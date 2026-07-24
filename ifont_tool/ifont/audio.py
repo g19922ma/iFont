@@ -128,34 +128,55 @@ def _flatten_moras(query):
 
 def synth_voicevox_designed(reading: str, pitches_hz, char_dur, speaker: int = 108,
                             host: str = "http://127.0.0.1:50021", sr: int = 44100,
-                            durations=None):
+                            durations=None, quality: bool = True, quality_log=None):
     """実声で「設計提示」を合成する。各モーラの音高を pitches_hz(モーラごとの周波数)で与え、
     長さを固定する。char_dur は全モーラ一律の秒数。durations(モーラごとの秒数リスト)を渡すと、
     そちらを優先して1モーラずつ長さを変えられる(競技かるたの伸ばし・余韻など)。
     競技かるたの読み(句頭B3・他E4・0.2秒)や実験の一定音高/旋律を実声で作る経路。
+
+    quality=True(既定)で品質処方を適用する(quality.py 参照):
+    強制有声化(文脈無声化の防止)・F0適合(実測→減衰付き逆補正)・音量ならし。
+    quality_log にリストを渡すと処方の経過を追記する。
     返り値は (wavバイト列, 各モーラの開始秒[list], 総秒)。"""
     import math
     q = _vv_query(reading, speaker, host)
     moras = _flatten_moras(q)
+    n = len(moras)
 
     def dur_at(i):
         if durations is not None:
             return float(durations[min(i, len(durations) - 1)])
         return float(char_dur)
 
-    out = []
-    for i, m in enumerate(moras):
-        f = float(pitches_hz[min(i, len(pitches_hz) - 1)])
-        out.append(_set_mora(m, math.log(f), dur_at(i)))
-    q["accent_phrases"] = [{"moras": out, "accent": 1, "pause_mora": None, "is_interrogative": False}]
-    q.update(dict(speedScale=1.0, pitchScale=0.0, intonationScale=1.0, volumeScale=1.0,
-                  prePhonemeLength=0.05, postPhonemeLength=0.15, outputSamplingRate=sr))
-    wav = _vv_synth(q, speaker, host)
-    pre = q["prePhonemeLength"]
+    durs = [dur_at(i) for i in range(n)]
+    refs = [float(pitches_hz[min(i, len(pitches_hz) - 1)]) for i in range(n)]
+    pre = 0.05
     onsets, t = [], pre
-    for i in range(len(out)):
+    for d in durs:
         onsets.append(t)
-        t += dur_at(i)
+        t += d
+
+    def _synth(ln_targets, force_voiced):
+        out = []
+        for i, m in enumerate(moras):
+            vm = dict(m)
+            if force_voiced and vm.get("vowel"):
+                vm["vowel"] = vm["vowel"].lower()   # 文脈無声化の防止(強制有声)
+            out.append(_set_mora(vm, ln_targets[i], durs[i]))
+        q2 = dict(q)
+        q2["accent_phrases"] = [{"moras": out, "accent": 1, "pause_mora": None,
+                                 "is_interrogative": False}]
+        q2.update(dict(speedScale=1.0, pitchScale=0.0, intonationScale=1.0, volumeScale=1.0,
+                       prePhonemeLength=pre, postPhonemeLength=0.15, outputSamplingRate=sr))
+        cons = [(m.get("consonant_length") or 0.0) for m in out]
+        return _vv_synth(q2, speaker, host), cons
+
+    ln = [math.log(f) for f in refs]
+    if not quality:
+        wav, _ = _synth(ln, False)
+        return wav, onsets, _wav_seconds(wav)
+    from . import quality as _quality
+    wav = _quality.apply(lambda l: _synth(l, True), refs, onsets, durs, log=quality_log)
     return wav, onsets, _wav_seconds(wav)
 
 

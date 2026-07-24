@@ -36,7 +36,8 @@ def _tokens_for(text_chars, reading):
 
 def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tones",
           rise=False, natural=False, speaker=2, fps=30, font=None, hint_font=None,
-          label=None, durations=None, pause_after=None, keep_frames=False):
+          label=None, durations=None, pause_after=None, keep_frames=False,
+          raw_voice=False):
     """動画を生成して out のパスを返す。
 
     表示は「時間ゲート提示」(固定領域に1文字ずつ、その音の区間で鮮明化)。
@@ -78,10 +79,14 @@ def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tone
                 wav_bytes, onsets, total = audio.synth_voicevox_natural(reading_text, speaker=speaker)
                 used_engine = "voicevox(自然韻律)"
             else:
+                qlog = []
                 wav_bytes, onsets, total = audio.synth_voicevox_designed(
                     reading_text, pitches_hz, char_dur, speaker=speaker,
-                    durations=(durs_eff if durations is not None else None))
-                used_engine = "voicevox(設計提示)"
+                    durations=(durs_eff if durations is not None else None),
+                    quality=not raw_voice, quality_log=qlog)
+                for line in qlog:
+                    print(f"[quality] {line}")
+                used_engine = "voicevox(設計提示)" if raw_voice else "voicevox(設計提示+品質処方)"
             if len(onsets) != n_sound:
                 print(f"[warn] 合成モーラ数({len(onsets)})が読み数({n_sound})と不一致。表示同期がずれる可能性。")
         except Exception as e:
@@ -181,6 +186,8 @@ def main(argv=None):
     ap.add_argument("--pause-after", default=None,
                     help="指定モーラの直後に無音(間合い)を挟む。'表示字index:秒' をカンマ区切り"
                          "(例 '13:1.0')。競技かるたの間合いに使う")
+    ap.add_argument("--raw-voice", action="store_true",
+                    help="実声の品質処方(強制有声化・F0適合・音量ならし)を切って素の設計合成にする")
     ap.add_argument("--keep-frames", action="store_true")
     args = ap.parse_args(argv)
 
@@ -196,7 +203,8 @@ def main(argv=None):
         args.text, reading=args.reading, pitch=args.pitch, speed=args.speed, out=args.out,
         engine=args.engine, rise=args.rise, natural=args.natural, speaker=args.speaker,
         fps=args.fps, font=args.font, hint_font=args.hint_font, label=args.label,
-        durations=durations, pause_after=pause_after, keep_frames=args.keep_frames)
+        durations=durations, pause_after=pause_after, keep_frames=args.keep_frames,
+        raw_voice=args.raw_voice)
     print(f"出力: {out}  ({dur:.1f}s, 音声={used_engine})")
     print(CREDITS)
     return 0
