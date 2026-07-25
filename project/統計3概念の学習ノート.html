@@ -1,0 +1,1039 @@
+<title>統計3概念の学習ノート — 非劣性・事前登録・階層モデル</title>
+<style>
+  :root{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82;
+    --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea;
+    --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f;  --bad-soft:#f6e5e0;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Songti SC",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+    --shadow:0 1px 2px rgba(20,30,50,.04),0 6px 22px rgba(20,30,50,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+      --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+      --line:#2b323d; --line-soft:#242a34;
+      --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2;
+      --teal:#5bc2c8;
+      --good:#79c79b; --good-soft:#1a2c22;
+      --warn:#e0b871; --warn-soft:#2e2717;
+      --bad:#e59178;  --bad-soft:#31201b;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82; --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea; --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f; --bad-soft:#f6e5e0;
+  }
+  :root[data-theme="dark"]{
+    --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+    --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+    --line:#2b323d; --line-soft:#242a34;
+    --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2; --teal:#5bc2c8;
+    --good:#79c79b; --good-soft:#1a2c22; --warn:#e0b871; --warn-soft:#2e2717;
+    --bad:#e59178; --bad-soft:#31201b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.85;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    font-size:16px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px 120px}
+  .breakout{max-width:960px;margin-left:auto;margin-right:auto}
+
+  /* --- 見出し --- */
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.35}
+  .eyebrow{font-family:var(--sans);font-size:12px;letter-spacing:.14em;font-weight:700;
+    color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+  header.top{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  header.top h1{font-size:33px;margin:0 0 14px;letter-spacing:.01em}
+  header.top .lead{font-size:16.5px;color:var(--ink-soft);margin:0;max-width:64ch}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:22px}
+  .chip{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+  .chip b{color:var(--ink)}
+
+  .part-head{margin:64px 0 6px;padding-top:20px;border-top:2px solid var(--accent)}
+  .part-head .num{font-family:var(--serif);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.1em}
+  h2{font-size:26px;margin:6px 0 4px}
+  .part-sub{color:var(--ink-soft);font-size:15px;margin:0 0 8px}
+  h3{font-size:20px;margin:38px 0 6px;padding-left:12px;border-left:3px solid var(--accent)}
+  h4{font-size:16.5px;margin:26px 0 4px;color:var(--ink)}
+  p{margin:12px 0}
+  .wrap>section>p, .wrap>section>section>p{max-width:70ch}
+  b,strong{font-weight:700;color:var(--ink)}
+  a{color:var(--accent-ink);text-underline-offset:2px}
+  em{font-style:normal;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+
+  /* 数式 */
+  .m{font-family:var(--serif);font-style:italic}
+  .eq{font-family:var(--serif);background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:14px 18px;margin:16px 0;font-size:17px;text-align:center;
+    overflow-x:auto;box-shadow:var(--shadow)}
+  .eq .m{font-style:italic}
+  sub,sup{font-size:.72em}
+
+  /* コールアウト */
+  .note{border-radius:12px;padding:15px 18px;margin:20px 0;font-size:14.5px;border:1px solid var(--line)}
+  .note .lab{font-weight:700;font-family:var(--sans);font-size:12.5px;letter-spacing:.06em;
+    text-transform:uppercase;display:block;margin-bottom:5px}
+  .note.key{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 32%,transparent)}
+  .note.key .lab{color:var(--accent-ink)}
+  .note.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+  .note.warn .lab{color:var(--warn)}
+  .note.misc{background:var(--panel);border-style:dashed}
+  .note.misc .lab{color:var(--ink-faint)}
+  .ifont{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);
+    border-radius:10px;padding:14px 18px;margin:20px 0;font-size:14.5px;box-shadow:var(--shadow)}
+  .ifont .lab{font-weight:700;font-size:12.5px;letter-spacing:.06em;color:var(--teal);
+    text-transform:uppercase;display:block;margin-bottom:5px}
+
+  /* 図 */
+  figure{margin:26px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:20px 20px 8px;box-shadow:var(--shadow)}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--ink-soft);margin:12px 2px 6px;line-height:1.7}
+  figcaption b{color:var(--ink)}
+  .svg-t{font-family:var(--sans);font-weight:700;fill:var(--ink)}
+  .svg-l{font-family:var(--sans);fill:var(--ink-soft)}
+  .svg-n{font-family:var(--mono);fill:var(--ink-soft)}
+  .svg-s{font-family:var(--sans);fill:var(--ink-faint)}
+
+  /* 表 */
+  .tbl{overflow-x:auto;margin:22px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink-soft);
+    font-weight:700;margin-bottom:8px;font-family:var(--sans)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  thead th{background:var(--panel-2);font-family:var(--sans);font-weight:700}
+  tbody th{background:color-mix(in srgb,var(--panel-2) 60%,transparent);font-weight:600;white-space:nowrap}
+  td .m{font-size:.95em}
+
+  /* コード */
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;margin:16px 0;color:var(--ink)}
+  pre .c{color:var(--ink-faint)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+
+  /* TOC */
+  nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;margin:30px 0;box-shadow:var(--shadow)}
+  nav.toc .lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin-bottom:10px}
+  nav.toc ol{margin:0;padding-left:0;list-style:none;counter-reset:toc}
+  nav.toc>ol>li{counter-increment:toc;margin:9px 0;padding-left:34px;position:relative;font-weight:600}
+  nav.toc>ol>li::before{content:counter(toc);position:absolute;left:0;top:0;width:24px;height:24px;
+    background:var(--accent-soft);color:var(--accent-ink);border-radius:7px;font-family:var(--serif);
+    font-size:13px;display:grid;place-items:center;font-weight:700}
+  nav.toc a{color:var(--ink);text-decoration:none}
+  nav.toc a:hover{color:var(--accent-ink)}
+  nav.toc .sub{font-weight:400;color:var(--ink-soft);font-size:13px;margin-top:2px}
+  ul.plain{margin:12px 0;padding-left:22px}
+  ul.plain li{margin:7px 0}
+  .refs{font-size:13.5px;color:var(--ink-soft)}
+  .refs li{margin:9px 0}
+  hr.soft{border:0;border-top:1px solid var(--line);margin:40px 0}
+  .lead-q{font-family:var(--serif);font-size:17px;color:var(--ink-soft);font-style:italic;
+    border-left:3px solid var(--line);padding-left:16px;margin:16px 0}
+  @media (max-width:560px){ header.top h1{font-size:26px} h2{font-size:22px} body{font-size:15px} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">iFont論文の統計 · 学習ノート</p>
+  <h1>「差がない」を示す・事前に決める・情報を借りる</h1>
+  <p class="lead">HCI/ECの研究者が t検定・分散分析は実務で使うが、その背後の数理モデルまでは踏み込んでいない——という前提から出発して、iFont論文に出てくる3つの概念を、図と対応表で腑に落とすためのノートです。</p>
+  <div class="meta">
+    <span class="chip">所要 <b>約60分</b></span>
+    <span class="chip">前提 <b>t検定・分散分析の実務利用</b></span>
+    <span class="chip">数式 <b>最小限・図で補う</b></span>
+    <span class="chip">構成 <b>3部（各20分前後）</b></span>
+  </div>
+</header>
+
+<section>
+  <p>この3つは、統計の道具箱の中では毛色が違って見えますが、<b>どれも「線形モデル」という同じ土台の上に立っています</b>。第3部でその土台をていねいに作るので、第1部・第2部で「なぜそんな回りくどいことを」と思っても、最後まで読むと一本の線でつながります。まず、なぜこの3つがiFont論文に必要になったのかを一言ずつ。</p>
+  <ul class="plain">
+    <li><b>非劣性マージン</b> — iFontは「0.2秒間隔で連続提示しても、1文字ずつの認識と<em>変わらない</em>」ことを示したい。「変わらない」は普通の検定では示せないので、専用の枠組みが要ります。</li>
+    <li><b>事前登録</b> — 「変わらない」という結論は、データを見てから基準を決めると簡単に捏造できてしまう。それを封じるために、実験前に判断基準を届け出ます。</li>
+    <li><b>階層モデル・部分プーリング</b> — 認識率を「かな1文字ごと」に推定したいが、1文字あたりの試行は少ない。全体の傾向と各文字の個性を同時にモデル化して、少ないデータを救います。</li>
+  </ul>
+
+  <nav class="toc">
+    <div class="lab">この教材の道筋</div>
+    <ol>
+      <li><a href="#p1">非劣性検定と非劣性マージン δ</a><div class="sub">「差がない」を積極的に示す。医学では標準、HCIでも広まりつつある考え方。</div></li>
+      <li><a href="#p2">事前登録（preregistration）</a><div class="sub">研究者の自由度を縛る。なぜ「事前に決めた」ことが統計的な正しさを支えるのか。</div></li>
+      <li><a href="#p3">線形モデル → 混合モデル → 階層モデルと部分プーリング</a><div class="sub">t検定もANOVAも線形モデル。そこに「項を足す」と何が起きるか。</div></li>
+    </ol>
+  </nav>
+</section>
+
+<!-- ============ PART 1 ============ -->
+<section id="p1">
+  <div class="part-head">
+    <div class="num">PART 1 · 約24分</div>
+    <h2>非劣性検定と非劣性マージン δ</h2>
+    <p class="part-sub">「差がない」ことを、有意差の不在ではなく、積極的な検定で示す。</p>
+  </div>
+
+  <h3>1.1 なぜ普通の検定では「差がない」を示せないのか</h3>
+  <p>まず、いつもの有意差検定（帰無仮説検定）が何を言っているかを思い出します。帰無仮説 <span class="m">H<sub>0</sub></span>「差はゼロ」を立て、データがそれと矛盾するほど極端なら <span class="m">H<sub>0</sub></span> を棄却して「差がある」と言う。ここで大事なのは、<b>棄却できなかったとき、それは「差がない証拠」ではない</b>という点です。</p>
+  <p>棄却できない理由は2つあり、検定はそれを区別しません。ひとつは本当に差が小さいから。もうひとつは、単に<b>データが足りなくて差を見つけられなかった</b>から。つまり「有意差なし」は、雑な実験ほど出やすい。手を抜くほど「差がない」ように見える、という倒錯が起きます。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 250" role="img" aria-label="有意差の不在が2つの異なる状況を区別しないことを示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">「有意差なし」が意味しうる2つの状況（横棒＝差の95%信頼区間）</text>
+      <!-- zero line -->
+      <line x1="450" y1="50" x2="450" y2="230" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="450" y="248" font-size="12" text-anchor="middle">差 = 0</text>
+      <!-- axis -->
+      <line x1="120" y1="230" x2="820" y2="230" stroke="var(--line)" stroke-width="1.5"/>
+      <!-- case A: tiny effect, tight CI -->
+      <text class="svg-l" x="120" y="82" font-size="13">A. 差は小さいと言い切れる</text>
+      <line x1="400" y1="98" x2="500" y2="98" stroke="var(--good)" stroke-width="3"/>
+      <line x1="400" y1="90" x2="400" y2="106" stroke="var(--good)" stroke-width="3"/>
+      <line x1="500" y1="90" x2="500" y2="106" stroke="var(--good)" stroke-width="3"/>
+      <circle cx="450" cy="98" r="4.5" fill="var(--good)"/>
+      <text class="svg-s" x="516" y="102" font-size="12">狭い区間が0の近くに収まる</text>
+      <!-- case B: unknown, wide CI -->
+      <text class="svg-l" x="120" y="152" font-size="13">B. 何も分からない（データ不足）</text>
+      <line x1="250" y1="168" x2="700" y2="168" stroke="var(--warn)" stroke-width="3"/>
+      <line x1="250" y1="160" x2="250" y2="176" stroke="var(--warn)" stroke-width="3"/>
+      <line x1="700" y1="160" x2="700" y2="176" stroke="var(--warn)" stroke-width="3"/>
+      <circle cx="450" cy="168" r="4.5" fill="var(--warn)"/>
+      <text class="svg-s" x="250" y="196" font-size="12">広い区間。大きな差も否定できていない</text>
+      <text class="svg-l" x="120" y="222" font-size="12.5" fill="var(--ink-faint)">どちらも「0を含む＝有意差なし」。だが意味は正反対。</text>
+    </svg>
+    <figcaption><b>図1.1</b> 有意差検定は A と B を区別しない。両方とも「区間が0を含む＝有意差なし」だが、A は「差は小さい」と言える一方、B は「まだ何も言えない」だけ。<b>「差がない」を主張したいなら、区間が0を含むかではなく、区間が<em>十分狭い範囲に収まっているか</em>を見る必要がある</b>——これが非劣性・等価性検定の出発点。</figcaption>
+  </figure>
+
+  <h3>1.2 発想の転換 — 「無視できる差の幅」δ を先に決める</h3>
+  <p>そこで問いを変えます。「差はゼロか？」ではなく、<b>「差は、実務上どうでもいいと言えるくらい小さいか？」</b>を問う。この「どうでもいい」の境界を、実験の前に一つの数値として決めます。これが<b>非劣性マージン <span class="m">δ</span></b>（デルタ）です。「劣化が <span class="m">δ</span> 未満なら、無いのと同じとみなす」という約束です。</p>
+  <p>判定は信頼区間で行います。差の信頼区間を作り、その<b>上限が <span class="m">δ</span> より小さければ</b>「劣化は <span class="m">δ</span> 未満だと自信を持って言える＝非劣性（干渉なし）」と結論します。検定の向きが逆さになっていることに注目してください。普通の検定は「0からどれだけ離れているか」を問い、非劣性検定は「<span class="m">δ</span> の内側にどれだけ確実に収まっているか」を問います。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 300" role="img" aria-label="信頼区間の上限とマージンδの位置関係による3通りの判定">
+      <text class="svg-t" x="20" y="24" font-size="15">信頼区間の上限とマージン δ の位置で決まる3つの結論</text>
+      <!-- axis -->
+      <line x1="150" y1="270" x2="850" y2="270" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="360" y1="45" x2="360" y2="278" stroke="var(--line)" stroke-width="1.3" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="360" y="292" font-size="12" text-anchor="middle">差 = 0（劣化なし）</text>
+      <line x1="660" y1="45" x2="660" y2="278" stroke="var(--bad)" stroke-width="2"/>
+      <text class="svg-s" x="660" y="292" font-size="12" text-anchor="middle" fill="var(--bad)">δ（許容の境界）</text>
+      <text class="svg-s" x="150" y="292" font-size="11">← S=200が良い　　劣化が大きい →</text>
+      <!-- Row 1 : no interference -->
+      <rect x="150" y="60" width="510" height="22" fill="var(--good-soft)" rx="4"/>
+      <line x1="250" y1="71" x2="470" y2="71" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="250" y1="63" x2="250" y2="79" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="470" y1="63" x2="470" y2="79" stroke="var(--good)" stroke-width="3.5"/>
+      <circle cx="360" cy="71" r="4.5" fill="var(--good)"/>
+      <text class="svg-l" x="686" y="75" font-size="13" fill="var(--good)" font-weight="700">干渉なし</text>
+      <text class="svg-s" x="686" y="93" font-size="11.5">上限が δ より左</text>
+      <!-- Row 2 : hold -->
+      <line x1="330" y1="140" x2="720" y2="140" stroke="var(--warn)" stroke-width="3.5"/>
+      <line x1="330" y1="132" x2="330" y2="148" stroke="var(--warn)" stroke-width="3.5"/>
+      <line x1="720" y1="132" x2="720" y2="148" stroke="var(--warn)" stroke-width="3.5"/>
+      <circle cx="500" cy="140" r="4.5" fill="var(--warn)"/>
+      <text class="svg-l" x="740" y="144" font-size="13" fill="var(--warn)" font-weight="700">保留</text>
+      <text class="svg-s" x="740" y="162" font-size="11.5">δ をまたぐ</text>
+      <!-- Row 3 : interference -->
+      <line x1="560" y1="210" x2="800" y2="210" stroke="var(--bad)" stroke-width="3.5"/>
+      <line x1="560" y1="202" x2="560" y2="218" stroke="var(--bad)" stroke-width="3.5"/>
+      <line x1="800" y1="202" x2="800" y2="218" stroke="var(--bad)" stroke-width="3.5"/>
+      <circle cx="680" cy="210" r="4.5" fill="var(--bad)"/>
+      <text class="svg-l" x="150" y="200" font-size="12.5">下限も 0 より右</text>
+      <text class="svg-l" x="150" y="214" font-size="13" fill="var(--bad)" font-weight="700">干渉あり</text>
+    </svg>
+    <figcaption><b>図1.2</b> 差の信頼区間（横棒）の置かれ方で3通りに判定する。<b>上限が δ より左</b>なら劣化は δ 未満だと言える＝<span style="color:var(--good);font-weight:700">干渉なし</span>。<b>下限まで 0 より右</b>なら本当に劣化がある＝<span style="color:var(--bad);font-weight:700">干渉あり</span>。<b>δ をまたぐ</b>なら<span style="color:var(--warn);font-weight:700">保留</span>（データ不足）。iFontの乙課題はこの3区分をそのまま使っている。</figcaption>
+  </figure>
+
+  <div class="note key">
+    <span class="lab">核心</span>
+    非劣性検定は「区間の<b>上限</b>とマージン δ を比べる」だけ。難しい新しい統計量は出てこない。使うのは、いつもの t検定と信頼区間である。変わるのは<b>「何と何を比べるか」という向き</b>だけ。
+  </div>
+
+  <h3>1.3 等価性検定（TOST）— 両側にしたいとき</h3>
+  <p>iFontは「劣化していないか（片側）」だけを気にするので、上限だけを見ます（<b>非劣性</b>）。もし「良くも悪くもなっていない（両側）」を示したいなら、上側と下側の両方に <span class="m">δ</span> を置き、区間全体が <span class="m">(−δ, +δ)</span> の内側に収まるかを見ます。これが心理学で普及した<b>等価性検定 TOST</b>（Two One-Sided Tests、2つの片側検定）です。名前のとおり、片側検定を2回やっているだけ。非劣性はその片側版だと思えば同じ枠組みです。</p>
+
+  <figure>
+    <svg viewBox="0 0 760 150" role="img" aria-label="等価性検定TOSTは区間が正負のマージンの内側に収まるかを見る">
+      <line x1="60" y1="110" x2="700" y2="110" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="380" y="132" font-size="12" text-anchor="middle">差 = 0</text>
+      <line x1="380" y1="35" x2="380" y2="118" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <!-- margins -->
+      <rect x="200" y="46" width="360" height="48" fill="var(--accent-soft)" rx="6"/>
+      <line x1="200" y1="40" x2="200" y2="100" stroke="var(--accent)" stroke-width="2"/>
+      <line x1="560" y1="40" x2="560" y2="100" stroke="var(--accent)" stroke-width="2"/>
+      <text class="svg-s" x="200" y="34" font-size="12" text-anchor="middle" fill="var(--accent-ink)">−δ</text>
+      <text class="svg-s" x="560" y="34" font-size="12" text-anchor="middle" fill="var(--accent-ink)">+δ</text>
+      <!-- CI inside -->
+      <line x1="300" y1="70" x2="470" y2="70" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="300" y1="62" x2="300" y2="78" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="470" y1="62" x2="470" y2="78" stroke="var(--good)" stroke-width="3.5"/>
+      <circle cx="392" cy="70" r="4.5" fill="var(--good)"/>
+      <text class="svg-l" x="600" y="74" font-size="13" fill="var(--good)" font-weight="700">等価</text>
+    </svg>
+    <figcaption><b>図1.3</b> 等価性検定（TOST）。信頼区間の全体が <span class="m">(−δ, +δ)</span> の帯の内側に収まれば「実質的に等価」と結論する。上側の片側だけを見るのが非劣性検定。</figcaption>
+  </figure>
+
+  <h3>1.4 マージン δ はどう決めるのか</h3>
+  <p>ここが非劣性検定の一番のクセです。<b><span class="m">δ</span> に「5%」のような分野横断の既定値はありません</b>。むしろ「既定値に頼らず、研究の中身から正当化して事前に決めよ」というのが規範です（医学の規制指針 ICH E10 が明記）。とはいえ相場はあり、割合（正答率など）を扱う医学試験では <b>10ポイント</b>前後がよく使われます（重大な結果なら1〜2ポイントまで絞る）。</p>
+  <p>iFontでは、<span class="m">δ</span> を測定の解像度から導いています。「後段で1文字ごとの認識率を測るときの誤差（標準誤差 約5〜6.5ポイント）より小さい差は、変換 g の出力を変えない」——だから <span class="m">δ</span>=5〜8ポイント。医学の相場よりむしろ厳しい側で、しかも数値の根拠が研究内在的なので、査読で守りやすい位置取りです。</p>
+
+  <div class="tbl">
+    <table>
+      <caption>表1.1　普通の有意差検定と非劣性検定の対比</caption>
+      <thead><tr><th></th><th>普通の有意差検定</th><th>非劣性検定</th></tr></thead>
+      <tbody>
+        <tr><th>示したいこと</th><td>差が<b>ある</b></td><td>差が<b>無視できるほど小さい</b></td></tr>
+        <tr><th>帰無仮説 <span class="m">H<sub>0</sub></span></th><td>差 = 0</td><td>差 ≥ <span class="m">δ</span>（劣化が許容外）</td></tr>
+        <tr><th>見るもの</th><td>区間が 0 を含むか</td><td>区間の<b>上限</b>が <span class="m">δ</span> より小さいか</td></tr>
+        <tr><th>データ不足だと</th><td>「有意差なし」に見えて<b>得</b></td><td>区間が広がり<b>結論できない</b>（保留）</td></tr>
+        <tr><th>使う道具</th><td colspan="2" style="text-align:center">同じ（t検定・信頼区間）。向きが違うだけ</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>1.5 片側でよいのか — 非劣性と等価性（TOST）の使い分け</h3>
+  <p class="lead-q">「非劣性＝片側検定、TOST＝両側検定」という対応は本質を突いている。そして「改善のつもりのシステムでも悪化しうるから、既定は両側」という指導もまっとうだ。では、なぜここで片側の非劣性を使うのか。TOSTが誠実なところを、非劣性で楽をしていないか。</p>
+  <p>結論から言うと、<b>「向きが正しいから片側」なのであって「緩いから片側」ではありません</b>。両側検定が既定とされるのは、多くの場面で<b>どちらの向きの差が問題になるか、事前に分からない</b>からです。改善策が裏目に出るかもしれないし、予想外に効きすぎるかもしれない。向きを決め打ちできないので、両側で守る。これは正しい既定です。</p>
+  <p>ところがiFontの干渉判定では事情が違います。ここで<b>測定の妥当性を脅かすのは片側だけ</b>だからです。「0.2秒間隔だと1文字目が<b>悪くなる</b>（干渉）」なら、単音で測った認識曲線を連続提示に当てはめる根拠が崩れます。しかし逆に「0.2秒間隔のほうが<b>良くなる</b>」場合は脅威になりません。単音（＝十分長い間隔）の値を当てはめると、実際の連続提示を<b>控えめに見積もる</b>ことになり、安全側の誤差だからです。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 250" role="img" aria-label="悪化と改善で結果の重大さが非対称であることを示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">2つの向きは、結果の重大さが非対称</text>
+      <!-- axis -->
+      <line x1="60" y1="120" x2="840" y2="120" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="450" y1="55" x2="450" y2="130" stroke="var(--line)" stroke-width="1.3" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="450" y="146" font-size="12" text-anchor="middle">差 = 0</text>
+      <line x1="650" y1="55" x2="650" y2="130" stroke="var(--bad)" stroke-width="2"/>
+      <text class="svg-s" x="650" y="146" font-size="12" text-anchor="middle" fill="var(--bad)">δ</text>
+      <!-- left region: better -->
+      <rect x="60" y="70" width="390" height="34" rx="7" fill="var(--good-soft)"/>
+      <text class="svg-l" x="255" y="92" font-size="12.5" text-anchor="middle" fill="var(--good)">← S=200 が良い（改善・facilitation）</text>
+      <!-- right region beyond delta: threat -->
+      <rect x="650" y="70" width="190" height="34" rx="7" fill="var(--bad-soft)"/>
+      <text class="svg-l" x="745" y="92" font-size="12.5" text-anchor="middle" fill="var(--bad)">悪化（干渉）→</text>
+      <!-- consequence labels -->
+      <text class="svg-l" x="255" y="180" font-size="13" text-anchor="middle" font-weight="700" fill="var(--good)">脅威ではない</text>
+      <text class="svg-s" x="255" y="200" font-size="11.5" text-anchor="middle">当てはめが控えめになるだけ＝安全側</text>
+      <text class="svg-s" x="255" y="216" font-size="11.5" text-anchor="middle" fill="var(--ink-faint)">しかも後方マスキング上ほぼ起こらない</text>
+      <text class="svg-l" x="745" y="180" font-size="13" text-anchor="middle" font-weight="700" fill="var(--bad)">妥当性への脅威</text>
+      <text class="svg-s" x="745" y="200" font-size="11.5" text-anchor="middle">単音の測定が当てはめられなくなる</text>
+      <text class="svg-s" x="745" y="216" font-size="11.5" text-anchor="middle" fill="var(--accent-ink)">← 非劣性検定はこの側を全力で見張る</text>
+    </svg>
+    <figcaption><b>図1.4</b> 「悪化」と「改善」は結果の重大さが対称ではない。悪化（右）だけが測定の妥当性を脅かし、改善（左）は当てはめを安全側にするだけ。<b>非劣性検定は、この危険な側に検定を丸ごと向けている</b>——「悪化を見逃す」危険こそが、この検定が見張っている当のもの。両側で守る必要があるのは「害の向きが未知」のときで、ここでは既知。</figcaption>
+  </figure>
+
+  <p>つまり<b>非劣性検定は、悪化の向きを無視するどころか、そこに検定を丸ごと向けています</b>。あなたが心配する「悪化を見逃す」危険こそ、この検定が全力で見張っている当のものです。落としているのは「良くなる」向きだけで、そこは脅威になりません。加えて仕組み上、S=200が頭打ちより良くなることはほぼ起こりません。S=200では1文字目を鳴らし切った直後に次の音（マスカー）が来るので、後続音は1文字目を<b>邪魔することはあっても助けることはない</b>（後方マスキング）。実際パイロットでも差は0付近で振れているだけでした。</p>
+
+  <p>では「緩さ＝ずる」はどこに潜むのか。<b>それは片側かどうかではなく、(1) マージン δ を大きく取ること、(2) 有意水準 α を甘くすること</b>の2つです。iFontはどちらも保守側に倒しています。δ は測定精度から導き、医学の相場（10ポイント）より厳しい5〜8ポイント。α は<b>片側2.5%</b>——これは<b>両側95%信頼区間の上側とちょうど同じ厳しさ</b>で、「片側だから半分に緩めた」わけではありません（片側5%にすれば緩くなりますが、そうしていない）。</p>
+
+  <div class="tbl">
+    <table>
+      <caption>表1.2　非劣性と等価性（TOST）はどちらを使うか</caption>
+      <thead><tr><th>状況</th><th>使う検定</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><th>片側だけが脅威<br>（悪化だけ困る。良くなるのは歓迎か無害）</th><td><b>非劣性</b>（片側）</td><td>iFontの干渉判定。新薬が既存薬に劣らない</td></tr>
+        <tr><th>両側が脅威<br>（良すぎても困る）</th><td><b>等価性 TOST</b>（両側）</td><td>測定器どうしの一致・製造公差・「効きすぎ」が別の前提を壊す場合</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note key">
+    <span class="lab">先回りできる報告</span>
+    査読で「両側で示すべきだ」と言われても困らない。信頼区間は両端とも計算済みなので、<b>そのまま等価性（TOST）としても報告できる</b>。S=200は頭打ちより良くもなっていない（下側の限界も −δ の内側）ので、等価性でも合格する。<b>非劣性を主・等価性を副として併記すれば、この懸念は先回りで潰せる</b>——コストはほぼゼロ。
+  </div>
+
+  <h4>コラム：等価性の併記は「基準の二重化」ではないか</h4>
+  <p>「非劣性で通った、等価性でも通った」と併記するのは、普通の検定でいえば「片側でも両側でも有意だった」と書くようなもの——<b>基準を二重にして甘い方に逃げているのでは？</b> という疑問はもっともだ。だが構造が違う。二重化の批判が刺さるのは<b>同じ仮説を、易しい基準と難しい基準の両方で試して、通ったほうを採る</b>ときで、批判の核は「後出しで甘い方へ乗り換える」点にある。非劣性と等価性はそうではなく、<b>片方がもう片方を含む入れ子</b>の関係にある。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 330" role="img" aria-label="非劣性と等価性が同じ信頼区間の両端の読み方の違いであり、等価性が非劣性を含むことを示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">非劣性と等価性は「同じ信頼区間の、どこを見るか」の違い</text>
+      <!-- number line -->
+      <line x1="120" y1="80" x2="800" y2="80" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="460" y1="55" x2="460" y2="150" stroke="var(--line)" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="460" y="48" font-size="12" text-anchor="middle">差 = 0</text>
+      <line x1="650" y1="55" x2="650" y2="150" stroke="var(--bad)" stroke-width="1.8"/>
+      <line x1="270" y1="55" x2="270" y2="150" stroke="var(--bad)" stroke-width="1.8" opacity="0.5"/>
+      <text class="svg-s" x="650" y="48" font-size="12" text-anchor="middle" fill="var(--bad)">+δ</text>
+      <text class="svg-s" x="270" y="48" font-size="12" text-anchor="middle" fill="var(--bad)">−δ</text>
+      <!-- single CI -->
+      <line x1="360" y1="80" x2="560" y2="80" stroke="var(--accent)" stroke-width="4"/>
+      <line x1="360" y1="70" x2="360" y2="90" stroke="var(--accent)" stroke-width="4"/>
+      <line x1="560" y1="70" x2="560" y2="90" stroke="var(--accent)" stroke-width="4"/>
+      <circle cx="460" cy="80" r="5" fill="var(--accent)"/>
+      <text class="svg-s" x="460" y="110" font-size="12" text-anchor="middle">1つの信頼区間（下端 … 点推定 … 上端）</text>
+      <!-- reads -->
+      <rect x="120" y="165" width="14" height="14" rx="4" fill="var(--teal)"/>
+      <text class="svg-l" x="142" y="177" font-size="13" font-weight="700">非劣性</text>
+      <text class="svg-l" x="215" y="177" font-size="12.5">上端 &lt; +δ　だけを見る（悪化していない）</text>
+      <rect x="120" y="195" width="14" height="14" rx="4" fill="var(--accent)"/>
+      <text class="svg-l" x="142" y="207" font-size="13" font-weight="700">等価性</text>
+      <text class="svg-l" x="215" y="207" font-size="12.5">上端 &lt; +δ　かつ　下端 &gt; −δ（両端を見る）</text>
+      <text class="svg-s" x="120" y="234" font-size="11.5" fill="var(--ink-faint)">→ どちらも同じ区間を見ている。等価性は条件が1つ多いだけ（新しい検定は増えていない）。</text>
+      <!-- nesting boxes -->
+      <rect x="120" y="250" width="420" height="62" rx="10" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.3"/>
+      <text class="svg-l" x="136" y="272" font-size="12.5" font-weight="700" fill="var(--good)">非劣性が言える（易しい）</text>
+      <rect x="136" y="280" width="230" height="26" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.3"/>
+      <text class="svg-l" x="150" y="298" font-size="12" font-weight="700" fill="var(--accent-ink)">等価も言える（強い）</text>
+      <text class="svg-l" x="580" y="278" font-size="13" font-weight="700">等価性 ⟹ 非劣性</text>
+      <text class="svg-s" x="580" y="298" font-size="12">（等価は非劣性を含む・入れ子）</text>
+    </svg>
+    <figcaption><b>図1.5</b> 非劣性は信頼区間の<b>上端だけ</b>を +δ と比べ、等価性はそれに<b>下端 &gt; −δ</b> の条件を足す。使うのは同じ1つの区間で、新しい検定統計量もデータも増えない。等価性は条件が1つ多いぶん<b>強い主張で、非劣性を論理的に含む</b>。</figcaption>
+  </figure>
+
+  <p>この入れ子から、二重化批判が当たらない理由が3つ出てくる。</p>
+  <ul class="plain">
+    <li><b>結論への「抜け道」が増えていない。</b> 多重検定で偽陽性が増える（第2部の <span class="m">1−0.95<sup>k</sup></span>）のは、<b>どれか1つでも当たれば同じ結論を言える</b>とき。iFontは事前登録した非劣性<b>1本だけ</b>で「干渉なし」を結論し、等価性はその結論への別ルートではない（＝抜け道は1本のまま）。だから偽陽性率は上がらない。</li>
+    <li><b>追加のαを使っていない。</b> そもそも等価性（TOST＝2つの片側検定）は、各側をαで検定しても全体の第一種の過誤がαを超えない（真の値はマージンの片側にしか居られないため、両方を誤って棄却できない）。非劣性はそのTOSTの片腕にすぎず、「非劣性＋もう片側＝TOST」は追加のαを1円も使わない単一の正当な手続き。</li>
+    <li><b>動く向きが逆。</b> 二重化のずるは「難しい基準が落ちたとき、易しい基準へ後出しで乗り換える」こと。iFontは易しい方（非劣性）を主に<b>事前固定</b>し、難しい方（等価性）を副として報告する。<b>弱い主張から強い主張へ動くのはずるになりようがない</b>——結果を見て甘い方へ逃げていないからだ。</li>
+  </ul>
+
+  <div class="note misc">
+    <span class="lab">封じ方（2案）</span>
+    <b>案A（推奨）</b>：非劣性を確認的な主解析として事前登録し、等価性は同じ区間からの<b>副次・記述</b>として一文添える。登録文で「主＝非劣性（確認的）／副＝等価性（記述的）」と役割を明記すれば、査読者はこれを「完全な区間報告」と読み、二重基準とは受け取らない。　<b>案B</b>：いっそ等価性を<b>唯一の主解析</b>として登録する。基準が1本になり批判は原理的に消えるが、検定力がわずかに下がり、iFontには関心の薄い「良すぎる側」まで見張ることになる。
+  </div>
+
+  <h3>1.6 どのくらい一般的な方法なのか</h3>
+  <ul class="plain">
+    <li><b>医学・臨床試験では完全に標準</b>。新薬が既存薬に「劣らない」ことを示す試験は日常的で、規制当局のガイドライン（ICH E9/E10、FDA/EMA）や報告基準（CONSORT の非劣性拡張）が整備されている。</li>
+    <li><b>心理学・HCIでは「等価性検定（TOST）」として近年普及中</b>。火付け役は Lakens (2017) の実務向け解説で、再現性運動と結びついて広まった。ただしまだ「知っている人は使う」段階で、分野の常識というほどではない。</li>
+    <li>だからiFontで使うと、<b>HCI/EC読者には馴染みが薄い</b>。論文では「差の不在は有意差の不在では示せない」という一文で導入し、δの根拠を明記し、引用（Lakens、CONSORT非劣性）を添える——という丁寧な扱いをしている。</li>
+  </ul>
+
+  <div class="ifont">
+    <span class="lab">iFontでの使い方</span>
+    乙課題（連続提示の干渉検証）で、<b>「0.2秒間隔での正答率」が「十分長い間隔での正答率（頭打ち）」を δ 以上は下回らない</b>ことを非劣性検定で確かめる。参加者ごとに差得点（頭打ち − S=200ms）を作り、その平均の信頼上限が δ を下回れば「干渉なし」。第一段は δ=8ポイント、保留なら増員して δ=5ポイントで再判定する二段階にしている（第2部・第3部にもつながる）。
+  </div>
+</section>
+
+<!-- ============ PART 2 ============ -->
+<section id="p2">
+  <div class="part-head">
+    <div class="num">PART 2 · 約18分</div>
+    <h2>事前登録（preregistration）</h2>
+    <p class="part-sub">実験の前に、仮説・手続き・判断基準・停止規則を届け出て固定する。</p>
+  </div>
+
+  <p class="lead-q">「事前に行うべき実験と判断基準を決めて届け出て、事後的に都合よく仮説を立てることを防ぐ方式」——という理解は正確です。ここでは、なぜそれが<b>統計的な正しさそのもの</b>を支えるのかを見ます。</p>
+
+  <h3>2.1 問題 — 「研究者の自由度」が偽陽性を作る</h3>
+  <p>データ解析には無数の小さな分かれ道があります。外れ値をどこで切るか、どの共変量を入れるか、いつ実験をやめるか、どの指標を主要評価にするか。ひとつひとつは正当に見えます。しかし<b>結果を見てから道を選べる</b>と、無意識にでも「有意になる道」を選んでしまう。これを<b>研究者の自由度</b>（researcher degrees of freedom）と呼びます。</p>
+  <p>関連する2つの悪癖があります。<b>p-hacking</b>（有意になるまで解析を少しずつ変える）と、<b>HARKing</b>（Hypothesizing After the Results are Known＝結果を見てから、それに合う仮説を「最初からそう思っていた」ように書く）。どちらも意図的な不正とは限らず、善意の研究者でも陥ります。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 260" role="img" aria-label="解析の分岐が増えるほど有意な結果に至る道が現れることを示す木">
+      <text class="svg-t" x="20" y="24" font-size="15">解析の分かれ道（garden of forking paths）</text>
+      <text class="svg-s" x="20" y="44" font-size="12.5">同じデータでも、選ぶ道の組合せで「有意」に着地する経路がいくつも現れる</text>
+      <!-- root -->
+      <circle cx="70" cy="150" r="7" fill="var(--accent)"/>
+      <text class="svg-l" x="52" y="180" font-size="11">データ</text>
+      <!-- level 1 -->
+      <line x1="77" y1="150" x2="230" y2="90" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="77" y1="150" x2="230" y2="210" stroke="var(--line)" stroke-width="1.5"/>
+      <circle cx="240" cy="90" r="6" fill="var(--ink-faint)"/>
+      <circle cx="240" cy="210" r="6" fill="var(--ink-faint)"/>
+      <text class="svg-s" x="150" y="104" font-size="10.5">外れ値を除く</text>
+      <text class="svg-s" x="150" y="228" font-size="10.5">除かない</text>
+      <!-- level 2 -->
+      <g stroke="var(--line)" stroke-width="1.4">
+        <line x1="246" y1="90" x2="430" y2="55"/><line x1="246" y1="90" x2="430" y2="125"/>
+        <line x1="246" y1="210" x2="430" y2="175"/><line x1="246" y1="210" x2="430" y2="240"/>
+      </g>
+      <circle cx="440" cy="55" r="6" fill="var(--ink-faint)"/><circle cx="440" cy="125" r="6" fill="var(--ink-faint)"/>
+      <circle cx="440" cy="175" r="6" fill="var(--ink-faint)"/><circle cx="440" cy="240" r="6" fill="var(--ink-faint)"/>
+      <text class="svg-s" x="350" y="40" font-size="10.5">共変量A</text>
+      <!-- level 3 to endpoints -->
+      <g stroke="var(--line)" stroke-width="1.3">
+        <line x1="446" y1="55" x2="640" y2="40"/><line x1="446" y1="55" x2="640" y2="80"/>
+        <line x1="446" y1="125" x2="640" y2="115"/><line x1="446" y1="125" x2="640" y2="150"/>
+        <line x1="446" y1="175" x2="640" y2="180"/><line x1="446" y1="175" x2="640" y2="210"/>
+        <line x1="446" y1="240" x2="640" y2="235"/>
+      </g>
+      <!-- endpoints, some significant -->
+      <g>
+        <circle cx="650" cy="40" r="6" fill="var(--ink-faint)"/>
+        <circle cx="650" cy="80" r="7" fill="var(--bad)"/>
+        <circle cx="650" cy="115" r="6" fill="var(--ink-faint)"/>
+        <circle cx="650" cy="150" r="7" fill="var(--bad)"/>
+        <circle cx="650" cy="180" r="6" fill="var(--ink-faint)"/>
+        <circle cx="650" cy="210" r="7" fill="var(--bad)"/>
+        <circle cx="650" cy="235" r="6" fill="var(--ink-faint)"/>
+      </g>
+      <rect x="690" y="70" width="14" height="14" rx="3" fill="var(--bad)"/>
+      <text class="svg-l" x="712" y="82" font-size="12">「有意」に着地した経路</text>
+      <rect x="690" y="100" width="14" height="14" rx="3" fill="var(--ink-faint)"/>
+      <text class="svg-l" x="712" y="112" font-size="12">有意でない経路</text>
+      <text class="svg-s" x="712" y="150" font-size="11.5" fill="var(--ink-faint)">結果を見てから道を選べば、</text>
+      <text class="svg-s" x="712" y="168" font-size="11.5" fill="var(--ink-faint)">赤にたどり着くのは簡単。</text>
+    </svg>
+    <figcaption><b>図2.1</b> 解析の分岐が3段階あるだけで経路は8通りに増える。真に効果がなくても、どこかの経路は偶然「有意」になる。<b>結果を見てから道を選ぶ自由</b>が、偽陽性を生む温床になる。</figcaption>
+  </figure>
+
+  <h3>2.2 なぜ「事前に決めた」ことが正しさを支えるのか</h3>
+  <p>ここが理論の核心です。<b>p値や有意水準5%という保証は、「検定を1回だけ、事前に決めた形で行う」ことを前提に計算されている</b>。同じデータに何通りもの解析を試して一番よいものを選ぶと、実際の偽陽性率は5%をはるかに超えます。下の図がその増え方です。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 300" role="img" aria-label="独立な検定を重ねるほど偽陽性が1回以上出る確率が上がる曲線">
+      <text class="svg-t" x="20" y="24" font-size="15">検定を重ねると「偽陽性が1回以上出る確率」はこう上がる</text>
+      <!-- axes -->
+      <line x1="80" y1="250" x2="850" y2="250" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="80" y1="60" x2="80" y2="250" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="465" y="285" font-size="12.5" text-anchor="middle">試した独立な検定の数 k</text>
+      <text class="svg-s" x="30" y="160" font-size="12.5" text-anchor="middle" transform="rotate(-90 30 160)">偽陽性が出る確率</text>
+      <!-- gridlines y -->
+      <g stroke="var(--line-soft)" stroke-width="1">
+        <line x1="80" y1="60" x2="850" y2="60"/><line x1="80" y1="155" x2="850" y2="155"/>
+      </g>
+      <text class="svg-n" x="72" y="64" font-size="11" text-anchor="end">100%</text>
+      <text class="svg-n" x="72" y="159" font-size="11" text-anchor="end">50%</text>
+      <text class="svg-n" x="72" y="254" font-size="11" text-anchor="end">0%</text>
+      <!-- curve 1 - 0.95^k, k=1..20 mapped x 80..850, y 250..(250-190*p) -->
+      <polyline fill="none" stroke="var(--accent)" stroke-width="3"
+        points="80,250 120,241 160,232 200,224 240,216 280,208 320,201 360,194 400,187 440,181 480,175 520,169 560,163 600,158 640,153 680,148 720,143 760,139 800,135 840,131"/>
+      <!-- reference line at 5% -->
+      <line x1="80" y1="240.5" x2="850" y2="240.5" stroke="var(--good)" stroke-width="1.6" stroke-dasharray="5 4"/>
+      <text class="svg-l" x="150" y="235" font-size="11.5" fill="var(--good)">意図した5%の水準</text>
+      <!-- markers -->
+      <circle cx="80" cy="250" r="4" fill="var(--accent)"/>
+      <circle cx="280" cy="208" r="4" fill="var(--accent)"/>
+      <text class="svg-n" x="280" y="200" font-size="11" text-anchor="middle">k=5 → 23%</text>
+      <circle cx="840" cy="131" r="4" fill="var(--bad)"/>
+      <text class="svg-n" x="820" y="123" font-size="11" text-anchor="end">k=20 → 64%</text>
+      <text class="svg-s" x="90" y="80" font-size="12" fill="var(--ink-faint)">式: 1 − 0.95 の k 乗</text>
+    </svg>
+    <figcaption><b>図2.2</b> 各検定の偽陽性率が5%でも、独立に <span class="m">k</span> 回試すと「少なくとも1回は偽陽性」の確率は <span class="m">1 − 0.95<sup>k</sup></span> で上がる。5回で23%、20回で64%。事前登録は、この「試す回数」と「試し方」を実験前に1つに固定することで、5%の保証を取り戻す装置である。</figcaption>
+  </figure>
+
+  <p>だから事前登録は、単なる誠実さのポーズではなく<b>統計的な必要条件</b>です。「事前に決めた1つの解析」だからこそ、その p値や信頼区間は額面どおりの意味を持ちます。iFontの二段階判定で「各段 片側2.5%」とわざわざ配分しているのも同じ理屈で、判定のチャンスが2回あるぶん、全体で5%を超えないように事前に割り振っています（Bonferroni）。</p>
+
+  <h3>2.3 何を届け出るのか — 確認と探索を分ける</h3>
+  <p>事前登録では、少なくとも次を実験<b>前</b>に書いて日付つきで固定します。仮説／デザインと条件／サンプルサイズと停止規則／主要評価項目／解析モデル／除外基準。ポイントは、これによって研究が<b>確認的（confirmatory）</b>な部分と<b>探索的（exploratory）</b>な部分にはっきり分かれることです。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 210" role="img" aria-label="事前登録により確認的解析と探索的解析が時間軸で分かれる図">
+      <!-- timeline -->
+      <line x1="60" y1="105" x2="840" y2="105" stroke="var(--line)" stroke-width="2"/>
+      <!-- preregister marker -->
+      <line x1="250" y1="55" x2="250" y2="155" stroke="var(--accent)" stroke-width="2.5"/>
+      <circle cx="250" cy="105" r="8" fill="var(--accent)"/>
+      <text class="svg-t" x="250" y="45" font-size="13" text-anchor="middle" fill="var(--accent-ink)">事前登録（日付を固定）</text>
+      <!-- data collection marker -->
+      <circle cx="500" cy="105" r="6" fill="var(--ink-faint)"/>
+      <text class="svg-s" x="500" y="132" font-size="12" text-anchor="middle">データ収集</text>
+      <!-- confirmatory zone -->
+      <rect x="70" y="150" width="360" height="34" rx="7" fill="var(--good-soft)"/>
+      <text class="svg-l" x="90" y="172" font-size="12.5" fill="var(--good)"><tspan font-weight="700">確認的:</tspan> 登録どおりの1つの解析。p値は額面どおり</text>
+      <!-- exploratory zone -->
+      <rect x="540" y="150" width="300" height="34" rx="7" fill="var(--warn-soft)"/>
+      <text class="svg-l" x="560" y="172" font-size="12.5" fill="var(--warn)"><tspan font-weight="700">探索的:</tspan> 自由にやってよい。ただし「発見」扱い</text>
+      <text class="svg-s" x="60" y="90" font-size="11.5">← 実験前</text>
+      <text class="svg-s" x="840" y="90" font-size="11.5" text-anchor="end">実験後 →</text>
+    </svg>
+    <figcaption><b>図2.3</b> 事前登録は<b>探索を禁止しない</b>。登録した1つの解析は「確認的」として強い証拠になり、それ以外の後から思いついた解析は「探索的（＝仮説生成）」として正直に報告すればよい。両者を混ぜて「探索の結果を確認のように書く」ことだけを防ぐ。</figcaption>
+  </figure>
+
+  <div class="note misc">
+    <span class="lab">よくある誤解</span>
+    事前登録は「計画から一歩も外れてはいけない」ではない。予定外の解析をしてよいし、逸脱してもよい。求められるのは<b>区別して正直に書く</b>ことだけ——「これは登録どおりの確認的解析」「これは後から気づいた探索的解析」と。
+  </div>
+
+  <h3>2.4 どのくらい一般的なのか</h3>
+  <ul class="plain">
+    <li><b>臨床試験では法的・規範的に必須</b>。ClinicalTrials.gov などへの登録が、資金・倫理・出版の条件になっている（米FDAAA、医学雑誌editor組織ICMJEの方針）。医学で「馴染みがある」と感じるのはこのため。</li>
+    <li><b>心理学では2011年以降の「再現性の危機」を機に急速に普及</b>。Open Science Framework の事前登録、さらに<b>Registered Reports</b>（結果を出す前に方法だけで査読し採否を決める仕組み）が広がった。Nosek ら (2018) が理論と実務をまとめている。</li>
+    <li><b>HCI/ECではまだ少数派だが増加中</b>。CHI などで研究者の自由度・透明性の議論が起き（Cockburn, Gutwin, Dix 2018「HARK No More」など）、事前登録した論文も現れ始めている。iFontで採り入れるのは、この流れの先取りにあたる。</li>
+  </ul>
+
+  <div class="ifont">
+    <span class="lab">iFontでの使い方</span>
+    乙課題の判定を <code>docs/prereg_interference.md</code> として事前登録する。仮説（劣化が δ 未満）、二段階のN（60/40 → 保留時130/80）、判定ルール（差得点の信頼上限 vs δ）、除外基準、そして<b>停止規則</b>（第一段で決着 or 保留なら増員）まで固定する。特にこの「二段階の停止規則」は、事前に決めておかないと偽陽性率が保証できない典型例で、事前登録が効く場面そのもの。
+  </div>
+</section>
+
+<!-- ============ PART 3 ============ -->
+<section id="p3">
+  <div class="part-head">
+    <div class="num">PART 3 · 約31分</div>
+    <h2>線形モデル → 混合モデル → 階層モデルと部分プーリング</h2>
+    <p class="part-sub">t検定もANOVAも線形モデル。そこに「項を足す」と、少ないデータが救える。</p>
+  </div>
+
+  <p class="lead-q">「分散分析などは線形モデルで、結局 反応 = 何かの影響 + 何かの影響 + 定数、と何らかのモデル化をしている。その項がちょっと増えただけと捉えてよいか」——ほぼ正解です。半分だけ補足が要る、というのがこの部の結論です。</p>
+
+  <h3>3.1 出発点 — あらゆる検定は線形モデルの特殊例</h3>
+  <p>t検定も分散分析も回帰も、根っこは同じ<b>線形モデル</b>です。観測値を「いくつかの効果の足し算＋ばらつき」として書きます。</p>
+  <div class="eq">
+    <span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub>x<sub>1</sub></span> + <span class="m">β<sub>2</sub>x<sub>2</sub></span> + ⋯ + <span class="m">ε</span>
+    &nbsp;&nbsp;<span style="font-size:13px;color:var(--ink-faint)">（観測 ＝ 定数 ＋ 効果 ＋ 効果 ＋ … ＋ 誤差）</span>
+  </div>
+  <p>ここで少し立ち止まります。回帰の <span class="m">x</span> は身長や時間のような<b>数値</b>ですが、「群A／群B」のような<b>カテゴリ</b>は数値ではありません。これを足し算の式に入れるための仕掛けが<b>ダミー変数</b>（0か1だけを取る変数）です。ここが分かると、t検定も分散分析も同じ式で書けることが腑に落ちます。</p>
+
+  <h4>ダミー変数 — カテゴリを 0/1 の列に置き換える</h4>
+  <p>「群Aの平均 vs 群Bの平均」を比べたいとき、<b>「Bなら1・Aなら0」という列を1本足す</b>だけで回帰の形になります。実際のデータ表で見ます。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 880 300" role="img" aria-label="カテゴリをダミー変数の0と1に置き換えるデータ表と、係数が平均差になることを示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">2群のとき：ダミー1本（β₁ が「BとAの平均差」そのものになる）</text>
+      <!-- table left -->
+      <g font-size="13">
+        <rect x="30" y="42" width="300" height="30" fill="var(--panel-2)"/>
+        <text class="svg-t" x="60" y="62" font-size="12.5">参加者</text>
+        <text class="svg-t" x="150" y="62" font-size="12.5">所属する群</text>
+        <text class="svg-t" x="270" y="62" font-size="12.5">値 y</text>
+        <g class="svg-l">
+          <text x="60" y="92">P1</text><text x="150" y="92">A</text><text x="270" y="92">62</text>
+          <text x="60" y="118">P2</text><text x="150" y="118">A</text><text x="270" y="118">58</text>
+          <text x="60" y="144">P3</text><text x="150" y="144">B</text><text x="270" y="144">71</text>
+          <text x="60" y="170">P4</text><text x="150" y="170">B</text><text x="270" y="170">69</text>
+        </g>
+        <line x1="30" y1="72" x2="330" y2="72" stroke="var(--line)" stroke-width="1.2"/>
+      </g>
+      <!-- arrow -->
+      <path d="M345 110 l40 0" stroke="var(--accent)" stroke-width="2" marker-end="url(#dm)"/>
+      <text class="svg-s" x="365" y="100" font-size="11" text-anchor="middle" fill="var(--accent-ink)">置換</text>
+      <defs><marker id="dm" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="var(--accent)"/></marker></defs>
+      <!-- table right with dummy -->
+      <g font-size="13">
+        <rect x="400" y="42" width="300" height="30" fill="var(--accent-soft)"/>
+        <text class="svg-t" x="425" y="62" font-size="12.5">参加者</text>
+        <text class="svg-t" x="512" y="62" font-size="12.5" fill="var(--accent-ink)">x（Bなら1）</text>
+        <text class="svg-t" x="645" y="62" font-size="12.5">値 y</text>
+        <g class="svg-l">
+          <text x="425" y="92">P1</text><text x="545" y="92" fill="var(--accent-ink)" font-weight="700">0</text><text x="645" y="92">62</text>
+          <text x="425" y="118">P2</text><text x="545" y="118" fill="var(--accent-ink)" font-weight="700">0</text><text x="645" y="118">58</text>
+          <text x="425" y="144">P3</text><text x="545" y="144" fill="var(--accent-ink)" font-weight="700">1</text><text x="645" y="144">71</text>
+          <text x="425" y="170">P4</text><text x="545" y="170" fill="var(--accent-ink)" font-weight="700">1</text><text x="645" y="170">69</text>
+        </g>
+        <line x1="400" y1="72" x2="700" y2="72" stroke="var(--line)" stroke-width="1.2"/>
+      </g>
+      <!-- equation interpretation -->
+      <rect x="30" y="200" width="820" height="80" rx="10" fill="var(--panel-2)"/>
+      <text class="svg-t" x="50" y="226" font-size="13.5">y = β₀ + β₁·x　に当てはめると</text>
+      <text class="svg-l" x="50" y="252" font-size="13">群A（x=0）: y ≈ β₀　　　　　→ <tspan font-weight="700">β₀ は「群Aの平均」</tspan></text>
+      <text class="svg-l" x="50" y="272" font-size="13">群B（x=1）: y ≈ β₀ + β₁　→ <tspan font-weight="700" fill="var(--accent-ink)">β₁ は「BとAの平均差」</tspan>　だから β₁=0 の検定 ＝ 2標本t検定</text>
+    </svg>
+    <figcaption><b>図3.1</b> カテゴリ「群A／群B」を「Bなら1・Aなら0」の列 <span class="m">x</span> に置き換えると、ふつうの回帰式に乗る。このとき <b>β₀ は基準群（A）の平均</b>、<b>β₁ は もう一方（B）との平均差</b>になり、「β₁ はゼロか」を問うことが2標本t検定と同じになる。</figcaption>
+  </figure>
+
+  <h4>3群以上のとき — ダミーは「束」になる</h4>
+  <p>群が3つ（A・B・C）に増えたらどうするか。数値として1,2,3と入れてはいけません（AとBの差＝BとCの差、という不当な仮定が入るため）。代わりに<b>ダミーを複数本たてます</b>。基準をAにするなら、「Bなら1」の列と「Cなら1」の列の<b>2本</b>。これが<b>「ダミーの束」</b>の正体です。一般に <b>水準がk個なら、ダミーは k−1 本</b>（基準の1つは全部0で表す）。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 880 260" role="img" aria-label="3群を2本のダミー変数で表す表と、それらの係数の束をまとめて検定するのが分散分析であることを示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">3群のとき：ダミー2本＝「束」。この2つをまとめて検定するのが分散分析</text>
+      <g font-size="13">
+        <rect x="40" y="42" width="420" height="30" fill="var(--accent-soft)"/>
+        <text class="svg-t" x="70" y="62" font-size="12.5">所属する群</text>
+        <text class="svg-t" x="215" y="62" font-size="12.5" fill="var(--accent-ink)">x₁（Bなら1）</text>
+        <text class="svg-t" x="350" y="62" font-size="12.5" fill="var(--accent-ink)">x₂（Cなら1）</text>
+        <g class="svg-l">
+          <text x="70" y="94">A（基準）</text><text x="255" y="94" font-weight="700">0</text><text x="390" y="94" font-weight="700">0</text>
+          <text x="70" y="122">B</text><text x="255" y="122" font-weight="700" fill="var(--accent-ink)">1</text><text x="390" y="122" font-weight="700">0</text>
+          <text x="70" y="150">C</text><text x="255" y="150" font-weight="700">0</text><text x="390" y="150" font-weight="700" fill="var(--accent-ink)">1</text>
+        </g>
+        <line x1="40" y1="72" x2="460" y2="72" stroke="var(--line)" stroke-width="1.2"/>
+      </g>
+      <!-- model -->
+      <rect x="500" y="42" width="350" height="110" rx="10" fill="var(--panel-2)"/>
+      <text class="svg-t" x="520" y="68" font-size="13">y = β₀ + β₁·x₁ + β₂·x₂ + ε</text>
+      <text class="svg-l" x="520" y="92" font-size="12.5">β₀ = Aの平均</text>
+      <text class="svg-l" x="520" y="112" font-size="12.5">β₁ = B と A の差</text>
+      <text class="svg-l" x="520" y="132" font-size="12.5">β₂ = C と A の差</text>
+      <!-- bundle test -->
+      <rect x="40" y="180" width="810" height="62" rx="10" fill="var(--good-soft)"/>
+      <text class="svg-t" x="62" y="206" font-size="13.5" fill="var(--good)">この β₁ と β₂ を<tspan font-weight="700">「束」としてまとめて</tspan>「両方ともゼロか？」と問うのが F検定 ＝ 一元配置分散分析の主効果</text>
+      <text class="svg-l" x="62" y="230" font-size="12.5">（1本ずつ t検定すると検定を2回することになる。束でまとめて1回で問うので、要因全体の効果を1つの帰無仮説で扱える）</text>
+    </svg>
+    <figcaption><b>図3.2</b> 3群なら「Bなら1」「Cなら1」の2本のダミーで表す（基準のAは両方0）。この2つの係数を<b>束にして「そろってゼロか」を一度に問う</b>のが分散分析のF検定。要因の水準がk個なら、束はk−1本になる。</figcaption>
+  </figure>
+
+  <p>つまり<b>t検定は「ダミー1本の回帰」、分散分析は「ダミーの束の回帰」</b>。<b>あなたの理解どおり、みな「効果の足し算」のモデル化</b>で、違うのはダミーの本数と、それを1本ずつ見るか束で見るかだけです。</p>
+
+  <div class="tbl">
+    <table>
+      <caption>表3.1　おなじみの検定は、みな線形モデルの特殊例</caption>
+      <thead><tr><th>おなじみの手法</th><th>線形モデルとしての姿</th></tr></thead>
+      <tbody>
+        <tr><th>1標本t検定</th><td><span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">ε</span>（定数が0かを検定）</td></tr>
+        <tr><th>2標本t検定</th><td><span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub></span>·<span class="m">x</span> + <span class="m">ε</span>　<span style="font-size:12.5px;color:var(--ink-faint)">（<span class="m">x</span>＝Bなら1・Aなら0のダミー1本。<span class="m">β<sub>1</sub></span>＝2群の平均差）</span></td></tr>
+        <tr><th>一元配置分散分析</th><td><span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub>x<sub>1</sub></span> + ⋯ + <span class="m">β<sub>k−1</sub>x<sub>k−1</sub></span> + <span class="m">ε</span>　<span style="font-size:12.5px;color:var(--ink-faint)">（k群ならダミー k−1 本＝「束」。束がそろってゼロかをF検定）</span></td></tr>
+        <tr><th>重回帰</th><td><span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub>x<sub>1</sub></span> + ⋯ + <span class="m">ε</span></td></tr>
+        <tr><th>ロジスティック回帰</th><td>上と同じ右辺で、<b>正答/誤答</b>のような0/1を予測（後述）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>正答/誤答を扱う — ロジスティック回帰</h4>
+  <p>iFontの反応は連続値ではなく「正答か誤答か（0/1）」です。この場合、確率を直接足し算すると0〜1をはみ出すので、<b>ロジット変換</b>（確率をオッズの対数に直す）を挟んで、その上で線形モデルを立てます。中身は「効果の足し算」で同じ。右辺は線形のまま、左辺だけ確率→ロジットに替えた、と思えば十分です。</p>
+  <div class="eq">
+    logit( <span class="m">P</span>(正答) ) = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub></span>·(条件) + ⋯
+  </div>
+
+  <h4>線形モデルは、実際には何を検定しているのか — 係数がゼロか</h4>
+  <p>右辺の各項には係数 <span class="m">β</span> が付いています。<span class="m">β</span> は「その項の効果の大きさ」で、データからは推定値 <span class="m">β̂</span> が出ます。そして<b>検定が問うことはいつも一つ——その係数はゼロと区別できるか（<span class="m">H<sub>0</sub></span>: <span class="m">β</span> = 0）</b>です。ゼロなら「その項に効果はない」。</p>
+  <ul class="plain">
+    <li><b>係数1つ → t検定。</b> ダミー1本のときの「<span class="m">β<sub>1</sub></span> はゼロか」＝2群の平均差の検定そのもの（図3.1）。</li>
+    <li><b>係数の束をまとめて → F検定。</b> ダミーの束（k群ならk−1本）の係数が<b>そろってゼロか</b>＝その要因の主効果の検定（図3.2）。</li>
+  </ul>
+  <p>だから「分散分析で要因Aの主効果が有意」は、モデルの言葉では<b>「Aの水準を表すダミーの係数が全部ゼロ、という帰無仮説を棄却した」</b>ということ。分散分析表で見ているF値は、この「係数の束がゼロか」を測っています。<b>推定値 <span class="m">β̂</span> が効果量、検定はそれが雑音と区別できるか</b>、という二役だと思えば十分です。</p>
+
+  <h4>正規分布を仮定するのはどれか — 誤差（残差）であって、データそのものではない</h4>
+  <p>ここは最も誤解が多い所です。線形モデルが正規分布を仮定するのは<b>誤差項 <span class="m">ε</span></b>（観測値からモデルの予測を引いた残差）であって、生データ <span class="m">y</span> ではありません。</p>
+  <div class="eq"><span class="m">y</span> = （モデルの予測） + <span class="m">ε</span>,　　<span class="m">ε</span> 〜 正規分布(0, <span class="m">σ<sup>2</sup></span>)</div>
+  <p>だから「2群で平均が違うので <span class="m">y</span> 全体はふた山」でも、<b>各群の中の残差が正規</b>なら前提は満たされます。t検定・分散分析の前提は正確には「<b>残差の正規性 ＋ 等分散 ＋ 独立</b>」の3点で、生データのヒストグラムが正規かどうかではありません。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 820 280" role="img" aria-label="正規分布を仮定するのは各群内の残差であって生データ全体ではないことを示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">正規を仮定するのは「各群内の残差」——生データ全体はふた山でもよい</text>
+      <!-- axes -->
+      <line x1="120" y1="70" x2="120" y2="240" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="120" y1="240" x2="720" y2="240" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="60" y="160" font-size="12" text-anchor="middle" transform="rotate(-90 60 160)">観測値 y</text>
+      <!-- group 1 -->
+      <text class="svg-l" x="280" y="262" font-size="12.5" text-anchor="middle">群 A</text>
+      <line x1="200" y1="185" x2="360" y2="185" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text class="svg-s" x="366" y="189" font-size="11" fill="var(--accent-ink)">群Aの平均</text>
+      <g fill="var(--ink-soft)">
+        <circle cx="240" cy="165" r="4"/><circle cx="270" cy="200" r="4"/><circle cx="300" cy="178" r="4"/>
+        <circle cx="255" cy="190" r="4"/><circle cx="320" cy="205" r="4"/><circle cx="285" cy="160" r="4"/>
+        <circle cx="230" cy="195" r="4"/><circle cx="310" cy="188" r="4"/>
+      </g>
+      <path d="M205 150 C165 165, 165 205, 205 220" fill="none" stroke="var(--teal)" stroke-width="2"/>
+      <text class="svg-s" x="150" y="150" font-size="10.5" fill="var(--teal)">残差は</text>
+      <text class="svg-s" x="150" y="164" font-size="10.5" fill="var(--teal)">ここで正規</text>
+      <!-- group 2 -->
+      <text class="svg-l" x="560" y="262" font-size="12.5" text-anchor="middle">群 B</text>
+      <line x1="480" y1="115" x2="640" y2="115" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text class="svg-s" x="646" y="119" font-size="11" fill="var(--accent-ink)">群Bの平均</text>
+      <g fill="var(--ink-soft)">
+        <circle cx="520" cy="95" r="4"/><circle cx="550" cy="130" r="4"/><circle cx="580" cy="108" r="4"/>
+        <circle cx="535" cy="120" r="4"/><circle cx="600" cy="132" r="4"/><circle cx="565" cy="90" r="4"/>
+        <circle cx="510" cy="125" r="4"/><circle cx="590" cy="118" r="4"/>
+      </g>
+      <path d="M485 80 C445 95, 445 135, 485 150" fill="none" stroke="var(--teal)" stroke-width="2"/>
+    </svg>
+    <figcaption><b>図3.3</b> 群Aと群Bで平均が違うので、両群をまとめた生データ <span class="m">y</span> は「ふた山」になりうる。しかし線形モデルの前提は<b>各群の中の残差（点と平均線のずれ）が正規</b>であること。生データ全体の形は前提と無関係。</figcaption>
+  </figure>
+
+  <p>2つ補足します。(1) <b>ロジスティック回帰には正規分布の仮定がありません</b>。反応が0/1でベルヌーイ分布に従うので、<span class="m">ε</span>〜正規 の項がそもそも無い（iFontが正答率にロジスティックを使う理由の一つ）。(2) <b>混合モデルでは、変量効果にも正規を仮定します</b>（<span class="m">a<sub>i</sub></span>, <span class="m">b<sub>c</sub></span> 〜 正規分布）。§3.4で足す「文字ごとのずれ」も正規分布から出てきたと見なす——正規性の仮定が1段増えます。</p>
+
+  <h4>主効果・交互作用・単純主効果を、モデルで読む</h4>
+  <p>2要因（A・B）のモデルはこう書けます。積の項 <span class="m">A×B</span> が交互作用です。</p>
+  <div class="eq"><span class="m">y</span> = <span class="m">β<sub>0</sub></span> + <span class="m">β<sub>1</sub></span>·A + <span class="m">β<sub>2</sub></span>·B + <span class="m">β<sub>3</sub></span>·(A×B) + <span class="m">ε</span></div>
+  <ul class="plain">
+    <li><b>主効果</b> ＝ 単独の項。Aの主効果は <span class="m">β<sub>1</sub></span>（Bを平均してならしたときのAの効果）。検定は <span class="m">H<sub>0</sub></span>: <span class="m">β<sub>1</sub></span> = 0。</li>
+    <li><b>交互作用</b> ＝ 積の項 <span class="m">β<sub>3</sub></span>。<b><span class="m">β<sub>3</sub></span> ≠ 0 ⟺ Aの効果がBの水準によって変わる</b>。図で言えば線が平行でない。</li>
+    <li><b>単純主効果</b> ＝ Bをある水準に固定したときのAの効果。モデルでは <span class="m">β<sub>1</sub></span> + <span class="m">β<sub>3</sub></span>·(そのBの値)。交互作用があるとき（<span class="m">β<sub>3</sub></span>≠0）、主効果だけでは足りず、Bで切って単純主効果を見るのはこのため。</li>
+  </ul>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 300" role="img" aria-label="交互作用の有無を平行・非平行の折れ線で示し、単純主効果を線の傾きとして示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">交互作用は「線が平行かどうか」、単純主効果は「1本の線の傾き」</text>
+      <!-- legend -->
+      <line x1="640" y1="16" x2="668" y2="16" stroke="var(--teal)" stroke-width="3"/><text class="svg-s" x="674" y="20" font-size="11">B=b1</text>
+      <line x1="720" y1="16" x2="748" y2="16" stroke="var(--accent)" stroke-width="3"/><text class="svg-s" x="754" y="20" font-size="11">B=b2</text>
+      <!-- Panel L: no interaction -->
+      <text class="svg-l" x="240" y="52" font-size="13" text-anchor="middle" font-weight="700">交互作用なし（平行）</text>
+      <line x1="110" y1="250" x2="410" y2="250" stroke="var(--line)" stroke-width="1.3"/>
+      <line x1="110" y1="80" x2="110" y2="250" stroke="var(--line)" stroke-width="1.3"/>
+      <text class="svg-s" x="160" y="270" font-size="11.5" text-anchor="middle">a1</text>
+      <text class="svg-s" x="360" y="270" font-size="11.5" text-anchor="middle">a2</text>
+      <text class="svg-s" x="70" y="170" font-size="11" text-anchor="middle" transform="rotate(-90 70 170)">値</text>
+      <line x1="160" y1="210" x2="360" y2="160" stroke="var(--teal)" stroke-width="3"/>
+      <circle cx="160" cy="210" r="4.5" fill="var(--teal)"/><circle cx="360" cy="160" r="4.5" fill="var(--teal)"/>
+      <line x1="160" y1="160" x2="360" y2="110" stroke="var(--accent)" stroke-width="3"/>
+      <circle cx="160" cy="160" r="4.5" fill="var(--accent)"/><circle cx="360" cy="110" r="4.5" fill="var(--accent)"/>
+      <text class="svg-s" x="240" y="235" font-size="11" text-anchor="middle" fill="var(--ink-faint)">傾きが同じ → β3 = 0</text>
+      <!-- Panel R: interaction -->
+      <text class="svg-l" x="670" y="52" font-size="13" text-anchor="middle" font-weight="700">交互作用あり（非平行）</text>
+      <line x1="540" y1="250" x2="840" y2="250" stroke="var(--line)" stroke-width="1.3"/>
+      <line x1="540" y1="80" x2="540" y2="250" stroke="var(--line)" stroke-width="1.3"/>
+      <text class="svg-s" x="590" y="270" font-size="11.5" text-anchor="middle">a1</text>
+      <text class="svg-s" x="790" y="270" font-size="11.5" text-anchor="middle">a2</text>
+      <line x1="590" y1="185" x2="790" y2="175" stroke="var(--teal)" stroke-width="3"/>
+      <circle cx="590" cy="185" r="4.5" fill="var(--teal)"/><circle cx="790" cy="175" r="4.5" fill="var(--teal)"/>
+      <line x1="590" y1="200" x2="790" y2="100" stroke="var(--accent)" stroke-width="3"/>
+      <circle cx="590" cy="200" r="4.5" fill="var(--accent)"/><circle cx="790" cy="100" r="4.5" fill="var(--accent)"/>
+      <!-- annotate simple main effect on b2 line -->
+      <path d="M700 150 l40 -22" stroke="var(--bad)" stroke-width="1.6" fill="none" marker-end="url(#am)"/>
+      <text class="svg-s" x="700" y="230" font-size="11" fill="var(--bad)">この傾き ＝ B=b2 での</text>
+      <text class="svg-s" x="700" y="245" font-size="11" fill="var(--bad)">Aの単純主効果</text>
+      <text class="svg-s" x="665" y="90" font-size="11" text-anchor="middle" fill="var(--ink-faint)">傾きが違う → β3 ≠ 0</text>
+      <defs><marker id="am" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="var(--bad)"/></marker></defs>
+    </svg>
+    <figcaption><b>図3.4</b> 2本の線はBの各水準でのAの効果（＝単純主効果＝その線の傾き）。<b>2本が平行なら交互作用なし（<span class="m">β<sub>3</sub></span>=0）、非平行なら交互作用あり（<span class="m">β<sub>3</sub></span>≠0）</b>。主効果は2本をならした平均的な傾き。交互作用があると、ならした主効果だけでは各線の違いを表せないので、線ごとの単純主効果を見る。</figcaption>
+  </figure>
+
+  <p>つまり、あなたが分散分析で使い分けている主効果・交互作用・単純主効果は、すべて<b>同じモデルの係数の組み合わせ</b>として読めます。交互作用が有意なら「積の項の係数がゼロでない」、そのとき各線の傾き（単純主効果）を個別に見る——という手順が、モデルから自然に出てきます。</p>
+
+  <h3>3.2 新しいのは「変量効果」— 項の種類が2つになる</h3>
+  <p>ここが「項がちょっと増えただけ」に対する<b>唯一の補足</b>です。線形モデルの項には2種類あります。</p>
+  <ul class="plain">
+    <li><b>固定効果（fixed effect）</b>：それ自体に興味がある、数の決まった効果。例：「S=200ms か 頭打ちか」という条件。水準を選び直すことはない。</li>
+    <li><b>変量効果（random effect）</b>：<b>母集団からのサンプル</b>とみなす効果。例：実験に使った「かな68字」や「参加者130名」。これらは、ありうる文字・人の集まりからたまたま選ばれた一部であり、個々の値そのものより<b>そのばらつき具合</b>に関心がある。</li>
+  </ul>
+  <p>「項が増えただけ」が半分正しく、半分足りないのはここです。<b>変量効果の項は、ただの係数ではなく「分布に従う」と仮定する</b>——ここが線形モデルからの本当の一歩です。文字ごとの効果 <span class="m">b<sub>c</sub></span> を「平均0・分散 <span class="m">σ<sup>2</sup><sub>字</sub></span> の正規分布から出てきた」と見なす。この一手が、次の部分プーリングを可能にします。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 220" role="img" aria-label="固定効果と変量効果の違い。変量効果は母集団からのサンプルとみなす">
+      <text class="svg-t" x="20" y="26" font-size="15">固定効果と変量効果 — 何を「母集団からのサンプル」とみなすか</text>
+      <!-- fixed -->
+      <rect x="40" y="55" width="360" height="140" rx="12" fill="var(--panel-2)"/>
+      <text class="svg-l" x="60" y="82" font-size="13" font-weight="700">固定効果：条件（S=200 / 頭打ち）</text>
+      <rect x="70" y="100" width="130" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-l" x="135" y="125" font-size="13" text-anchor="middle" fill="var(--accent-ink)">S=200</text>
+      <rect x="230" y="100" width="130" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+      <text class="svg-l" x="295" y="125" font-size="13" text-anchor="middle" fill="var(--accent-ink)">頭打ち</text>
+      <text class="svg-s" x="60" y="172" font-size="11.5">この2つに用がある。選び直さない。</text>
+      <!-- random -->
+      <rect x="500" y="55" width="360" height="140" rx="12" fill="var(--panel-2)"/>
+      <text class="svg-l" x="520" y="82" font-size="13" font-weight="700">変量効果：かな（68字）</text>
+      <!-- population curve -->
+      <path d="M520 165 Q600 100 680 165" fill="none" stroke="var(--teal)" stroke-width="1.6" opacity=".6"/>
+      <text class="svg-s" x="600" y="98" font-size="10.5" text-anchor="middle" fill="var(--teal)">ありうる文字の母集団</text>
+      <g fill="var(--teal)">
+        <circle cx="560" cy="150" r="5"/><circle cx="600" cy="140" r="5"/><circle cx="640" cy="150" r="5"/>
+        <circle cx="585" cy="128" r="5"/><circle cx="620" cy="125" r="5"/>
+      </g>
+      <text class="svg-l" x="700" y="135" font-size="12">あ, か, さ, …</text>
+      <text class="svg-s" x="520" y="185" font-size="11.5">実験の68字は、そこから引いた標本。</text>
+    </svg>
+    <figcaption><b>図3.5</b> 固定効果は「その水準に用がある」効果（条件）。変量効果は「母集団からたまたま引いた標本」とみなす効果（文字・参加者）。だから文字の効果は、個々の値そのものより<b>「文字によってどれだけばらつくか」</b>として扱う。</figcaption>
+  </figure>
+
+  <h3>3.3 3つのプーリング — no / complete / partial</h3>
+  <p>「文字ごとの認識率を知りたいが、1文字あたりの試行が少ない」問題に、3つの態度がありえます。iFontの「文字全体の値＋文字独特の値」という理解は、まさに3つ目です。</p>
+  <ul class="plain">
+    <li><b>no pooling（プーリングしない）</b>：文字ごとに完全に独立して推定する。各文字のデータしか使わないので、試行の少ない文字は推定が<b>暴れる</b>（過学習）。</li>
+    <li><b>complete pooling（完全にプールする）</b>：文字の違いを無視して全部まとめる。安定するが、文字の個性を<b>消してしまう</b>（過度な単純化）。</li>
+    <li><b>partial pooling（部分プーリング）</b>：その中間。各文字の推定を<b>全体平均のほうへ引き寄せる</b>。データが少ない文字ほど強く引き寄せ、多い文字はあまり動かさない。これが階層モデルが自動でやること。</li>
+  </ul>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 340" role="img" aria-label="no pooling, complete pooling, partial poolingの3つを比較する図">
+      <text class="svg-t" x="20" y="24" font-size="15">3つのプーリング — 文字ごとの推定（点）と全体平均（横線）</text>
+      <!-- shared baseline positions -->
+      <!-- panel 1 no pooling -->
+      <text class="svg-l" x="150" y="58" font-size="13" text-anchor="middle" font-weight="700">no pooling</text>
+      <text class="svg-s" x="150" y="74" font-size="10.5" text-anchor="middle">文字ごと独立</text>
+      <line x1="40" y1="270" x2="260" y2="270" stroke="var(--line)" stroke-width="1.3"/>
+      <g fill="var(--ink-soft)">
+        <circle cx="70" cy="110" r="5"/><circle cx="105" cy="240" r="5"/><circle cx="140" cy="130" r="5"/>
+        <circle cx="175" cy="255" r="5"/><circle cx="210" cy="150" r="5"/><circle cx="240" cy="200" r="5"/>
+      </g>
+      <!-- error bars big -->
+      <g stroke="var(--ink-faint)" stroke-width="1.4" opacity=".7">
+        <line x1="70" y1="80" x2="70" y2="140"/><line x1="105" y1="210" x2="105" y2="265"/>
+        <line x1="140" y1="100" x2="140" y2="160"/><line x1="175" y1="230" x2="175" y2="268"/>
+        <line x1="210" y1="120" x2="210" y2="180"/><line x1="240" y1="165" x2="240" y2="235"/>
+      </g>
+      <text class="svg-s" x="150" y="292" font-size="10.5" text-anchor="middle" fill="var(--bad)">ばらつき大（暴れる）</text>
+
+      <!-- panel 2 complete pooling -->
+      <text class="svg-l" x="450" y="58" font-size="13" text-anchor="middle" font-weight="700">complete pooling</text>
+      <text class="svg-s" x="450" y="74" font-size="10.5" text-anchor="middle">全部まとめる</text>
+      <line x1="340" y1="270" x2="560" y2="270" stroke="var(--line)" stroke-width="1.3"/>
+      <line x1="350" y1="180" x2="550" y2="180" stroke="var(--accent)" stroke-width="2.5"/>
+      <g fill="var(--accent)">
+        <circle cx="370" cy="180" r="5"/><circle cx="405" cy="180" r="5"/><circle cx="440" cy="180" r="5"/>
+        <circle cx="475" cy="180" r="5"/><circle cx="510" cy="180" r="5"/><circle cx="540" cy="180" r="5"/>
+      </g>
+      <text class="svg-s" x="450" y="292" font-size="10.5" text-anchor="middle" fill="var(--warn)">個性が消える</text>
+
+      <!-- panel 3 partial pooling -->
+      <text class="svg-l" x="750" y="58" font-size="13" text-anchor="middle" font-weight="700">partial pooling</text>
+      <text class="svg-s" x="750" y="74" font-size="10.5" text-anchor="middle">全体へ引き寄せる（階層モデル）</text>
+      <line x1="640" y1="270" x2="860" y2="270" stroke="var(--line)" stroke-width="1.3"/>
+      <line x1="650" y1="180" x2="850" y2="180" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text class="svg-s" x="655" y="174" font-size="10" fill="var(--accent-ink)">全体平均</text>
+      <!-- original faint positions and pulled positions with arrows -->
+      <g>
+        <!-- char with lots of data: barely moves -->
+        <circle cx="670" cy="120" r="4" fill="var(--ink-faint)" opacity=".45"/>
+        <line x1="670" y1="124" x2="670" y2="140" stroke="var(--good)" stroke-width="1.4" marker-end="url(#arw)"/>
+        <circle cx="670" cy="145" r="5" fill="var(--good)"/>
+        <text class="svg-s" x="670" y="300" font-size="9.5" text-anchor="middle">多い→少し</text>
+        <!-- char with little data: pulled a lot -->
+        <circle cx="720" cy="245" r="4" fill="var(--ink-faint)" opacity=".45"/>
+        <line x1="720" y1="240" x2="720" y2="196" stroke="var(--good)" stroke-width="1.4" marker-end="url(#arw)"/>
+        <circle cx="720" cy="190" r="5" fill="var(--good)"/>
+        <circle cx="770" cy="110" r="4" fill="var(--ink-faint)" opacity=".45"/>
+        <line x1="770" y1="115" x2="770" y2="165" stroke="var(--good)" stroke-width="1.4" marker-end="url(#arw)"/>
+        <circle cx="770" cy="170" r="5" fill="var(--good)"/>
+        <text class="svg-s" x="770" y="300" font-size="9.5" text-anchor="middle">少ない→大きく</text>
+        <circle cx="820" cy="250" r="4" fill="var(--ink-faint)" opacity=".45"/>
+        <line x1="820" y1="245" x2="820" y2="200" stroke="var(--good)" stroke-width="1.4" marker-end="url(#arw)"/>
+        <circle cx="820" cy="195" r="5" fill="var(--good)"/>
+      </g>
+      <defs>
+        <marker id="arw" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 z" fill="var(--good)"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><b>図3.6</b> 部分プーリング（右）は、文字ごとの生の推定（薄い点）を全体平均のほうへ引き寄せて最終推定（緑）にする。<b>データの少ない文字ほど強く引き寄せ、多い文字はほとんど動かさない</b>。no pooling（左）の暴れと complete pooling（中）の個性つぶしの、いいとこ取り。この「引き寄せ（shrinkage、収縮）」が部分プーリングの本体。</figcaption>
+  </figure>
+
+  <div class="note key">
+    <span class="lab">核心</span>
+    部分プーリングの正体は<b>収縮（shrinkage）</b>。各文字の推定を、その文字だけの生データと全体平均の<b>あいだ</b>に置く。混ぜる比率は、その文字のデータ量が自動的に決める——データが少ないほど全体平均を信じ、多いほど自分のデータを信じる。
+  </div>
+
+  <h3>3.4 モデルの式で見る — 「情報を借りる」</h3>
+  <p>iFontの「文字全体の値＋文字独特の値」を式にするとこうです。正答のロジットを、全体の切片・条件の効果・<b>参加者ごとのずれ</b>・<b>文字ごとのずれ</b>の足し算で書きます。</p>
+  <div class="eq">
+    logit( <span class="m">P</span>(正答<sub>参加者 i, 文字 c</sub>) ) = <span class="m">α</span> + <span class="m">β</span>·(条件) + <span class="m">a<sub>i</sub></span> + <span class="m">b<sub>c</sub></span>
+  </div>
+  <p style="text-align:center;color:var(--ink-soft);font-size:14px;margin-top:-4px">
+    <span class="m">a<sub>i</sub></span> 〜 正規分布(0, <span class="m">σ<sup>2</sup><sub>参加者</sub></span>)　　<span class="m">b<sub>c</sub></span> 〜 正規分布(0, <span class="m">σ<sup>2</sup><sub>文字</sub></span>)
+  </p>
+  <p>この <span class="m">a<sub>i</sub></span>・<span class="m">b<sub>c</sub></span> が変量効果です。それぞれ「平均0の正規分布から出てきた」と仮定するのがミソ。この仮定があるおかげで、ある文字の推定に<b>他の文字のデータも間接的に効いてきます</b>。全体の分布 <span class="m">σ<sup>2</sup><sub>文字</sub></span> は全文字から推定され、それが個々の文字の推定を「その分布らしい値」へ引き戻すからです。これを<b>情報を借りる（borrowing strength）</b>と言います。データの少ない文字が、仲間の文字から強さを借りている、というイメージです。</p>
+
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="観測数が少ない文字ほど強く収縮することを示す図">
+      <text class="svg-t" x="20" y="24" font-size="14.5">収縮の強さは「その文字の観測数」で決まる</text>
+      <!-- axes -->
+      <line x1="90" y1="210" x2="710" y2="210" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="90" y1="50" x2="90" y2="210" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="400" y="240" font-size="12" text-anchor="middle">その文字の観測数（多い →）</text>
+      <text class="svg-s" x="34" y="130" font-size="12" text-anchor="middle" transform="rotate(-90 34 130)">全体平均へ引き寄せる割合</text>
+      <!-- curve: shrinkage = 1/(1+n/k), decreasing -->
+      <polyline fill="none" stroke="var(--teal)" stroke-width="3"
+        points="100,70 140,92 180,110 230,128 290,146 360,162 440,176 530,187 620,195 700,200"/>
+      <text class="svg-l" x="150" y="95" font-size="11.5" fill="var(--teal)">観測が少ない文字</text>
+      <text class="svg-l" x="150" y="112" font-size="11" fill="var(--ink-faint)">→ ほぼ全体平均を採用</text>
+      <text class="svg-l" x="560" y="182" font-size="11.5" fill="var(--teal)" text-anchor="end">観測が多い文字</text>
+      <text class="svg-l" x="560" y="199" font-size="11" fill="var(--ink-faint)" text-anchor="end">→ ほぼ自分の値を採用</text>
+    </svg>
+    <figcaption><b>図3.7</b> 引き寄せる割合は、その文字の観測数がなめらかに決める。データが乏しい文字は全体平均をほぼそのまま借り、データが豊富な文字は自分の推定をほぼそのまま使う。しきい値でカクッと切り替わるのではなく、連続的に混ざる。</figcaption>
+  </figure>
+
+  <h3>3.5 名前の整理 — 混合モデル・階層モデル・マルチレベルは同じ仲間</h3>
+  <p>用語が乱立していますが、実質は近いものです。<b>混合モデル（mixed model）</b>は「固定効果と変量効果が混ざったモデル」という意味。<b>階層モデル（hierarchical model）／マルチレベルモデル</b>は「効果に階層（全体の分布→個々の値）がある」という視点を強調した呼び名。<b>部分プーリング</b>はそれが生む振る舞い（収縮）を指します。Kikiwake論文の「混合モデル」も、iFontの「階層モデル・部分プーリング」も、この同じ家族です。</p>
+  <p>ベイズ統計との関係も一言。変量効果の分布仮定 <span class="m">b<sub>c</sub></span>〜正規分布 は、ベイズでいう<b>事前分布</b>そのものです。部分プーリング＝ゆるい正則化＝弱い事前分布、という三つ組は同じことを別の言葉で言っています。だからiFontの本解析はベイズの階層ロジスティック回帰で書けます。</p>
+
+  <div class="tbl">
+    <table>
+      <caption>表3.2　3つのプーリングの比較</caption>
+      <thead><tr><th></th><th>no pooling</th><th>complete pooling</th><th>partial pooling（階層モデル）</th></tr></thead>
+      <tbody>
+        <tr><th>文字の扱い</th><td>完全に別々</td><td>全部同じ</td><td>全体分布から引いた標本</td></tr>
+        <tr><th>少数データの文字</th><td>暴れる</td><td>個性が消える</td><td>全体平均を借りて安定</td></tr>
+        <tr><th>過学習/過単純化</th><td>過学習ぎみ</td><td>過単純化</td><td>データ量で自動調整</td></tr>
+        <tr><th>ひとことで</th><td>信じすぎ</td><td>まとめすぎ</td><td><b>ちょうどよく混ぜる</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>ツールでどう書くか</h4>
+  <p>実務では、既存の混合モデルの関数に「変量効果の項」を <code>(1|グループ)</code> という記法で足すだけです。あなたが分散分析で慣れた「モデル式に項を書く」感覚の延長で書けます。</p>
+  <pre><span class="c"># R / lme4 — 正答(0/1)を、条件（固定効果）と</span>
+<span class="c">#            参加者・文字（変量効果）で説明する</span>
+glmer(correct ~ condition + (1 | subject) + (1 | item),
+      data = d, family = binomial)
+
+<span class="c"># (1 | subject) が「参加者ごとの切片のずれ a_i」</span>
+<span class="c"># (1 | item)    が「文字ごとの切片のずれ b_c」</span>
+<span class="c"># ← この2項が変量効果。足すだけで部分プーリングが働く</span></pre>
+  <p>見た目は本当に「項が増えただけ」です。ただし <code>(1|item)</code> と書いた瞬間、その項は「係数」ではなく「正規分布に従うずれの集まり」として推定される——この一点が、第3.2節で述べた線形モデルからの一歩であり、収縮を生む仕掛けです。</p>
+
+  <h3>3.6 どのくらい一般的な方法なのか（分野別）</h3>
+  <p>非劣性や事前登録と違い、混合モデル（＝階層モデル＝マルチレベルモデル）は<b>すでに多くの分野で標準的な道具</b>です。ただし「いつから・どれだけ当たり前か」は分野でかなり差があります。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 300" role="img" aria-label="混合モデルの分野ごとの浸透度を横棒で示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">混合モデル・階層モデルの分野ごとの浸透度</text>
+      <!-- legend -->
+      <rect x="600" y="14" width="12" height="12" rx="3" fill="var(--accent)"/><text class="svg-s" x="618" y="24" font-size="11">標準</text>
+      <rect x="670" y="14" width="12" height="12" rx="3" fill="var(--teal)"/><text class="svg-s" x="688" y="24" font-size="11">普及</text>
+      <rect x="740" y="14" width="12" height="12" rx="3" fill="var(--warn)"/><text class="svg-s" x="758" y="24" font-size="11">増加中</text>
+      <!-- rows: label(x20-215), bar from 230 -->
+      <!-- helper: full bar width to x=760 -->
+      <g font-size="13">
+        <!-- 教育学・社会学 -->
+        <text class="svg-l" x="215" y="66" text-anchor="end">教育学・社会学</text>
+        <rect x="230" y="54" width="530" height="18" rx="5" fill="var(--accent)"/>
+        <text class="svg-s" x="238" y="67" font-size="11" fill="#fff">発祥（1980s）・中核手法</text>
+        <!-- 医学・生物統計 -->
+        <text class="svg-l" x="215" y="106" text-anchor="end">医学・生物統計・疫学</text>
+        <rect x="230" y="94" width="530" height="18" rx="5" fill="var(--accent)"/>
+        <text class="svg-s" x="238" y="107" font-size="11" fill="#fff">反復測定・メタ分析・クラスター試験で標準</text>
+        <!-- 生態学 -->
+        <text class="svg-l" x="215" y="146" text-anchor="end">生態学・生物学</text>
+        <rect x="230" y="134" width="530" height="18" rx="5" fill="var(--accent)"/>
+        <text class="svg-s" x="238" y="147" font-size="11" fill="#fff">GLMM が標準</text>
+        <!-- 心理言語学 -->
+        <text class="svg-l" x="215" y="186" text-anchor="end">心理学・心理言語学</text>
+        <rect x="230" y="174" width="470" height="18" rx="5" fill="var(--teal)"/>
+        <text class="svg-s" x="238" y="187" font-size="11" fill="#fff">2008〜13で標準化（交差変量効果）</text>
+        <!-- HCI/EC -->
+        <text class="svg-l" x="215" y="226" text-anchor="end">HCI・EC</text>
+        <rect x="230" y="214" width="260" height="18" rx="5" fill="var(--warn)"/>
+        <text class="svg-s" x="238" y="227" font-size="11" fill="#fff">推奨は増加。まだ分散分析が多い</text>
+      </g>
+      <text class="svg-s" x="230" y="264" font-size="11.5" fill="var(--ink-faint)">← 発祥した教育学から、医学・生態学へ広がり、心理言語学で「参加者×項目」の標準手法に。HCIは移行の途中。</text>
+    </svg>
+    <figcaption><b>図3.8</b> 混合モデルは教育学・社会学で生まれ（生徒が学校に入れ子になる構造の分析）、医学・生態学で標準化し、心理言語学で「参加者と項目を同時に変量効果にする」使い方が定着した。HCI/ECはこの移行の途中にある。</figcaption>
+  </figure>
+
+  <ul class="plain">
+    <li><b>教育学・社会学（発祥地）</b> — マルチレベルモデルはここで生まれた。「生徒 ⊂ 学級 ⊂ 学校」のような入れ子データを扱うのが元来の動機。Raudenbush &amp; Bryk の階層線形モデル（HLM）が古典で、いまも中核手法。</li>
+    <li><b>医学・生物統計・疫学</b> — 経時測定（患者ごとの変量効果）、クラスターランダム化試験、メタ分析の変量効果モデルなどで<b>日常的に標準</b>。混合モデル（mixed-effects model）という呼び名はこの界隈で定着している。</li>
+    <li><b>生態学・生物学</b> — 一般化線形混合モデル（GLMM）が標準の道具。Bolker ら (2009) の解説が広く読まれた。</li>
+    <li><b>心理学・心理言語学</b> — <b>2008〜2013年ごろに急速に標準化</b>。決め手は「<b>参加者と項目（items）を同時に変量効果にする</b>」交差変量効果で、これが反復測定分散分析を置き換えた（Baayen 2008、Barr ら 2013「keep it maximal」）。Kikiwake論文の混合モデルもこの系譜。</li>
+    <li><b>HCI・EC</b> — 反復測定デザインで混合モデルを推奨する声が増え、方法論の論文でも取り上げられるが、実際にはまだ反復測定分散分析が多い。<b>移行の途中</b>で、iFontで使うのは先取りに近い。</li>
+  </ul>
+
+  <div class="note key">
+    <span class="lab">iFontとの直結点</span>
+    iFontの「<b>参加者ごとのずれ ＋ 文字ごとのずれ</b>」は、心理言語学で標準化した「参加者×項目の交差変量効果」とまったく同じ構造。つまりiFontの階層モデルは、HCIでは新しく見えても、隣接分野ではすでに<b>確立した定石</b>を輸入しているだけ、と位置づけられる。
+  </div>
+
+  <div class="ifont">
+    <span class="lab">iFontでの使い方</span>
+    本計測（1文字課題）で、かな1文字ごとの認識率を推定するのに階層ロジスティック回帰を使う。<code>correct ~ 1 + (1|参加者) + (1|文字)</code> の形。1文字あたりの試行は限られるが、部分プーリングで全体傾向から情報を借り、暴れずに文字ごとの曲線を出す。乙課題の補助解析でも <code>correct1 ~ 条件 + (1|参加者) + (1|文字)</code> を使い、主要解析（差得点のt検定）を裏づける。Kikiwake論文の混合モデルと地続きの手法。
+  </div>
+</section>
+
+<hr class="soft">
+
+<!-- ============ SUMMARY ============ -->
+<section>
+  <h3 style="border-left-color:var(--teal)">3つを1枚で</h3>
+  <div class="tbl">
+    <table>
+      <caption>表4　この教材のまとめ</caption>
+      <thead><tr><th>概念</th><th>ひとことで</th><th>効く場面</th><th>普及度</th></tr></thead>
+      <tbody>
+        <tr><th>非劣性マージン δ</th><td>「差がδ未満」を積極的に示す。信頼区間の上限とδを比べる</td><td>「変わらない」を主張したいとき</td><td>医学=標準／HCI=普及中（TOST）</td></tr>
+        <tr><th>事前登録</th><td>判断基準を実験前に固定し、研究者の自由度を封じる</td><td>確認的な結論の信用を担保したいとき</td><td>臨床=必須／心理=急増／HCI=少数派</td></tr>
+        <tr><th>階層モデル・部分プーリング</th><td>全体の値＋個体のずれ、とモデル化し情報を借りる</td><td>群ごと（文字ごと）に少ないデータを推定するとき</td><td>多分野で標準化しつつある</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>共通の土台は<b>線形モデル</b>でした。非劣性は「その差の信頼区間をどう読むか」の話、事前登録は「その検定を1回に固定する」話、階層モデルは「その線形モデルに分布を仮定した項を足す」話。道具は増えても、<b>足し算のモデルと信頼区間という骨格は変わっていません</b>。</p>
+
+  <h3 style="border-left-color:var(--teal)">もっと深く学ぶなら</h3>
+  <ul class="refs">
+    <li><b>非劣性・等価性</b> — Lakens, D. (2017) “Equivalence Tests: A Practical Primer for t Tests, Correlations, and Meta-Analyses.” <i>Social Psychological and Personality Science</i> 8(4), 355–362.（HCI/心理向けの実務入門。まずこれ）／ Piaggio et al. (2012) CONSORT非劣性拡張, <i>JAMA</i> 308(24).</li>
+    <li><b>事前登録</b> — Nosek, Ebersole, DeHaven, Mellor (2018) “The preregistration revolution.” <i>PNAS</i> 115(11), 2600–2606.／ Cockburn, Gutwin, Dix (2018) “HARK No More: …preregistration in HCI.” <i>CHI</i>.（HCIでの議論）</li>
+    <li><b>階層モデル・混合モデル</b> — Gelman &amp; Hill (2007) <i>Data Analysis Using Regression and Multilevel/Hierarchical Models</i>.（部分プーリングの定番）／ McElreath (2020) <i>Statistical Rethinking</i>.（ベイズから直観的に）／ Barr, Levy, Scheepers, Tily (2013) “Keep it maximal.” <i>JML</i>.（変量効果構造の実務指針）</li>
+  </ul>
+  <p style="color:var(--ink-faint);font-size:13px;margin-top:26px">このノートはiFont論文の統計を学ぶための教材です。数値や設計はiFontプロジェクトの事前登録ドラフト・セッション設計に基づきます。</p>
+</section>
+
+</div>
