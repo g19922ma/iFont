@@ -788,6 +788,56 @@
   </ul>
   <p>「項が増えただけ」が半分正しく、半分足りないのはここです。<b>変量効果の項は、ただの係数ではなく「分布に従う」と仮定する</b>——ここが線形モデルからの本当の一歩です。文字ごとの効果 <span class="m">b<sub>c</sub></span> を「平均0・分散 <span class="m">σ<sup>2</sup><sub>字</sub></span> の正規分布から出てきた」と見なす。この一手が、次の部分プーリングを可能にします。</p>
 
+  <h4>式のどこが固定効果で、どこが変量効果か</h4>
+  <p>§3.1までに出てきた式は、実は<b>全部が固定効果</b>でした。そこに変量効果の項を足すと、こう変わります。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 330" role="img" aria-label="同じ式の中で固定効果の項と変量効果の項がどこかを色分けして示す図">
+      <text class="svg-t" x="20" y="26" font-size="15">同じ式の中での固定効果と変量効果の見分け方</text>
+
+      <!-- 旧: all fixed -->
+      <text class="svg-l" x="30" y="60" font-size="12.5">これまでの式（2要因の分散分析。すべて固定効果）</text>
+      <rect x="30" y="72" width="470" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"/>
+      <text class="svg-t" x="48" y="98" font-size="16" font-family="var(--serif)">y = β₀ + β₁·A + β₂·B + β₃·(A×B)</text>
+      <text class="svg-l" x="512" y="98" font-size="16" font-family="var(--serif)">+ ε</text>
+      <text class="svg-s" x="48" y="128" font-size="11.5" fill="var(--accent-ink)">└──── すべて固定効果：定数として推定（ただ1つの値が決まる）────┘</text>
+      <text class="svg-s" x="512" y="128" font-size="11.5">└ 誤差 ┘</text>
+
+      <!-- 新: mixed -->
+      <text class="svg-l" x="30" y="176" font-size="12.5">変量効果を足した式（混合モデル。iFontが使う形）</text>
+      <rect x="30" y="188" width="250" height="40" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"/>
+      <rect x="288" y="188" width="170" height="40" rx="8" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.2"/>
+      <text class="svg-t" x="48" y="214" font-size="16" font-family="var(--serif)">y = β₀ + β₁·A</text>
+      <text class="svg-t" x="306" y="214" font-size="16" font-family="var(--serif)" fill="var(--good)">+ aᵢ + b_c</text>
+      <text class="svg-l" x="470" y="214" font-size="16" font-family="var(--serif)">+ ε</text>
+      <text class="svg-s" x="48" y="244" font-size="11.5" fill="var(--accent-ink)">└── 固定効果 ──┘</text>
+      <text class="svg-s" x="306" y="244" font-size="11.5" fill="var(--good)">└── 変量効果 ──┘</text>
+      <text class="svg-s" x="470" y="244" font-size="11.5">└ 誤差 ┘</text>
+
+      <!-- distributions -->
+      <text class="svg-l" x="306" y="272" font-size="12.5" fill="var(--good)">aᵢ 〜 正規分布(0, σ²_参加者)　← 参加者ごとのずれ</text>
+      <text class="svg-l" x="306" y="294" font-size="12.5" fill="var(--good)">b_c 〜 正規分布(0, σ²_文字)　← 文字ごとのずれ</text>
+      <text class="svg-s" x="30" y="294" font-size="11.5">固定効果は</text>
+      <text class="svg-s" x="30" y="312" font-size="11.5">分布の仮定なし</text>
+    </svg>
+    <figcaption><b>図3.5</b> 同じ足し算の式の中で、<span style="color:var(--accent-ink);font-weight:700">青が固定効果</span>（条件など。定数として1つの値を推定）、<span style="color:var(--good);font-weight:700">緑が変量効果</span>（参加者・文字ごとのずれ。正規分布に従うと仮定）。<b>見分け方は記号ではなく「何を推定するか」</b>。</figcaption>
+  </figure>
+
+  <div class="tbl">
+    <table>
+      <caption>表3.2　固定効果と変量効果の違い（式の読み方）</caption>
+      <thead><tr><th></th><th>固定効果（β）</th><th>変量効果（aᵢ, b_c）</th></tr></thead>
+      <tbody>
+        <tr><th>式での見え方</th><td>係数 β が1個</td><td>個体ごとのずれの<b>集まり</b></td></tr>
+        <tr><th>推定するもの</th><td><b>その値そのもの</b>（β₁＝2.3、など）</td><td><b>ばらつきの大きさ σ</b>（個々の値は副産物）</td></tr>
+        <tr><th>個数</th><td>条件の数だけ（少数）</td><td>参加者数・文字数だけ（多数）</td></tr>
+        <tr><th>分布の仮定</th><td>なし</td><td><b>あり</b>（平均0の正規分布）</td></tr>
+        <tr><th>増えたら</th><td>パラメータが1個増える</td><td>パラメータは実質<b>1個（σ）</b>しか増えない</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>最後の行が要点です。参加者130人分のずれ <span class="m">a<sub>i</sub></span> を入れても、<b>推定するパラメータは実質「σ<sub>参加者</sub>」1個だけ</b>。130個の値は「その分布から出てきたもの」として自動的に決まります。だからデータが少なくてもモデルが破綻しません。これが次節の部分プーリングの仕掛けです。</p>
+
   <figure class="breakout">
     <svg viewBox="0 0 900 220" role="img" aria-label="固定効果と変量効果の違い。変量効果は母集団からのサンプルとみなす">
       <text class="svg-t" x="20" y="26" font-size="15">固定効果と変量効果 — 何を「母集団からのサンプル」とみなすか</text>
@@ -812,7 +862,7 @@
       <text class="svg-l" x="700" y="135" font-size="12">あ, か, さ, …</text>
       <text class="svg-s" x="520" y="185" font-size="11.5">実験の68字は、そこから引いた標本。</text>
     </svg>
-    <figcaption><b>図3.5</b> 固定効果は「その水準に用がある」効果（条件）。変量効果は「母集団からたまたま引いた標本」とみなす効果（文字・参加者）。だから文字の効果は、個々の値そのものより<b>「文字によってどれだけばらつくか」</b>として扱う。</figcaption>
+    <figcaption><b>図3.6</b> 固定効果は「その水準に用がある」効果（条件）。変量効果は「母集団からたまたま引いた標本」とみなす効果（文字・参加者）。だから文字の効果は、個々の値そのものより<b>「文字によってどれだけばらつくか」</b>として扱う。</figcaption>
   </figure>
 
   <h3>3.3 3つのプーリング — no / complete / partial</h3>
@@ -885,7 +935,7 @@
         </marker>
       </defs>
     </svg>
-    <figcaption><b>図3.6</b> 部分プーリング（右）は、文字ごとの生の推定（薄い点）を全体平均のほうへ引き寄せて最終推定（緑）にする。<b>データの少ない文字ほど強く引き寄せ、多い文字はほとんど動かさない</b>。no pooling（左）の暴れと complete pooling（中）の個性つぶしの、いいとこ取り。この「引き寄せ（shrinkage、収縮）」が部分プーリングの本体。</figcaption>
+    <figcaption><b>図3.7</b> 部分プーリング（右）は、文字ごとの生の推定（薄い点）を全体平均のほうへ引き寄せて最終推定（緑）にする。<b>データの少ない文字ほど強く引き寄せ、多い文字はほとんど動かさない</b>。no pooling（左）の暴れと complete pooling（中）の個性つぶしの、いいとこ取り。この「引き寄せ（shrinkage、収縮）」が部分プーリングの本体。</figcaption>
   </figure>
 
   <div class="note key">
@@ -919,7 +969,7 @@
       <text class="svg-l" x="560" y="182" font-size="11.5" fill="var(--teal)" text-anchor="end">観測が多い文字</text>
       <text class="svg-l" x="560" y="199" font-size="11" fill="var(--ink-faint)" text-anchor="end">→ ほぼ自分の値を採用</text>
     </svg>
-    <figcaption><b>図3.7</b> 引き寄せる割合は、その文字の観測数がなめらかに決める。データが乏しい文字は全体平均をほぼそのまま借り、データが豊富な文字は自分の推定をほぼそのまま使う。しきい値でカクッと切り替わるのではなく、連続的に混ざる。</figcaption>
+    <figcaption><b>図3.8</b> 引き寄せる割合は、その文字の観測数がなめらかに決める。データが乏しい文字は全体平均をほぼそのまま借り、データが豊富な文字は自分の推定をほぼそのまま使う。しきい値でカクッと切り替わるのではなく、連続的に混ざる。</figcaption>
   </figure>
 
   <h3>3.5 名前の整理 — 混合モデル・階層モデル・マルチレベルは同じ仲間</h3>
@@ -928,7 +978,7 @@
 
   <div class="tbl">
     <table>
-      <caption>表3.2　3つのプーリングの比較</caption>
+      <caption>表3.3　3つのプーリングの比較</caption>
       <thead><tr><th></th><th>no pooling</th><th>complete pooling</th><th>partial pooling（階層モデル）</th></tr></thead>
       <tbody>
         <tr><th>文字の扱い</th><td>完全に別々</td><td>全部同じ</td><td>全体分布から引いた標本</td></tr>
@@ -939,17 +989,14 @@
     </table>
   </div>
 
-  <h4>ツールでどう書くか</h4>
-  <p>実務では、既存の混合モデルの関数に「変量効果の項」を <code>(1|グループ)</code> という記法で足すだけです。あなたが分散分析で慣れた「モデル式に項を書く」感覚の延長で書けます。</p>
-  <pre><span class="c"># R / lme4 — 正答(0/1)を、条件（固定効果）と</span>
-<span class="c">#            参加者・文字（変量効果）で説明する</span>
-glmer(correct ~ condition + (1 | subject) + (1 | item),
-      data = d, family = binomial)
-
-<span class="c"># (1 | subject) が「参加者ごとの切片のずれ a_i」</span>
-<span class="c"># (1 | item)    が「文字ごとの切片のずれ b_c」</span>
-<span class="c"># ← この2項が変量効果。足すだけで部分プーリングが働く</span></pre>
-  <p>見た目は本当に「項が増えただけ」です。ただし <code>(1|item)</code> と書いた瞬間、その項は「係数」ではなく「正規分布に従うずれの集まり」として推定される——この一点が、第3.2節で述べた線形モデルからの一歩であり、収縮を生む仕掛けです。</p>
+  <h4>実務ではどう扱うか</h4>
+  <p>統計ソフトの上でやることは、<b>分散分析でモデル式に項を書くのと同じ感覚</b>です。違いは一点だけ。</p>
+  <div class="note key">
+    <span class="lab">要点</span>
+    項を足すときに、それを<b>「定数として推定する項（固定効果）」</b>にするか、<b>「正規分布に従う量として推定する項（変量効果）」</b>にするかを、書き方で選べる。
+  </div>
+  <p>主要な統計ソフト（R、Python、SPSS、JASP など）はどれも混合モデルに対応していて、「この項は変量効果にする」と指定する記法が用意されています。指定を1つ足した瞬間、その項は係数ではなく<b>正規分布に従うずれの集まり</b>として推定され、部分プーリング（収縮）が自動的に働きます。</p>
+  <p>つまり実務上の学習コストは、<b>「どの項を変量効果にするか」を決めることだけ</b>です。iFontなら「参加者」と「文字」の2つ——それが第3.4節の式の <span class="m">a<sub>i</sub></span> と <span class="m">b<sub>c</sub></span> にあたります。推定のアルゴリズムはソフトが引き受けます。</p>
 
   <h3>3.6 どのくらい一般的な方法なのか（分野別）</h3>
   <p>非劣性や事前登録と違い、混合モデル（＝階層モデル＝マルチレベルモデル）は<b>すでに多くの分野で標準的な道具</b>です。ただし「いつから・どれだけ当たり前か」は分野でかなり差があります。</p>
@@ -987,7 +1034,7 @@ glmer(correct ~ condition + (1 | subject) + (1 | item),
       </g>
       <text class="svg-s" x="230" y="264" font-size="11.5" fill="var(--ink-faint)">← 発祥した教育学から、医学・生態学へ広がり、心理言語学で「参加者×項目」の標準手法に。HCIは移行の途中。</text>
     </svg>
-    <figcaption><b>図3.8</b> 混合モデルは教育学・社会学で生まれ（生徒が学校に入れ子になる構造の分析）、医学・生態学で標準化し、心理言語学で「参加者と項目を同時に変量効果にする」使い方が定着した。HCI/ECはこの移行の途中にある。</figcaption>
+    <figcaption><b>図3.9</b> 混合モデルは教育学・社会学で生まれ（生徒が学校に入れ子になる構造の分析）、医学・生態学で標準化し、心理言語学で「参加者と項目を同時に変量効果にする」使い方が定着した。HCI/ECはこの移行の途中にある。</figcaption>
   </figure>
 
   <ul class="plain">
