@@ -143,6 +143,51 @@ def psola_contour(x, sr, t0, t1, points):
     return out
 
 
+def envelope_db(x, sr, hop=0.005, win=0.030):
+    """RMSエンベロープ(dBFS)。返り値 (時刻列, dB列)。"""
+    import numpy as np
+    h, w = int(hop * sr), int(win * sr)
+    n = max(1, (len(x) - w) // h)
+    t = np.arange(n) * hop + win / 2
+    e = np.array([20 * np.log10(max(np.sqrt(np.mean(x[i * h:i * h + w] ** 2)), 1e-9))
+                  for i in range(n)])
+    return t, e
+
+
+def shape_region(x, sr, t0, t1, env):
+    """伸ばし区間 [t0,t1] のエンベロープを整形する(木本実読みの実測形)。
+
+    env = ("hold", リリースdB, リリース秒): 直前の本体レベルで張り続け、末尾で抜く。
+    env = ("yoin", 保持率, 減衰dB): 保持率まで張り、その後対数線形で減衰する(余韻)。"""
+    import numpy as np
+    a0, a1 = max(0, int((t0 - 0.20) * sr)), max(1, int((t0 - 0.02) * sr))
+    seg = x[a0:a1]
+    L0 = 20 * np.log10(max(float(np.sqrt(np.mean(seg ** 2))), 1e-9))
+    et, e = envelope_db(x, sr)
+    t = np.arange(len(x)) / sr
+    cur = np.interp(t, et, e)
+    tgt = np.full_like(t, L0 - 1.0)
+    if env[0] == "hold":
+        rel_db, rel_s = env[1], env[2]
+        m = t >= t1 - rel_s
+        tgt[m] = L0 - 1.0 - rel_db * (t[m] - (t1 - rel_s)) / max(1e-9, rel_s)
+    else:  # yoin
+        hold_frac, decay_db = env[1], env[2]
+        th = t0 + hold_frac * (t1 - t0)
+        m = t >= th
+        tgt[m] = L0 - 1.0 - decay_db * (t[m] - th) / max(1e-9, t1 - th)
+    g = np.clip(tgt - cur, -12.0, 12.0)
+    g[t < t0] = 0.0
+    ramp = (t >= t0 - 0.10) & (t < t0)              # 本体からの入りは滑らかに
+    g0 = g[min(len(g) - 1, np.searchsorted(t, t0))]
+    g[ramp] = g0 * (t[ramp] - (t0 - 0.10)) / 0.10
+    after = t >= t1
+    g[after] = 0.0
+    k = max(1, int(0.03 * sr))
+    g = np.convolve(g, np.ones(k) / k, mode="same")
+    return x * 10 ** (g / 20)
+
+
 def mora_rms_db(x, sr, on, dur):
     import numpy as np
     a, b = int((on + 0.02) * sr), int((on + min(dur, 0.32)) * sr)
@@ -183,8 +228,9 @@ def apply(synth, refs_hz, onsets, durs, log=None, gain_nodes=None, skip_fit=None
     synth(ln_targets) -> (wavバイト列, 各モーラの子音長リスト)。強制有声化は synth 側で
     済んでいる前提(audio.py の設計クエリが行う)。gain_nodes は音量ならしの節点にする
     モーラの添字(省略時は全モーラ)。skip_fit は F0 適合から外すモーラの添字。
-    elongations は (t0, t1, 開始Hz, 終端Hz, 減衰dB) のリストで、その区間の F0 を PSOLA で
-    設計輪郭に載せ替え、減衰dB > 0 なら区間の終端へ向けて緩やかに音量を落とす(余韻)。"""
+    elongations は dict(t0, t1, points, env) のリスト。points は (区間相対秒, Hz) の
+    F0 輪郭で PSOLA で載せ替える(伸ばし・余韻・句頭スライド)。env は shape_region の
+    エンベロープ指定(None なら音量は触らない)。"""
     if not have_numpy():
         if log is not None:
             log.append("numpy が無いため品質処方をスキップ(素の合成)")
@@ -200,20 +246,19 @@ def apply(synth, refs_hz, onsets, durs, log=None, gain_nodes=None, skip_fit=None
         x, sr, worst = pitch_fit(synth_np, refs_hz, onsets, durs, log=log, skip=skip_fit)
         if log is not None:
             log.append(f"F0適合: 採用反復の最大偏差 {worst:.0f}セント")
-        import numpy as np
-        for (t0, t1, hz0, hz1, decay_db) in (elongations or []):
-            x = psola_contour(x, sr, t0, t1, [[0.0, hz0], [t1 - t0, hz1]])
-            if decay_db > 0:                      # 余韻: 終端へ-decay_dBの対数線形減衰
-                a, b = int(t0 * sr), int(t1 * sr)
-                g = -decay_db * np.arange(b - a) / max(1, b - a - 1)
-                x[a:b] *= 10 ** (g / 20)
+        x, _L0 = gain_smooth(x, sr, onsets, durs, log=log, nodes=gain_nodes)
+        for c in (elongations or []):
+            x = psola_contour(x, sr, c["t0"], c["t1"], c["points"])
+        for c in (elongations or []):
+            if c.get("env"):
+                x = shape_region(x, sr, c["t0"], c["t1"], c["env"])
         if elongations and log is not None:
-            log.append(f"伸ばし整形: {len(elongations)}区間を PSOLA で設計音高へ載せ替え")
+            log.append(f"輪郭整形: {len(elongations)}区間(伸ばし・余韻・句頭スライド)を PSOLA+整形")
     else:
         if log is not None:
             log.append("parselmouth が無いため F0 適合をスキップ(強制有声化と音量ならしのみ)")
         x, sr, _cons = synth_np([math.log(f) for f in refs_hz])
-    x, _L0 = gain_smooth(x, sr, onsets, durs, log=log, nodes=gain_nodes)
+        x, _L0 = gain_smooth(x, sr, onsets, durs, log=log, nodes=gain_nodes)
     import numpy as np
     peak = float(np.max(np.abs(x))) if len(x) else 0.0
     if peak > 0.98:

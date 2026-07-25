@@ -183,10 +183,17 @@ def synth_voicevox_designed(reading: str, pitches_hz, char_dur, speaker: int = 1
             skip_fit.append(len(sub_durs))
             sub_durs.append(piece)
             sub_refs.append(safe)
-        # 最終モーラの余韻は -25セントへの緩い下降と-12dBの減衰(披講の引き伸ばしの自然形)
-        hz_end = refs[i] * 2 ** (-25.0 / 1200.0) if i == n - 1 else refs[i]
-        decay_db = 12.0 if i == n - 1 else 0.0
-        elongs.append((onsets[i] + HEAD, onsets[i] + durs[i], refs[i], hz_end, decay_db))
+        # 伸ばしの輪郭(木本実読みの実測形):
+        # 途中の伸ばし = F0をわずかに張り上げ(+25c)、音量は張ったまま末尾でリリース。
+        # 最終モーラの余韻 = F0は保ったまま、4割保持してから緩やかに減衰。
+        t0, t1 = onsets[i] + HEAD, onsets[i] + durs[i]
+        if i == n - 1:
+            elongs.append(dict(t0=t0, t1=t1, points=[[0.0, refs[i]], [t1 - t0, refs[i]]],
+                               env=("yoin", 0.4, 16.0)))
+        else:
+            hz_end = refs[i] * 2 ** (25.0 / 1200.0)
+            elongs.append(dict(t0=t0, t1=t1, points=[[0.0, refs[i]], [t1 - t0, hz_end]],
+                               env=("hold", 8.0, 0.12)))
     if any(n_cont):
         expanded = "".join(m["text"] + "ー" * n_cont[i] for i, m in enumerate(moras))
         q = _vv_query(expanded, speaker, host)
@@ -195,6 +202,15 @@ def synth_voicevox_designed(reading: str, pitches_hz, char_dur, speaker: int = 1
             raise RuntimeError(f"ー分割後のモーラ数不一致: 合成{len(sub_moras)} != 設計{len(sub_durs)}")
     else:
         sub_moras = moras
+    # 句頭の上昇(B3->E4等)は階段でなくスライドにする(実読みは2モーラかけて滑らかに上がる)。
+    # 低いモーラから次のモーラの音高へ、次のモーラの6割時点で到達する輪郭を PSOLA で描く。
+    for i in range(n - 1):
+        if refs[i + 1] / refs[i] >= 2 ** (200.0 / 1200.0):
+            g1 = onsets[i + 1] + 0.6 * durs[i + 1]
+            elongs.append(dict(t0=onsets[i] + 0.02, t1=g1,
+                               points=[[0.0, refs[i]],
+                                       [g1 - onsets[i] - 0.02, refs[i + 1]]],
+                               env=None))
     sub_onsets, t = [], pre
     for d in sub_durs:
         sub_onsets.append(t)
