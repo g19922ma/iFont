@@ -86,10 +86,13 @@ def f0_windows(onsets, durs, cons):
     return wins
 
 
-def pitch_fit(synth, refs_hz, onsets, durs, max_iter=4, tol_cents=30.0, damp=0.55, log=None):
+def pitch_fit(synth, refs_hz, onsets, durs, max_iter=4, tol_cents=30.0, damp=0.55, log=None,
+              skip=None):
     """合成→モーラF0実測→偏差の減衰付き逆補正→再合成 を繰り返し、最良の反復を採る。
 
-    synth(ln_targets) -> (x, sr, cons)。返り値は (x, sr, 採用反復の最大偏差セント)。"""
+    synth(ln_targets) -> (x, sr, cons)。skip の添字(ー継続モーラなど、後段の PSOLA で
+    輪郭を上書きするもの)は採点・補正の対象外。返り値は (x, sr, 採用反復の最大偏差セント)。"""
+    skip = set(skip or [])
     ln = [math.log(f) for f in refs_hz]
     best = None
     for it in range(max_iter):
@@ -97,6 +100,8 @@ def pitch_fit(synth, refs_hz, onsets, durs, max_iter=4, tol_cents=30.0, damp=0.5
         meas = analyze_f0(x, sr, f0_windows(onsets, durs, cons))
         worst = 0.0
         for i, (m, r) in enumerate(zip(meas, refs_hz)):
+            if i in skip:
+                continue
             if m["f0"] is None or m["n_voiced"] < 4:
                 worst = max(worst, 999.0)   # 無声のままのモーラ(要注意)
                 continue
@@ -113,6 +118,31 @@ def pitch_fit(synth, refs_hz, onsets, durs, max_iter=4, tol_cents=30.0, damp=0.5
     return best[1], best[2], best[0]
 
 
+def psola_contour(x, sr, t0, t1, points):
+    """[t0,t1] の F0 を PSOLA で points(区間相対秒, Hz) の輪郭に置き換えた波形を返す。
+    伸ばし・余韻を設計音高に載せ替えるのに使う(接続部は25msクロスフェード)。"""
+    import numpy as np
+    import parselmouth
+    snd = parselmouth.Sound(x, sampling_frequency=sr)
+    seg = snd.extract_part(from_time=t0, to_time=t1)
+    manip = parselmouth.praat.call(seg, "To Manipulation", 0.01, 100.0, 520.0)
+    pt = parselmouth.praat.call("Create PitchTier", "elong", 0.0, t1 - t0)
+    for tp, hz in points:
+        parselmouth.praat.call(pt, "Add point", tp, hz)
+    parselmouth.praat.call([pt, manip], "Replace pitch tier")
+    res = parselmouth.praat.call(manip, "Get resynthesis (overlap-add)")
+    y = res.values[0]
+    a, b = int(t0 * sr), int(t1 * sr)
+    m = b - a
+    y = np.pad(y, (0, max(0, m - len(y))))[:m]
+    out = x.copy()
+    nf = int(0.025 * sr)
+    w = np.linspace(0, 1, nf)
+    out[a:a + nf] = out[a:a + nf] * (1 - w) + y[:nf] * w
+    out[a + nf:b] = y[nf:]
+    return out
+
+
 def mora_rms_db(x, sr, on, dur):
     import numpy as np
     a, b = int((on + 0.02) * sr), int((on + min(dur, 0.32)) * sr)
@@ -120,16 +150,21 @@ def mora_rms_db(x, sr, on, dur):
     return 20 * np.log10(max(np.sqrt(np.mean(seg ** 2)), 1e-9)) if len(seg) else -120.0
 
 
-def gain_smooth(x, sr, onsets, durs, log=None):
-    """モーラRMSの中央値レベルへ、モーラ中心を節点とする緩いゲインでならす。"""
+def gain_smooth(x, sr, onsets, durs, log=None, nodes=None):
+    """モーラRMSの中央値レベルへ、モーラ中心を節点とする緩いゲインでならす。
+
+    nodes に添字リストを渡すと、そのモーラだけを節点にする(残りは補間)。
+    伸ばし・余韻のー継続モーラを節点から外し、自然な減衰をゲインで持ち上げて
+    壊さないために使う。"""
     import numpy as np
-    lv = [mora_rms_db(x, sr, on, d) for on, d in zip(onsets, durs)]
+    idx = list(range(len(onsets))) if nodes is None else list(nodes)
+    lv = [mora_rms_db(x, sr, onsets[i], durs[i]) for i in idx]
     L0 = float(np.median(lv))
     centers, gains = [], []
-    for on, d, l in zip(onsets, durs, lv):
+    for i, l in zip(idx, lv):
         g = L0 - l
         g = 0.0 if abs(g) < 2.0 else float(np.clip(g, -8, 8))
-        centers.append(on + min(d, 0.32) / 2)
+        centers.append(onsets[i] + min(durs[i], 0.32) / 2)
         gains.append(g)
     t = np.arange(len(x)) / sr
     gdb = np.interp(t, centers, gains, left=gains[0], right=gains[-1])
@@ -141,11 +176,15 @@ def gain_smooth(x, sr, onsets, durs, log=None):
     return x * 10 ** (gdb / 20), L0
 
 
-def apply(synth, refs_hz, onsets, durs, log=None):
-    """設計提示の品質処方(F0適合+音量ならし)を適用した WAV バイト列を返す。
+def apply(synth, refs_hz, onsets, durs, log=None, gain_nodes=None, skip_fit=None,
+          elongations=None):
+    """設計提示の品質処方(F0適合+PSOLA伸ばし整形+音量ならし)を適用した WAV バイト列を返す。
 
     synth(ln_targets) -> (wavバイト列, 各モーラの子音長リスト)。強制有声化は synth 側で
-    済んでいる前提(audio.py の設計クエリが行う)。"""
+    済んでいる前提(audio.py の設計クエリが行う)。gain_nodes は音量ならしの節点にする
+    モーラの添字(省略時は全モーラ)。skip_fit は F0 適合から外すモーラの添字。
+    elongations は (t0, t1, 開始Hz, 終端Hz, 減衰dB) のリストで、その区間の F0 を PSOLA で
+    設計輪郭に載せ替え、減衰dB > 0 なら区間の終端へ向けて緩やかに音量を落とす(余韻)。"""
     if not have_numpy():
         if log is not None:
             log.append("numpy が無いため品質処方をスキップ(素の合成)")
@@ -158,14 +197,23 @@ def apply(synth, refs_hz, onsets, durs, log=None):
         return x, sr, cons
 
     if have_parselmouth():
-        x, sr, worst = pitch_fit(synth_np, refs_hz, onsets, durs, log=log)
+        x, sr, worst = pitch_fit(synth_np, refs_hz, onsets, durs, log=log, skip=skip_fit)
         if log is not None:
             log.append(f"F0適合: 採用反復の最大偏差 {worst:.0f}セント")
+        import numpy as np
+        for (t0, t1, hz0, hz1, decay_db) in (elongations or []):
+            x = psola_contour(x, sr, t0, t1, [[0.0, hz0], [t1 - t0, hz1]])
+            if decay_db > 0:                      # 余韻: 終端へ-decay_dBの対数線形減衰
+                a, b = int(t0 * sr), int(t1 * sr)
+                g = -decay_db * np.arange(b - a) / max(1, b - a - 1)
+                x[a:b] *= 10 ** (g / 20)
+        if elongations and log is not None:
+            log.append(f"伸ばし整形: {len(elongations)}区間を PSOLA で設計音高へ載せ替え")
     else:
         if log is not None:
             log.append("parselmouth が無いため F0 適合をスキップ(強制有声化と音量ならしのみ)")
         x, sr, _cons = synth_np([math.log(f) for f in refs_hz])
-    x, _L0 = gain_smooth(x, sr, onsets, durs, log=log)
+    x, _L0 = gain_smooth(x, sr, onsets, durs, log=log, nodes=gain_nodes)
     import numpy as np
     peak = float(np.max(np.abs(x))) if len(x) else 0.0
     if peak > 0.98:

@@ -156,13 +156,57 @@ def synth_voicevox_designed(reading: str, pitches_hz, char_dur, speaker: int = 1
         onsets.append(t)
         t += d
 
+    # 長いモーラ(伸ばし・余韻)は「本体+ー継続モーラ」に分割して合成する。
+    # VOICEVOX は0.5秒を超える持続母音を保てず途中から無声のかすれに落ちるため
+    # (build_karuta_samples.py の余韻 0.75s×4 分割と同じ処方)。ーは読みテキストに
+    # 挿入して audio_query に解釈させる(手製のモーラ辞書はエンジンが解釈しない)。
+    # sub_* が合成の実単位。表示同期の onsets は元モーラ単位のまま。
+    SPLIT, HEAD, PIECE = 0.55, 0.35, 0.50
+    SAFE_SUSTAIN_HZ = 260.0   # これより高い持続母音はエンジンがフライに落ちる字がある
+    n_cont = [0] * n                                        # モーラごとのー継続の個数
+    for i in range(n):
+        if durs[i] > SPLIT:
+            n_cont[i] = max(1, int(math.ceil((durs[i] - HEAD) / PIECE)))
+    sub_durs, sub_refs, skip_fit, elongs = [], [], [], []
+    for i in range(n):
+        if n_cont[i] == 0:
+            sub_durs.append(durs[i])
+            sub_refs.append(refs[i])
+            continue
+        piece = (durs[i] - HEAD) / n_cont[i]
+        sub_durs.append(HEAD)
+        sub_refs.append(refs[i])
+        # 伸ばし部分は安全な音高で合成し、後段の PSOLA で設計音高へ載せ替える
+        # (高い音の持続はエンジンが保てない。実測: ワのE4持続は114Hzのフライに落ちる)。
+        safe = refs[i] if refs[i] <= 280.0 else SAFE_SUSTAIN_HZ
+        for j in range(n_cont[i]):
+            skip_fit.append(len(sub_durs))
+            sub_durs.append(piece)
+            sub_refs.append(safe)
+        # 最終モーラの余韻は -25セントへの緩い下降と-12dBの減衰(披講の引き伸ばしの自然形)
+        hz_end = refs[i] * 2 ** (-25.0 / 1200.0) if i == n - 1 else refs[i]
+        decay_db = 12.0 if i == n - 1 else 0.0
+        elongs.append((onsets[i] + HEAD, onsets[i] + durs[i], refs[i], hz_end, decay_db))
+    if any(n_cont):
+        expanded = "".join(m["text"] + "ー" * n_cont[i] for i, m in enumerate(moras))
+        q = _vv_query(expanded, speaker, host)
+        sub_moras = _flatten_moras(q)
+        if len(sub_moras) != len(sub_durs):
+            raise RuntimeError(f"ー分割後のモーラ数不一致: 合成{len(sub_moras)} != 設計{len(sub_durs)}")
+    else:
+        sub_moras = moras
+    sub_onsets, t = [], pre
+    for d in sub_durs:
+        sub_onsets.append(t)
+        t += d
+
     def _synth(ln_targets, force_voiced):
         out = []
-        for i, m in enumerate(moras):
+        for i, m in enumerate(sub_moras):
             vm = dict(m)
             if force_voiced and vm.get("vowel"):
                 vm["vowel"] = vm["vowel"].lower()   # 文脈無声化の防止(強制有声)
-            out.append(_set_mora(vm, ln_targets[i], durs[i]))
+            out.append(_set_mora(vm, ln_targets[i], sub_durs[i]))
         q2 = dict(q)
         q2["accent_phrases"] = [{"moras": out, "accent": 1, "pause_mora": None,
                                  "is_interrogative": False}]
@@ -171,12 +215,21 @@ def synth_voicevox_designed(reading: str, pitches_hz, char_dur, speaker: int = 1
         cons = [(m.get("consonant_length") or 0.0) for m in out]
         return _vv_synth(q2, speaker, host), cons
 
-    ln = [math.log(f) for f in refs]
     if not quality:
-        wav, _ = _synth(ln, False)
+        ln = [math.log(f) for f in refs]
+        out = [_set_mora(dict(m), ln[i], durs[i]) for i, m in enumerate(moras)]
+        q["accent_phrases"] = [{"moras": out, "accent": 1, "pause_mora": None,
+                                "is_interrogative": False}]
+        q.update(dict(speedScale=1.0, pitchScale=0.0, intonationScale=1.0, volumeScale=1.0,
+                      prePhonemeLength=pre, postPhonemeLength=0.15, outputSamplingRate=sr))
+        wav = _vv_synth(q, speaker, host)
         return wav, onsets, _wav_seconds(wav)
     from . import quality as _quality
-    wav = _quality.apply(lambda l: _synth(l, True), refs, onsets, durs, log=quality_log)
+    skip_set = set(skip_fit)
+    gain_nodes = [i for i in range(len(sub_durs)) if i not in skip_set]
+    wav = _quality.apply(lambda l: _synth(l, True), sub_refs, sub_onsets, sub_durs,
+                         log=quality_log, gain_nodes=gain_nodes,
+                         skip_fit=skip_fit, elongations=elongs)
     return wav, onsets, _wav_seconds(wav)
 
 
