@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  <work><work-title>ちはやぶる かるた読み(木本タイミング)</work-title></work>
+  <part-list>
+    <score-part id="P1"><part-name>知声</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>100</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>15</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <direction placement="above">
+        <direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>60</per-minute></metronome></direction-type>
+        <sound tempo="60"/>
+      </direction>
+      <note>
+        <pitch><step>B</step><octave>3</octave></pitch>
+        <duration>22</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>ち</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>24</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>は</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>19</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>や</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>26</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>ぶ</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>85</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>る</text></lyric>
+      </note>
+      <note>
+        <pitch><step>B</step><octave>3</octave></pitch>
+        <duration>17</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>か</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>19</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>み</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>20</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>よ</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>28</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>も</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>16</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>き</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>32</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>か</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>75</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>ず</text></lyric>
+      </note>
+      <note><rest/><duration>45</duration><voice>1</voice></note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>27</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>た</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>27</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>つ</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>27</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>た</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>12</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>が</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>95</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>わ</text></lyric>
+      </note>
+      <note><rest/><duration>90</duration><voice>1</voice></note>
+      <note>
+        <pitch><step>B</step><octave>3</octave></pitch>
+        <duration>19</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>か</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>19</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>ら</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>22</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>く</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>23</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>れ</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>25</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>な</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>20</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>い</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>90</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>に</text></lyric>
+      </note>
+      <note><rest/><duration>45</duration><voice>1</voice></note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>23</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>み</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>25</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>ず</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>20</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>く</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>20</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>く</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>30</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>る</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>28</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>と</text></lyric>
+      </note>
+      <note>
+        <pitch><step>E</step><octave>4</octave></pitch>
+        <duration>290</duration><voice>1</voice>
+        <lyric number="1"><syllabic>single</syllabic><text>わ</text></lyric>
+      </note>
+      <note><rest/><duration>95</duration><voice>1</voice></note>
+    </measure>
+  </part>
+</score-partwise>

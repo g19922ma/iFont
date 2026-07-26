@@ -90,3 +90,21 @@
 - 未解決(構造的): 子音の立ち上がりの鋭さ(VOT処方の連続版・未着手)、マイクロプロソディ
   (自然なゆらぎ)の欠如。披講の伸ばしは歌に近く、歌声合成(NEUTRINO/Sinsy、
   プロジェクトログ2026-06に選択肢(i)として記載あり)の方が土俵として適する可能性
+
+## 2026-07-26 歌声合成(VoiSona/知声)の試作 — 伸ばし問題の構造的解決の検証
+
+- ユーザー要望で VoiSona 標準シンガー「知声(Chis-A)」を試行。VoiSona は CLI/API の
+  ない GUI 専用のため、(1)こちらで MusicXML 生成(project/voisona/chihayaburu_chisa.musicxml、
+  tempo60で音価=秒、木本実測タイミング・B3/E4・読み仮名歌詞) → (2)ユーザーが VoiSona で
+  WAV 書き出し(+.lab 音素ラベル) → (3)以降は自動、の半自動フロー
+- 実測結果(0_chihayaburu_chisa.wav、Desktop/ifont_listen・ローカルのみ):
+  - 31モーラ全一致・内容約14.1s(設計14.05s とほぼ一致。末尾に無音パディングで全長30s)
+  - E4モーラは±10c内、句頭B3も設計通り。フレーズ頭は低めから上がる自然なポルタメンタが
+    勝手に付く(木本の「からくれ」214→341Hz のスライドと同型)
+  - 伸ばし: るー0.8s・最終わー2.97s とも音量-21〜-24dBで張ったまま持続、F0±0c。
+    **VOICEVOXで4段の処方(ー分割・安全音高・PSOLA・shape)が必要だった性質が素で出る**
+- .lab の音素境界からモーラonsetを取り、render_frames_gated で字幕同期した
+  waka_chisa.mp4 を生成(scratchpad と Desktop/ifont_listen)
+- 音声・labは知声の利用規約(クレジット「VoiSona:知声」等)配慮で git には入れない
+- 含意: 披講用の製品音声は歌声合成が土俵として適切。完全自動化が要るなら
+  NEUTRINO/Sinsy(CLI あり)が候補。実験刺激・等速提示は VOICEVOX 凍結インベントリのまま
