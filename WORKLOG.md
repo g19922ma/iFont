@@ -108,3 +108,14 @@
 - 音声・labは知声の利用規約(クレジット「VoiSona:知声」等)配慮で git には入れない
 - 含意: 披講用の製品音声は歌声合成が土俵として適切。完全自動化が要るなら
   NEUTRINO/Sinsy(CLI あり)が候補。実験刺激・等速提示は VOICEVOX 凍結インベントリのまま
+
+## 2026-07-26(続) 知声への木本韻律の完全転写
+
+- 「もっと木本に近づけられるか(タイミングなど)」→ 韻律転写を実装。木本実読みの
+  (1)F0輪郭 (2)音量エンベロープの形 (3)モーラ長・休止長 をモーラ対応のタイムワープで
+  知声WAVへ PSOLA 転写(parselmouth Manipulation: DurationTier+PitchTier+ゲイン)
+- 結果: モーラ長誤差 中央値0ms・最大74ms(木本の「が」70msにレート下限0.6が当たる箇所のみ)、
+  伸ばしF0 341→346Hz のじわ上げ・余韻の減衰カーブも木本の実測形そのまま
+- 成果物: waka_chisa_kimoto.mp4 / chisa_kimoto_full.wav (Desktop/ifont_listen)、
+  境界 project/voisona/chisa_full_moras.json、手順 project/voisona/README.md
+- 残る差: 声質(知声そのもの)と子音の質(転写は母音・韻律のみで分節音は知声のまま)
