@@ -119,3 +119,12 @@
 - 成果物: waka_chisa_kimoto.mp4 / chisa_kimoto_full.wav (Desktop/ifont_listen)、
   境界 project/voisona/chisa_full_moras.json、手順 project/voisona/README.md
 - 残る差: 声質(知声そのもの)と子音の質(転写は母音・韻律のみで分節音は知声のまま)
+
+## 2026-07-28 概念整理: Perceptual Score・文字合成・iFont
+
+- 乙課題の議論(短いS活用・陽性対照・実効理解度)から発展し、丸山の発案で概念の三層化が確定:
+  Perceptual Score(中間表現: 文字情報が時間とともに徐々に識別可能になる過程。対象レベル・
+  累積・モダリティ非依存) / 音声合成→音声・文字合成→iFont(動的文字) / F が対象レベルと
+  文字レベルの橋渡し、g が両合成器の較正表
+- 詳細と栗原先生相談用メモ: project/perceptual_score_concept.md(アブスト反映案・未決事項つき)
+- アブスト修正版(文体チェック適用+干渉判定の1文追加)は会話内。採否・論文反映はPI判断待ち
