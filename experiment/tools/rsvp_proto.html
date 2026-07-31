@@ -74,6 +74,7 @@
     <option value="tango">無意味な単語列（記憶テスト）</option>
   </select>
   <button id="rand">ランダム生成</button>
+  <button id="reveal" style="display:none">表示（答え合わせ）</button>
 </div>
 <div class="row">
   <div class="tabs" id="tabs">
@@ -151,16 +152,30 @@ const TEMPLATES = [
   "{time}{place}をさんぽしていた{person}は{obj}{verb}",
 ];
 function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+let hiddenText = null;                       // 生成文は伏せておき「表示」で答え合わせ
+const textEl = document.getElementById("text");
+const revealBtn = document.getElementById("reveal");
 document.getElementById("rand").onclick = () => {
   const used = {};
-  const s = pick(TEMPLATES).replace(/\{(\w+)\}/g, (_, k) => {
+  hiddenText = pick(TEMPLATES).replace(/\{(\w+)\}/g, (_, k) => {
     let w = pick(BANK[k]);
     if (used[k + w]) w = pick(BANK[k]);      // 同語の重複をゆるく回避
     used[k + w] = 1;
     return w;
   });
-  document.getElementById("text").value = s;
+  textEl.value = "";
+  textEl.placeholder = "（生成ずみ・ふせてあります。そのまま再生 → 読めたか自分に問う → 表示で答え合わせ）";
+  revealBtn.style.display = "inline-block";
 };
+revealBtn.onclick = () => {
+  if (hiddenText != null) textEl.value = hiddenText;
+  hiddenText = null;
+  revealBtn.style.display = "none";
+};
+textEl.addEventListener("input", () => { hiddenText = null; revealBtn.style.display = "none"; });
+document.getElementById("presets").addEventListener("change", () => {
+  hiddenText = null; revealBtn.style.display = "none";
+});
 let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
   mode = +el.dataset.m;
@@ -180,7 +195,7 @@ const stage = document.getElementById("stage");
 let raf = null, t0 = null;
 document.getElementById("go").onclick = () => {
   cancelAnimationFrame(raf);
-  const toks = tokenize(document.getElementById("text").value);
+  const toks = tokenize(hiddenText ?? document.getElementById("text").value);
   if (!toks.length) return;
   const S = +speedEl.value;
   t0 = performance.now();
