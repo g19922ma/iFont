@@ -81,6 +81,7 @@
     <div class="tab active" data-m="0">① 置換（素のRSVP）</div>
     <div class="tab" data-m="1">② 残像減衰</div>
     <div class="tab" data-m="2">③ 履歴が左に残る</div>
+    <div class="tab" data-m="3">④ 先がうっすら見える</div>
   </div>
   <label>速さ</label>
   <input type="range" id="speed" min="0.10" max="0.30" step="0.01" value="0.14">
@@ -96,7 +97,8 @@
 <div class="note">
   <b>見どころ</b>：①は条件統制に使っている現行方式。②は前の文字が同じ枠でしばらく薄く残る
   （狭い画面での高速理解に効くか？）。③はいまの文字が定位置に出て、読み終えた文字が
-  履歴として左に少し重なりながら溜まり、古いほど薄れる（読み返しがきく）。
+  履歴として左に溜まり、古いほど薄れる（読み返しがきく）。④は次とその次の文字が右に
+  うっすら見えている（ふだんの読書の「視野の端の先読み」の再現。予測が効くか？）。
   再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
 </div>
 
@@ -164,7 +166,7 @@ document.getElementById("rand").onclick = () => {
     return w;
   });
   textEl.value = "";
-  textEl.placeholder = "（生成ずみ・ふせてあります。そのまま再生 → 読めたか自分に問う → 表示で答え合わせ）";
+  textEl.placeholder = "？？？";
   revealBtn.style.display = "inline-block";
 };
 revealBtn.onclick = () => {
@@ -226,6 +228,14 @@ document.getElementById("go").onclick = () => {
       if (i - 2 >= 0 && i - 2 < toks.length)
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
+    } else if (mode === 3) {
+      // いまの文字は枠内にくっきり。次の文字が右に薄く、その次はさらに薄く見えている(先読み)
+      if (i < toks.length) mk(toks[i], W/2, H/2, size, 1);
+      for (let d = 1; d <= 2; d++) {
+        const k = i + d;
+        if (k < toks.length)
+          mk(toks[k], W/2 + d * gap * 0.95, H/2, size * 0.88, d === 1 ? 0.32 : 0.13);
+      }
     } else {
       // いまの文字は定位置。終わった文字は履歴として左に溜まり、古いほど薄くなる(重ねない)
       const XCUR = W * 0.66;
