@@ -73,7 +73,8 @@
     <option value="suji">時刻と気温</option>
     <option value="tango">無意味な単語列（記憶テスト）</option>
   </select>
-  <button id="rand">ランダム生成</button>
+  <button id="rand">ランダム文生成</button>
+  <button id="randchars">ランダム文字列</button>
   <button id="reveal" style="display:none">表示（答え合わせ）</button>
 </div>
 <div class="row">
@@ -175,6 +176,15 @@ document.getElementById("rand").onclick = () => {
     used[k + w] = 1;
     return w;
   });
+  textEl.value = "";
+  textEl.placeholder = "？？？";
+  revealBtn.style.display = "inline-block";
+};
+const KANA_POOL = [..."あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわ" +
+                   "がぎぐげござじずぜぞだでどばびぶべぼぱぴぷぺぽ"];
+document.getElementById("randchars").onclick = () => {
+  const n = 16 + Math.floor(Math.random() * 5);
+  hiddenText = Array.from({length: n}, () => pick(KANA_POOL)).join("");
   textEl.value = "";
   textEl.placeholder = "？？？";
   revealBtn.style.display = "inline-block";
