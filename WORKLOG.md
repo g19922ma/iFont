@@ -128,3 +128,17 @@
   文字レベルの橋渡し、g が両合成器の較正表
 - 詳細と栗原先生相談用メモ: project/perceptual_score_concept.md(アブスト反映案・未決事項つき)
 - アブスト修正版(文体チェック適用+干渉判定の1文追加)は会話内。採否・論文反映はPI判断待ち
+
+## 2026-07-31 Perceptual Score デモ実装(手描きカーブ→音声+iFontの両合成)
+
+- ユーザー要望「私が理解度グラフを描いたら、音声合成と文字合成でそうなるものを作れるか」
+  → experiment/tools/pscore_demo.py として実装。スコアJSON(文字ごとの[時刻,目標識別可能性]
+  点列)を入力に、(1)視覚: 仮の心理測定関数の逆写像で不透明度の時間変化を生成、
+  (2)聴覚: 目標区間長の設計合成(今週の伸ばし処方を活用)+PSOLAワープで内容到達がカーブに
+  追従、(3)下部にスコアと進行カーソルを描いた mp4 を出力
+- 較正はプレースホルダのロジスティック(FLOOR=0.02, PLAT=0.95, 視覚mid0.45/聴覚mid0.5)。
+  実験の実データで差し替える前提を画面とdocstringに明記
+- 例: pscore_example.json(あ・お2本)。実行:
+  ~/ifont_env/bin/python experiment/tools/pscore_demo.py pscore_example.json out.mp4
+  (VOICEVOX起動が必要)
+- ユーザーのカーブ入力手段: JSON編集 / 手描き画像を渡してClaudeが点列化 / (将来)ブラウザ編集UI
