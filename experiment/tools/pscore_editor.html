@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>知覚楽譜 — Perceptual Score エディタ</title>
+<style>
+  :root{
+    --paper:#f6f1e5; --paper2:#efe7d4; --ink:#262220; --ink2:#5a5348;
+    --grid:#ddd3bc; --ai:#234794; --shu:#c73e2e; --matsu:#3f6b4f; --kincha:#a8741a;
+    --line:#c9bfa6;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+    color:var(--ink); min-height:100vh; padding:34px 40px 60px;
+    background:
+      radial-gradient(1200px 500px at 85% -10%, rgba(199,62,46,.05), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(35,71,148,.06), transparent 55%),
+      repeating-linear-gradient(0deg, transparent 0 2px, rgba(120,100,60,.022) 2px 3px),
+      var(--paper);
+  }
+  header{display:flex; align-items:baseline; gap:18px; margin-bottom:6px;}
+  h1{font-size:30px; letter-spacing:.14em; font-weight:600;}
+  .stamp{
+    display:inline-block; font-size:11px; letter-spacing:.1em; color:#fff;
+    background:var(--shu); padding:5px 8px; border-radius:3px;
+    transform:rotate(-2deg); box-shadow:0 1px 0 rgba(0,0,0,.18);
+    font-family:"Hiragino Kaku Gothic ProN",sans-serif;
+  }
+  .sub{color:var(--ink2); font-size:13px; letter-spacing:.06em; margin-bottom:22px;}
+  .row{display:flex; gap:14px; align-items:center; flex-wrap:wrap; margin-bottom:14px;}
+  label{font-size:13px; color:var(--ink2); letter-spacing:.08em;}
+  input[type=text], input[type=number]{
+    font-family:inherit; font-size:16px; padding:6px 10px; width:110px;
+    border:1px solid var(--line); border-radius:4px; background:#fffdf7; color:var(--ink);
+  }
+  input[type=text]{width:150px; letter-spacing:.3em;}
+  button{
+    font-family:inherit; font-size:14px; letter-spacing:.1em; cursor:pointer;
+    padding:8px 16px; border-radius:4px; border:1px solid var(--ink2);
+    background:#fffdf7; color:var(--ink); transition:all .15s;
+  }
+  button:hover{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  button.primary{background:var(--shu); border-color:var(--shu); color:#fff;}
+  button.primary:hover{background:#a93325;}
+  .chips{display:flex; gap:8px;}
+  .chip{
+    min-width:46px; height:46px; border-radius:50%; border:2px solid transparent;
+    font-size:22px; display:flex; align-items:center; justify-content:center;
+    background:#fffdf7; box-shadow:inset 0 0 0 1px var(--line); cursor:pointer;
+    transition:transform .12s;
+  }
+  .chip.active{border-color:currentColor; transform:scale(1.12);
+    box-shadow:0 2px 8px rgba(0,0,0,.14);}
+  .canvas-wrap{
+    position:relative; background:#fffdf7; border:1px solid var(--line);
+    border-radius:6px; box-shadow:0 3px 14px rgba(60,45,20,.08); overflow:hidden;
+  }
+  canvas{display:block; width:100%; height:460px; cursor:crosshair; touch-action:none;}
+  .hint{color:var(--ink2); font-size:13px; line-height:2; margin-top:16px; letter-spacing:.04em;}
+  .hint b{color:var(--shu); font-weight:600;}
+  #out{
+    margin-top:14px; width:100%; height:110px; font-size:12px;
+    font-family:"SF Mono",Menlo,monospace; background:#faf6ea;
+    border:1px dashed var(--line); border-radius:4px; padding:10px; color:var(--ink2);
+    display:none;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>知覚楽譜</h1>
+  <span class="stamp">Perceptual Score</span>
+</header>
+<div class="sub">文字が時間とともにどれだけ分かるべきかを、指で描く。描いた楽譜は音声と動的文字（iFont）に合成される。</div>
+
+<div class="row">
+  <label>文字</label>
+  <input type="text" id="chars" value="あお" maxlength="6">
+  <label>長さ（秒）</label>
+  <input type="number" id="dur" value="3.0" min="1" max="10" step="0.5">
+  <button id="apply">用意する</button>
+  <span style="flex:1"></span>
+  <button id="clear">選択中の線を消す</button>
+  <button id="export">書き出し（pscore.json）</button>
+  <button id="synth" class="primary">合成する（音声＋文字）</button>
+</div>
+
+<div class="row"><label>いま描く文字：</label><div class="chips" id="chips"></div></div>
+
+<div class="canvas-wrap"><canvas id="cv"></canvas></div>
+
+<div class="hint">
+  <b>描き方</b>：丸で文字を選ぶ → 方眼の上を左から右へなぞる（何度でも描き直せる）→
+  <b>合成する</b>。30〜60秒ほどでこの下に動画が現れる。
+  たての軸は「その時点までにどれだけ識別できるべきか」（0〜100%）。
+</div>
+<div id="status" style="margin-top:14px; font-size:14px; color:var(--shu); letter-spacing:.08em;"></div>
+<video id="player" controls style="display:none; width:100%; margin-top:12px; border-radius:6px;
+  border:1px solid var(--line); box-shadow:0 3px 14px rgba(60,45,20,.12);"></video>
+<textarea id="out" readonly></textarea>
+
+<script>
+const COLORS = ["#234794", "#c73e2e", "#3f6b4f", "#a8741a", "#6b3f88", "#3f7d8a"];
+const N = 240;                      // 時間方向の格子数
+let chars = [], curves = {}, active = 0, duration = 3.0;
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+let CW = 0, CH = 0, PADL = 64, PADR = 24, PADT = 26, PADB = 44;
+
+function setup() {
+  const s = document.getElementById("chars").value.replace(/\s/g, "");
+  duration = parseFloat(document.getElementById("dur").value) || 3.0;
+  chars = [...s];
+  for (const c of chars) if (!curves[c]) curves[c] = new Array(N).fill(null);
+  for (const k of Object.keys(curves)) if (!chars.includes(k)) delete curves[k];
+  active = Math.min(active, chars.length - 1);
+  renderChips(); resize();
+}
+function renderChips() {
+  const box = document.getElementById("chips");
+  box.innerHTML = "";
+  chars.forEach((c, i) => {
+    const d = document.createElement("div");
+    d.className = "chip" + (i === active ? " active" : "");
+    d.textContent = c;
+    d.style.color = COLORS[i % COLORS.length];
+    d.onclick = () => { active = i; renderChips(); };
+    box.appendChild(d);
+  });
+}
+function resize() {
+  const r = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  CW = r.width; CH = r.height;
+  draw();
+}
+const x2t = x => (x - PADL) / (CW - PADL - PADR) * duration;
+const t2x = t => PADL + t / duration * (CW - PADL - PADR);
+const y2v = y => Math.min(1, Math.max(0, 1 - (y - PADT) / (CH - PADT - PADB)));
+const v2y = v => PADT + (1 - v) * (CH - PADT - PADB);
+
+function draw() {
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.font = '12px "Hiragino Mincho ProN",serif';
+  // 方眼
+  for (let v = 0; v <= 1.001; v += 0.25) {
+    ctx.strokeStyle = v === 0 || v === 1 ? "#c9bfa6" : "#e6ddc6";
+    ctx.beginPath(); ctx.moveTo(PADL, v2y(v)); ctx.lineTo(CW - PADR, v2y(v)); ctx.stroke();
+    ctx.fillStyle = "#8a8171";
+    ctx.fillText(Math.round(v * 100) + "%", 18, v2y(v) + 4);
+  }
+  const step = duration > 5 ? 1.0 : 0.5;
+  for (let t = 0; t <= duration + 1e-6; t += step) {
+    ctx.strokeStyle = "#eee5cf";
+    ctx.beginPath(); ctx.moveTo(t2x(t), PADT); ctx.lineTo(t2x(t), CH - PADB); ctx.stroke();
+    ctx.fillStyle = "#8a8171";
+    ctx.fillText(t.toFixed(1) + "秒", t2x(t) - 12, CH - 18);
+  }
+  // カーブ
+  chars.forEach((c, i) => {
+    const cur = curves[c];
+    ctx.strokeStyle = COLORS[i % COLORS.length];
+    ctx.lineWidth = i === active ? 3.5 : 2;
+    ctx.globalAlpha = i === active ? 1 : 0.55;
+    ctx.beginPath();
+    let started = false;
+    for (let k = 0; k < N; k++) {
+      if (cur[k] == null) continue;
+      const x = PADL + k / (N - 1) * (CW - PADL - PADR), y = v2y(cur[k]);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  });
+}
+let drawing = false, lastK = null;
+function pen(e) {
+  const r = cv.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  const k = Math.round((x - PADL) / (CW - PADL - PADR) * (N - 1));
+  if (k < 0 || k >= N) return;
+  const v = y2v(y);
+  const cur = curves[chars[active]];
+  if (lastK != null && Math.abs(k - lastK) > 1) {
+    const a = Math.min(k, lastK), b = Math.max(k, lastK);
+    const va = cur[lastK] ?? v;
+    for (let j = a; j <= b; j++) cur[j] = va + (v - va) * (j - a) / (b - a);
+  }
+  cur[k] = v; lastK = k;
+  draw();
+}
+cv.addEventListener("pointerdown", e => { if (!chars.length) return;
+  drawing = true; lastK = null; cv.setPointerCapture(e.pointerId); pen(e); });
+cv.addEventListener("pointermove", e => { if (drawing) pen(e); });
+cv.addEventListener("pointerup", () => { drawing = false; lastK = null; });
+
+document.getElementById("apply").onclick = setup;
+document.getElementById("clear").onclick = () => {
+  if (chars.length) { curves[chars[active]] = new Array(N).fill(null); draw(); } };
+document.getElementById("export").onclick = () => {
+  const out = { comment: "知覚楽譜エディタで描画", duration: duration, chars: [] };
+  chars.forEach(c => {
+    const cur = curves[c];
+    const pts = [];
+    for (let k = 0; k < N; k += Math.round(N / 24)) {
+      if (cur[k] != null)
+        pts.push([+(k / (N - 1) * duration).toFixed(3), +cur[k].toFixed(3)]);
+    }
+    const lastIdx = cur.length - 1;
+    if (cur[lastIdx] != null) pts.push([+duration.toFixed(3), +cur[lastIdx].toFixed(3)]);
+    if (pts.length >= 2) out.chars.push({ char: c, points: pts });
+  });
+  const txt = JSON.stringify(out, null, 1);
+  const ta = document.getElementById("out");
+  ta.style.display = "block"; ta.value = txt;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt], { type: "application/json" }));
+  a.download = "pscore.json"; a.click();
+};
+function buildScore() {
+  const out = { comment: "知覚楽譜エディタで描画", duration: duration, chars: [] };
+  chars.forEach(c => {
+    const cur = curves[c];
+    const pts = [];
+    for (let k = 0; k < N; k += Math.round(N / 24)) {
+      if (cur[k] != null)
+        pts.push([+(k / (N - 1) * duration).toFixed(3), +cur[k].toFixed(3)]);
+    }
+    if (cur[N - 1] != null) pts.push([+duration.toFixed(3), +cur[N - 1].toFixed(3)]);
+    if (pts.length >= 2) out.chars.push({ char: c, points: pts });
+  });
+  return out;
+}
+document.getElementById("synth").onclick = async () => {
+  const score = buildScore();
+  if (!score.chars.length) { alert("先にカーブを描いてください"); return; }
+  const st = document.getElementById("status");
+  const btn = document.getElementById("synth");
+  btn.disabled = true;
+  st.textContent = "合成中……（音声を作り、文字を描いています。30〜60秒）";
+  try {
+    const res = await fetch("/synth", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(score) });
+    if (!res.ok) throw new Error(await res.text());
+    const j = await res.json();
+    const v = document.getElementById("player");
+    v.src = j.url + "?t=" + Date.now();
+    v.style.display = "block";
+    v.play();
+    st.textContent = "できました。下の動画がいま描いた楽譜の演奏です。";
+  } catch (e) {
+    st.textContent = "合成に失敗: " + e.message +
+      "（このページはサーバ経由 http://localhost:8765 で開く必要があります）";
+  }
+  btn.disabled = false;
+};
+window.addEventListener("resize", resize);
+setup();
+</script>
+</body>
+</html>

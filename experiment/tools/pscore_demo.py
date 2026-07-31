@@ -212,7 +212,7 @@ def render_frames(T, chars, frames_dir):
 # ---------------- 本体 ----------------
 def main(score_path, out_mp4):
     T, chars = load_score(score_path)
-    work = os.path.join(HERE, "pscore_work")
+    work = os.environ.get("PSCORE_WORK") or os.path.join(HERE, "pscore_work")
     if os.path.isdir(work):
         shutil.rmtree(work)
     os.makedirs(work)

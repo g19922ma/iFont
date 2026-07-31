@@ -142,3 +142,11 @@
   ~/ifont_env/bin/python experiment/tools/pscore_demo.py pscore_example.json out.mp4
   (VOICEVOX起動が必要)
 - ユーザーのカーブ入力手段: JSON編集 / 手描き画像を渡してClaudeが点列化 / (将来)ブラウザ編集UI
+
+## 2026-07-31(続) 知覚楽譜エディタ: ブラウザで描く→その場で合成
+
+- pscore_editor.html(和風UI・方眼にドラッグでカーブ描画・文字と長さ可変・JSON書き出し)+
+  pscore_server.py(localhost:8765。POST /synth で pscore_demo.py を実行し /video で mp4 配信)
+- 起動: PSCORE_WORK=<作業dir> ~/ifont_env/bin/python experiment/tools/pscore_server.py
+  (VOICEVOX 起動下)→ http://localhost:8765
+- pscore_demo.py は PSCORE_WORK 環境変数で作業ディレクトリを外部指定可能に
