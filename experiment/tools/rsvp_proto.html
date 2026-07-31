@@ -154,13 +154,17 @@ document.getElementById("go").onclick = () => {
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
     } else {
+      const XR = W * 0.66;                      // 窓の右端。これより右には出さない
       for (let k = 0; k < toks.length; k++) {
-        const x = W * 0.82 + (k * gap) - (t / S) * gap;
-        if (x < -gap || x > W + gap) continue;
-        const edge = Math.min(x / (W * 0.16), (W - x) / (W * 0.16), 1);
-        const isCur = Math.abs(x - W/2) < gap/2;
-        mk(toks[k], x, H/2, isCur ? size * 1.18 : size, Math.max(0.06, edge));
+        const x = XR + (k * gap) - (t / S) * gap;   // 右端から現れて左へ流れる
+        if (x < -gap || x > XR + 2) continue;
+        const edge = Math.min((XR - x) / (gap * 0.6), x / (W * 0.16), 1);
+        mk(toks[k], x, H/2, k === i ? size * 1.18 : size, Math.max(0.06, edge));
       }
+      const line = document.createElement("div");
+      line.style.cssText = "position:absolute;top:18%;bottom:18%;width:0;" +
+        "border-right:1px dashed rgba(255,255,255,.22);left:" + XR + "px";
+      stage.appendChild(line);
     }
     raf = requestAnimationFrame(frame);
   }
