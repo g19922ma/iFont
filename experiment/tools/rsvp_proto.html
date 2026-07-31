@@ -60,9 +60,19 @@
 <div class="row">
   <input type="text" id="text"
     value="きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう">
-  <button onclick="preset('news')">ニュース風</button>
-  <button onclick="preset('waka')">百人一首</button>
-  <button onclick="preset('iroha')">いろは</button>
+  <select id="presets" style="font-family:inherit; font-size:14px; padding:6px 8px;
+    border:1px solid var(--line); border-radius:4px; background:#fffdf7; color:var(--ink);">
+    <option value="">文例を選ぶ…</option>
+    <option value="news">天気予報（ニュース風）</option>
+    <option value="waka">百人一首（ちはやぶる）</option>
+    <option value="iroha">いろは歌</option>
+    <option value="mukashi">昔話の冒頭</option>
+    <option value="quiz">早押しクイズ</option>
+    <option value="eki">駅のアナウンス</option>
+    <option value="kaiwa">日常会話</option>
+    <option value="suji">時刻と気温</option>
+    <option value="tango">無意味な単語列（記憶テスト）</option>
+  </select>
 </div>
 <div class="row">
   <div class="tabs" id="tabs">
@@ -101,8 +111,16 @@ const PRESETS = {
   news: "きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう",
   waka: "ちはやぶるかみよもきかずたつたがわからくれないにみずくくるとは",
   iroha: "いろはにほへとちりぬるをわかよたれそつねならむういのおくやまけふこえて",
+  mukashi: "むかしむかしあるところにおじいさんとおばあさんがすんでいましたおじいさんはやまへしばかりにおばあさんはかわへせんたくにいきました",
+  quiz: "にほんでいちばんめんせきがおおきいとどうふけんはどこでしょうこたえはほっかいどうです",
+  eki: "まもなくさんばんせんにとうきょういきのれっしゃがまいりますあぶないですからきいろいせんのうちがわまでおさがりください",
+  kaiwa: "きょうのよるごはんはカレーにしようとおもうんだけどほかになにかたべたいものある",
+  suji: "ただいまのじこくはごごさんじじゅうごふんですげんざいのきおんはにじゅうはちどです",
+  tango: "さくらとけいすいかめがねたいこふねひこうきみかんらくだてがみ",
 };
-function preset(k){ document.getElementById("text").value = PRESETS[k]; }
+document.getElementById("presets").onchange = e => {
+  if (e.target.value) document.getElementById("text").value = PRESETS[e.target.value];
+};
 let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
   mode = +el.dataset.m;
