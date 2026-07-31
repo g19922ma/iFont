@@ -82,7 +82,11 @@
     <div class="tab" data-m="1">② 残像減衰</div>
     <div class="tab" data-m="3">③ 次が同じ枠に滲む</div>
     <div class="tab" data-m="2">④ 履歴が左に残る</div>
+    <div class="tab" data-m="4">⑤ 通常配置に逐次出現</div>
   </div>
+  <label id="persistlab">⑤の残存</label>
+  <input type="range" id="persist" min="0.2" max="4.0" step="0.1" value="1.5" style="width:130px">
+  <span id="persistval" style="font-size:13px; color:var(--ink2); min-width:60px;"></span>
   <label>速さ</label>
   <input type="range" id="speed" min="0.10" max="0.30" step="0.01" value="0.14">
   <span class="speedval" id="speedval"></span>
@@ -98,7 +102,9 @@
   <b>見どころ</b>：①は条件統制に使っている現行方式。②は前の文字が同じ枠でしばらく薄く残る
   （狭い画面での高速理解に効くか？）。③は②の先出し版で、同じ枠の中に次の文字が時間とともに
   うっすら滲み出してくる（クロスフェード。先読みの予測が効くか？）。④はいまの文字が定位置に
-  出て、読み終えた文字が履歴として左に溜まり、古いほど薄れる（読み返しがきく）。
+  出て、読み終えた文字が履歴として左に溜まり、古いほど薄れる（読み返しがきく）。⑤は普通の
+  文章のように文字位置を固定し、ターンが来た文字から浮かび上がる（moving window 系の変形。
+  「⑤の残存」スライダで直前文字がどれだけ残るかを操作——右端まで上げると消えない）。
   再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
 </div>
 
@@ -182,7 +188,7 @@ let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
   mode = +el.dataset.m;
   document.querySelectorAll(".tab").forEach(e => e.classList.toggle("active", e === el));
-  document.getElementById("frame").style.display = mode === 2 ? "none" : "block";
+  document.getElementById("frame").style.display = (mode === 2 || mode === 4) ? "none" : "block";
 });
 const speedEl = document.getElementById("speed");
 function setSpeed(v){ speedEl.value = v; showSpeed(); }
@@ -192,6 +198,12 @@ function showSpeed(){
     s.toFixed(2) + "秒/モーラ（毎秒" + (1/s).toFixed(1) + "字）";
 }
 speedEl.oninput = showSpeed; showSpeed();
+const persistEl = document.getElementById("persist");
+function showPersist(){
+  const v = +persistEl.value;
+  document.getElementById("persistval").textContent = v >= 4.0 ? "残しっぱなし" : v.toFixed(1) + "秒";
+}
+persistEl.oninput = showPersist; showPersist();
 
 const stage = document.getElementById("stage");
 let raf = null, t0 = null;
@@ -208,7 +220,8 @@ document.getElementById("go").onclick = () => {
     const t = (now - t0) / 1000;
     const i = Math.floor(t / S);
     stage.innerHTML = "";
-    if (i >= toks.length + (mode === 2 ? 6 : 1)) {
+    const tail = mode === 2 ? 6 : mode === 4 ? Math.min(10, Math.ceil((+persistEl.value) / S) + 2) : 1;
+    if (i >= toks.length + tail) {
       stage.innerHTML = '<div id="done">おわり — 内容を言えましたか？</div>';
       return;
     }
@@ -228,6 +241,26 @@ document.getElementById("go").onclick = () => {
       if (i - 2 >= 0 && i - 2 < toks.length)
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
+    } else if (mode === 4) {
+      // 通常配置+逐次出現: 文字位置は固定。自分のターンで浮かび上がり、残存時間ののち薄れる
+      const persist = +persistEl.value;
+      const keep = persist >= 4.0;
+      const fs = Math.min(86, (W * 0.86) / Math.min(toks.length, 16) / 1.05);
+      const cw = fs * 1.08;
+      const perLine = Math.max(1, Math.floor((W * 0.9) / cw));
+      const nLines = Math.ceil(toks.length / perLine);
+      for (let k = 0; k < toks.length; k++) {
+        const li = Math.floor(k / perLine), ci = k % perLine;
+        const lineLen = Math.min(perLine, toks.length - li * perLine);
+        const x = W/2 + (ci - (lineLen - 1) / 2) * cw;
+        const y = H/2 + (li - (nLines - 1) / 2) * fs * 1.5;
+        let op;
+        if (k > i) op = 0;
+        else if (k === i) op = Math.min(1, (t - k * S) / S * 3);
+        else if (keep) op = 1;
+        else op = Math.max(0, 1 - (t - (k + 1) * S) / persist);
+        if (op > 0) mk(toks[k], x, y, fs, op);
+      }
     } else if (mode === 3) {
       // ②の先出し版: 同じ枠の中で、次の文字がスロットの進みとともにうっすら滲み出してくる
       const prog = (t - i * S) / S;
