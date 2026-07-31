@@ -88,8 +88,10 @@
   <input type="range" id="persist" min="0.2" max="4.0" step="0.1" value="1.5" style="width:130px">
   <span id="persistval" style="font-size:13px; color:var(--ink2); min-width:60px;"></span>
   <label>速さ</label>
-  <input type="range" id="speed" min="0.10" max="0.30" step="0.01" value="0.14">
+  <input type="range" id="speed" min="0.03" max="0.30" step="0.01" value="0.14">
   <span class="speedval" id="speedval"></span>
+  <button onclick="setSpeed(0.05)">0.05（爆速）</button>
+  <button onclick="setSpeed(0.08)">0.08</button>
   <button onclick="setSpeed(0.14)">0.14（放送）</button>
   <button onclick="setSpeed(0.20)">0.20（かるた）</button>
   <span style="flex:1"></span>
