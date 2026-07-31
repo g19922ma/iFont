@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>高速文字提示の試し場 — RSVP と代替方式</title>
+<style>
+  :root{
+    --paper:#f6f1e5; --ink:#262220; --ink2:#5a5348; --line:#c9bfa6;
+    --ai:#234794; --shu:#c73e2e;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif; color:var(--ink);
+    min-height:100vh; padding:30px 40px 50px;
+    background:
+      repeating-linear-gradient(0deg, transparent 0 2px, rgba(120,100,60,.022) 2px 3px),
+      var(--paper);
+  }
+  header{display:flex; align-items:baseline; gap:16px; margin-bottom:4px;}
+  h1{font-size:26px; letter-spacing:.12em; font-weight:600;}
+  .stamp{font-size:11px; letter-spacing:.08em; color:#fff; background:var(--shu);
+    padding:4px 8px; border-radius:3px; transform:rotate(-2deg);
+    font-family:"Hiragino Kaku Gothic ProN",sans-serif;}
+  .sub{color:var(--ink2); font-size:13px; margin-bottom:18px; letter-spacing:.05em;}
+  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:12px;}
+  label{font-size:13px; color:var(--ink2); letter-spacing:.06em;}
+  input[type=text]{font-family:inherit; font-size:15px; padding:6px 10px; flex:1;
+    min-width:340px; border:1px solid var(--line); border-radius:4px; background:#fffdf7;}
+  input[type=range]{width:220px; accent-color:var(--shu);}
+  button{font-family:inherit; font-size:13px; letter-spacing:.08em; cursor:pointer;
+    padding:7px 14px; border-radius:4px; border:1px solid var(--ink2);
+    background:#fffdf7; color:var(--ink); transition:all .15s;}
+  button:hover{background:var(--ink); color:var(--paper);}
+  button.primary{background:var(--shu); border-color:var(--shu); color:#fff; font-size:15px;
+    padding:9px 22px;}
+  button.primary:hover{background:#a93325;}
+  .tabs{display:flex; gap:0; border:1px solid var(--line); border-radius:5px; overflow:hidden;}
+  .tab{padding:8px 16px; font-size:13px; cursor:pointer; background:#fffdf7;
+    border-right:1px solid var(--line); letter-spacing:.04em;}
+  .tab:last-child{border-right:none;}
+  .tab.active{background:var(--ai); color:#fff;}
+  .speedval{font-size:15px; min-width:150px; color:var(--ink);}
+  .stage-wrap{position:relative; background:#141416; border-radius:8px;
+    box-shadow:0 4px 18px rgba(40,30,10,.18); height:380px; overflow:hidden; margin-top:8px;}
+  #stage{position:absolute; inset:0;}
+  .ch{position:absolute; color:#ececec; font-weight:500; white-space:pre;
+    transform:translate(-50%,-50%);}
+  .frame-mark{position:absolute; left:50%; top:50%; width:230px; height:270px;
+    transform:translate(-50%,-50%); border:1px dashed rgba(255,255,255,.16); border-radius:6px;}
+  .note{color:var(--ink2); font-size:13px; line-height:1.9; margin-top:14px;}
+  #done{position:absolute; left:50%; top:8%; transform:translateX(-50%);
+    color:#9a9a92; font-size:14px; letter-spacing:.1em; font-family:inherit;}
+</style>
+</head>
+<body>
+<header><h1>高速文字提示の試し場</h1><span class="stamp">RSVP ×3方式</span></header>
+<div class="sub">0.14秒/モーラ（アナウンサー相当）で文章を読むつらさを体感し、置換・残像・スクロールの3方式を比べる。</div>
+
+<div class="row">
+  <input type="text" id="text"
+    value="きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう">
+  <button onclick="preset('news')">ニュース風</button>
+  <button onclick="preset('waka')">百人一首</button>
+  <button onclick="preset('iroha')">いろは</button>
+</div>
+<div class="row">
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-m="0">① 置換（素のRSVP）</div>
+    <div class="tab" data-m="1">② 残像減衰</div>
+    <div class="tab" data-m="2">③ スクロール窓</div>
+  </div>
+  <label>速さ</label>
+  <input type="range" id="speed" min="0.10" max="0.30" step="0.01" value="0.14">
+  <span class="speedval" id="speedval"></span>
+  <button onclick="setSpeed(0.14)">0.14（放送）</button>
+  <button onclick="setSpeed(0.20)">0.20（かるた）</button>
+  <span style="flex:1"></span>
+  <button class="primary" id="go">再生</button>
+</div>
+
+<div class="stage-wrap"><div class="frame-mark" id="frame"></div><div id="stage"></div></div>
+
+<div class="note">
+  <b>見どころ</b>：①は条件統制に使っている現行方式。②は前の文字が同じ枠でしばらく薄く残る
+  （狭い画面での高速理解に効くか？）。③は文字が右から現れて左へ流れ、視線で追える。
+  再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
+</div>
+
+<script>
+const SMALL = "ゃゅょぁぃぅぇぉっー";
+function tokenize(s){
+  const t = [];
+  for (const ch of s.replace(/\s/g,"")) {
+    if (t.length && SMALL.includes(ch) && ch !== "っ" && ch !== "ー") t[t.length-1] += ch;
+    else t.push(ch);
+  }
+  return t;
+}
+const PRESETS = {
+  news: "きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう",
+  waka: "ちはやぶるかみよもきかずたつたがわからくれないにみずくくるとは",
+  iroha: "いろはにほへとちりぬるをわかよたれそつねならむういのおくやまけふこえて",
+};
+function preset(k){ document.getElementById("text").value = PRESETS[k]; }
+let mode = 0;
+document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
+  mode = +el.dataset.m;
+  document.querySelectorAll(".tab").forEach(e => e.classList.toggle("active", e === el));
+  document.getElementById("frame").style.display = mode === 2 ? "none" : "block";
+});
+const speedEl = document.getElementById("speed");
+function setSpeed(v){ speedEl.value = v; showSpeed(); }
+function showSpeed(){
+  const s = +speedEl.value;
+  document.getElementById("speedval").textContent =
+    s.toFixed(2) + "秒/モーラ（毎秒" + (1/s).toFixed(1) + "字）";
+}
+speedEl.oninput = showSpeed; showSpeed();
+
+const stage = document.getElementById("stage");
+let raf = null, t0 = null;
+document.getElementById("go").onclick = () => {
+  cancelAnimationFrame(raf);
+  const toks = tokenize(document.getElementById("text").value);
+  if (!toks.length) return;
+  const S = +speedEl.value;
+  t0 = performance.now();
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const size = mode === 2 ? 120 : 210;
+  const gap = size * 1.15;
+  function frame(now){
+    const t = (now - t0) / 1000;
+    const i = Math.floor(t / S);
+    stage.innerHTML = "";
+    if (i >= toks.length + (mode === 2 ? 6 : 1)) {
+      stage.innerHTML = '<div id="done">おわり — 内容を言えましたか？</div>';
+      return;
+    }
+    const mk = (txt, x, y, fs, op) => {
+      const d = document.createElement("div");
+      d.className = "ch"; d.textContent = txt;
+      d.style.left = x + "px"; d.style.top = y + "px";
+      d.style.fontSize = fs + "px"; d.style.opacity = Math.max(0, Math.min(1, op));
+      stage.appendChild(d);
+    };
+    if (mode === 0) {
+      if (i < toks.length) mk(toks[i], W/2, H/2, size, 1);
+    } else if (mode === 1) {
+      const prog = (t - i * S) / S;               // いまのスロット内の進み(0..1)
+      if (i - 1 >= 0 && i - 1 < toks.length)
+        mk(toks[i-1], W/2, H/2, size, 0.45 * (1 - prog * 1.15));   // 残像
+      if (i - 2 >= 0 && i - 2 < toks.length)
+        mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
+      if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
+    } else {
+      for (let k = 0; k < toks.length; k++) {
+        const x = W * 0.82 + (k * gap) - (t / S) * gap;
+        if (x < -gap || x > W + gap) continue;
+        const edge = Math.min(x / (W * 0.16), (W - x) / (W * 0.16), 1);
+        const isCur = Math.abs(x - W/2) < gap/2;
+        mk(toks[k], x, H/2, isCur ? size * 1.18 : size, Math.max(0.06, edge));
+      }
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+};
+</script>
+</body>
+</html>
