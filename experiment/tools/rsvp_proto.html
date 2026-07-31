@@ -78,7 +78,7 @@
   <div class="tabs" id="tabs">
     <div class="tab active" data-m="0">① 置換（素のRSVP）</div>
     <div class="tab" data-m="1">② 残像減衰</div>
-    <div class="tab" data-m="2">③ スクロール窓</div>
+    <div class="tab" data-m="2">③ 履歴が左に残る</div>
   </div>
   <label>速さ</label>
   <input type="range" id="speed" min="0.10" max="0.30" step="0.01" value="0.14">
@@ -93,7 +93,8 @@
 
 <div class="note">
   <b>見どころ</b>：①は条件統制に使っている現行方式。②は前の文字が同じ枠でしばらく薄く残る
-  （狭い画面での高速理解に効くか？）。③は文字が右から現れて左へ流れ、視線で追える。
+  （狭い画面での高速理解に効くか？）。③はいまの文字が定位置に出て、読み終えた文字が
+  履歴として左に少し重なりながら溜まり、古いほど薄れる（読み返しがきく）。
   再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
 </div>
 
@@ -172,16 +173,20 @@ document.getElementById("go").onclick = () => {
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
     } else {
-      const XR = W * 0.66;                      // 窓の右端。これより右には出さない
-      for (let k = 0; k < toks.length; k++) {
-        const x = XR + (k * gap) - (t / S) * gap;   // 右端から現れて左へ流れる
-        if (x < -gap || x > XR + 2) continue;
-        const edge = Math.min((XR - x) / (gap * 0.6), x / (W * 0.16), 1);
-        mk(toks[k], x, H/2, k === i ? size * 1.18 : size, Math.max(0.06, edge));
+      // いまの文字は定位置。終わった文字は履歴として左に少し重なりながら溜まり、古いほど薄くなる
+      const XCUR = W * 0.62;
+      const step = gap * 0.55;
+      const kTop = Math.min(i, toks.length - 1);
+      for (let k = Math.max(0, kTop - 7); k <= kTop; k++) {
+        const age = i - k;
+        const x = XCUR - age * step;
+        const op = age === 0 ? 1 : Math.max(0, 0.62 - 0.10 * age);
+        if (op <= 0) continue;
+        mk(toks[k], x, H/2, age === 0 ? size * 1.18 : size * 0.88, op);
       }
       const line = document.createElement("div");
-      line.style.cssText = "position:absolute;top:18%;bottom:18%;width:0;" +
-        "border-right:1px dashed rgba(255,255,255,.22);left:" + XR + "px";
+      line.style.cssText = "position:absolute;top:22%;bottom:22%;width:0;" +
+        "border-right:1px dashed rgba(255,255,255,.18);left:" + (XCUR + gap * 0.62) + "px";
       stage.appendChild(line);
     }
     raf = requestAnimationFrame(frame);
