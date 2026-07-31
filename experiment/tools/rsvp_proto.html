@@ -73,6 +73,7 @@
     <option value="suji">時刻と気温</option>
     <option value="tango">無意味な単語列（記憶テスト）</option>
   </select>
+  <button id="rand">ランダム生成</button>
 </div>
 <div class="row">
   <div class="tabs" id="tabs">
@@ -121,6 +122,44 @@ const PRESETS = {
 };
 document.getElementById("presets").onchange = e => {
   if (e.target.value) document.getElementById("text").value = PRESETS[e.target.value];
+};
+
+// ---- ランダム文章生成(初見の文で理解度を試すため。テンプレート×語彙バンク) ----
+const BANK = {
+  person: ["おじいさん","おばあさん","えきいんさん","こどもたち","となりのねこ",
+           "パンやさん","がくせい","ゆうびんやさん","おまわりさん","りょうしさん"],
+  person2: ["ともだち","せんせい","いもうと","おにいさん","きんじょのひと","たびびと"],
+  place: ["こうえん","としょかん","うみべ","しょうてんがい","やまのうえ","えきまえ",
+          "はしのたもと","たんぼのあぜみち","おてらのにわ","いちば"],
+  obj: ["りんご","おにぎり","あかいかさ","ふるいとけい","てがみ","ちいさなふね",
+        "めがね","たいこ","きんぎょ","どんぐり","ちず","すいとう"],
+  verb: ["をかいました","をたべました","をみつけました","をなくしました","をひろいました",
+         "をとどけました","をわすれてしまいました","をたいせつにしています"],
+  time: ["あさはやく","ゆうがたに","あめあがりに","おひるすぎに","ゆきのふるひに","まよなかに"],
+  adj: ["おもい","ながい","はやい","たかい","ふるい","あまい"],
+  region: ["きゅうしゅうほくぶ","とうほくちほう","しこくぜんいき","かんとうなんぶ","ほくりく"],
+  weather: ["はれ","くもり","あめ","つよいかぜ","きり"],
+  shop: ["パンや","ほんや","はなや","おかしや","こっとうや"],
+};
+const TEMPLATES = [
+  "{time}{person}は{place}で{obj}{verb}",
+  "{place}のちかくにあたらしい{shop}ができて{person}はさっそくでかけました",
+  "{person}が{obj}をもって{place}へむかうとちゅう{person2}にばったりあいました",
+  "{obj}と{obj}ではどちらが{adj}でしょうかこたえはあとのおたのしみです",
+  "あすの{region}は{weather}のちいちじ{weather}となるみこみです",
+  "{person}のかばんには{obj}と{obj}がはいっていました",
+  "{time}{place}をさんぽしていた{person}は{obj}{verb}",
+];
+function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
+document.getElementById("rand").onclick = () => {
+  const used = {};
+  const s = pick(TEMPLATES).replace(/\{(\w+)\}/g, (_, k) => {
+    let w = pick(BANK[k]);
+    if (used[k + w]) w = pick(BANK[k]);      // 同語の重複をゆるく回避
+    used[k + w] = 1;
+    return w;
+  });
+  document.getElementById("text").value = s;
 };
 let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
@@ -173,9 +212,9 @@ document.getElementById("go").onclick = () => {
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
     } else {
-      // いまの文字は定位置。終わった文字は履歴として左に少し重なりながら溜まり、古いほど薄くなる
-      const XCUR = W * 0.62;
-      const step = gap * 0.55;
+      // いまの文字は定位置。終わった文字は履歴として左に溜まり、古いほど薄くなる(重ねない)
+      const XCUR = W * 0.66;
+      const step = gap * 0.95;
       const kTop = Math.min(i, toks.length - 1);
       for (let k = Math.max(0, kTop - 7); k <= kTop; k++) {
         const age = i - k;
