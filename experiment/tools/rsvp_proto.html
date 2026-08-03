@@ -85,6 +85,7 @@
     <div class="tab" data-m="2">④ 履歴が左に残る</div>
     <div class="tab" data-m="4">⑤ 通常配置に逐次出現</div>
     <div class="tab" data-m="5">⑥ 単語単位で残る</div>
+    <div class="tab" data-m="6">⑦ 単語単位RSVP</div>
   </div>
   <label>速さ</label>
   <input type="range" id="speed" min="0.03" max="0.30" step="0.01" value="0.14">
@@ -113,7 +114,9 @@
   残存スライダで直前文字がどれだけ残るかを操作——右端まで上げると消えない）。⑥は
   セマンティック単位RSVP：モーラ速度で出すが、単語/文節のチャンクが完成するまで全体が
   残り、完成後はチャンク単位でまとめて薄れる（区切りは空白か／。プリセットとランダム文は
-  区切り済み）。再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
+  区切り済み）。⑦は単語単位RSVP：いまのチャンクだけが中央に出て（中はモーラ速度で埋まる）、
+  次のチャンクが同じ場所に上書きされる。再生後に「内容を言えるか」を自分に問うのが評価のコツ。
+  速度を変えて限界を探る。
 </div>
 
 <script>
@@ -205,7 +208,7 @@ let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
   mode = +el.dataset.m;
   document.querySelectorAll(".tab").forEach(e => e.classList.toggle("active", e === el));
-  document.getElementById("frame").style.display = (mode === 2 || mode === 4 || mode === 5) ? "none" : "block";
+  document.getElementById("frame").style.display = (mode === 2 || mode >= 4) ? "none" : "block";
   document.getElementById("persistrow").style.display = (mode === 4 || mode === 5) ? "flex" : "none";
 });
 const speedEl = document.getElementById("speed");
@@ -303,6 +306,27 @@ document.getElementById("go").onclick = () => {
       if (i - 2 >= 0 && i - 2 < toks.length)
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
+    } else if (mode === 6) {
+      // 単語単位RSVP: いまのチャンクだけを中央に表示。チャンク内はモーラ速度で埋まり、
+      // 次のチャンクが来ると同じ場所に上書きされる
+      if (i < toks.length) {
+        const ci = chunkOf[i];
+        let start = 0;
+        for (let j = 0; j < ci; j++) start += chunks[j].length;
+        const len = chunks[ci].length;
+        const maxLen = Math.max(...chunks.map(c => c.length));
+        const fs7 = Math.min(150, (W * 0.75) / maxLen / 1.05);
+        const cw = fs7 * 1.08;
+        for (let m = 0; m < len; m++) {
+          const k = start + m;
+          let op;
+          if (k > i) op = 0;
+          else if (k === i) op = Math.min(1, (t - k * S) / S * 3);
+          else op = 1;
+          if (op > 0)
+            mk(toks[k], W/2 + (m - (len - 1) / 2) * cw, H/2, fs7, op);
+        }
+      }
     } else if (mode === 5) {
       // セマンティック単位RSVP: モーラ速度で出すが、チャンクが完成するまで全体が残り、
       // 完成後はチャンク単位でまとめて薄れる
