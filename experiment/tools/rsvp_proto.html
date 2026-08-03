@@ -84,6 +84,7 @@
     <div class="tab" data-m="3">③ 次が同じ枠に滲む</div>
     <div class="tab" data-m="2">④ 履歴が左に残る</div>
     <div class="tab" data-m="4">⑤ 通常配置に逐次出現</div>
+    <div class="tab" data-m="5">⑥ 単語単位で残る</div>
   </div>
   <label>速さ</label>
   <input type="range" id="speed" min="0.03" max="0.30" step="0.01" value="0.14">
@@ -96,7 +97,7 @@
   <button class="primary" id="go">再生</button>
 </div>
 <div class="row" id="persistrow" style="display:none">
-  <label>⑤ 直前文字の残存</label>
+  <label>⑤⑥ 直前の残存</label>
   <input type="range" id="persist" min="0" max="4.0" step="0.1" value="1.5" style="width:220px">
   <span id="persistval" style="font-size:13px; color:var(--ink2); min-width:110px;"></span>
 </div>
@@ -109,30 +110,32 @@
   うっすら滲み出してくる（クロスフェード。先読みの予測が効くか？）。④はいまの文字が定位置に
   出て、読み終えた文字が履歴として左に溜まり、古いほど薄れる（読み返しがきく）。⑤は普通の
   文章のように文字位置を固定し、ターンが来た文字から浮かび上がる（moving window 系の変形。
-  「⑤の残存」スライダで直前文字がどれだけ残るかを操作——右端まで上げると消えない）。
-  再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
+  残存スライダで直前文字がどれだけ残るかを操作——右端まで上げると消えない）。⑥は
+  セマンティック単位RSVP：モーラ速度で出すが、単語/文節のチャンクが完成するまで全体が
+  残り、完成後はチャンク単位でまとめて薄れる（区切りは空白か／。プリセットとランダム文は
+  区切り済み）。再生後に「内容を言えるか」を自分に問うのが評価のコツ。速度を変えて限界を探る。
 </div>
 
 <script>
 const SMALL = "ゃゅょぁぃぅぇぉっー";
 function tokenize(s){
   const t = [];
-  for (const ch of s.replace(/\s/g,"")) {
+  for (const ch of s.replace(/[\s　／/・]/g,"")) {
     if (t.length && SMALL.includes(ch) && ch !== "っ" && ch !== "ー") t[t.length-1] += ch;
     else t.push(ch);
   }
   return t;
 }
-const PRESETS = {
-  news: "きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう",
-  waka: "ちはやぶるかみよもきかずたつたがわからくれないにみずくくるとは",
-  iroha: "いろはにほへとちりぬるをわかよたれそつねならむういのおくやまけふこえて",
-  mukashi: "むかしむかしあるところにおじいさんとおばあさんがすんでいましたおじいさんはやまへしばかりにおばあさんはかわへせんたくにいきました",
-  quiz: "にほんでいちばんめんせきがおおきいとどうふけんはどこでしょうこたえはほっかいどうです",
-  eki: "まもなくさんばんせんにとうきょういきのれっしゃがまいりますあぶないですからきいろいせんのうちがわまでおさがりください",
-  kaiwa: "きょうのよるごはんはカレーにしようとおもうんだけどほかになにかたべたいものある",
-  suji: "ただいまのじこくはごごさんじじゅうごふんですげんざいのきおんはにじゅうはちどです",
-  tango: "さくらとけいすいかめがねたいこふねひこうきみかんらくだてがみ",
+const PRESETS = {  // 空白がチャンク(単語/文節)区切り。⑥が使う。他の方式では無視される
+  news: "きょうの かんとうちほうは はれ ときどき くもり ごごからは ところにより にわかあめが ふるでしょう",
+  waka: "ちはやぶる かみよもきかず たつたがわ からくれないに みずくくるとは",
+  iroha: "いろはにほへと ちりぬるを わかよたれそ つねならむ ういのおくやま けふこえて",
+  mukashi: "むかしむかし あるところに おじいさんと おばあさんが すんでいました おじいさんは やまへ しばかりに おばあさんは かわへ せんたくに いきました",
+  quiz: "にほんで いちばん めんせきが おおきい とどうふけんは どこでしょう こたえは ほっかいどうです",
+  eki: "まもなく さんばんせんに とうきょういきの れっしゃが まいります あぶないですから きいろいせんの うちがわまで おさがりください",
+  kaiwa: "きょうの よるごはんは カレーに しようと おもうんだけど ほかに なにか たべたいもの ある",
+  suji: "ただいまの じこくは ごご さんじ じゅうごふんです げんざいの きおんは にじゅうはちどです",
+  tango: "さくら とけい すいか めがね たいこ ふね ひこうき みかん らくだ てがみ",
 };
 document.getElementById("presets").onchange = e => {
   if (e.target.value) document.getElementById("text").value = PRESETS[e.target.value];
@@ -147,22 +150,22 @@ const BANK = {
           "はしのたもと","たんぼのあぜみち","おてらのにわ","いちば"],
   obj: ["りんご","おにぎり","あかいかさ","ふるいとけい","てがみ","ちいさなふね",
         "めがね","たいこ","きんぎょ","どんぐり","ちず","すいとう"],
-  verb: ["をかいました","をたべました","をみつけました","をなくしました","をひろいました",
-         "をとどけました","をわすれてしまいました","をたいせつにしています"],
+  verb: ["かいました","たべました","みつけました","なくしました","ひろいました",
+         "とどけました","わすれてしまいました","たいせつにしています"],
   time: ["あさはやく","ゆうがたに","あめあがりに","おひるすぎに","ゆきのふるひに","まよなかに"],
   adj: ["おもい","ながい","はやい","たかい","ふるい","あまい"],
   region: ["きゅうしゅうほくぶ","とうほくちほう","しこくぜんいき","かんとうなんぶ","ほくりく"],
   weather: ["はれ","くもり","あめ","つよいかぜ","きり"],
   shop: ["パンや","ほんや","はなや","おかしや","こっとうや"],
 };
-const TEMPLATES = [
-  "{time}{person}は{place}で{obj}{verb}",
-  "{place}のちかくにあたらしい{shop}ができて{person}はさっそくでかけました",
-  "{person}が{obj}をもって{place}へむかうとちゅう{person2}にばったりあいました",
-  "{obj}と{obj}ではどちらが{adj}でしょうかこたえはあとのおたのしみです",
-  "あすの{region}は{weather}のちいちじ{weather}となるみこみです",
-  "{person}のかばんには{obj}と{obj}がはいっていました",
-  "{time}{place}をさんぽしていた{person}は{obj}{verb}",
+const TEMPLATES = [  // 空白がチャンク区切り(⑥用)
+  "{time} {person}は {place}で {obj}を {verb}",
+  "{place}の ちかくに あたらしい {shop}が できて {person}は さっそく でかけました",
+  "{person}が {obj}を もって {place}へ むかうとちゅう {person2}に ばったり あいました",
+  "{obj}と {obj}では どちらが {adj}でしょうか こたえは あとの おたのしみです",
+  "あすの {region}は {weather}のち いちじ {weather}と なるみこみです",
+  "{person}の かばんには {obj}と {obj}が はいっていました",
+  "{time} {place}を さんぽしていた {person}は {obj}を {verb}",
 ];
 function pick(a){ return a[Math.floor(Math.random() * a.length)]; }
 let hiddenText = null;                       // 生成文は伏せておき「表示」で答え合わせ
@@ -202,8 +205,8 @@ let mode = 0;
 document.querySelectorAll(".tab").forEach(el => el.onclick = () => {
   mode = +el.dataset.m;
   document.querySelectorAll(".tab").forEach(e => e.classList.toggle("active", e === el));
-  document.getElementById("frame").style.display = (mode === 2 || mode === 4) ? "none" : "block";
-  document.getElementById("persistrow").style.display = mode === 4 ? "flex" : "none";
+  document.getElementById("frame").style.display = (mode === 2 || mode === 4 || mode === 5) ? "none" : "block";
+  document.getElementById("persistrow").style.display = (mode === 4 || mode === 5) ? "flex" : "none";
 });
 const speedEl = document.getElementById("speed");
 function setSpeed(v){ speedEl.value = v; showSpeed(); }
@@ -225,18 +228,61 @@ const stage = document.getElementById("stage");
 let raf = null, t0 = null;
 document.getElementById("go").onclick = () => {
   cancelAnimationFrame(raf);
-  const toks = tokenize(hiddenText ?? document.getElementById("text").value);
+  const raw = hiddenText ?? document.getElementById("text").value;
+  const chunks = raw.split(/[\s　／/・]+/).filter(Boolean).map(tokenize).filter(c => c.length);
+  const toks = chunks.flat();
   if (!toks.length) return;
+  const chunkOf = [], chunkEndMora = [];
+  {
+    let k = 0;
+    chunks.forEach((c, ci) => {
+      c.forEach(() => chunkOf.push(ci));
+      k += c.length;
+      chunkEndMora.push(k - 1);
+    });
+  }
   const S = +speedEl.value;
   t0 = performance.now();
   const W = stage.clientWidth, H = stage.clientHeight;
   const size = mode === 2 ? 120 : 210;
   const gap = size * 1.15;
+  // ⑥のレイアウト(チャンクを跨がずに折り返し、チャンク間に少し空きを置く)
+  let pos6 = null, fs6 = 0;
+  if (mode === 5) {
+    fs6 = Math.min(76, (W * 0.86) / Math.min(toks.length, 18) / 1.05);
+    const cw = fs6 * 1.08, spacing = fs6 * 0.5, maxW = W * 0.92;
+    const starts = [];
+    { let s2 = 0; chunks.forEach(c => { starts.push(s2); s2 += c.length; }); }
+    const lines = [];
+    let cur = [], curW = 0;
+    chunks.forEach((c, ci) => {
+      const w = c.length * cw + (cur.length ? spacing : 0);
+      if (cur.length && curW + w > maxW) { lines.push(cur); cur = []; curW = 0; }
+      curW += c.length * cw + (cur.length ? spacing : 0);
+      cur.push(ci);
+    });
+    if (cur.length) lines.push(cur);
+    pos6 = new Array(toks.length);
+    lines.forEach((lineChunks, li) => {
+      const lineW = lineChunks.reduce((a, ci) => a + chunks[ci].length * cw, 0) +
+                    spacing * (lineChunks.length - 1);
+      let x = W / 2 - lineW / 2 + cw / 2;
+      const y = H / 2 + (li - (lines.length - 1) / 2) * fs6 * 1.6;
+      lineChunks.forEach(ci => {
+        for (let m = 0; m < chunks[ci].length; m++) {
+          pos6[starts[ci] + m] = { x: x, y: y };
+          x += cw;
+        }
+        x += spacing;
+      });
+    });
+  }
   function frame(now){
     const t = (now - t0) / 1000;
     const i = Math.floor(t / S);
     stage.innerHTML = "";
-    const tail = mode === 2 ? 6 : mode === 4 ? Math.min(10, Math.ceil((+persistEl.value) / S) + 2) : 1;
+    const tail = mode === 2 ? 6 :
+      (mode === 4 || mode === 5) ? Math.min(10, Math.ceil((+persistEl.value) / S) + 2) : 1;
     if (i >= toks.length + tail) {
       stage.innerHTML = '<div id="done">おわり — 内容を言えましたか？</div>';
       return;
@@ -257,6 +303,23 @@ document.getElementById("go").onclick = () => {
       if (i - 2 >= 0 && i - 2 < toks.length)
         mk(toks[i-2], W/2, H/2, size, 0.14 * (1 - prog));          // さらに前
       if (i < toks.length) mk(toks[i], W/2, H/2, size, Math.min(1, prog * 4 + 0.35));
+    } else if (mode === 5) {
+      // セマンティック単位RSVP: モーラ速度で出すが、チャンクが完成するまで全体が残り、
+      // 完成後はチャンク単位でまとめて薄れる
+      const persist = +persistEl.value;
+      const keep = persist >= 4.0;
+      for (let k = 0; k < toks.length; k++) {
+        let op;
+        if (k > i) op = 0;
+        else if (k === i) op = Math.min(1, (t - k * S) / S * 3);
+        else {
+          const tEnd = (chunkEndMora[chunkOf[k]] + 1) * S;
+          if (keep || t < tEnd) op = 1;
+          else if (persist <= 0) op = 0;
+          else op = Math.max(0, 1 - (t - tEnd) / persist);
+        }
+        if (op > 0) mk(toks[k], pos6[k].x, pos6[k].y, fs6, op);
+      }
     } else if (mode === 4) {
       // 通常配置+逐次出現: 文字位置は固定。自分のターンで浮かび上がり、残存時間ののち薄れる
       const persist = +persistEl.value;
