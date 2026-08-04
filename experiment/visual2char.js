@@ -1,6 +1,7 @@
 // =========================================================================
 // 視覚版 2文字課題 本実験 (2026-07-02 設計改訂版)
-//   - 固定領域に C1→C2 を各 0.2 秒で提示。前の文字は一瞬で消去。
+//   - 固定領域に C1→C2 を各 0.2 秒で提示。前の文字は一瞬で消去する
+//     (統制条件。残存条件では C1 が薄くなりながら重なって残る。下記の改訂その2)。
 //     C2 は frac% 時点で消去 (聴覚 truncation の視覚版)。2文字目を当てる。
 //   - 提示アルゴリズムは ALGO_LIST から配る
 //     (パイロット pilot_visual2char.html で比較して絞り込んだら書き換える)。
@@ -20,6 +21,17 @@
 //     4. C2 の提示時間の実測 (actual_ms / actual_frames)。名目は CHAR_MS*frac/100 だが、
 //        実際にはリフレッシュ周期に量子化されるので、描画フレームの実時刻から測る。
 //     5. 本番モード (?prod=1)。同意画面・GAS 送信・完了コードは prod_common.js に一本化。
+//
+//   2026-08 の改訂その2 (先行文字の残存の要因を追加):
+//     提示方式を2水準にした。
+//       ・"none"  (統制・従来どおり): C1 が消えてから C2 が出る。
+//       ・"decay" (先行文字の残存):   C2 の提示中も C1 が薄くなりながら同じ枠に
+//         重なって残る。C1 の不透明度は C2 の提示開始時刻を起点として
+//         alpha = exp(-t / TAU_MS) の指数減衰にする。
+//     この条件で増えるのは C1 の可視時間だけであり、C2 の可視時間は一切変わらない。
+//     回答対象は C2 なので、「長く見せただけ」という交絡が生じない設計になっている。
+//     C2 の提示開始時刻 (CHAR_MS) と打ち切り時刻 (CHAR_MS + CHAR_MS*frac/100) は
+//     両条件で完全に同一である。この性質を壊さないこと。
 // =========================================================================
 
 const N_TRIALS = 200;
@@ -27,6 +39,28 @@ const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;          // frac=100 (C2 を最後まで見せる) の統制試行
 const CHAR_MS = 200;              // 1文字の提示時間 (競技かるたの規定 0.2 秒)
 const FRAC_GRID = Array.from({length: 21}, (_, i) => i * 5);
+
+const URL_PARAMS = new URLSearchParams(location.search);
+
+// 先行文字 (C1) の残存の条件。"none" は統制 (従来どおり)、"decay" は指数減衰で重ねて残す。
+// 研究者のパイロット用に URL パラメータ ?overlap= で上書きできる
+// (例: ?overlap=decay で残存条件だけに固定できる)。
+const OVERLAP_LIST_DEFAULT = ["none", "decay"];
+function parseOverlapParam(raw) {
+  if (!raw) return OVERLAP_LIST_DEFAULT.slice();
+  const vals = raw.split(",").map(s => s.trim())
+    .filter(v => OVERLAP_LIST_DEFAULT.indexOf(v) >= 0);
+  return vals.length ? vals : OVERLAP_LIST_DEFAULT.slice();
+}
+const OVERLAP_LIST = parseOverlapParam(URL_PARAMS.get("overlap"));
+
+// C1 の減衰の時定数 (ミリ秒)。
+// ※これは仮の値である。視覚的な残像・図像記憶の減衰の文献にもとづいて後日確定する。
+//   確定するまでは、この1箇所だけを書き換えれば全体に反映される。
+//   研究者のパイロット用に URL パラメータ ?tau= で上書きできる (例: ?tau=150)。
+const TAU_MS_DEFAULT = 100;
+const _tauParam = Number(URL_PARAMS.get("tau"));
+const TAU_MS = (Number.isFinite(_tauParam) && _tauParam > 0) ? _tauParam : TAU_MS_DEFAULT;
 const FONT_TAG = "bizudgothic";   // base/ 画像のフォント
 const SIZE = 256;
 const STROKE_THRESH = 128;
@@ -214,10 +248,50 @@ const ALGOS = {
   },
 };
 
-// C1 を 0→0.2s で提示し 0.2s で一瞬で消去、C2 は frac% 時点で消去。経過時間ベース。
+// 残存条件で C1 と C2 を重ねて描くための作業用キャンバス。
+// 既存の ALGOS の描画関数は先頭で必ず白く塗りつぶすため、そのまま同じ枠に2回呼ぶと
+// あとの描画が前の描画を白で消してしまう。そこで、いったん作業用キャンバスにそれぞれを
+// 描いてから本番の枠に合成する。
+let layer1 = null, layer1Ctx = null, layer2 = null, layer2Ctx = null;
+function ensureLayers() {
+  if (layer1) return;
+  layer1 = document.createElement("canvas");
+  layer1.width = layer1.height = SIZE;
+  layer1Ctx = layer1.getContext("2d", { willReadFrequently: true });
+  layer2 = document.createElement("canvas");
+  layer2.width = layer2.height = SIZE;
+  layer2Ctx = layer2.getContext("2d", { willReadFrequently: true });
+}
+
+// 残存条件の1フレーム。まず C1 をその不透明度で描き、その上に C2 を重ねる。
+//   ・C1 は最終状態 (u=1、完全に現れた状態) を、C2 の提示開始からの経過時間 t に対して
+//     alpha = exp(-t / TAU_MS) の不透明度で描く。作業用キャンバスは白地なので、
+//     不透明度を下げて重ねると「白に向かって薄くなる」ことになる。
+//   ・C2 は乗算合成 (multiply) で上に重ねる。白地どうしの乗算なので、
+//     C2 の白い部分では下の C1 の残りがそのまま残り、C2 の墨の部分だけが濃くなる。
+//     単純に上書きすると C2 の白い背景で C1 を消してしまうため、乗算にしている。
+function drawOverlapped(ctx, render, c1, c2, u2, tSinceC2) {
+  ensureLayers();
+  const alpha = Math.exp(-tSinceC2 / TAU_MS);
+  clearStage(ctx);
+  render(layer1Ctx, c1, 1);
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(layer1, 0, 0);
+  ctx.globalAlpha = 1;
+  render(layer2Ctx, c2, u2);
+  ctx.globalCompositeOperation = "multiply";
+  ctx.drawImage(layer2, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+}
+
+// C1 を 0→0.2s で提示し、C2 は frac% 時点で消去。経過時間ベース。
+// 統制条件 (overlap="none") では 0.2s で C1 を一瞬で消去する。
+// 残存条件 (overlap="decay") では C2 の提示中も C1 が指数減衰しながら重なって残る。
+// どちらの条件でも C2 の提示開始時刻 (CHAR_MS) と打ち切り時刻 (c2End) は同一であり、
+// C2 の可視時間は条件によって変わらない (これがこの要因の設計上の要である)。
 // 名目の C2 の提示時間 (CHAR_MS*frac/100) は画面のリフレッシュ周期に量子化されるため、
 // C2 を最初に描画したフレームから消去したフレームまでの経過時間とフレーム数を実測して返す。
-function playSeq(ctx, c1, c2, frac, algoName, onDone) {
+function playSeq(ctx, c1, c2, frac, algoName, overlap, onDone) {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   const render = ALGOS[algoName];
   const c2End = CHAR_MS + CHAR_MS * frac / 100;
@@ -228,7 +302,11 @@ function playSeq(ctx, c1, c2, frac, algoName, onDone) {
     if (el < CHAR_MS) {
       render(ctx, c1, el / CHAR_MS);
     } else if (el < c2End) {
-      render(ctx, c2, (el - CHAR_MS) / CHAR_MS);
+      if (overlap === "decay") {
+        drawOverlapped(ctx, render, c1, c2, (el - CHAR_MS) / CHAR_MS, el - CHAR_MS);
+      } else {
+        render(ctx, c2, (el - CHAR_MS) / CHAR_MS);
+      }
       if (tFirst2 === null) tFirst2 = now;
       frames2 += 1;
     } else {
@@ -259,8 +337,15 @@ function dealEven(items, n) {
   while (out.length < n) out.push(...shuffle([...items]));
   return out.slice(0, n);
 }
-function specId(c1, c2, algo, frac) {
-  return `v2c-${c1}${c2}-${algo}-f${String(frac).padStart(3, "0")}`;
+function specId(c1, c2, algo, frac, overlap) {
+  return `v2c-${c1}${c2}-${algo}-f${String(frac).padStart(3, "0")}-${overlap}`;
+}
+// 条件水準ごとの試行数。総試行数を水準数で割り、割り切れない余りは先頭の水準から1問ずつ配る
+// (既定の2水準・総数200問なら 100問ずつになる)。
+function splitByLevel(total, nLevels) {
+  const base = Math.floor(total / nLevels);
+  const rest = total - base * nLevels;
+  return Array.from({length: nLevels}, (_, i) => base + (i < rest ? 1 : 0));
 }
 // C1 と C2 を配る。採点対象は C2 なので C2 の均等配分を優先し、C1 も別の組から均等に配る。
 // C1 と C2 が同じ字になった場合だけ、その位置の C1 を後ろの別の字と入れ替える。
@@ -274,32 +359,44 @@ function dealPairs(n) {
   }
   return d1.map((c1, i) => [c1, d2[i]]);
 }
-// 本番 N_TRIALS 問。frac 水準・文字・アルゴリズムをそれぞれ均等に配ってから順序を混ぜる。
+// 本番 N_TRIALS 問。提示方式2水準 × frac21水準が均等になるように配り、
+// さらに文字とアルゴリズムも全体で均等に配ってから順序を混ぜる。
+// frac は提示方式の水準ごとに独立に均等配分する。こうすると「条件ごとの試行数」と
+// 「条件 × frac のセルの試行数」の両方をできるだけそろえられる。
 function buildMainSpecs() {
-  const nCatch = Math.round(N_TRIALS * CATCH_RATE);   // frac=100 の統制試行
-  const nGraded = N_TRIALS - nCatch;
-  const fracs = dealEven(FRAC_GRID, nGraded);         // 21水準にできるだけ均等
   const pairs = dealPairs(N_TRIALS);                  // 78字にできるだけ均等
   const algos = dealEven(ALGO_LIST, N_TRIALS);
+  const perCond = splitByLevel(N_TRIALS, OVERLAP_LIST.length);
   const specs = [];
-  for (let i = 0; i < N_TRIALS; i++) {
-    const isCatch = i >= nGraded;
-    const frac = isCatch ? 100 : fracs[i];
-    const [c1, c2] = pairs[i];
-    specs.push({ c1, c2, frac, algo: algos[i], is_catch: isCatch, id: specId(c1, c2, algos[i], frac) });
-  }
+  let i = 0;
+  OVERLAP_LIST.forEach((overlap, s) => {
+    const n = perCond[s];
+    const nCatch = Math.round(n * CATCH_RATE);        // frac=100 の統制試行
+    const nGraded = n - nCatch;
+    const fracs = dealEven(FRAC_GRID, nGraded);       // 21水準にできるだけ均等
+    for (let j = 0; j < n; j++, i++) {
+      const isCatch = j >= nGraded;
+      const frac = isCatch ? 100 : fracs[j];
+      const [c1, c2] = pairs[i];
+      specs.push({ c1, c2, frac, algo: algos[i], overlap,
+        is_catch: isCatch, id: specId(c1, c2, algos[i], frac, overlap) });
+    }
+  });
   return shuffle(specs);
 }
 // 練習 N_PRACTICE 問。見やすい水準から始めて短い水準も混ぜ、
 // 「最後まで見える問も、ほとんど見えない問もある」ことを体験してもらう。
+// 提示方式も両方の条件を体験できるように交互に配る (重なって見えることに驚かせないため)。
 function buildPracticeSpecs() {
   const ladder = [100, 80, 60, 40, 20];
   const pairs = dealPairs(N_PRACTICE);
   const algos = dealEven(ALGO_LIST, N_PRACTICE);
+  const overlaps = dealEven(OVERLAP_LIST, N_PRACTICE);
   return Array.from({length: N_PRACTICE}, (_, i) => {
     const frac = ladder[i % ladder.length];
     const [c1, c2] = pairs[i];
-    return { c1, c2, frac, algo: algos[i], is_catch: false, id: specId(c1, c2, algos[i], frac) };
+    return { c1, c2, frac, algo: algos[i], overlap: overlaps[i],
+      is_catch: false, id: specId(c1, c2, algos[i], frac, overlaps[i]) };
   });
 }
 
@@ -351,7 +448,8 @@ function makeTrial(spec, isPractice = false) {
         } else {
           _replays += 1;
         }
-        playSeq(ctx, spec.c1, spec.c2, spec.frac, spec.algo, (m) => { if (!_meas) _meas = m; });
+        playSeq(ctx, spec.c1, spec.c2, spec.frac, spec.algo, spec.overlap,
+          (m) => { if (!_meas) _meas = m; });
       };
       if (btn) btn.addEventListener("click", play);
       _spaceHandler = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); play(); } };
@@ -367,6 +465,9 @@ function makeTrial(spec, isPractice = false) {
       target_char: spec.c2,
       algo: spec.algo,
       frac: spec.frac,
+      overlap: spec.overlap,     // "none" (統制) か "decay" (先行文字の残存)
+      // 減衰の時定数。統制条件では減衰そのものが無いので空欄にする。
+      tau_ms: (spec.overlap === "decay") ? TAU_MS : "",
       n_choices: N_CHOICES,
       is_catch: spec.is_catch,
     },
@@ -386,6 +487,7 @@ function makeTrial(spec, isPractice = false) {
         stimulus_id: data.stimulus_id, response_char: data.response_char,
         target_char: data.target_char, c1: data.c1, modality: data.modality,
         q_set: data.q_set, font: data.font, algo: data.algo, frac: data.frac,
+        overlap: data.overlap, tau_ms: data.tau_ms,
         n_choices: data.n_choices, replays: data.replays, rt_ms: data.rt_ms,
         is_catch: data.is_catch, actual_ms: data.actual_ms, actual_frames: data.actual_frames,
       });
@@ -416,7 +518,8 @@ function makeFeedback(spec) {
 
 function downloadResults() {
   const payload = {
-    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, CHAR_MS, FRAC_GRID, ALGO_LIST, FONT_TAG },
+    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, CHAR_MS, FRAC_GRID, ALGO_LIST, FONT_TAG,
+      OVERLAP_LIST, TAU_MS },
     env: ENV,
     trials: jsPsych.data.get().filter({task: "main"}).values(),
   };
@@ -487,6 +590,8 @@ async function run() {
        押すまでは何も起きませんので、落ち着いてから始めてください。</p>
        <p>1文字目は最後まで表示されますが、<b>2文字目は途中で消える</b>ことがあります。
        答えるのは <b>2文字目</b> です。</p>
+       ${OVERLAP_LIST.indexOf("decay") >= 0 ? `<p>問題によっては、<b>1文字目が薄く残ったまま2文字目が重なって見える</b>ことがあります。
+       これは実験の仕組みによるもので、故障や不具合ではありません。</p>` : ""}
        <p>押したあと、同じボタンが「▶ もう一度みる」に変わり、<b>何度でも</b> 見直せます。
        下の <b>50音表</b>(濁音・半濁音などを含む 78 字)から、<b>2文字目</b>だと思う 1 文字を
        選んでください。表は毎回同じ並びです。</p>`,

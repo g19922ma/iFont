@@ -1,7 +1,8 @@
 // =========================================================================
 // 視覚版 1文字課題 本実験 (統一モデルの C1=∅ = 先頭位置の特殊ケース)
-//   - 固定領域に単一のかなを 0.2 秒で提示。0.2 秒の中で認識度が上がる提示
-//     アルゴリズムを使い、frac% 時点で消去する (時間ゲート)。何の文字かを問う。
+//   - 固定領域に単一のかなを提示する。1文字にかける時間 (CHAR_MS) の中で
+//     認識度が上がる提示アルゴリズムを使い、frac% 時点で消去する (時間ゲート)。
+//     何の文字かを問う。1文字にかける時間は 200 ミリ秒と 133 ミリ秒の2水準。
 //   - 提示アルゴリズムは ALGO_LIST から配る
 //     (パイロット pilot_visual2char.html で絞り込んだら書き換える)。
 //   - 文字は VISUAL 78字。base/<char>.png からブラウザ側で合成。正解は target_char を
@@ -17,12 +18,43 @@
 //     4. 提示時間の実測 (actual_ms / actual_frames)。名目は CHAR_MS*frac/100 だが、
 //        実際にはリフレッシュ周期に量子化されるので、描画フレームの実時刻から測る。
 //     5. 本番モード (?prod=1)。同意画面・GAS 送信・完了コードは prod_common.js に一本化。
+//
+//   2026-08 の改訂その2 (提示速度の要因を追加):
+//     1文字にかける時間 (CHAR_MS) を 200 ミリ秒に固定していたのをやめ、
+//     200 ミリ秒と 133 ミリ秒の2水準にして参加者内で両方を実施する。
+//       ・200 ミリ秒は毎秒 5.0 モーラに相当し、日本語能力試験 N5 の聴解音声
+//         (毎秒 5.05 モーラ) とほぼ同じ、最も配慮された遅い読み上げ速度である。
+//         聴覚課題の刺激プールがこの速度で作られているため、聴覚と視覚を
+//         対応づけるときの基準点になる。
+//       ・133 ミリ秒は毎秒 7.5 モーラに相当し、アナウンサーの標準的な
+//         読み上げ速度に当たる。
+//     frac は「提示アルゴリズムがどこまで進んだか」を表す無次元の量であり、
+//     実際の露光時間は frac × CHAR_MS である。したがって速度水準を変えても
+//     frac のグリッド (0 から 100 まで5刻みの21水準) はそのまま使える。
 // =========================================================================
 
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;            // frac=100 (最後まで見せる) の統制試行
-const CHAR_MS = 200;
+
+// 提示速度の要因。1文字にかける時間 (ミリ秒) の水準。
+// 研究者のパイロット用に URL パラメータ ?charms= で上書きできる
+// (例: ?charms=200 で1水準に固定、?charms=200,133 で明示的に2水準)。
+const URL_PARAMS = new URLSearchParams(location.search);
+const CHAR_MS_DEFAULT = [200, 133];
+function parseCharMsParam(raw) {
+  if (!raw) return CHAR_MS_DEFAULT.slice();
+  const vals = raw.split(",")
+    .map(s => Number(s.trim()))
+    .filter(v => Number.isFinite(v) && v > 0);
+  return vals.length ? vals : CHAR_MS_DEFAULT.slice();
+}
+const CHAR_MS_LIST = parseCharMsParam(URL_PARAMS.get("charms"));
+// 教示で参加者に伝える速さの表現 (水準が1つのときはその値だけを書く)。
+const SPEED_NOTE = (CHAR_MS_LIST.length > 1)
+  ? `1文字あたり ${(Math.min(...CHAR_MS_LIST) / 1000).toFixed(2)} 〜 ${(Math.max(...CHAR_MS_LIST) / 1000).toFixed(2)} 秒`
+  : `1文字あたり ${(CHAR_MS_LIST[0] / 1000).toFixed(2)} 秒`;
+
 const FRAC_GRID = Array.from({length: 21}, (_, i) => i * 5);
 const FONT_TAG = "bizudgothic";
 const SIZE = 256;
@@ -164,19 +196,21 @@ const ALGOS = {
   slideR(ctx, ch, u) { clearStage(ctx); ctx.drawImage(imgs[ch], (1 - u) * SIZE, 0, SIZE, SIZE); },
 };
 
-// 単一のかなを 0→frac/100 まで提示 (名目 0〜0.2*frac/100 秒) して消去する。
+// 単一のかなを 0→frac/100 まで提示 (名目 0〜charMs*frac/100 ミリ秒) して消去する。
+// charMs はその試行の提示速度 (200 または 133 ミリ秒)。frac は無次元の進み具合なので、
+// 速度が変わっても frac のグリッドはそのまま使える。
 // 名目の提示時間は画面のリフレッシュ周期に量子化されるため、実際に描画した最初の
 // フレームから消去したフレームまでの経過時間と、描画したフレーム数を実測して返す。
-function playSeq(ctx, ch, frac, algoName, onDone) {
+function playSeq(ctx, ch, frac, algoName, charMs, onDone) {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   const render = ALGOS[algoName];
-  const end = CHAR_MS * frac / 100;
+  const end = charMs * frac / 100;
   const t0 = performance.now();
   let tFirst = null, frames = 0;
   function frame(now) {
     const el = now - t0;
     if (el < end) {
-      render(ctx, ch, el / CHAR_MS);
+      render(ctx, ch, el / charMs);
       if (tFirst === null) tFirst = now;
       frames += 1;
       rafId = requestAnimationFrame(frame);
@@ -204,33 +238,52 @@ function dealEven(items, n) {
   while (out.length < n) out.push(...shuffle([...items]));
   return out.slice(0, n);
 }
-function specId(ch, algo, frac) {
-  return `v1c-${ch}-${algo}-f${String(frac).padStart(3, "0")}`;
+function specId(ch, algo, frac, charMs) {
+  return `v1c-${ch}-${algo}-f${String(frac).padStart(3, "0")}-c${charMs}`;
 }
-// 本番 N_TRIALS 問。frac 水準・文字・アルゴリズムをそれぞれ均等に配ってから順序を混ぜる。
+// 速度水準ごとの試行数。総試行数を水準数で割り、割り切れない余りは先頭の水準から1問ずつ配る
+// (既定の2水準・総数200問なら 100問ずつになる)。
+function splitByLevel(total, nLevels) {
+  const base = Math.floor(total / nLevels);
+  const rest = total - base * nLevels;
+  return Array.from({length: nLevels}, (_, i) => base + (i < rest ? 1 : 0));
+}
+// 本番 N_TRIALS 問。速度2水準 × frac21水準が均等になるように配り、
+// さらに文字とアルゴリズムも全体で均等に配ってから順序を混ぜる。
+// frac は速度水準ごとに独立に均等配分する。こうすると「速度水準ごとの試行数」と
+// 「速度 × frac のセルの試行数」の両方をできるだけそろえられる。
 function buildMainSpecs() {
-  const nCatch = Math.round(N_TRIALS * CATCH_RATE);   // frac=100 の統制試行
-  const nGraded = N_TRIALS - nCatch;
-  const fracs = dealEven(FRAC_GRID, nGraded);         // 21水準にできるだけ均等
   const chars = dealEven(CHARS, N_TRIALS);            // 78字にできるだけ均等
   const algos = dealEven(ALGO_LIST, N_TRIALS);
+  const perSpeed = splitByLevel(N_TRIALS, CHAR_MS_LIST.length);
   const specs = [];
-  for (let i = 0; i < N_TRIALS; i++) {
-    const isCatch = i >= nGraded;
-    const frac = isCatch ? 100 : fracs[i];
-    specs.push({ ch: chars[i], frac, algo: algos[i], is_catch: isCatch, id: specId(chars[i], algos[i], frac) });
-  }
+  let i = 0;
+  CHAR_MS_LIST.forEach((charMs, s) => {
+    const n = perSpeed[s];
+    const nCatch = Math.round(n * CATCH_RATE);        // frac=100 の統制試行
+    const nGraded = n - nCatch;
+    const fracs = dealEven(FRAC_GRID, nGraded);       // 21水準にできるだけ均等
+    for (let j = 0; j < n; j++, i++) {
+      const isCatch = j >= nGraded;
+      const frac = isCatch ? 100 : fracs[j];
+      specs.push({ ch: chars[i], frac, algo: algos[i], char_ms: charMs,
+        is_catch: isCatch, id: specId(chars[i], algos[i], frac, charMs) });
+    }
+  });
   return shuffle(specs);
 }
 // 練習 N_PRACTICE 問。見やすい水準から始めて短い水準も混ぜ、
 // 「最後まで見える問も、ほとんど見えない問もある」ことを体験してもらう。
+// 提示速度も両方の水準を体験できるように交互に配る。
 function buildPracticeSpecs() {
   const ladder = [100, 80, 60, 40, 20];
   const chars = dealEven(CHARS, N_PRACTICE);
   const algos = dealEven(ALGO_LIST, N_PRACTICE);
+  const charMss = dealEven(CHAR_MS_LIST, N_PRACTICE);
   return Array.from({length: N_PRACTICE}, (_, i) => {
     const frac = ladder[i % ladder.length];
-    return { ch: chars[i], frac, algo: algos[i], is_catch: false, id: specId(chars[i], algos[i], frac) };
+    return { ch: chars[i], frac, algo: algos[i], char_ms: charMss[i],
+      is_catch: false, id: specId(chars[i], algos[i], frac, charMss[i]) };
   });
 }
 
@@ -277,7 +330,7 @@ function makeTrial(spec, isPractice = false) {
         } else {
           _replays += 1;
         }
-        playSeq(ctx, spec.ch, spec.frac, spec.algo, (m) => { if (!_meas) _meas = m; });
+        playSeq(ctx, spec.ch, spec.frac, spec.algo, spec.char_ms, (m) => { if (!_meas) _meas = m; });
       };
       if (btn) btn.addEventListener("click", play);
       _spaceHandler = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); play(); } };
@@ -292,6 +345,7 @@ function makeTrial(spec, isPractice = false) {
       target_char: spec.ch,
       algo: spec.algo,
       frac: spec.frac,
+      char_ms: spec.char_ms,     // その試行の提示速度 (200 または 133 ミリ秒)
       n_choices: N_CHOICES,
       is_catch: spec.is_catch,
     },
@@ -310,7 +364,8 @@ function makeTrial(spec, isPractice = false) {
       PROD.saveFracTrial({
         stimulus_id: data.stimulus_id, response_char: data.response_char,
         target_char: data.target_char, modality: data.modality, q_set: data.q_set,
-        font: data.font, algo: data.algo, frac: data.frac, n_choices: data.n_choices,
+        font: data.font, algo: data.algo, frac: data.frac, char_ms: data.char_ms,
+        n_choices: data.n_choices,
         replays: data.replays, rt_ms: data.rt_ms, is_catch: data.is_catch,
         actual_ms: data.actual_ms, actual_frames: data.actual_frames,
       });
@@ -340,7 +395,7 @@ function makeFeedback(spec) {
 
 function downloadResults() {
   const payload = {
-    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, CHAR_MS, FRAC_GRID, ALGO_LIST, FONT_TAG },
+    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, CHAR_MS_LIST, FRAC_GRID, ALGO_LIST, FONT_TAG },
     env: ENV,
     trials: jsPsych.data.get().filter({task: "main"}).values(),
   };
@@ -381,8 +436,8 @@ async function run() {
       `<h2>インクルーシブ字幕の研究実験（視覚・1文字版）</h2>
        <p>本実験は、画面にすばやく表示される文字の読み取りやすさを測ることを目的としています。
        所要時間は約 20 分です。ご協力ありがとうございます。</p>
-       <p><b>文字が短い時間 (0.2 秒) で表示されます。</b>
-       画面がよく見える明るさ・距離でご参加ください。</p>
+       <p><b>文字が短い時間 (${SPEED_NOTE}) で表示されます。</b>
+       表示の速さは問題ごとに変わります。画面がよく見える明るさ・距離でご参加ください。</p>
        <p>取得するデータ: 各設問への回答とその所要時間、参加識別子。
        個人を特定する情報は収集しません。</p>
        <p><b>続けて参加することに同意される場合は「次へ」を押してください。</b></p>`,
@@ -394,8 +449,8 @@ async function run() {
     pages: [
       `<h2>課題</h2>
        <p>各問で、ひらがなが <b>1文字だけ</b> 同じ場所に表示されます。
-       0.2 秒の速さで、字は「だんだん現れる」ように表示されます
-       (現れかたは問題ごとにさまざまです)。</p>
+       ${SPEED_NOTE}の速さで、字は「だんだん現れる」ように表示されます
+       (現れかたも表示の速さも問題ごとにさまざまです)。</p>
        <p>各問は <b>自分のペース</b> で始められます。表示枠の下の
        <b>[準備ができたら開始]</b> ボタン (またはスペースキー) を押すと、そこで文字が表示されます。
        押すまでは何も起きませんので、落ち着いてから始めてください。</p>

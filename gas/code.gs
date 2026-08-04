@@ -18,9 +18,18 @@
  *   response_char, correct_char, correct, modality, q_set,
  *   k_index, k, r, frac_index, frac, n_choices, font_voice, mode,
  *   replays, rt_ms, is_catch, c1, algo, pitch_scheme, bigram_freq,
- *   actual_ms, actual_frames, ua, dpr, screen, touch, refresh_hz
+ *   actual_ms, actual_frames, ua, dpr, screen, touch, refresh_hz,
+ *   char_ms, overlap, tau_ms
+ *   - char_ms は視覚1文字課題の提示速度の要因。1文字にかける時間 (ミリ秒) で、
+ *     200 (毎秒5.0モーラ・N5聴解相当) と 133 (毎秒7.5モーラ・アナウンサー相当) の2水準。
+ *     実際の露光時間は frac × char_ms になる。他の課題では空欄。
+ *   - overlap / tau_ms は視覚2文字課題の「先行文字の残存」の要因。
+ *     overlap は "none" (統制: C1 が消えてから C2 が出る) か
+ *     "decay" (C2 の提示中も C1 が alpha=exp(-t/tau) で薄くなりながら重なって残る)。
+ *     tau_ms は減衰の時定数で、統制条件では空欄。C2 の可視時間は条件によらず同一なので、
+ *     この要因で増えるのは C1 の可視時間だけである。他の課題では空欄。
  *   - actual_ms / actual_frames は視覚課題の実測。名目の提示時間
- *     (CHAR_MS*frac/100) は画面のリフレッシュ周期に量子化されるため、
+ *     (char_ms*frac/100) は画面のリフレッシュ周期に量子化されるため、
  *     ターゲット文字を最初に描画したフレームから消去したフレームまでの
  *     実時間とフレーム数をクライアントが測って送る。聴覚課題では空欄。
  *   - ua / dpr / screen / touch / refresh_hz は端末環境。prod_common.js の
@@ -142,6 +151,8 @@ function doPost(e) {
         "n_choices", "font_voice", "mode", "replays", "rt_ms", "is_catch",
         "c1", "algo", "pitch_scheme", "bigram_freq",
         "actual_ms", "actual_frames", "ua", "dpr", "screen", "touch", "refresh_hz",
+        // 2026-08 に追加した実験要因の列。既存シートに足すときは末尾に追記すること。
+        "char_ms", "overlap", "tau_ms",
       ]);
     }
     trials.appendRow([
@@ -178,6 +189,10 @@ function doPost(e) {
       blank(body.screen),
       (body.touch === undefined ? "" : !!body.touch),
       blank(body.refresh_hz),
+      // 2026-08 に追加した実験要因。視覚1文字課題は char_ms、視覚2文字課題は overlap/tau_ms を送る。
+      blank(body.char_ms),
+      blank(body.overlap),
+      blank(body.tau_ms),
     ]);
 
     return out({status: "ok", correct: correct});
