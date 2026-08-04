@@ -14,7 +14,8 @@
 //     2. 教示と練習のフィードバック。何を答えるのか・難しくて当然であること・
 //        勘で答えてよいことを、練習の各問のあとにも繰り返し伝える。
 //     3. 出題の配り方。frac 水準・文字・アルゴリズムを均等に配ってから順序を混ぜる
-//        (毎回独立に抽選すると水準と文字の出現が偏るため)。総試行数は 200 のまま。
+//        (毎回独立に抽選すると水準と文字の出現が偏るため)。この時点では総試行数は 200 だった
+//        (提示速度の要因を足したのにともない 320 に増やした。下記の改訂その2を見よ)。
 //     4. 提示時間の実測 (actual_ms / actual_frames)。名目は CHAR_MS*frac/100 だが、
 //        実際にはリフレッシュ周期に量子化されるので、描画フレームの実時刻から測る。
 //     5. 本番モード (?prod=1)。同意画面・GAS 送信・完了コードは prod_common.js に一本化。
@@ -31,9 +32,10 @@
 //     frac は「提示アルゴリズムがどこまで進んだか」を表す無次元の量であり、
 //     実際の露光時間は frac × CHAR_MS である。したがって速度水準を変えても
 //     frac のグリッド (0 から 100 まで5刻みの21水準) はそのまま使える。
+//     要因を1つ足したぶん総試行数も 200 から 320 に増やし、速度水準ごとに従来と同じ
+//     160試行を確保する (精度目標「字ごとに約88観測」を水準ごとに保つため)。
 // =========================================================================
 
-const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;            // frac=100 (最後まで見せる) の統制試行
 
@@ -54,6 +56,27 @@ const CHAR_MS_LIST = parseCharMsParam(URL_PARAMS.get("charms"));
 const SPEED_NOTE = (CHAR_MS_LIST.length > 1)
   ? `1文字あたり ${(Math.min(...CHAR_MS_LIST) / 1000).toFixed(2)} 〜 ${(Math.max(...CHAR_MS_LIST) / 1000).toFixed(2)} 秒`
   : `1文字あたり ${(CHAR_MS_LIST[0] / 1000).toFixed(2)} 秒`;
+
+// 総試行数は「速度水準ごとの試行数 × 水準数」で決める。
+//   要因を1つ足したぶん総試行数も増やす必要がある。精度目標は「字ごとに約88観測」であり、
+//   これは字ごとの推定の標準誤差を約5.4ポイントに収めるための値で、干渉判定のマージン
+//   δ=8ポイントを正当化する根拠になっている。総試行数を据え置いて水準で割ると
+//   観測数が半減し、標準誤差が約7.6ポイントに悪化して δ の正当化が成り立たなくなる。
+//   そのため、水準ごとに従来と同じ観測数 (160試行) を確保する。
+//   2水準なら 320問 (所要 約25分) になる。
+const N_PER_LEVEL = 160;
+// 研究者のパイロットで1水準に固定したときは、1本が長すぎて試しにくいので従来の 200問に戻す
+// (本番の精度目標は2水準そろえて実施したときのものなので、パイロットには適用しない)。
+const N_TRIALS_PILOT = 200;
+const N_TRIALS = (CHAR_MS_LIST.length > 1)
+  ? N_PER_LEVEL * CHAR_MS_LIST.length
+  : N_TRIALS_PILOT;
+
+// 所要時間の目安 (分)。本番設計 (2水準・320問) で約25分。
+// 試行数を変えたパイロットでは、それに比例させた見込みを表示する。
+const EST_MINUTES_FULL = 25;
+const N_TRIALS_FULL = N_PER_LEVEL * CHAR_MS_DEFAULT.length;
+const EST_MINUTES = Math.max(1, Math.round(EST_MINUTES_FULL * N_TRIALS / N_TRIALS_FULL));
 
 const FRAC_GRID = Array.from({length: 21}, (_, i) => i * 5);
 const FONT_TAG = "bizudgothic";
@@ -421,7 +444,7 @@ async function run() {
       const box = document.createElement("div");
       box.className = "prod-consent";
       document.body.appendChild(box);
-      PROD.consentScreen(box, "かなの見分けの課題（画面表示・約20分）", 20,
+      PROD.consentScreen(box, `かなの見分けの課題（画面表示・約${EST_MINUTES}分）`, EST_MINUTES,
         () => { box.remove(); resolve(); }, false);
     });
   }
@@ -435,7 +458,7 @@ async function run() {
     pages: [
       `<h2>インクルーシブ字幕の研究実験（視覚・1文字版）</h2>
        <p>本実験は、画面にすばやく表示される文字の読み取りやすさを測ることを目的としています。
-       所要時間は約 20 分です。ご協力ありがとうございます。</p>
+       所要時間は約 ${EST_MINUTES} 分です。ご協力ありがとうございます。</p>
        <p><b>文字が短い時間 (${SPEED_NOTE}) で表示されます。</b>
        表示の速さは問題ごとに変わります。画面がよく見える明るさ・距離でご参加ください。</p>
        <p>取得するデータ: 各設問への回答とその所要時間、参加識別子。
