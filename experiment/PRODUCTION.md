@@ -7,8 +7,10 @@
 
 ## 本番URL(デプロイ後)
 
-このリポジトリは GitHub Pages で **https://qurihara.github.io/iFont/** に配信される。
-以下の `<base>` は `https://qurihara.github.io/iFont` を指す。
+このリポジトリは GitHub Pages で配信され、独自ドメイン **https://unryu.org/iFont/** が正式な配信先である。
+`https://qurihara.github.io/iFont/...` でもアクセスできるが、301で `http://unryu.org/iFont/...` へ転送される。
+**参加者に案内するURLは、転送をはさまず暗号化された `https://unryu.org/iFont/...` の形にすること。**
+以下の `<base>` は `https://unryu.org/iFont` を指す。
 
 乙課題(較正・干渉ゲート)
 
