@@ -30,6 +30,9 @@ const ENV = { ua: navigator.userAgent, dpr: window.devicePixelRatio || 1,
   function f(now){ n++; if(n<40) requestAnimationFrame(f); else ENV.refreshHz = Math.round(1000/((now-t0)/n)); }
   requestAnimationFrame(f);
 })();
+// 本番モードの送信本文にも端末環境を載せる(オブジェクトの参照を渡すので、
+// あとから確定するリフレッシュレートも送信時の値が読まれる)。
+if (window.PROD) PROD.setEnv(ENV);
 
 // 既定は、視覚と聴覚で対応が取れる「独立モーラ72字」。
 const GRID_MORA = [

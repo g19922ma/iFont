@@ -33,9 +33,17 @@ const COUNTDOWN_S = Number(P.get("countdown") ?? 5); // countdownモード時の
 const START_MODE = P.get("start") || "click";        // "click"(既定・自己ペース) / "countdown" / "none"
 const FADE_S = 0.008;                       // 打ち切りのクリック音を避けるフェード
 
-// 端末環境(解析用にログ)
+// 端末環境(解析用にログ)。リフレッシュレートは聴覚課題の成績には関わらないが、
+// 端末の素性を1つの列で見比べられるように視覚課題と同じ形で測っておく。
 const ENV = { ua: navigator.userAgent, dpr: window.devicePixelRatio || 1,
-  screen: `${window.screen.width}x${window.screen.height}`, touch: (navigator.maxTouchPoints || 0) > 0 };
+  screen: `${window.screen.width}x${window.screen.height}`, touch: (navigator.maxTouchPoints || 0) > 0, refreshHz: null };
+(function measureRefresh(){ let n=0; const t0=performance.now();
+  function f(now){ n++; if(n<40) requestAnimationFrame(f); else ENV.refreshHz = Math.round(1000/((now-t0)/n)); }
+  requestAnimationFrame(f);
+})();
+// 本番モードの送信本文にも端末環境を載せる(オブジェクトの参照を渡すので、
+// あとから確定するリフレッシュレートも送信時の値が読まれる)。
+if (window.PROD) PROD.setEnv(ENV);
 
 // v1.5: 「区別できる音」68音のグリッド。を・ぢ・づ は現代標準語で お・じ・ず と同音
 // (本番プールでも同一の音声ファイル)、ゔ は日本語話者の多くが ぶ と区別して聞かないため、

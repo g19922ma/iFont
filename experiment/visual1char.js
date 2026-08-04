@@ -2,19 +2,23 @@
 // 視覚版 1文字課題 本実験 (統一モデルの C1=∅ = 先頭位置の特殊ケース)
 //   - 固定領域に単一のかなを 0.2 秒で提示。0.2 秒の中で認識度が上がる提示
 //     アルゴリズムを使い、frac% 時点で消去する (時間ゲート)。何の文字かを問う。
-//   - 提示アルゴリズムは ALGO_LIST から試行ごとにランダム
+//   - 提示アルゴリズムは ALGO_LIST から配る
 //     (パイロット pilot_visual2char.html で絞り込んだら書き換える)。
 //   - 文字は VISUAL 78字。base/<char>.png からブラウザ側で合成。正解は target_char を
 //     申告して GAS が採点 (visual2char と同じチート耐性方針)。
+//
+//   2026-08 の改訂 (乙課題で導入済みの参加者体験を移植):
+//     1. クリック開始 (自己ペース)。刺激は自動で始まらず、開始ボタン (またはスペース)
+//        を押してから提示する。押すまでは回答ボタンを押せないようにしてある。
+//     2. 教示と練習のフィードバック。何を答えるのか・難しくて当然であること・
+//        勘で答えてよいことを、練習の各問のあとにも繰り返し伝える。
+//     3. 出題の配り方。frac 水準・文字・アルゴリズムを均等に配ってから順序を混ぜる
+//        (毎回独立に抽選すると水準と文字の出現が偏るため)。総試行数は 200 のまま。
+//     4. 提示時間の実測 (actual_ms / actual_frames)。名目は CHAR_MS*frac/100 だが、
+//        実際にはリフレッシュ周期に量子化されるので、描画フレームの実時刻から測る。
+//     5. 本番モード (?prod=1)。同意画面・GAS 送信・完了コードは prod_common.js に一本化。
 // =========================================================================
 
-const SUBMIT_URL = "";              // EDIT BEFORE DEPLOY
-
-// 本実験に載せる提示アルゴリズム。刺激の強さの測定 (docs/visual_stimulus_intensity.md)
-// にもとづき、fade・blur・moya の3種に絞った。stroke は 1/f からの逸脱が高く (ざらつき)、
-// slideB・slideR・zoom は動きが速いため、目の疲労の観点で刺激が強いとして除外した。
-// ALGOS には7種すべての実装を残してある (論文執筆の検討材料のため)。
-const ALGO_LIST = ["fade", "blur", "moya"];
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;            // frac=100 (最後まで見せる) の統制試行
@@ -24,6 +28,23 @@ const FONT_TAG = "bizudgothic";
 const SIZE = 256;
 const STROKE_THRESH = 128;
 const BLUR_MAX_PX = 12;
+
+// 本実験に載せる提示アルゴリズム。刺激の強さの測定 (docs/visual_stimulus_intensity.md)
+// にもとづき、fade・blur・moya の3種に絞った。stroke は 1/f からの逸脱が高く (ざらつき)、
+// slideB・slideR・zoom は動きが速いため、目の疲労の観点で刺激が強いとして除外した。
+// ALGOS には7種すべての実装を残してある (論文執筆の検討材料のため)。
+const ALGO_LIST = ["fade", "blur", "moya"];
+
+// 端末・表示環境 (実測タイミングの解釈に使う。pilot_soa_visual2.js と同じ測り方)。
+const ENV = { ua: navigator.userAgent, dpr: window.devicePixelRatio || 1,
+  screen: `${window.screen.width}x${window.screen.height}`,
+  touch: (navigator.maxTouchPoints || 0) > 0, refreshHz: null };
+(function measureRefresh() {
+  let n = 0; const t0 = performance.now();
+  function f(now) { n++; if (n < 40) requestAnimationFrame(f); else ENV.refreshHz = Math.round(1000 / ((now - t0) / n)); }
+  requestAnimationFrame(f);
+})();
+PROD.setEnv(ENV);
 
 const CHARS = [
   ..."あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん",
@@ -49,11 +70,9 @@ const GRID_COLS = 5;
 const GRID_ROWS = GRID_78.length;
 const N_CHOICES = CHARS.length;   // 78
 
-const params = new URLSearchParams(window.location.search);
-const workerId = params.get("worker_id") || params.get("wid") || "";
-const participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
-const completionCode = Array.from({length: 16},
-  () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 30)]).join("");
+// 参加者ID・完了コード・送信は prod_common.js に一本化してある (二重管理をなくすため)。
+const participantId = PROD.participantId;
+const completionCode = PROD.completionCode;
 
 const jsPsych = initJsPsych({
   display_element: document.body,
@@ -61,8 +80,12 @@ const jsPsych = initJsPsych({
   message_progress_bar: "進捗",
 });
 
-let _replays = 0;
+let _replays = 0;          // 「もう一度みる」を押した回数
 let rafId = null;
+let _meas = null;          // その問の最初の提示の実測 {actual_ms, actual_frames}
+let _tTrial = 0;           // 問が画面に出た時刻 (jsPsych の rt の起点)
+let _tStim = null;         // 最初に提示を始めた時刻 (反応時間の起点)
+let _spaceHandler = null;
 
 // ---- 描画: 画像読込 + 提示アルゴリズム (visual2char.js と同一) --------------
 let imgs = {};
@@ -141,35 +164,86 @@ const ALGOS = {
   slideR(ctx, ch, u) { clearStage(ctx); ctx.drawImage(imgs[ch], (1 - u) * SIZE, 0, SIZE, SIZE); },
 };
 
-// 単一のかなを 0→frac/100 まで提示 (時間 0〜0.2*frac/100 秒) して消去する。
-function playSeq(ctx, ch, frac, algoName) {
+// 単一のかなを 0→frac/100 まで提示 (名目 0〜0.2*frac/100 秒) して消去する。
+// 名目の提示時間は画面のリフレッシュ周期に量子化されるため、実際に描画した最初の
+// フレームから消去したフレームまでの経過時間と、描画したフレーム数を実測して返す。
+function playSeq(ctx, ch, frac, algoName, onDone) {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   const render = ALGOS[algoName];
   const end = CHAR_MS * frac / 100;
   const t0 = performance.now();
+  let tFirst = null, frames = 0;
   function frame(now) {
     const el = now - t0;
-    if (el < end) { render(ctx, ch, el / CHAR_MS); }
-    else { clearStage(ctx); rafId = null; return; }
-    rafId = requestAnimationFrame(frame);
+    if (el < end) {
+      render(ctx, ch, el / CHAR_MS);
+      if (tFirst === null) tFirst = now;
+      frames += 1;
+      rafId = requestAnimationFrame(frame);
+      return;
+    }
+    // 消去したフレーム。frac=0 では一度も描画しないので実測は 0ms・0フレームになる。
+    clearStage(ctx);
+    rafId = null;
+    if (onDone) onDone({ actual_ms: (tFirst === null) ? 0 : Math.round(now - tFirst), actual_frames: frames });
   }
   clearStage(ctx);
   rafId = requestAnimationFrame(frame);
 }
 
 // ---- 試行の生成 -------------------------------------------------------------
-function makeTrialSpec() {
-  const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
-  const isCatch = Math.random() < CATCH_RATE;
-  const frac = isCatch ? 100 : FRAC_GRID[Math.floor(Math.random() * FRAC_GRID.length)];
-  const algo = ALGO_LIST[Math.floor(Math.random() * ALGO_LIST.length)];
-  return { ch, frac, algo, is_catch: isCatch,
-           id: `v1c-${ch}-${algo}-f${String(frac).padStart(3, "0")}` };
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+// 混ぜた一組を順に配り、尽きたら混ぜ直して配り続ける。どの要素の出現数も差は高々1になる。
+// 毎回独立に抽選すると、水準や文字の出現数が偶然かたよって成績を歪めるため
+// (乙課題 pilot_soa_*.js の dealPairs と同じ考え方)。
+function dealEven(items, n) {
+  const out = [];
+  while (out.length < n) out.push(...shuffle([...items]));
+  return out.slice(0, n);
+}
+function specId(ch, algo, frac) {
+  return `v1c-${ch}-${algo}-f${String(frac).padStart(3, "0")}`;
+}
+// 本番 N_TRIALS 問。frac 水準・文字・アルゴリズムをそれぞれ均等に配ってから順序を混ぜる。
+function buildMainSpecs() {
+  const nCatch = Math.round(N_TRIALS * CATCH_RATE);   // frac=100 の統制試行
+  const nGraded = N_TRIALS - nCatch;
+  const fracs = dealEven(FRAC_GRID, nGraded);         // 21水準にできるだけ均等
+  const chars = dealEven(CHARS, N_TRIALS);            // 78字にできるだけ均等
+  const algos = dealEven(ALGO_LIST, N_TRIALS);
+  const specs = [];
+  for (let i = 0; i < N_TRIALS; i++) {
+    const isCatch = i >= nGraded;
+    const frac = isCatch ? 100 : fracs[i];
+    specs.push({ ch: chars[i], frac, algo: algos[i], is_catch: isCatch, id: specId(chars[i], algos[i], frac) });
+  }
+  return shuffle(specs);
+}
+// 練習 N_PRACTICE 問。見やすい水準から始めて短い水準も混ぜ、
+// 「最後まで見える問も、ほとんど見えない問もある」ことを体験してもらう。
+function buildPracticeSpecs() {
+  const ladder = [100, 80, 60, 40, 20];
+  const chars = dealEven(CHARS, N_PRACTICE);
+  const algos = dealEven(ALGO_LIST, N_PRACTICE);
+  return Array.from({length: N_PRACTICE}, (_, i) => {
+    const frac = ladder[i % ladder.length];
+    return { ch: chars[i], frac, algo: algos[i], is_catch: false, id: specId(chars[i], algos[i], frac) };
+  });
 }
 
 function buttonHtml(choice) {
   if (choice === "") return '<button class="jspsych-btn grid-spacer" disabled tabindex="-1"></button>';
   return `<button class="jspsych-btn grid-kana">${choice}</button>`;
+}
+
+// 回答用の50音ボタン。提示前は押せないようにして、開始してから答えてもらう。
+function answerButtons() {
+  const group = document.querySelector("#jspsych-html-button-response-btngroup, .jspsych-html-button-response-btngroup");
+  if (!group) return [];
+  return Array.from(group.querySelectorAll("button")).filter(b => !b.disabled);
 }
 
 function makeTrial(spec, isPractice = false) {
@@ -178,21 +252,36 @@ function makeTrial(spec, isPractice = false) {
     stimulus: `
       <div class="stim-wrap">
         <canvas id="stim-canvas" width="${SIZE}" height="${SIZE}"></canvas>
-        <button type="button" id="replay-btn" class="replay-btn">▶ もう一度みる</button>
+        <button type="button" id="play-btn" class="replay-btn">準備ができたら開始（またはスペースキー）</button>
       </div>
-      <div class="trial-prompt">ひらがな1文字が一瞬だけ表示されます。何の文字か、50音表から選んでください</div>`,
+      <div class="trial-prompt">ボタンを押すと、ひらがな1文字が一瞬だけ表示されます。何の文字か、50音表から選んでください</div>`,
     choices: GRID_FLAT,
     button_html: buttonHtml,
     grid_rows: GRID_ROWS,
     grid_columns: GRID_COLS,
     on_load: () => {
-      _replays = 0;
+      _replays = 0; _meas = null; _tStim = null;
+      _tTrial = performance.now();
       const canvas = document.getElementById("stim-canvas");
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       clearStage(ctx);
-      playSeq(ctx, spec.ch, spec.frac, spec.algo);
-      const btn = document.getElementById("replay-btn");
-      if (btn) btn.addEventListener("click", () => { _replays += 1; playSeq(ctx, spec.ch, spec.frac, spec.algo); });
+      const btn = document.getElementById("play-btn");
+      // 提示前は回答できないようにする (自己ペースで開始してもらうため)。
+      const answers = answerButtons();
+      answers.forEach(b => { b.disabled = true; b.style.opacity = ".45"; });
+      const play = () => {
+        if (_tStim === null) {
+          _tStim = performance.now();                     // 反応時間の起点
+          answers.forEach(b => { b.disabled = false; b.style.opacity = ""; });
+          if (btn) btn.textContent = "▶ もう一度みる";
+        } else {
+          _replays += 1;
+        }
+        playSeq(ctx, spec.ch, spec.frac, spec.algo, (m) => { if (!_meas) _meas = m; });
+      };
+      if (btn) btn.addEventListener("click", play);
+      _spaceHandler = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); play(); } };
+      document.addEventListener("keydown", _spaceHandler);
     },
     data: {
       task: isPractice ? "practice" : "main",
@@ -207,26 +296,59 @@ function makeTrial(spec, isPractice = false) {
       is_catch: spec.is_catch,
     },
     on_finish: (data) => {
+      if (_spaceHandler) { document.removeEventListener("keydown", _spaceHandler); _spaceHandler = null; }
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
       data.response_char = GRID_FLAT[data.response];
       data.replays = _replays;
-      if (!isPractice && SUBMIT_URL) {
-        try {
-          fetch(SUBMIT_URL, {
-            method: "POST", mode: "no-cors",
-            headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({
-              participant_id: participantId, worker_id: workerId,
-              completion_code: completionCode, stimulus_id: data.stimulus_id,
-              response_char: data.response_char, target_char: data.target_char,
-              modality: data.modality, q_set: data.q_set, font: data.font,
-              algo: data.algo, frac: data.frac, n_choices: data.n_choices,
-              replays: data.replays, rt_ms: data.rt, is_catch: data.is_catch, ts: Date.now(),
-            }),
-          });
-        } catch (e) { console.warn("submit failed:", e); }
-      }
+      // 反応時間は「提示が始まってから回答するまで」。開始ボタンを押すまでの待ち時間は含めない
+      // (自己ペース開始にしたため、jsPsych の rt をそのまま使うと待ち時間が混ざる)。
+      data.rt_ms = (_tStim === null) ? data.rt : Math.round(data.rt - (_tStim - _tTrial));
+      data.actual_ms = _meas ? _meas.actual_ms : "";
+      data.actual_frames = _meas ? _meas.actual_frames : "";
+      data.refresh_hz = ENV.refreshHz;
+      if (isPractice) return;
+      PROD.saveFracTrial({
+        stimulus_id: data.stimulus_id, response_char: data.response_char,
+        target_char: data.target_char, modality: data.modality, q_set: data.q_set,
+        font: data.font, algo: data.algo, frac: data.frac, n_choices: data.n_choices,
+        replays: data.replays, rt_ms: data.rt_ms, is_catch: data.is_catch,
+        actual_ms: data.actual_ms, actual_frames: data.actual_frames,
+      });
     },
   };
+}
+
+// 練習のフィードバック。正解を示しつつ、難しくて当然であること・勘でよいことを伝える。
+function makeFeedback(spec) {
+  return {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      const last = jsPsych.data.get().last(1).values()[0] || {};
+      const ok = last.response_char === spec.ch;
+      return `<div style="padding:16px 8px">
+        <p style="font-size:17px">正解は「<b style="font-size:24px">${spec.ch}</b>」でした
+          <span style="color:${ok ? "#2E7D8F" : "#C25B4E"};font-weight:700">${ok ? "◯" : "×"}</span></p>
+        <p style="font-size:14px;color:#555;line-height:1.8">これは練習です。答えは記録されません。<br>
+          <b>難しくて当然の課題</b>です。ほとんど見えない問もあります。
+          見えなかったと感じても空欄にせず、<b>勘で選んで</b>ください。正誤は報酬に影響しません。</p></div>`;
+    },
+    choices: ["次へ"],
+    trial_duration: 5000,
+    data: { task: "practice_feedback" },
+  };
+}
+
+function downloadResults() {
+  const payload = {
+    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, CHAR_MS, FRAC_GRID, ALGO_LIST, FONT_TAG },
+    env: ENV,
+    trials: jsPsych.data.get().filter({task: "main"}).values(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `visual1char_${Date.now()}.json`;
+  a.click();
 }
 
 async function run() {
@@ -238,10 +360,21 @@ async function run() {
   catch (e) { loading.textContent = "画像の読み込みに失敗しました: " + e.message; loading.style.color = "#900"; return; }
   loading.remove();
 
-  const specs = Array.from({length: N_TRIALS + N_PRACTICE}, () => makeTrialSpec());
-  const practiceSpecs = specs.slice(0, N_PRACTICE);
-  const mainSpecs = specs.slice(N_PRACTICE);
+  // 本番モード(?prod=1)は、jsPsych を始める前に同意画面を挟む。
+  if (PROD.enabled) {
+    await new Promise((resolve) => {
+      const box = document.createElement("div");
+      box.className = "prod-consent";
+      document.body.appendChild(box);
+      PROD.consentScreen(box, "かなの見分けの課題（画面表示・約20分）", 20,
+        () => { box.remove(); resolve(); }, false);
+    });
+  }
 
+  const practiceSpecs = buildPracticeSpecs();
+  const mainSpecs = buildMainSpecs();
+
+  // 研究者パイロット(?prod なし)のときだけ出す同意ページ。本番モードは prod_common.js の同意画面を使う。
   const consent = {
     type: jsPsychInstructions,
     pages: [
@@ -262,24 +395,35 @@ async function run() {
       `<h2>課題</h2>
        <p>各問で、ひらがなが <b>1文字だけ</b> 同じ場所に表示されます。
        0.2 秒の速さで、字は「だんだん現れる」ように表示されます
-       (現れかたは問題ごとにさまざまです)。ごく一瞬で消えることもあれば、
-       最後まで見えることもあります。</p>
-       <p>「▶ もう一度みる」ボタンで <b>何度でも</b> 見直せます。
+       (現れかたは問題ごとにさまざまです)。</p>
+       <p>各問は <b>自分のペース</b> で始められます。表示枠の下の
+       <b>[準備ができたら開始]</b> ボタン (またはスペースキー) を押すと、そこで文字が表示されます。
+       押すまでは何も起きませんので、落ち着いてから始めてください。</p>
+       <p>押したあと、同じボタンが「▶ もう一度みる」に変わり、<b>何度でも</b> 見直せます。
        下の <b>50音表</b>(濁音・半濁音などを含む 78 字)から、見えた 1 文字を選んでください。
-       表は毎回同じ並びです。</p>
-       <p>確信が持てなくても、感覚で答えて構いません。考え込まずに次々と答えてください。</p>`,
+       表は毎回同じ並びです。</p>`,
+      `<h2>答え方</h2>
+       <p><b>難しくて当然の課題です。</b>ごく一瞬で消える問もあれば、最後まで見える問もあります。
+       ほとんど何も見えない問も混ざっています。</p>
+       <p>見えなかったと感じたときも、<b>勘で1文字を選んでください</b>。
+       外れた答えも大切なデータです。正誤は報酬に影響しません。</p>
+       <p>確信が持てなくても構いません。考え込まずに次々と答えてください。</p>`,
       `<h2>練習</h2>
-       <p>まず ${N_PRACTICE} 問の練習を行います。練習問題の答えは記録されません。</p>
+       <p>まず ${N_PRACTICE} 問の練習を行います。練習問題の答えは記録されません。
+       練習では毎回、正解をお見せします。</p>
        <p>準備ができたら「練習を始める」を押してください。</p>`,
     ],
     show_clickable_nav: true, button_label_next: "練習を始める",
   };
-  const practiceBlock = practiceSpecs.map(s => makeTrial(s, true));
+  // 練習は1問ごとに正解を見せる (乙課題と同じ流れ)。
+  const practiceBlock = practiceSpecs.flatMap(s => [makeTrial(s, true), makeFeedback(s)]);
   const mainStart = {
     type: jsPsychInstructions,
     pages: [
       `<h2>練習終了</h2>
        <p>続いて本番 ${mainSpecs.length} 問に入ります。
+       本番では <b>正解は表示されません</b>。ここからの回答が記録されます。</p>
+       <p>やり方は練習と同じです。分からない問は勘で選んでください。
        静かで集中できる環境で挑んでください。</p>
        <p>準備ができたら「本番を始める」を押してください。</p>`,
     ],
@@ -288,17 +432,27 @@ async function run() {
   const mainBlock = mainSpecs.map(s => makeTrial(s, false));
   const finish = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `
+    stimulus: () => {
+      const sec = Math.round(jsPsych.getTotalTime() / 1000);
+      if (PROD.enabled) return PROD.completionHTML(sec);
+      return `
       <h2>ご協力ありがとうございました</h2>
       <p>下の <b>完了コード</b> を、応募元の入力欄に貼り付けてください。</p>
       <p><span class="completion-code">${completionCode}</span></p>
-      <p style="font-size:12px;color:#666;">
-        参加者ID: ${participantId} ／ 所要時間: ${Math.round(jsPsych.getTotalTime() / 1000)} 秒
-      </p>`,
+      <p style="font-size:12px;color:#666;">参加者ID: ${participantId} ／ 所要時間: ${sec} 秒</p>
+      <p><button type="button" id="dl-btn" class="replay-btn">結果JSONをダウンロード</button></p>`;
+    },
     choices: ["閉じる"],
+    on_load: () => {
+      const b = document.getElementById("dl-btn");
+      if (b) b.addEventListener("click", downloadResults);
+    },
   };
 
-  jsPsych.run([consent, instructions, ...practiceBlock, mainStart, ...mainBlock, finish]);
+  const timeline = [];
+  if (!PROD.enabled) timeline.push(consent);
+  timeline.push(instructions, ...practiceBlock, mainStart, ...mainBlock, finish);
+  jsPsych.run(timeline);
 }
 
 run();

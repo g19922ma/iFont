@@ -13,11 +13,34 @@
  *      → copy the /exec URL into experiment.js → SUBMIT_URL.
  *   5. The first request you make will trigger an authorization prompt.
  *
- * Schema appended to the "trials" sheet:
+ * Schema appended to the "trials" sheet (frac課題):
  *   ts, participant_id, worker_id, completion_code, stimulus_id,
  *   response_char, correct_char, correct, modality, q_set,
  *   k_index, k, r, frac_index, frac, n_choices, font_voice, mode,
- *   replays, rt_ms, is_catch, c1, algo, pitch_scheme, bigram_freq
+ *   replays, rt_ms, is_catch, c1, algo, pitch_scheme, bigram_freq,
+ *   actual_ms, actual_frames, ua, dpr, screen, touch, refresh_hz
+ *   - actual_ms / actual_frames は視覚課題の実測。名目の提示時間
+ *     (CHAR_MS*frac/100) は画面のリフレッシュ周期に量子化されるため、
+ *     ターゲット文字を最初に描画したフレームから消去したフレームまでの
+ *     実時間とフレーム数をクライアントが測って送る。聴覚課題では空欄。
+ *   - ua / dpr / screen / touch / refresh_hz は端末環境。prod_common.js の
+ *     PROD.setEnv() で各ページが登録し、送信本文に自動で載る。
+ *   - rt_ms は「刺激の提示が始まってから回答するまで」。frac課題はクリック開始
+ *     (自己ペース)にしたため、開始ボタンを押すまでの待ち時間は含まない。
+ *
+ * Schema appended to the "soa_trials" sheet (乙課題・1試行1行):
+ *   ts, participant_id, worker_id, completion_code, task, trial_index,
+ *   version, speaker, pitch, S, c1, c2, c3, resp1, resp2, correct1, correct2,
+ *   actual_soa1, actual_soa2, actual_dur3, ua, dpr, screen, touch, refresh_hz
+ *   - actual_* は requestAnimationFrame の実時刻から測った間隔(視覚乙課題)。
+ *
+ * Schema appended to the "soa_sessions" sheet (乙課題・セッション完了1行):
+ *   ts, participant_id, worker_id, completion_code, task, version, speaker,
+ *   speaker_name, pitch, n_trials, duration_s, summary_json,
+ *   ua, dpr, screen, touch, refresh_hz
+ *
+ * 注意: シートのヘッダ行はシートを新規作成するときだけ書き込む。既存のシートに
+ *       列を足したときは、ヘッダ行を手で追記するか、シートを作り直すこと。
  *
  * One shared ANSWER_KEY serves the pre-rendered pools. Visual entries carry
  * {font, mode:"f1", k_index, k, r}; audio (truncation) entries carry
@@ -118,6 +141,7 @@ function doPost(e) {
         "modality", "q_set", "k_index", "k", "r", "frac_index", "frac",
         "n_choices", "font_voice", "mode", "replays", "rt_ms", "is_catch",
         "c1", "algo", "pitch_scheme", "bigram_freq",
+        "actual_ms", "actual_frames", "ua", "dpr", "screen", "touch", "refresh_hz",
       ]);
     }
     trials.appendRow([
@@ -146,6 +170,14 @@ function doPost(e) {
       algo,
       pitchScheme,
       bigramFreq,
+      // 視覚課題の実測タイミング(聴覚課題では送られてこないので空欄)と端末環境。
+      blank(body.actual_ms),
+      blank(body.actual_frames),
+      blank(body.ua),
+      blank(body.dpr),
+      blank(body.screen),
+      (body.touch === undefined ? "" : !!body.touch),
+      blank(body.refresh_hz),
     ]);
 
     return out({status: "ok", correct: correct});
@@ -154,7 +186,13 @@ function doPost(e) {
   }
 }
 
+// 値が無いときにセルを空欄にする(0 や false を落とさないための小さな補助)。
+function blank(v) {
+  return (v === undefined || v === null) ? "" : v;
+}
+
 // 乙課題(較正)のセッション記録。soa_trials シートに1試行1行、soa_sessions に完了1行。
+// クライアント(prod_common.js)は端末環境 ua/dpr/screen/touch/refresh_hz を毎回付けて送る。
 function handleSoa(sheetId, body) {
   const ss = SpreadsheetApp.openById(sheetId);
   if (body.kind === "soa_done") {
@@ -162,12 +200,15 @@ function handleSoa(sheetId, body) {
     if (!s) {
       s = ss.insertSheet("soa_sessions");
       s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task",
-        "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s", "summary_json"]);
+        "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s", "summary_json",
+        "ua", "dpr", "screen", "touch", "refresh_hz"]);
     }
     s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
       body.completion_code || "", body.task || "", body.version || "", body.speaker || "",
       body.speaker_name || "", body.pitch || "", body.n_trials || "", body.duration_s || "",
-      JSON.stringify(body.byLevel || "")]);
+      JSON.stringify(body.byLevel || ""),
+      blank(body.ua), blank(body.dpr), blank(body.screen),
+      (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz)]);
     return out({status: "ok"});
   }
   let s = ss.getSheetByName("soa_trials");
@@ -175,12 +216,18 @@ function handleSoa(sheetId, body) {
     s = ss.insertSheet("soa_trials");
     s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task", "trial_index",
       "version", "speaker", "pitch", "S", "c1", "c2", "c3", "resp1", "resp2",
-      "correct1", "correct2"]);
+      "correct1", "correct2",
+      "actual_soa1", "actual_soa2", "actual_dur3",
+      "ua", "dpr", "screen", "touch", "refresh_hz"]);
   }
   s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
     body.completion_code || "", body.task || "", (body.trial_index === undefined ? "" : body.trial_index),
     body.version || "", body.speaker || "", body.pitch || "", body.S,
-    body.c1, body.c2, body.c3, body.resp1, body.resp2, !!body.correct1, !!body.correct2]);
+    body.c1, body.c2, body.c3, body.resp1, body.resp2, !!body.correct1, !!body.correct2,
+    // 実測の間隔(視覚乙課題のみ。聴覚乙課題では送られてこないので空欄)。
+    blank(body.actual_soa1), blank(body.actual_soa2), blank(body.actual_dur3),
+    blank(body.ua), blank(body.dpr), blank(body.screen),
+    (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz)]);
   return out({status: "ok", correct1: !!body.correct1, correct2: !!body.correct2});
 }
 

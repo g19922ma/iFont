@@ -10,13 +10,24 @@
 //     Web Audio で再生時に行う(pilot_audio と同じライブ切り出し)。
 //   - 回答は固定50音グリッド(全 72 字)。catch = frac=100(C2 全提示)。
 //   - manifest = experiment/audio2char_manifest.json (回答は含まない)。
+//
+//   2026-08 の改訂 (乙課題で導入済みの参加者体験を移植):
+//     1. クリック開始 (自己ペース)。音は自動で鳴らさず、[音をきく] ボタン
+//        (またはスペースキー) を押してから鳴らす。押すまでは回答ボタンを押せない。
+//     2. 教示と練習のフィードバック。何を答えるのか・難しくて当然であること・
+//        勘で答えてよいことを、練習の各問のあとにも繰り返し伝える。
+//        なお正解はこの端末に置いていない (answer_key はサーバ側) ため、
+//        練習でも正解そのものは表示できない。参加者自身の答えだけを見せる。
+//     3. 出題の配り方。frac 水準を均等に配ってから順序を混ぜる。
+//        文字の均等配分は、manifest に文字が含まれない(正解を伏せる設計の)ため
+//        この課題ではできない。刺激そのものは非復元抽出なので同じ対は出ない。
+//        総試行数は 200 のまま。
+//     4. 本番モード (?prod=1)。同意画面・GAS 送信・完了コードは prod_common.js に一本化。
 // =========================================================================
-
-// EDIT BEFORE DEPLOY: deployed Google Apps Script /exec URL.
-const SUBMIT_URL = "";
 
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
+const CATCH_RATE = 0.05;
 
 // 2文字目を切り出す割合のグリッド(0〜100 を 5 刻み = 21 段階)。ifont_common.FRAC_GRID と一致。
 const FRAC_GRID = Array.from({length: 21}, (_, i) => i * 5);
@@ -28,6 +39,18 @@ const BEEP_MS = 80;          // 合図音1回の長さ
 const BEEP_LEAD_MS = 300;    // 開始の合図音から、文字の音声が始まるまでの間隔
 const END_GAP_MS = 500;      // 文字の音声が終わってから、終了の合図音までの間隔
 const END_BEEP_GAP_MS = 140; // 終了の合図音を2回鳴らすときの、1回目と2回目の間隔
+
+// 端末環境 (解析用にログ。リフレッシュレートは聴覚課題の成績には関わらないが、
+// 端末の素性を視覚課題と同じ形で見比べられるように測っておく)。
+const ENV = { ua: navigator.userAgent, dpr: window.devicePixelRatio || 1,
+  screen: `${window.screen.width}x${window.screen.height}`,
+  touch: (navigator.maxTouchPoints || 0) > 0, refreshHz: null };
+(function measureRefresh() {
+  let n = 0; const t0 = performance.now();
+  function f(now) { n++; if (n < 40) requestAnimationFrame(f); else ENV.refreshHz = Math.round(1000 / ((now - t0) / n)); }
+  requestAnimationFrame(f);
+})();
+PROD.setEnv(ENV);
 
 // =========================================================================
 // 全 72 字の固定50音グリッド (audio.js の GRID_AUDIO と一致)
@@ -59,11 +82,9 @@ const N_CHOICES = GRID_FLAT.filter(c => c !== "").length;   // 72, γ = 1/72
 // =========================================================================
 // Setup
 // =========================================================================
-const params = new URLSearchParams(window.location.search);
-const workerId = params.get("worker_id") || params.get("wid") || "";
-const participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
-const completionCode = Array.from({length: 16},
-  () => "ABCDEFGHJKMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 30)]).join("");
+// 参加者ID・完了コード・送信は prod_common.js に一本化してある (二重管理をなくすため)。
+const participantId = PROD.participantId;
+const completionCode = PROD.completionCode;
 
 const jsPsych = initJsPsych({
   display_element: document.body,
@@ -74,8 +95,11 @@ const jsPsych = initJsPsych({
 // Web Audio: 全長音声をデコードしてキャッシュし、再生時に [0, gate] を切り出す。
 let ctx = null;
 const _bufCache = {};   // id -> AudioBuffer
-let _replays = 0;
+let _replays = 0;       // 「もう一度きく」を押した回数
 let _nodes = [];        // 予約済みの音声ノード(合図音・刺激)。再生し直すときにまとめて止める。
+let _tTrial = 0;        // 問が画面に出た時刻 (jsPsych の rt の起点)
+let _tStim = null;      // 最初に鳴らし始めた時刻 (反応時間の起点)
+let _spaceHandler = null;
 
 function ensureCtx() {
   if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -153,21 +177,40 @@ async function loadManifest() {
   return await res.json();
 }
 
-// 各刺激(対×条件)に frac を割り当てる。catch=frac=100 をおよそ 5% 入れ、
-// 残りは FRAC_GRID から一様抽出する。
-function assignFrac(isCatch) {
-  if (isCatch) return 100;
-  return FRAC_GRID[Math.floor(Math.random() * FRAC_GRID.length)];
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
 }
-
-function sampleTrials(manifest, n) {
+// 混ぜた一組を順に配り、尽きたら混ぜ直して配り続ける。どの要素の出現数も差は高々1になる。
+// 毎回独立に抽選すると水準の出現数が偶然かたよって成績を歪めるため
+// (乙課題 pilot_soa_audio.js の dealPairs と同じ考え方)。
+function dealEven(items, n) {
+  const out = [];
+  while (out.length < n) out.push(...shuffle([...items]));
+  return out.slice(0, n);
+}
+// 刺激は 5184 対のプールから非復元抽出し、frac は 21水準に均等に配る。
+// catch(frac=100)は CATCH_RATE 分だけ別に確保する。
+function buildTrials(manifest, n) {
   const pool = manifest.stimuli || [];
   if (pool.length === 0) throw new Error("audio2char_manifest に刺激がありません");
   const picked = jsPsych.randomization.sampleWithoutReplacement(pool, Math.min(n, pool.length));
-  return picked.map((s, i) => {
-    const isCatch = Math.random() < 0.05;
-    return Object.assign({}, s, {frac: assignFrac(isCatch), is_catch: isCatch || false});
+  const nCatch = Math.round(n * CATCH_RATE);
+  const nGraded = n - nCatch;
+  const fracs = dealEven(FRAC_GRID, nGraded);
+  const out = picked.map((s, i) => {
+    const isCatch = i >= nGraded;
+    return Object.assign({}, s, {frac: isCatch ? 100 : fracs[i], is_catch: isCatch});
   });
+  return shuffle(out);
+}
+// 練習 n 問。聞き取りやすい水準から始めて短い水準も混ぜ、
+// 「最後まで聞こえる問も、ほとんど聞こえない問もある」ことを体験してもらう。
+function buildPracticeTrials(manifest, n) {
+  const pool = manifest.stimuli || [];
+  const ladder = [100, 80, 60, 40, 20];
+  const picked = jsPsych.randomization.sampleWithoutReplacement(pool, Math.min(n, pool.length));
+  return picked.map((s, i) => Object.assign({}, s, {frac: ladder[i % ladder.length], is_catch: false}));
 }
 
 // =========================================================================
@@ -180,30 +223,50 @@ function buttonHtml(choice) {
   return `<button class="jspsych-btn grid-kana">${choice}</button>`;
 }
 
+// 回答用の50音ボタン。再生前は押せないようにして、聞いてから答えてもらう。
+function answerButtons() {
+  const group = document.querySelector("#jspsych-html-button-response-btngroup, .jspsych-html-button-response-btngroup");
+  if (!group) return [];
+  return Array.from(group.querySelectorAll("button")).filter(b => !b.disabled);
+}
+
 function makeTrial(stim, isPractice = false) {
   return {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
       <div class="audio-controls">
-        <button type="button" id="replay-btn" class="replay-btn">▶ 音をきく / もう一度</button>
+        <button type="button" id="play-btn" class="replay-btn">▶ 準備ができたら音をきく（またはスペースキー）</button>
       </div>
-      <div class="trial-prompt">2文字つづけて読み上げます。<b>2文字目</b>が何か、50音表から選んでください</div>`,
+      <div class="trial-prompt">ボタンを押すと2文字つづけて読み上げます。<b>2文字目</b>が何か、50音表から選んでください</div>`,
     choices: GRID_FLAT,
     button_html: buttonHtml,
     grid_rows: GRID_ROWS,
     grid_columns: GRID_COLS,
     on_load: () => {
-      _replays = 0;
-      const btn = document.getElementById("replay-btn");
+      _replays = 0; _tStim = null;
+      _tTrial = performance.now();
+      const btn = document.getElementById("play-btn");
+      // 再生前は回答できないようにする (自己ペースで開始してもらうため)。
+      const answers = answerButtons();
+      answers.forEach(b => { b.disabled = true; b.style.opacity = ".45"; });
       decodeStim(stim).then(buf => {
-        playGated(buf, stim);          // 初回は同意クリック後なので自動再生できる
-        if (btn) btn.addEventListener("click", () => {
-          _replays += 1;
+        const play = () => {
+          if (_tStim === null) {
+            _tStim = performance.now();                   // 反応時間の起点
+            answers.forEach(b => { b.disabled = false; b.style.opacity = ""; });
+            if (btn) btn.textContent = "▶ もう一度きく";
+          } else {
+            _replays += 1;
+          }
           playGated(buf, stim);
-        });
+        };
+        if (btn) btn.addEventListener("click", play);
+        _spaceHandler = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); play(); } };
+        document.addEventListener("keydown", _spaceHandler);
       }).catch(err => {
         const p = document.querySelector(".trial-prompt");
         if (p) p.textContent = "音声の読み込みに失敗しました: " + err.message;
+        answers.forEach(b => { b.disabled = false; b.style.opacity = ""; });
       });
     },
     data: {
@@ -217,35 +280,57 @@ function makeTrial(stim, isPractice = false) {
       is_catch: stim.is_catch,
     },
     on_finish: (data) => {
+      if (_spaceHandler) { document.removeEventListener("keydown", _spaceHandler); _spaceHandler = null; }
+      stopAll();
       data.response_char = GRID_FLAT[data.response];
       data.replays = _replays;
-      if (!isPractice && SUBMIT_URL) {
-        try {
-          fetch(SUBMIT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: {"Content-Type": "text/plain;charset=utf-8"},
-            body: JSON.stringify({
-              participant_id: participantId,
-              worker_id: workerId,
-              completion_code: completionCode,
-              stimulus_id: data.stimulus_id,
-              response_char: data.response_char,
-              modality: data.modality,
-              q_set: data.q_set,
-              pitch_scheme: data.pitch_scheme,
-              frac: data.frac,
-              n_choices: data.n_choices,
-              replays: data.replays,
-              rt_ms: data.rt,
-              is_catch: data.is_catch,
-              ts: Date.now(),
-            }),
-          });
-        } catch (e) { console.warn("submit failed:", e); }
-      }
+      // 反応時間は「音が鳴り始めてから回答するまで」。開始ボタンを押すまでの待ち時間は含めない
+      // (自己ペース開始にしたため、jsPsych の rt をそのまま使うと待ち時間が混ざる)。
+      data.rt_ms = (_tStim === null) ? data.rt : Math.round(data.rt - (_tStim - _tTrial));
+      if (isPractice) return;
+      PROD.saveFracTrial({
+        stimulus_id: data.stimulus_id, response_char: data.response_char,
+        modality: data.modality, q_set: data.q_set, pitch_scheme: data.pitch_scheme,
+        frac: data.frac, n_choices: data.n_choices, replays: data.replays,
+        rt_ms: data.rt_ms, is_catch: data.is_catch,
+      });
     },
   };
+}
+
+// 練習のフィードバック。難しくて当然であること・勘でよいことを伝える。
+// 正解表(answer_key)はサーバ側にあり端末に無いため、正解そのものは表示できない。
+function makeFeedback() {
+  return {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: () => {
+      const last = jsPsych.data.get().last(1).values()[0] || {};
+      const ans = last.response_char || "（未選択）";
+      return `<div style="padding:16px 8px">
+        <p style="font-size:17px">あなたの答え（2文字目）: <b style="font-size:24px">${ans}</b></p>
+        <p style="font-size:14px;color:#555;line-height:1.8">これは練習です。答えは記録されません。<br>
+          <b>難しくて当然の課題</b>です。2文字目がほとんど聞こえない問もあります。
+          聞こえなかったと感じても空欄にせず、<b>勘で選んで</b>ください。
+          1文字目を2文字目として答えないように気をつけてください。正誤は報酬に影響しません。<br>
+          この課題は正解をお見せできません（答えは端末に置いていないため）。</p></div>`;
+    },
+    choices: ["次へ"],
+    trial_duration: 5000,
+    data: { task: "practice_feedback" },
+  };
+}
+
+function downloadResults() {
+  const payload = {
+    config: { N_TRIALS, N_PRACTICE, CATCH_RATE, FRAC_GRID, pitch_scheme: "B3-E4" },
+    env: ENV,
+    trials: jsPsych.data.get().filter({task: "main"}).values(),
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `audio2char_${Date.now()}.json`;
+  a.click();
 }
 
 // =========================================================================
@@ -261,23 +346,34 @@ async function run() {
     return;
   }
 
-  let all;
+  let practiceStims, mainStims;
   try {
-    all = sampleTrials(manifest, N_TRIALS + N_PRACTICE);
+    practiceStims = buildPracticeTrials(manifest, N_PRACTICE);
+    mainStims = buildTrials(manifest, N_TRIALS);
   } catch (e) {
     document.body.innerHTML = '<p style="padding:40px;color:#900;">' + e.message + '</p>';
     return;
   }
-  const practiceStims = all.slice(0, N_PRACTICE);
-  const mainStims = all.slice(N_PRACTICE);
 
+  // 本番モード(?prod=1)は、jsPsych を始める前に同意画面を挟む(聴覚課題はヘッドホン必須)。
+  if (PROD.enabled) {
+    await new Promise((resolve) => {
+      const box = document.createElement("div");
+      box.className = "prod-consent";
+      document.body.appendChild(box);
+      PROD.consentScreen(box, "かなの聞き取りの課題（音声・約20分）", 20,
+        () => { box.remove(); resolve(); }, true);
+    });
+  }
+
+  // 研究者パイロット(?prod なし)のときだけ出す同意ページ。本番モードは prod_common.js の同意画面を使う。
   const consent = {
     type: jsPsychInstructions,
     pages: [
       `<h2>インクルーシブ字幕の研究実験（音声・2文字版）</h2>
        <p>本実験は、競技かるたの読み上げに似た音声で、文字の聞き取りやすさを測ることを目的としています。
        所要時間は約 20 分です。ご協力ありがとうございます。</p>
-       <p><b>音声を使用します。スピーカーまたはイヤホン・ヘッドフォンをご用意のうえ、
+       <p><b>音声を使用します。ヘッドホン・イヤホンをご用意のうえ、
        音量を適切に調整してください。</b></p>
        <p>取得するデータ: 各設問への回答とその所要時間、参加識別子。
        個人を特定する情報は収集しません。</p>
@@ -291,18 +387,26 @@ async function run() {
     type: jsPsychInstructions,
     pages: [
       `<h2>課題</h2>
-       <p>各問で、まず短い「ピッ」という合図音が1回鳴り、そのあとに、ひらがなを <b>2文字つづけて</b> 読み上げます。
+       <p>各問は <b>自分のペース</b> で始められます。
+       <b>[準備ができたら音をきく]</b> ボタン (またはスペースキー) を押すと、そこで音が鳴り始めます。
+       押すまでは何も鳴りませんので、落ち着いてから始めてください。</p>
+       <p>まず短い「ピッ」という合図音が1回鳴り、そのあとに、ひらがなを <b>2文字つづけて</b> 読み上げます。
        読み上げが終わってしばらくすると、今度は合図音が「ピッピッ」と2回鳴り、その問が終わったことをお知らせします。
        始まりの合図音は1回、終わりの合図音は2回で区別できます。</p>
-       <p>
-       1文字目は最後まで聞こえますが、<b>2文字目は途中までしか流れない</b>ことがあります
-       (ごく短いこともあれば、最後まで聞こえることもあります)。</p>
-       <p>「▶ 音をきく / もう一度」ボタンで <b>何度でも</b> 聞き直せます。
+       <p>1文字目は最後まで聞こえますが、<b>2文字目は途中までしか流れない</b>ことがあります。
+       答えるのは <b>2文字目</b> です。</p>
+       <p>押したあと、同じボタンが「▶ もう一度きく」に変わり、<b>何度でも</b> 聞き直せます。
        下の <b>50音表</b>(濁音・半濁音を含む 72 字)から、<b>2文字目</b>だと思う 1 文字を選んでください。
-       表は毎回同じ並びです。</p>
+       表は毎回同じ並びです。</p>`,
+      `<h2>答え方</h2>
        <p>2文字のつながりに意味はありません。ことばとして自然かどうかは気にせず、
        聞こえた音だけで答えてください。</p>
-       <p>確信が持てなくても、感覚で答えて構いません。考え込まずに次々と答えてください。</p>`,
+       <p><b>難しくて当然の課題です。</b>2文字目はごく短いこともあれば、最後まで聞こえることもあります。
+       2文字目がほとんど聞こえない問も混ざっています。</p>
+       <p>聞こえなかったと感じたときも、<b>勘で1文字を選んでください</b>。
+       1文字目を2文字目として答えないように気をつけてください。
+       外れた答えも大切なデータです。正誤は報酬に影響しません。
+       確信が持てなくても構いません。考え込まずに次々と答えてください。</p>`,
       `<h2>練習</h2>
        <p>まず ${N_PRACTICE} 問の練習を行います。練習問題の答えは記録されません。
        ここで音量を調整してください。</p>
@@ -312,14 +416,16 @@ async function run() {
     button_label_next: "練習を始める",
   };
 
-  const practiceBlock = practiceStims.map(s => makeTrial(s, true));
+  // 練習は1問ごとに答え方を確認する画面を挟む (乙課題と同じ流れ)。
+  const practiceBlock = practiceStims.flatMap(s => [makeTrial(s, true), makeFeedback()]);
 
   const mainStart = {
     type: jsPsychInstructions,
     pages: [
       `<h2>練習終了</h2>
-       <p>続いて本番 ${mainStims.length} 問に入ります。
-       静かで集中できる環境で挑んでください。</p>
+       <p>続いて本番 ${mainStims.length} 問に入ります。ここからの回答が記録されます。</p>
+       <p>やり方は練習と同じです。分からない問は勘で選んでください。
+       静かな環境で、ヘッドホンの装着を確認してから進めてください。</p>
        <p>準備ができたら「本番を始める」を押してください。</p>`,
     ],
     show_clickable_nav: true,
@@ -330,24 +436,27 @@ async function run() {
 
   const finish = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: () => `
+    stimulus: () => {
+      const sec = Math.round(jsPsych.getTotalTime() / 1000);
+      if (PROD.enabled) return PROD.completionHTML(sec);
+      return `
       <h2>ご協力ありがとうございました</h2>
       <p>下の <b>完了コード</b> を、応募元の入力欄に貼り付けてください。</p>
       <p><span class="completion-code">${completionCode}</span></p>
-      <p style="font-size:12px;color:#666;">
-        参加者ID: ${participantId} ／ 所要時間: ${Math.round(jsPsych.getTotalTime() / 1000)} 秒
-      </p>`,
+      <p style="font-size:12px;color:#666;">参加者ID: ${participantId} ／ 所要時間: ${sec} 秒</p>
+      <p><button type="button" id="dl-btn" class="replay-btn">結果JSONをダウンロード</button></p>`;
+    },
     choices: ["閉じる"],
+    on_load: () => {
+      const b = document.getElementById("dl-btn");
+      if (b) b.addEventListener("click", downloadResults);
+    },
   };
 
-  jsPsych.run([
-    consent,
-    instructions,
-    ...practiceBlock,
-    mainStart,
-    ...mainBlock,
-    finish,
-  ]);
+  const timeline = [];
+  if (!PROD.enabled) timeline.push(consent);
+  timeline.push(instructions, ...practiceBlock, mainStart, ...mainBlock, finish);
+  jsPsych.run(timeline);
 }
 
 run();
