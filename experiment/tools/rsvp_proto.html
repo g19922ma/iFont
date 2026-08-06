@@ -59,7 +59,7 @@
 
 <div class="row">
   <input type="text" id="text"
-    value="きょうのかんとうちほうははれときどきくもりごごからはところによりにわかあめがふるでしょう">
+    value="きょうの かんとうちほうは はれ ときどき くもり ごごからは ところにより にわかあめが ふるでしょう">
   <select id="presets" style="font-family:inherit; font-size:14px; padding:6px 8px;
     border:1px solid var(--line); border-radius:4px; background:#fffdf7; color:var(--ink);">
     <option value="">文例を選ぶ…</option>
@@ -232,7 +232,14 @@ let raf = null, t0 = null;
 document.getElementById("go").onclick = () => {
   cancelAnimationFrame(raf);
   const raw = hiddenText ?? document.getElementById("text").value;
-  const chunks = raw.split(/[\s　／/・]+/).filter(Boolean).map(tokenize).filter(c => c.length);
+  let chunks = raw.split(/[\s　／/・]+/).filter(Boolean).map(tokenize).filter(c => c.length);
+  // 区切りのない長いチャンクは5モーラごとに自動分割(⑥⑦が読める大きさを保つため)
+  chunks = chunks.flatMap(c => {
+    if (c.length <= 10) return [c];
+    const out = [];
+    for (let j = 0; j < c.length; j += 5) out.push(c.slice(j, j + 5));
+    return out;
+  });
   const toks = chunks.flat();
   if (!toks.length) return;
   const chunkOf = [], chunkEndMora = [];
