@@ -15,7 +15,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "e2c8599b7390b40c1172",
@@ -25,8 +27,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "481835e7128cf0a2d147",
@@ -37,7 +41,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "f9bbc345aecb2d335ab4",
@@ -48,7 +54,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "9a5b2fa21609c3cab5d3",
@@ -59,7 +67,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "6a2339386b1bcf9c44dc",
@@ -70,7 +80,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 0.9
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "e9272bbc1801e845edc4",
@@ -81,7 +93,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "0c8c87d6c2c3532b9996",
@@ -92,7 +106,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "9327ea09c6aa973e52d1",
@@ -103,7 +119,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "50cf79d2980dda8c64e6",
@@ -114,7 +132,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "216b3538dda7297c7d83",
@@ -125,7 +145,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.7
+   "gate_gain": 0.9,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "8788712cecb05cac0ec9",
@@ -136,7 +158,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.3
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "584787751a00ca4d1bc4",
@@ -146,8 +170,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "be98fe9629c62ce9e6b2",
@@ -158,7 +184,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 2.5
+   "gate_gain": 1.2,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "5c88d1a279d2284b6fa2",
@@ -169,7 +197,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.7
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "8ad2a3c09bfc19b186aa",
@@ -180,7 +210,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "7c1ab662488ecaf4e269",
@@ -191,7 +223,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.1
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "5486ec1c3c0cc1e356d9",
@@ -202,7 +236,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.1
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "38c99d7e642af0c99d8b",
@@ -213,7 +249,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "3709a42d1756169ff636",
@@ -224,7 +262,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "5e68bc22c8d968cf0794",
@@ -234,8 +274,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 0.9
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "7c5f6087245df23b6611",
@@ -245,8 +287,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "bdd0a636dc21df98cd33",
@@ -256,8 +300,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "3dc989ea6319860d75a8",
@@ -267,8 +313,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "7313dc3576b05dfea592",
@@ -279,7 +327,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "9c15732dec50cceece52",
@@ -289,8 +339,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 90,
-   "gate_gain": 1.1
+   "gate_onset_ms": 80,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 164.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "80e5a45a5173cdfc3564",
@@ -301,7 +353,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 80,
-   "gate_gain": 2.2
+   "gate_gain": 1.0,
+   "gate_avail_ms": 164.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "a124f78fde49e8f69023",
@@ -311,8 +365,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 90,
-   "gate_gain": 0.9
+   "gate_onset_ms": 80,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 154.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "1e97c6e50e8dd7c42aa6",
@@ -323,7 +379,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 90,
-   "gate_gain": 1.4
+   "gate_gain": 1.0,
+   "gate_avail_ms": 154.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "ee5e10413cbdd19f643f",
@@ -334,7 +392,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 70,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 174.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "36ab655f79c55fa6625d",
@@ -345,7 +405,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "9c942904f26cdcb09f4d",
@@ -356,7 +418,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "650a0f6a655312a7993e",
@@ -367,7 +431,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "b8ca24d41260f7bd8c5f",
@@ -378,7 +444,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "e6d638e8d7112293b503",
@@ -389,7 +457,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "decb12a9b8318a89fa16",
@@ -400,7 +470,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 0.9
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "8ac71bca75e0fd960c57",
@@ -411,7 +483,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "ca7c87a61700cafbb3d7",
@@ -422,7 +496,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "0d67b1db92708c0079bf",
@@ -433,7 +509,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 174.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "b5aacdd38a53d9464d0a",
@@ -444,7 +522,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "1c658cf2c422718a583d",
@@ -455,7 +535,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "1d78f53a401c0edcea32",
@@ -466,7 +548,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "04c4ae801278f21a2760",
@@ -477,7 +561,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "7a092e911989f4b3211e",
@@ -488,7 +574,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 0.9
+   "gate_gain": 0.9,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "2748cfded1433272b4bc",
@@ -499,7 +587,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "ca334e753b58984cadf4",
@@ -510,7 +600,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "2df3f9484c6de690ff50",
@@ -520,8 +612,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "b27738d327bc1df562a1",
@@ -532,7 +626,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 40,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "d56c52f415edfdac9bf6",
@@ -543,7 +639,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 0.9
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "e5e96e3f4e0ca846cfc4",
@@ -554,7 +652,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "f8fb2151a123babc0550",
@@ -564,8 +664,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 0.8
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "d63db60175138872b470",
@@ -576,7 +678,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.2
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "9a534ef1dda63ca383f4",
@@ -587,7 +691,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 0.9
+   "gate_gain": 1.0,
+   "gate_avail_ms": 174.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "08fbe2c0a3d3731130da",
@@ -598,7 +704,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 0.9
+   "gate_gain": 1.0,
+   "gate_avail_ms": 174.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "ac366729d1f597785a5f",
@@ -609,7 +717,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.042,
+   "mora_len_ms": 192.0
   },
   {
    "id": "90ac872922672dc96edf",
@@ -620,7 +730,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "71b583d52f0a9acf2c54",
@@ -631,7 +743,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "55c18c87e0ba64bad227",
@@ -642,7 +756,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "de304b931894754a8729",
@@ -653,7 +769,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 0.9,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "75e3c9c6e3e77462bfaf",
@@ -664,7 +782,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "ceb10b11240be9e6cc9a",
@@ -674,8 +794,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "24f22fedb3b2e079e682",
@@ -686,7 +808,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 60,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 184.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "2f40eec076b4b2c4ba4e",
@@ -697,7 +821,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "d507398a309e7986bd56",
@@ -708,7 +834,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 0.9
+   "gate_gain": 0.9,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "7a65e9a9b9962505ed96",
@@ -718,8 +846,10 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_onset_ms": 40,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 204.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "d393bf4aca66369786ef",
@@ -730,7 +860,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "24caffaafec499680d60",
@@ -741,7 +873,9 @@
    "q_set": "all",
    "modality": "audio1char",
    "gate_onset_ms": 50,
-   "gate_gain": 1.0
+   "gate_gain": 1.0,
+   "gate_avail_ms": 194.708,
+   "mora_len_ms": 202.667
   },
   {
    "id": "c1a3ec894dba84cac3e6",
@@ -751,8 +885,12 @@
    "sr": 24000,
    "q_set": "all",
    "modality": "audio1char",
-   "gate_onset_ms": 90,
-   "gate_gain": 1.0
+   "gate_onset_ms": 80,
+   "gate_gain": 1.0,
+   "gate_avail_ms": 166.042,
+   "mora_len_ms": 200.0
   }
- ]
+ ],
+ "codec_delay_ms": 46.042,
+ "gate_note": "gate_avail_ms = 窓の起点(char_onset_s + gate_onset_ms)からモーラ末尾までの長さ(ミリ秒)。再生側は char_dur_s から引き算せず、この値を窓の長さに使う。"
 }

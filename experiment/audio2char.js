@@ -117,9 +117,21 @@ async function decodeStim(stim) {
 }
 
 // C1 を全提示し、C2 を frac% まで残す = ファイル先頭から gate 秒までを再生。
-function gatedBuffer(buf, c2_onset, c2_dur, frac) {
+// 切り出し点は manifest の c2_gate_start_ms / c2_avail_ms(復号後の座標での C2 の
+// 開始位置とモーラ長)から求める。名目の c2_onset_s / c2_dur_s を使ってはいけない。
+// 名目値は VOICEVOX の音素長の量子化(10.667ms格子)も mp3 の復号遅れ(46.042ms)も
+// 見込んでおらず、実測では C2 は 334.04 か 344.71 ミリ秒から始まり 526〜547 ミリ秒で終わる。
+// 名目値のままだと frac=0 で C1 の末尾を34〜45ミリ秒削り、frac=100 で C2 の母音の後半を
+// 26〜47ミリ秒切り落としていた(2026-08-06 修正。1文字課題と同じ欠陥)。
+function gateSeconds(stim) {
+  if (typeof stim.c2_gate_start_ms === "number" && typeof stim.c2_avail_ms === "number") {
+    return (stim.c2_gate_start_ms + stim.c2_avail_ms * stim.frac / 100) / 1000;
+  }
+  return stim.c2_onset_s + (stim.frac / 100) * stim.c2_dur_s;   // 古いマニフェストへの保険
+}
+function gatedBuffer(buf, stim) {
   const sr = buf.sampleRate;
-  const gate = c2_onset + (frac / 100) * c2_dur;
+  const gate = gateSeconds(stim);
   const src = buf.getChannelData(0);
   const len = Math.max(1, Math.min(src.length, Math.round(gate * sr)));
   const ab = ctx.createBuffer(1, len, sr);
@@ -156,10 +168,10 @@ function playGated(buf, stim) {
   const t0 = ctx.currentTime + 0.02;
   playBeep(t0);                                     // 開始の合図音(1回)
   const stimStart = t0 + BEEP_LEAD_MS / 1000;
-  // 再生する音声の長さ = 先頭から2文字目のゲート点まで = c2_onset + c2_dur*frac/100
-  const stimDur = stim.c2_onset_s + stim.c2_dur_s * stim.frac / 100;
+  // 再生する音声の長さ = 先頭から2文字目のゲート点まで(復号後の座標)
+  const stimDur = gateSeconds(stim);
   const s = ctx.createBufferSource();
-  s.buffer = gatedBuffer(buf, stim.c2_onset_s, stim.c2_dur_s, stim.frac);
+  s.buffer = gatedBuffer(buf, stim);
   s.connect(ctx.destination);
   s.start(stimStart);                               // 合図音のあと、間隔をおいて文字の音声
   _nodes.push(s);

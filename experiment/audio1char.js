@@ -4,6 +4,9 @@
 //     再生して (truncation) 何の文字かを問う。frac=0 無音 / frac=100 完全 (catch)。
 //   - 時間ゲートは再生時に Web Audio でライブ切り出し (audio2char と同方式)。
 //   - 時間ゲートは実測の音響的開始(gate_onset_ms)を起点に、量子化済みゲイン(gate_gain)を適用する(2026-07-23修正)。
+//   - 窓の終わりはモーラの実体の末尾(gate_avail_ms)に合わせる(2026-08-06修正)。
+//     以前は名目の char_dur_s から引き算しており、mp3 の復号遅れ(46.042ms)と
+//     音素長の量子化を見込んでいなかったため、モーラ末尾(母音の後半)が窓の外に出ていた。
 //   - 回答は固定50音グリッド(68字。を・ぢ・づ・ゔは同音のため除外、同音は併記ボタン)。
 //     manifest は公開(回答なし・68刺激)、正解は answer_key。
 //
@@ -95,13 +98,24 @@ async function decodeStim(stim) {
   _bufCache[stim.id] = buf;
   return buf;
 }
-// 実測の音響的開始から、スロット末までの残りの frac% を再生。
+// 実測の音響的開始から、モーラ末尾までの残りの frac% を再生。
+// 窓の長さは manifest の gate_avail_ms(音響的開始からモーラ末尾までのミリ秒)をそのまま使う。
+// char_dur_s から引き算してはいけない。char_dur_s は合成時に指定した名目の長さで、
+// (1) VOICEVOX が音素長を10.667ミリ秒の格子へ量子化するぶん、(2) mp3 の復号で先頭に入る
+// 46.042ミリ秒の遅れ、のどちらも見込んでいないため、モーラ末尾が窓の外に落ちる
+// (2026-08-06 の修正。以前は0.2秒のモーラのうち約150ミリ秒しか鳴っていなかった)。
+function gateAvailS(stim) {
+  if (typeof stim.gate_avail_ms === "number") return Math.max(0.01, stim.gate_avail_ms / 1000);
+  // 古いマニフェスト(gate_avail_ms なし)への保険。末尾が切れるが再生自体は続く。
+  const onsetMs = (typeof stim.gate_onset_ms === "number") ? stim.gate_onset_ms : 0;
+  return Math.max(0.01, stim.char_dur_s - onsetMs / 1000);
+}
 function gatedBuffer(buf, stim) {
   const sr = buf.sampleRate;
   const onsetMs = (typeof stim.gate_onset_ms === "number") ? stim.gate_onset_ms : 0;
   const gain = (typeof stim.gate_gain === "number") ? stim.gate_gain : 1.0;
   const start = Math.round((stim.char_onset_s + onsetMs / 1000) * sr);
-  const avail = Math.max(0.01, stim.char_dur_s - onsetMs / 1000);
+  const avail = gateAvailS(stim);
   const len = Math.max(0, Math.round(avail * stim.frac / 100 * sr));
   const src = buf.getChannelData(0);
   const ab = ctx.createBuffer(1, Math.max(1, len), sr);
@@ -140,8 +154,7 @@ function playGated(buf, stim) {
   const t0 = ctx.currentTime + 0.02;
   playBeep(t0);                                     // 開始の合図音(1回)
   const stimStart = t0 + BEEP_LEAD_MS / 1000;
-  const onsetMs = (typeof stim.gate_onset_ms === "number") ? stim.gate_onset_ms : 0;
-  const stimDur = Math.max(0, (stim.char_dur_s - onsetMs / 1000)) * stim.frac / 100; // 実際に鳴る音声の長さ(frac=0なら0)
+  const stimDur = gateAvailS(stim) * stim.frac / 100;   // 実際に鳴る音声の長さ(frac=0なら0)
   if (stim.frac > 0) {                              // 無音の問でも合図音は前後に鳴る
     const s = ctx.createBufferSource();
     s.buffer = gatedBuffer(buf, stim);
