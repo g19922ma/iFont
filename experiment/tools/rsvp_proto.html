@@ -316,11 +316,12 @@ document.getElementById("go").onclick = () => {
     } else if (mode === 6) {
       // 単語単位RSVP: いまのチャンクだけを中央に表示。チャンク内はモーラ速度で埋まり、
       // 次のチャンクが来ると同じ場所に上書きされる
-      if (i < toks.length) {
+      const c6 = i < toks.length ? chunks[chunkOf[i]] : undefined;
+      if (c6) {
         const ci = chunkOf[i];
         let start = 0;
         for (let j = 0; j < ci; j++) start += chunks[j].length;
-        const len = chunks[ci].length;
+        const len = c6.length;
         const maxLen = Math.max(...chunks.map(c => c.length));
         const fs7 = Math.min(150, (W * 0.75) / maxLen / 1.05);
         const cw = fs7 * 1.08;
