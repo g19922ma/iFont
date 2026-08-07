@@ -37,13 +37,13 @@ def _tokens_for(text_chars, reading):
 def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tones",
           rise=False, natural=False, speaker=2, fps=30, font=None, hint_font=None,
           label=None, durations=None, pause_after=None, keep_frames=False,
-          slot_ms=None, g="mock"):
+          slot_ms=None, g="mock", g_slope=1.0):
     """動画を生成して out のパスを返す。
 
     表示は「時間ゲート提示」(固定領域に1文字ずつ、その音の区間で鮮明化)。
     engine=voicevox で実声。natural=True は自然韻律(現代文向け)、False は設計提示
     slot_ms を与えると「流暢なまま全モーラの長さを固定する」経路になる(音高はエンジン任せ)。
-    g="linear" なら文字によらず区間いっぱいで一次関数に鮮明化する(仮の g)。
+    g="linear"/"logistic" なら文字によらない仮の g で鮮明化する。
     (各モーラの音高=pitch・長さ=1/speed 秒に固定。競技かるたの句頭B3・他E4 などに使う)。
     reading で表示字と読み(音)を分けられる(は→ワ 等)。
     durations で1モーラずつ長さを変えられる(競技かるたの伸ばし・余韻。音のあるモーラ数と同数)。
@@ -59,7 +59,7 @@ def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tone
     reading_text = "".join(tokens)
     n_sound = len(sound_pos)
 
-    gmodel.set_mode(g)
+    gmodel.set_mode(g, g_slope)
     if slot_ms:
         speed = 1000.0 / float(slot_ms)      # 1モーラ slot_ms ミリ秒に固定する
     font = font or DEFAULT_FONT
@@ -195,9 +195,12 @@ def main(argv=None):
                     help="実声を流暢に読ませたまま、全モーラの長さをこのミリ秒に固定する。"
                          "音高とアクセントはエンジンにまかせるので抑揚は自然なまま、速さだけが一定になる。"
                          "指定すると --speed と --natural より優先される")
-    ap.add_argument("--g", choices=["mock", "linear"], default="mock",
+    ap.add_argument("--g", choices=["mock", "linear", "logistic"], default="mock",
                     help="鮮明化のしかた。mock=文字ごとに閾値が違う擬似g(既定) / "
-                         "linear=文字によらず区間いっぱいを一次関数で鮮明化する仮のg")
+                         "linear=区間いっぱいを一次関数で鮮明化する仮のg / "
+                         "logistic=区間の中央で明瞭度50%%のロジスティック曲線")
+    ap.add_argument("--g-slope", type=float, default=1.0,
+                    help="--g logistic のときの、区間の中央における傾き(既定1.0)")
     ap.add_argument("--keep-frames", action="store_true")
     args = ap.parse_args(argv)
 
@@ -214,7 +217,7 @@ def main(argv=None):
         engine=args.engine, rise=args.rise, natural=args.natural, speaker=args.speaker,
         fps=args.fps, font=args.font, hint_font=args.hint_font, label=args.label,
         durations=durations, pause_after=pause_after, keep_frames=args.keep_frames,
-        slot_ms=args.slot_ms, g=args.g)
+        slot_ms=args.slot_ms, g=args.g, g_slope=args.g_slope)
     print(f"出力: {out}  ({dur:.1f}s, 音声={used_engine})")
     print(CREDITS)
     return 0
