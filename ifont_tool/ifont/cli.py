@@ -15,7 +15,7 @@ import argparse
 import os
 import tempfile
 
-from . import audio, render, video
+from . import audio, gmodel, render, video
 from .credits import CREDITS
 
 DEFAULT_FONT = os.path.normpath(
@@ -36,11 +36,14 @@ def _tokens_for(text_chars, reading):
 
 def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tones",
           rise=False, natural=False, speaker=2, fps=30, font=None, hint_font=None,
-          label=None, durations=None, pause_after=None, keep_frames=False):
+          label=None, durations=None, pause_after=None, keep_frames=False,
+          slot_ms=None, g="mock"):
     """動画を生成して out のパスを返す。
 
     表示は「時間ゲート提示」(固定領域に1文字ずつ、その音の区間で鮮明化)。
     engine=voicevox で実声。natural=True は自然韻律(現代文向け)、False は設計提示
+    slot_ms を与えると「流暢なまま全モーラの長さを固定する」経路になる(音高はエンジン任せ)。
+    g="linear" なら文字によらず区間いっぱいで一次関数に鮮明化する(仮の g)。
     (各モーラの音高=pitch・長さ=1/speed 秒に固定。競技かるたの句頭B3・他E4 などに使う)。
     reading で表示字と読み(音)を分けられる(は→ワ 等)。
     durations で1モーラずつ長さを変えられる(競技かるたの伸ばし・余韻。音のあるモーラ数と同数)。
@@ -56,6 +59,9 @@ def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tone
     reading_text = "".join(tokens)
     n_sound = len(sound_pos)
 
+    gmodel.set_mode(g)
+    if slot_ms:
+        speed = 1000.0 / float(slot_ms)      # 1モーラ slot_ms ミリ秒に固定する
     font = font or DEFAULT_FONT
     if not os.path.exists(font):
         raise FileNotFoundError(f"フォントが見つからない: {font}")
@@ -74,7 +80,11 @@ def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tone
     onsets = total = wav_bytes = None
     if engine == "voicevox":
         try:
-            if natural:
+            if slot_ms:
+                wav_bytes, onsets, total = audio.synth_voicevox_slot(
+                    reading_text, char_dur, speaker=speaker)
+                used_engine = f"voicevox(流暢・{float(slot_ms):.0f}ms/モーラ固定)"
+            elif natural:
                 wav_bytes, onsets, total = audio.synth_voicevox_natural(reading_text, speaker=speaker)
                 used_engine = "voicevox(自然韻律)"
             else:
@@ -181,6 +191,13 @@ def main(argv=None):
     ap.add_argument("--pause-after", default=None,
                     help="指定モーラの直後に無音(間合い)を挟む。'表示字index:秒' をカンマ区切り"
                          "(例 '13:1.0')。競技かるたの間合いに使う")
+    ap.add_argument("--slot-ms", type=float, default=None,
+                    help="実声を流暢に読ませたまま、全モーラの長さをこのミリ秒に固定する。"
+                         "音高とアクセントはエンジンにまかせるので抑揚は自然なまま、速さだけが一定になる。"
+                         "指定すると --speed と --natural より優先される")
+    ap.add_argument("--g", choices=["mock", "linear"], default="mock",
+                    help="鮮明化のしかた。mock=文字ごとに閾値が違う擬似g(既定) / "
+                         "linear=文字によらず区間いっぱいを一次関数で鮮明化する仮のg")
     ap.add_argument("--keep-frames", action="store_true")
     args = ap.parse_args(argv)
 
@@ -196,7 +213,8 @@ def main(argv=None):
         args.text, reading=args.reading, pitch=args.pitch, speed=args.speed, out=args.out,
         engine=args.engine, rise=args.rise, natural=args.natural, speaker=args.speaker,
         fps=args.fps, font=args.font, hint_font=args.hint_font, label=args.label,
-        durations=durations, pause_after=pause_after, keep_frames=args.keep_frames)
+        durations=durations, pause_after=pause_after, keep_frames=args.keep_frames,
+        slot_ms=args.slot_ms, g=args.g)
     print(f"出力: {out}  ({dur:.1f}s, 音声={used_engine})")
     print(CREDITS)
     return 0

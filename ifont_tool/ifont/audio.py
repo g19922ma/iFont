@@ -183,6 +183,41 @@ def insert_pauses(wav_bytes, pauses):
     return buf.getvalue(), sum(d for _, d in pauses)
 
 
+def _set_mora_duration(m, dur):
+    """1モーラの長さ(秒)だけを固定する。音高(pitch)には触れない。
+    子音は dur-0.04 秒を上限とし、残りを母音に充てる。"""
+    c = m.get("consonant_length") or 0.0
+    if c > dur - 0.04:
+        c = dur - 0.04
+        m["consonant_length"] = c
+    m["vowel_length"] = dur - c
+
+
+def synth_voicevox_slot(reading: str, slot_s: float, speaker: int = 108,
+                        host: str = "http://127.0.0.1:50021", sr: int = 44100):
+    """実声を流暢に読ませたまま、全モーラの長さを slot_s 秒に固定して合成する。
+
+    音高とアクセントはエンジンの判断のままにするので、抑揚は自然なまま、速さだけが一定になる。
+    設計提示(synth_voicevox_designed)が音高も固定してしまうのに対し、こちらは長さだけを操作する。
+    現代文を一定の速さで読ませたいとき(早押しクイズ向けの出力)に使う経路である。
+    句間のポーズはエンジンが入れたまま残す(ポーズはモーラではないため)。
+    返り値は (wavバイト列, 各モーラの開始秒[list], 総秒)。"""
+    q = _vv_query(reading, speaker, host)
+    q.update(dict(prePhonemeLength=0.05, postPhonemeLength=0.15, outputSamplingRate=sr))
+    for ap in q["accent_phrases"]:
+        for m in ap["moras"]:
+            _set_mora_duration(m, float(slot_s))
+    wav = _vv_synth(q, speaker, host)
+    onsets, t = [], q["prePhonemeLength"]
+    for ap in q["accent_phrases"]:
+        for m in ap["moras"]:
+            onsets.append(t)
+            t += float(slot_s)
+        if ap.get("pause_mora"):
+            t += (ap["pause_mora"].get("vowel_length") or 0.0)
+    return wav, onsets, _wav_seconds(wav)
+
+
 def synth_voicevox_natural(reading: str, speaker: int = 108,
                            host: str = "http://127.0.0.1:50021", sr: int = 44100):
     """実声で「自然韻律」を合成する(現代文向け)。音高・長さは VOICEVOX の既定のまま。

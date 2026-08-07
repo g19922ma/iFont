@@ -113,6 +113,33 @@
 </div>
 
 <div class="panel">
+  <h2>提示速度をそろえた読み上げ（1モーラの長さを固定）</h2>
+  <p class="k">同じ文「日本で一番高い山は何？」を、<b>1モーラの長さを固定したまま流暢に</b>読み上げた3本です。
+  音の高さとアクセントは合成エンジンにまかせているので、<b>抑揚は自然なまま、速さだけが一定</b>になります。
+  字幕は仮の一次関数で、その字の区間いっぱいを使って鮮明化しています（実験前のプレースホルダ）。
+  声は東北きりたんの実声です。</p>
+  <div class="videos">
+    <figure>
+      <video src="sample_assets/quiz_slot200.mp4" controls preload="metadata" playsinline></video>
+      <figcaption>（あ）<b>1モーラ 200ミリ秒</b>（毎秒5.0モーラ）。競技かるたの読み上げ規則と同じ速さで、
+      日本語能力試験のもっとも易しい級の聴解音声（毎秒5.05モーラ）にあたります。全体で約4.3秒。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_slot167.mp4" controls preload="metadata" playsinline></video>
+      <figcaption>（い）<b>1モーラ 167ミリ秒</b>（毎秒6.0モーラ）。上と下の中間にあたる速さです。全体で約3.8秒。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_slot133.mp4" controls preload="metadata" playsinline></video>
+      <figcaption>（う）<b>1モーラ 133ミリ秒</b>（毎秒7.5モーラ）。アナウンサーの標準的な読み上げに相当し、
+      日本語能力試験の最上級（毎秒7.07モーラ）をわずかに上回ります。全体で約3.2秒。</figcaption>
+    </figure>
+  </div>
+  <p class="k" style="margin-top:12px">iFontを成立させるには、この提示速度で「続けて出しても認識が落ちない」ことと、
+  「その速度での認識率曲線」の2つが要ります。前者を第1段階の乙課題が、後者を第2段階のfrac課題が引き受けます。
+  どの速さを運用点にするかは、乙課題の結果から決めます。</p>
+</div>
+
+<div class="panel">
   <h2>競技かるたの公式ルールに沿った読み上げ</h2>
   <p class="k">一般社団法人全日本かるた協会の
   <a href="https://www.karuta.or.jp/wp/wp-content/uploads/2026/06/%E7%AB%B6%E6%8A%80%E3%81%8B%E3%82%8B%E3%81%9F%E8%AA%AD%E6%89%8B%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E6%94%B9%E8%A8%82%E7%89%8820250401%EF%BC%9CHP%E6%8E%B2%E8%BC%89%E7%94%A8%EF%BC%9E.pdf" target="_blank" rel="noopener">競技かるた読手テキスト</a>

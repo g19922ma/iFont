@@ -26,11 +26,29 @@ def visual_threshold(ch: str) -> float:
     return _THR_LOW + (_THR_HIGH - _THR_LOW) * _stable_unit(ch)
 
 
+# 鮮明化のしかた。"mock" は上の擬似 g（文字ごとに閾値が違う）、
+# "linear" は文字によらず区間いっぱいを使って一次関数で鮮明化する仮の g。
+# 実データが無い段階で「速さと同期」だけを見せたいときは linear を使う。
+_MODE = "mock"
+
+
+def set_mode(mode: str) -> None:
+    """鮮明化のしかたを選ぶ。"mock"(既定) か "linear"。"""
+    global _MODE
+    if mode not in ("mock", "linear"):
+        raise ValueError(f"g のモードが不正: {mode}（mock か linear）")
+    _MODE = mode
+
+
 def reveal_opacity(ch: str, local_t: float) -> float:
     """文字 ch の、区間内での相対時刻 local_t(0..1) における不透明度(0..1)。
 
-    thr までで 0→1 に立ち上がり、以降は 1 を保つ（fade 提示）。
+    mock:   文字ごとの閾値 thr までで 0→1 に立ち上がり、以降は 1 を保つ（smoothstep）。
+    linear: 文字によらず、区間の始まりから終わりまで一次関数で 0→1 に立ち上がる。
     """
+    x = max(0.0, min(1.0, local_t))
+    if _MODE == "linear":
+        return x
     thr = max(visual_threshold(ch), 1e-3)
     x = max(0.0, min(1.0, local_t / thr))
     # smoothstep でなめらかに
