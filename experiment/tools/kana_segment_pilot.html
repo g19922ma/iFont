@@ -49,7 +49,7 @@
   <div id="intro"><button class="primary" id="start">はじめる</button></div>
   <div id="trial" style="display:none">
     <div class="qtitle" id="qnum"></div>
-    <button class="primary" id="play">▶ 音を聞く（1回だけ）</button>
+    <div class="qtitle" id="playmsg">♪ 音が流れます…</div>
     <div id="answerbox" style="display:none">
       <div class="qtitle" style="margin-top:18px">どの音？</div>
       <div class="choices" id="choices"></div>
@@ -104,13 +104,15 @@ function mkScale(el, cb) {
   }
 }
 
+let playTimer = null;
 document.getElementById("start").onclick = async () => {
   await iP;
+  ctx.resume();
   document.getElementById("intro").style.display = "none";
   document.getElementById("trial").style.display = "block";
   nextTrial();
 };
-document.getElementById("quit").onclick = () => finish();
+document.getElementById("quit").onclick = () => { clearTimeout(playTimer); finish(); };
 
 function nextTrial() {
   ti++;
@@ -120,7 +122,9 @@ function nextTrial() {
   document.getElementById("qnum").textContent = `第${ti + 1}問 / ${plan.length}`;
   document.getElementById("answerbox").style.display = "none";
   document.getElementById("natbox").style.display = isFull ? "block" : "none";
-  document.getElementById("play").disabled = false;
+  document.getElementById("playmsg").style.display = "block";
+  clearTimeout(playTimer);
+  playTimer = setTimeout(doPlay, 500);          // 0.5秒後に自動再生
   const ch = document.getElementById("choices");
   ch.innerHTML = "";
   M.choices.forEach((c, i) => {
@@ -149,7 +153,7 @@ function checkReady() {
   document.getElementById("next").disabled = !ok;
 }
 
-document.getElementById("play").onclick = () => {
+function doPlay() {
   const v = M.variants[cur.vi];
   const gate = v.gates_s[cur.gi];
   const buf = buffers[v.id];
@@ -164,9 +168,9 @@ document.getElementById("play").onclick = () => {
   g.gain.linearRampToValueAtTime(0, t0 + dur);
   src.start(t0, 0, dur + 0.01);
   cur.t_play = Date.now();
-  document.getElementById("play").disabled = true;
+  document.getElementById("playmsg").style.display = "none";
   document.getElementById("answerbox").style.display = "block";
-};
+}
 
 document.getElementById("next").onclick = () => {
   const v = M.variants[cur.vi];
