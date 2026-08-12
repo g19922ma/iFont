@@ -96,6 +96,13 @@ async function init() {
     const j = Math.floor(Math.random() * (i + 1));
     [plan[i], plan[j]] = [plan[j], plan[i]];
   }
+  // 練習3問(基準の易しい断片。記録しない)を先頭に付ける
+  const easy = M.variants
+    .map((v, vi) => ({v, vi}))
+    .filter(x => x.v.cons_scale === 1 && x.v.vowel_scale === 1)
+    .sort(() => Math.random() - 0.5).slice(0, 3)
+    .map(x => ({vi: x.vi, gi: 3, practice: true}));
+  plan = [...easy, ...plan];
 }
 const iP = init();
 
@@ -125,7 +132,10 @@ function nextTrial() {
   if (ti >= plan.length) return finish();
   cur = { ...plan[ti], choice: null, conf: null, nat: null, t_play: null };
   const isFull = M.variants[cur.vi].gates_s[cur.gi] === null;
-  document.getElementById("qnum").textContent = `第${ti + 1}問 / ${plan.length}`;
+  const nPractice = plan.filter(p => p.practice).length;
+  document.getElementById("qnum").textContent = cur.practice
+    ? `練習 ${ti + 1} / ${nPractice}`
+    : `第${ti + 1 - nPractice}問 / ${plan.length - nPractice}`;
   document.getElementById("answerbox").style.display = "none";
   document.getElementById("natbox").style.display = isFull ? "block" : "none";
   document.getElementById("playmsg").style.display = "block";
@@ -171,6 +181,7 @@ function doPlay() {
 }
 
 document.getElementById("next").onclick = () => {
+  if (cur.practice) return nextTrial();          // 練習は記録しない
   const v = M.variants[cur.vi];
   rec.push({trial: ti + 1, id: v.id, kana: v.kana, cond: COND_LABEL(v),
             cons_scale: v.cons_scale, vowel_scale: v.vowel_scale,
