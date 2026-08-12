@@ -163,3 +163,15 @@
 - TODO AIプロトタイピング → experiment/tools/rsvp_proto.html を作成:
   ①置換(素のRSVP) ②残像減衰(前の文字が同枠で薄く残る) ③スクロール窓 の3方式を
   0.10〜0.30s/mora(プリセット0.14/0.20)で体感比較。ニュース風/百人一首/いろはのプリセット付き
+
+## 2026-08-12 セグメント操作パイロット(母音か子音か)の実験環境v1
+
+- 丸山の新アイデア「理解度グラフに効くのは音のどの部分か(全体/母音/子音)」を実験環境化
+- experiment/tools/build_segment_pilot.py: 木本「ちは上の句」(Kikiwake読み取りのみ)を
+  MFA音素境界でPSOLA伸縮({母音,子音}×{0.6,1.0,1.5})。決まり字聞き分け用の打ち切り点
+  6段階を伸縮後時刻に変換してmanifest.jsonへ。音声は実読み話者の声のためgit外(ローカル生成)
+- experiment/tools/segment_pilot.html: ち群3択(ちはやぶる/ちぎりきな/ちぎりおきし)+確信度、
+  全長試行のみ自然さ評価。30試行、結果表(正答率×ゲート×変形)とCSV書き出し
+- 起動: build_segment_pilot.py <dir> → dirでhttp.server → index.html(=segment_pilot.htmlコピー)
+- デモ音声(seg_*.wav 6種: 原音/全体1.5/母音1.5/子音1.5/母音0.6/子音0.6)はDesktop/ifont_listen
+- 知見メモ: 有音部の77%は母音(母音3.24s vs 子音0.97s)→「全体の短縮」はほぼ母音の短縮
