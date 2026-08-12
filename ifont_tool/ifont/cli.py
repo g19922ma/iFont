@@ -37,7 +37,7 @@ def _tokens_for(text_chars, reading):
 def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tones",
           rise=False, natural=False, speaker=2, fps=30, font=None, hint_font=None,
           label=None, durations=None, pause_after=None, keep_frames=False,
-          slot_ms=None, g="mock", g_slope=1.0):
+          slot_ms=None, slot_mode="uniform", g="mock", g_slope=1.0):
     """動画を生成して out のパスを返す。
 
     表示は「時間ゲート提示」(固定領域に1文字ずつ、その音の区間で鮮明化)。
@@ -82,8 +82,8 @@ def build(text, reading=None, pitch="E4", speed=5.0, out="out.mp4", engine="tone
         try:
             if slot_ms:
                 wav_bytes, onsets, total = audio.synth_voicevox_slot(
-                    reading_text, char_dur, speaker=speaker)
-                used_engine = f"voicevox(流暢・{float(slot_ms):.0f}ms/モーラ固定)"
+                    reading_text, char_dur, speaker=speaker, mode=slot_mode)
+                used_engine = f"voicevox(流暢・{float(slot_ms):.0f}ms/モーラ固定・{slot_mode})"
             elif natural:
                 wav_bytes, onsets, total = audio.synth_voicevox_natural(reading_text, speaker=speaker)
                 used_engine = "voicevox(自然韻律)"
@@ -195,6 +195,11 @@ def main(argv=None):
                     help="実声を流暢に読ませたまま、全モーラの長さをこのミリ秒に固定する。"
                          "音高とアクセントはエンジンにまかせるので抑揚は自然なまま、速さだけが一定になる。"
                          "指定すると --speed と --natural より優先される")
+    ap.add_argument("--slot-mode", choices=["uniform", "vowel"], default="uniform",
+                    help="--slot-ms のときの長さの配り方。uniform=子音と母音を同じ倍率で伸縮する"
+                         "(既定。子音と母音の比が自然のまま保たれる) / "
+                         "vowel=子音長を保ち残りを母音に充てる(かるたの伸ばし・余韻向け。"
+                         "一定速度への変更に使うと母音が間延びする)")
     ap.add_argument("--g", choices=["mock", "linear", "logistic"], default="mock",
                     help="鮮明化のしかた。mock=文字ごとに閾値が違う擬似g(既定) / "
                          "linear=区間いっぱいを一次関数で鮮明化する仮のg / "
@@ -217,7 +222,7 @@ def main(argv=None):
         engine=args.engine, rise=args.rise, natural=args.natural, speaker=args.speaker,
         fps=args.fps, font=args.font, hint_font=args.hint_font, label=args.label,
         durations=durations, pause_after=pause_after, keep_frames=args.keep_frames,
-        slot_ms=args.slot_ms, g=args.g, g_slope=args.g_slope)
+        slot_ms=args.slot_ms, slot_mode=args.slot_mode, g=args.g, g_slope=args.g_slope)
     print(f"出力: {out}  ({dur:.1f}s, 音声={used_engine})")
     print(CREDITS)
     return 0

@@ -194,19 +194,42 @@ def _set_mora_duration(m, dur):
 
 
 def synth_voicevox_slot(reading: str, slot_s: float, speaker: int = 108,
-                        host: str = "http://127.0.0.1:50021", sr: int = 44100):
+                        host: str = "http://127.0.0.1:50021", sr: int = 44100,
+                        mode: str = "uniform"):
     """実声を流暢に読ませたまま、全モーラの長さを slot_s 秒に固定して合成する。
 
     音高とアクセントはエンジンの判断のままにするので、抑揚は自然なまま、速さだけが一定になる。
     設計提示(synth_voicevox_designed)が音高も固定してしまうのに対し、こちらは長さだけを操作する。
     現代文を一定の速さで読ませたいとき(早押しクイズ向けの出力)に使う経路である。
     句間のポーズはエンジンが入れたまま残す(ポーズはモーラではないため)。
+
+    mode は長さの配り方。
+      "uniform" 子音と母音を同じ倍率で伸縮する(既定)。エンジン自身の話速指定と同じ配り方で、
+                子音と母音の比が自然のまま保たれる。話速指定と違うのは、全体を一律の倍率で
+                伸縮するのではなく、モーラごとに目標の長さへ合わせる点である。
+      "vowel"   子音長を保ち、残りを母音に充てる。競技かるたの伸ばし・余韻(母音を保持する操作)
+                のための配り方で、一定速度への変更に使うと母音だけが引き伸ばされ、
+                子音の割合が下がって間延びして聞こえる。
     返り値は (wavバイト列, 各モーラの開始秒[list], 総秒)。"""
+    if mode not in ("vowel", "uniform"):
+        raise ValueError(f"mode が不正: {mode}(vowel か uniform)")
     q = _vv_query(reading, speaker, host)
     q.update(dict(prePhonemeLength=0.05, postPhonemeLength=0.15, outputSamplingRate=sr))
     for ap in q["accent_phrases"]:
         for m in ap["moras"]:
-            _set_mora_duration(m, float(slot_s))
+            if mode == "uniform":
+                c = m.get("consonant_length") or 0.0
+                v = m.get("vowel_length") or 0.0
+                tot = c + v
+                if tot > 0:
+                    k = float(slot_s) / tot
+                    if c:
+                        m["consonant_length"] = c * k
+                    m["vowel_length"] = v * k
+                else:
+                    m["vowel_length"] = float(slot_s)
+            else:
+                _set_mora_duration(m, float(slot_s))
     wav = _vv_synth(q, speaker, host)
     onsets, t = [], q["prePhonemeLength"]
     for ap in q["accent_phrases"]:
