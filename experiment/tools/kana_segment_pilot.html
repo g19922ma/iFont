@@ -42,7 +42,7 @@
 <header><h1>か行5択 — どこで分かるか</h1><span class="stamp">打ち切り×伸縮パイロット</span></header>
 <div class="sub">
   1音の<b>途中まで</b>が流れます。「か」「き」「く」「け」「こ」のどれかを答えてください。
-  音は子音・母音の長さを変えてあり、打ち切り位置も変わります。全90問・約15分。
+  音は子音・母音の長さを変えてあり、打ち切り位置も変わります。全74問・約12分。
   途中でやめても「ここで結果を見る」で集計できます。ヘッドホン推奨。
 </div>
 <div id="stagebox">
@@ -90,6 +90,8 @@ async function init() {
   M.variants.forEach((v, vi) => v.gates_s.forEach((g, gi) => {
     // 子音終了ゲートでは母音条件は基準と同一刺激になるため出題しない
     if (gi === 0 && v.cons_scale === 1.0 && v.vowel_scale !== 1.0) return;
+    // 母音1/6ゲートは「母音×0.5(再現された凹み)」と「か(遅いかな)」だけ出題
+    if (gi === 3 && !(v.cons_scale === 1.0 && v.vowel_scale === 0.5) && v.kana !== "か") return;
     plan.push({vi, gi});
   }));
   for (let i = plan.length - 1; i > 0; i--) {
