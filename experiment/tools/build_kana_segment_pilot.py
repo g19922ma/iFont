@@ -24,7 +24,8 @@ KANAS = ["か", "き", "く", "け", "こ"]
 SCALES = [0.5, 1.0, 2.0]
 # v2: 十字の5条件(子音か母音の一方だけ動かす+基準)と、打ち切りゲート
 CONDS = [(1.0, 1.0), (0.5, 1.0), (2.0, 1.0), (1.0, 0.5), (1.0, 2.0)]
-GATE_LABELS = ["子音の終わりまで", "母音の1/3まで", "母音の2/3まで", "全長"]
+# v3.1: 坂(子音終了〜母音1/3)に測定点を集中。全長・自然さは別調査に切り出し
+GATE_LABELS = ["子音の終わりまで", "母音の1/12まで", "母音の1/6まで", "母音の1/3まで"]
 B3 = 246.94
 DUR = 0.30
 SPK = 108
@@ -114,10 +115,10 @@ def main(outdir, grid=False):
                 y = x.copy()
             else:
                 y = stretch(x, [(t_on, t_cv, cs), (t_cv, t_end, vs)])
-            # 打ち切りゲート(伸縮後の時刻): 子音終わり / 母音1/3 / 母音2/3 / 全長
+            # 打ち切りゲート(伸縮後の時刻): 子音終わり / 母音1/12 / 1/6 / 1/3
             cv = t_on + cons * cs
-            gates = [round(cv, 3), round(cv + vowel * vs / 3, 3),
-                     round(cv + vowel * vs * 2 / 3, 3), None]
+            gates = [round(cv, 3), round(cv + vowel * vs / 12, 3),
+                     round(cv + vowel * vs / 6, 3), round(cv + vowel * vs / 3, 3)]
             frags = []
             for gi, g in enumerate(gates):
                 fname = f"{vid}_g{gi}.wav"
