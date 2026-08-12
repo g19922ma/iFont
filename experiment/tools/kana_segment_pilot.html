@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>か行5択 — 母音・子音の伸縮パイロット</title>
+<style>
+  :root{--paper:#f6f1e5; --ink:#262220; --ink2:#5a5348; --line:#c9bfa6;
+        --ai:#234794; --shu:#c73e2e;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Hiragino Mincho ProN","Yu Mincho",serif; color:var(--ink);
+    min-height:100vh; padding:30px 40px 50px;
+    background:repeating-linear-gradient(0deg, transparent 0 2px, rgba(120,100,60,.022) 2px 3px), var(--paper);}
+  header{display:flex; align-items:baseline; gap:16px; margin-bottom:4px;}
+  h1{font-size:24px; letter-spacing:.12em; font-weight:600;}
+  .stamp{font-size:11px; color:#fff; background:var(--shu); padding:4px 8px;
+    border-radius:3px; transform:rotate(-2deg);
+    font-family:"Hiragino Kaku Gothic ProN",sans-serif;}
+  .sub{color:var(--ink2); font-size:13px; margin-bottom:20px; line-height:1.8;}
+  button{font-family:inherit; font-size:15px; letter-spacing:.08em; cursor:pointer;
+    padding:10px 20px; border-radius:5px; border:1px solid var(--ink2);
+    background:#fffdf7; color:var(--ink); transition:all .15s;}
+  button:hover{background:var(--ink); color:var(--paper);}
+  button.primary{background:var(--shu); border-color:var(--shu); color:#fff;}
+  button.primary:hover{background:#a93325;}
+  button:disabled{opacity:.35; cursor:default;}
+  #stagebox{background:#fffdf7; border:1px solid var(--line); border-radius:8px;
+    padding:34px; margin-top:8px; box-shadow:0 3px 14px rgba(60,45,20,.08); min-height:300px;}
+  .qtitle{font-size:15px; color:var(--ink2); letter-spacing:.08em; margin-bottom:14px;}
+  .choices{display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 6px;}
+  .choices button{font-size:30px; padding:14px 26px;}
+  .scale{display:flex; gap:10px; margin:8px 0;}
+  .scale button{min-width:52px;}
+  table{border-collapse:collapse; margin-top:12px; font-size:13.5px;}
+  th,td{border:1px solid var(--line); padding:6px 12px; text-align:center;}
+  th{background:#efe7d4; font-weight:600;}
+  .note{color:var(--ink2); font-size:12.5px; margin-top:14px; line-height:1.8;}
+</style>
+</head>
+<body>
+<header><h1>か行5択</h1><span class="stamp">母音・子音の伸縮パイロット</span></header>
+<div class="sub">
+  1音だけ流れます。<b>「か」「き」「く」「け」「こ」のどれか</b>を答えてください。
+  音は子音・母音の長さをいろいろに変えてあります（高さは同じ）。全45問・約10分。
+</div>
+<div id="stagebox">
+  <div id="intro"><button class="primary" id="start">はじめる</button></div>
+  <div id="trial" style="display:none">
+    <div class="qtitle" id="qnum"></div>
+    <button class="primary" id="play">▶ 音を聞く（1回だけ）</button>
+    <div id="answerbox" style="display:none">
+      <div class="qtitle" style="margin-top:18px">どの音？</div>
+      <div class="choices" id="choices"></div>
+      <div class="qtitle" style="margin-top:14px">確信度（1=当てずっぽう 〜 5=確実）</div>
+      <div class="scale" id="conf"></div>
+      <div class="qtitle" style="margin-top:14px">音の自然さ（1=とても変 〜 5=自然）</div>
+      <div class="scale" id="nat"></div>
+      <button class="primary" id="next" style="margin-top:16px" disabled>次へ</button>
+    </div>
+  </div>
+  <div id="result" style="display:none"></div>
+</div>
+<div class="note">刺激: 東北きりたん(108)・B3・0.3秒/モーラ。PSOLAで子音・母音の長さを独立に
+{0.5, 1, 2}倍。データはブラウザ内のみ（CSVで書き出し）。</div>
+
+<script>
+let M = null, ctx = null, buffers = {};
+let plan = [], ti = -1, rec = [], cur = {};
+
+async function init() {
+  M = await (await fetch("manifest.json")).json();
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  for (const v of M.variants) {
+    const ab = await (await fetch(v.file)).arrayBuffer();
+    buffers[v.id] = await ctx.decodeAudioData(ab);
+  }
+  plan = M.variants.map((v, i) => i);
+  for (let i = plan.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [plan[i], plan[j]] = [plan[j], plan[i]];
+  }
+}
+const iP = init();
+
+function mkScale(el, cb) {
+  el.innerHTML = "";
+  for (let s = 1; s <= 5; s++) {
+    const b = document.createElement("button");
+    b.textContent = s;
+    b.onclick = () => { [...el.children].forEach(c => c.style.background = "");
+      b.style.background = "#e6dcc0"; cb(s); };
+    el.appendChild(b);
+  }
+}
+
+document.getElementById("start").onclick = async () => {
+  await iP;
+  document.getElementById("intro").style.display = "none";
+  document.getElementById("trial").style.display = "block";
+  nextTrial();
+};
+
+function nextTrial() {
+  ti++;
+  if (ti >= plan.length) return finish();
+  cur = { vi: plan[ti], choice: null, conf: null, nat: null, t_play: null };
+  document.getElementById("qnum").textContent = `第${ti + 1}問 / ${plan.length}`;
+  document.getElementById("answerbox").style.display = "none";
+  document.getElementById("play").disabled = false;
+  const ch = document.getElementById("choices");
+  ch.innerHTML = "";
+  M.choices.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.textContent = c;
+    b.onclick = () => { cur.choice = i;
+      [...ch.children].forEach(x => x.style.background = "");
+      b.style.background = "#e6dcc0"; checkReady(); };
+    ch.appendChild(b);
+  });
+  mkScale(document.getElementById("conf"), s => { cur.conf = s; checkReady(); });
+  mkScale(document.getElementById("nat"), s => { cur.nat = s; checkReady(); });
+  document.getElementById("next").disabled = true;
+}
+
+function checkReady() {
+  const ok = cur.choice !== null && cur.conf !== null && cur.nat !== null;
+  document.getElementById("next").disabled = !ok;
+}
+
+document.getElementById("play").onclick = () => {
+  const v = M.variants[cur.vi];
+  const src = ctx.createBufferSource();
+  src.buffer = buffers[v.id];
+  src.connect(ctx.destination);
+  src.start();
+  cur.t_play = Date.now();
+  document.getElementById("play").disabled = true;
+  document.getElementById("answerbox").style.display = "block";
+};
+
+document.getElementById("next").onclick = () => {
+  const v = M.variants[cur.vi];
+  rec.push({trial: ti + 1, id: v.id, kana: v.kana,
+            cons_scale: v.cons_scale, vowel_scale: v.vowel_scale,
+            cons_ms: v.cons_ms, vowel_ms: v.vowel_ms,
+            choice: M.choices[cur.choice],
+            correct: M.choices[cur.choice] === v.kana ? 1 : 0,
+            conf: cur.conf, naturalness: cur.nat,
+            rt_ms: Date.now() - cur.t_play});
+  nextTrial();
+};
+
+function cell(rows, key) {
+  if (!rows.length) return "-";
+  if (key === "correct")
+    return Math.round(100 * rows.reduce((a, r) => a + r.correct, 0) / rows.length) + "%";
+  return (rows.reduce((a, r) => a + r[key], 0) / rows.length).toFixed(1);
+}
+
+function finish() {
+  document.getElementById("trial").style.display = "none";
+  const R = document.getElementById("result");
+  R.style.display = "block";
+  let html = "";
+  for (const [key, title] of [["correct", "正答率"], ["conf", "平均確信度"], ["naturalness", "平均自然さ"]]) {
+    html += `<div class="qtitle" style="margin-top:14px">${title}（行=子音倍率, 列=母音倍率, 5かな込み）</div><table><tr><th></th>`;
+    M.scales.forEach(vs => html += `<th>母音×${vs}</th>`);
+    html += "</tr>";
+    for (const cs of M.scales) {
+      html += `<tr><th>子音×${cs}</th>`;
+      for (const vs of M.scales) {
+        const rows = rec.filter(r => r.cons_scale === cs && r.vowel_scale === vs);
+        html += `<td>${cell(rows, key)}</td>`;
+      }
+      html += "</tr>";
+    }
+    html += "</table>";
+  }
+  html += "<div style='margin-top:18px'><button class='primary' id='csv'>CSVを保存</button></div>";
+  R.innerHTML = html;
+  document.getElementById("csv").onclick = () => {
+    const head = Object.keys(rec[0]).join(",");
+    const rows = rec.map(r => Object.values(r).join(","));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([head + "\n" + rows.join("\n")], {type: "text/csv"}));
+    a.download = "kana_segment_pilot.csv";
+    a.click();
+  };
+}
+</script>
+</body>
+</html>
