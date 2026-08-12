@@ -22,6 +22,9 @@ from ifont import audio as ifa
 
 KANAS = ["か", "き", "く", "け", "こ"]
 SCALES = [0.5, 1.0, 2.0]
+# v2: 十字の5条件(子音か母音の一方だけ動かす+基準)と、打ち切りゲート
+CONDS = [(1.0, 1.0), (0.5, 1.0), (2.0, 1.0), (1.0, 0.5), (1.0, 2.0)]
+GATE_LABELS = ["子音の終わりまで", "母音の1/3まで", "母音の2/3まで", "全長"]
 B3 = 246.94
 DUR = 0.30
 SPK = 108
@@ -69,30 +72,37 @@ def stretch(x, spans):
     return res.values[0]
 
 
-def main(outdir):
+def main(outdir, grid=False):
     os.makedirs(outdir, exist_ok=True)
+    conds = ([(c, v) for c in SCALES for v in SCALES] if grid else CONDS)
     variants = []
     for ch in KANAS:
         x, t_on, t_cv, t_end = synth_kana(ch)
-        for cs in SCALES:
-            for vs in SCALES:
-                vid = f"{ch}_c{int(cs*10):02d}_v{int(vs*10):02d}"
-                if cs == 1.0 and vs == 1.0:
-                    y = x.copy()
-                else:
-                    y = stretch(x, [(t_on, t_cv, cs), (t_cv, t_end, vs)])
-                path = os.path.join(outdir, vid + ".wav")
-                with wave.open(path, "wb") as w:
-                    w.setnchannels(1)
-                    w.setsampwidth(2)
-                    w.setframerate(SR)
-                    w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
-                variants.append(dict(id=vid, file=vid + ".wav", kana=ch,
-                                     cons_scale=cs, vowel_scale=vs,
-                                     cons_ms=round((t_cv - t_on) * cs * 1000),
-                                     vowel_ms=round((t_end - t_cv) * vs * 1000)))
-        print(f"{ch}: 子音 {1000*(t_cv-t_on):.0f}ms / 母音 {1000*(t_end-t_cv):.0f}ms → 9変形")
-    manifest = dict(choices=KANAS, scales=SCALES, variants=variants,
+        cons, vowel = t_cv - t_on, t_end - t_cv
+        for (cs, vs) in conds:
+            vid = f"{ch}_c{int(cs*10):02d}_v{int(vs*10):02d}"
+            if cs == 1.0 and vs == 1.0:
+                y = x.copy()
+            else:
+                y = stretch(x, [(t_on, t_cv, cs), (t_cv, t_end, vs)])
+            path = os.path.join(outdir, vid + ".wav")
+            with wave.open(path, "wb") as w:
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(SR)
+                w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
+            # 打ち切りゲート(伸縮後の時刻): 子音終わり / 母音1/3 / 母音2/3 / 全長
+            cv = t_on + cons * cs
+            gates = [round(cv, 3), round(cv + vowel * vs / 3, 3),
+                     round(cv + vowel * vs * 2 / 3, 3), None]
+            variants.append(dict(id=vid, file=vid + ".wav", kana=ch,
+                                 cons_scale=cs, vowel_scale=vs,
+                                 cons_ms=round(cons * cs * 1000),
+                                 vowel_ms=round(vowel * vs * 1000),
+                                 gates_s=gates))
+        print(f"{ch}: 子音 {1000*cons:.0f}ms / 母音 {1000*vowel:.0f}ms → {len(conds)}変形")
+    manifest = dict(choices=KANAS, scales=SCALES, gate_labels=GATE_LABELS,
+                    variants=variants,
                     speaker="東北きりたん(108)・B3・0.3秒", note="PSOLAで子音/母音を独立伸縮")
     json.dump(manifest, open(os.path.join(outdir, "manifest.json"), "w"),
               ensure_ascii=False, indent=1)
@@ -100,4 +110,5 @@ def main(outdir):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "kana_segment_stimuli")
+    args = [a for a in sys.argv[1:] if a != "--grid"]
+    main(args[0] if args else "kana_segment_stimuli", grid="--grid" in sys.argv)

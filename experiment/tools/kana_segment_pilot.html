@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>か行5択 — 母音・子音の伸縮パイロット</title>
+<title>か行5択 — どこで分かるか（打ち切り×伸縮パイロット）</title>
 <style>
   :root{--paper:#f6f1e5; --ink:#262220; --ink2:#5a5348; --line:#c9bfa6;
         --ai:#234794; --shu:#c73e2e;}
@@ -35,13 +35,15 @@
   th,td{border:1px solid var(--line); padding:6px 12px; text-align:center;}
   th{background:#efe7d4; font-weight:600;}
   .note{color:var(--ink2); font-size:12.5px; margin-top:14px; line-height:1.8;}
+  #chart{background:#fffdf7; border:1px solid var(--line); border-radius:6px; margin-top:14px;}
 </style>
 </head>
 <body>
-<header><h1>か行5択</h1><span class="stamp">母音・子音の伸縮パイロット</span></header>
+<header><h1>か行5択 — どこで分かるか</h1><span class="stamp">打ち切り×伸縮パイロット</span></header>
 <div class="sub">
-  1音だけ流れます。<b>「か」「き」「く」「け」「こ」のどれか</b>を答えてください。
-  音は子音・母音の長さをいろいろに変えてあります（高さは同じ）。全45問・約10分。
+  1音の<b>途中まで</b>が流れます。「か」「き」「く」「け」「こ」のどれかを答えてください。
+  音は子音・母音の長さを変えてあり、打ち切り位置も変わります。全100問・約18分。
+  途中でやめても「ここで結果を見る」で集計できます。
 </div>
 <div id="stagebox">
   <div id="intro"><button class="primary" id="start">はじめる</button></div>
@@ -53,19 +55,28 @@
       <div class="choices" id="choices"></div>
       <div class="qtitle" style="margin-top:14px">確信度（1=当てずっぽう 〜 5=確実）</div>
       <div class="scale" id="conf"></div>
-      <div class="qtitle" style="margin-top:14px">音の自然さ（1=とても変 〜 5=自然）</div>
-      <div class="scale" id="nat"></div>
+      <div id="natbox" style="display:none">
+        <div class="qtitle" style="margin-top:14px">音の自然さ（1=とても変 〜 5=自然）</div>
+        <div class="scale" id="nat"></div>
+      </div>
       <button class="primary" id="next" style="margin-top:16px" disabled>次へ</button>
     </div>
+    <div style="margin-top:22px"><button id="quit" style="font-size:12px">ここで結果を見る</button></div>
   </div>
   <div id="result" style="display:none"></div>
 </div>
-<div class="note">刺激: 東北きりたん(108)・B3・0.3秒/モーラ。PSOLAで子音・母音の長さを独立に
-{0.5, 1, 2}倍。データはブラウザ内のみ（CSVで書き出し）。</div>
+<div class="note">刺激: 東北きりたん(108)・B3・0.3秒/モーラ。PSOLAで子音/母音を伸縮した「十字」5条件
+（×1×1・子音×0.5・子音×2・母音×0.5・母音×2）×打ち切り4点。データはブラウザ内のみ（CSV書き出し）。</div>
 
 <script>
 let M = null, ctx = null, buffers = {};
 let plan = [], ti = -1, rec = [], cur = {};
+const COND_LABEL = v =>
+  (v.cons_scale === 1 && v.vowel_scale === 1) ? "基準" :
+  v.cons_scale !== 1 ? `子音×${v.cons_scale}` : `母音×${v.vowel_scale}`;
+const COND_ORDER = ["子音×0.5", "基準", "子音×2", "母音×0.5", "母音×2"];
+const COND_COLOR = {"基準": "#52514e", "子音×0.5": "#2a78d6", "子音×2": "#1b3f78",
+                    "母音×0.5": "#eb6834", "母音×2": "#a83c14"};
 
 async function init() {
   M = await (await fetch("manifest.json")).json();
@@ -74,7 +85,7 @@ async function init() {
     const ab = await (await fetch(v.file)).arrayBuffer();
     buffers[v.id] = await ctx.decodeAudioData(ab);
   }
-  plan = M.variants.map((v, i) => i);
+  M.variants.forEach((v, vi) => v.gates_s.forEach((g, gi) => plan.push({vi, gi})));
   for (let i = plan.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [plan[i], plan[j]] = [plan[j], plan[i]];
@@ -99,13 +110,16 @@ document.getElementById("start").onclick = async () => {
   document.getElementById("trial").style.display = "block";
   nextTrial();
 };
+document.getElementById("quit").onclick = () => finish();
 
 function nextTrial() {
   ti++;
   if (ti >= plan.length) return finish();
-  cur = { vi: plan[ti], choice: null, conf: null, nat: null, t_play: null };
+  cur = { ...plan[ti], choice: null, conf: null, nat: null, t_play: null };
+  const isFull = M.variants[cur.vi].gates_s[cur.gi] === null;
   document.getElementById("qnum").textContent = `第${ti + 1}問 / ${plan.length}`;
   document.getElementById("answerbox").style.display = "none";
+  document.getElementById("natbox").style.display = isFull ? "block" : "none";
   document.getElementById("play").disabled = false;
   const ch = document.getElementById("choices");
   ch.innerHTML = "";
@@ -123,16 +137,25 @@ function nextTrial() {
 }
 
 function checkReady() {
-  const ok = cur.choice !== null && cur.conf !== null && cur.nat !== null;
+  const isFull = M.variants[cur.vi].gates_s[cur.gi] === null;
+  const ok = cur.choice !== null && cur.conf !== null && (!isFull || cur.nat !== null);
   document.getElementById("next").disabled = !ok;
 }
 
 document.getElementById("play").onclick = () => {
   const v = M.variants[cur.vi];
+  const gate = v.gates_s[cur.gi];
+  const buf = buffers[v.id];
   const src = ctx.createBufferSource();
-  src.buffer = buffers[v.id];
-  src.connect(ctx.destination);
-  src.start();
+  src.buffer = buf;
+  const g = ctx.createGain();
+  src.connect(g); g.connect(ctx.destination);
+  const t0 = ctx.currentTime + 0.05;
+  const dur = gate === null ? buf.duration : Math.min(gate, buf.duration);
+  g.gain.setValueAtTime(1, t0);
+  g.gain.setValueAtTime(1, t0 + Math.max(0, dur - 0.006));
+  g.gain.linearRampToValueAtTime(0, t0 + dur);
+  src.start(t0, 0, dur + 0.01);
   cur.t_play = Date.now();
   document.getElementById("play").disabled = true;
   document.getElementById("answerbox").style.display = "block";
@@ -140,44 +163,83 @@ document.getElementById("play").onclick = () => {
 
 document.getElementById("next").onclick = () => {
   const v = M.variants[cur.vi];
-  rec.push({trial: ti + 1, id: v.id, kana: v.kana,
+  rec.push({trial: ti + 1, id: v.id, kana: v.kana, cond: COND_LABEL(v),
             cons_scale: v.cons_scale, vowel_scale: v.vowel_scale,
-            cons_ms: v.cons_ms, vowel_ms: v.vowel_ms,
+            gate_idx: cur.gi, gate_label: M.gate_labels[cur.gi],
+            gate_s: v.gates_s[cur.gi] ?? "",
             choice: M.choices[cur.choice],
             correct: M.choices[cur.choice] === v.kana ? 1 : 0,
-            conf: cur.conf, naturalness: cur.nat,
+            conf: cur.conf, naturalness: cur.nat ?? "",
             rt_ms: Date.now() - cur.t_play});
   nextTrial();
 };
 
-function cell(rows, key) {
-  if (!rows.length) return "-";
-  if (key === "correct")
-    return Math.round(100 * rows.reduce((a, r) => a + r.correct, 0) / rows.length) + "%";
-  return (rows.reduce((a, r) => a + r[key], 0) / rows.length).toFixed(1);
+function acc(rows) {
+  return rows.length ? rows.reduce((a, r) => a + r.correct, 0) / rows.length : null;
+}
+
+function drawChart() {
+  const cv = document.getElementById("chart");
+  const W = cv.width = 860, H = cv.height = 360;
+  const c2 = cv.getContext("2d");
+  c2.fillStyle = "#fffdf7"; c2.fillRect(0, 0, W, H);
+  const ml = 60, mr = 160, mt = 30, mb = 46;
+  const px = gi => ml + gi / (M.gate_labels.length - 1) * (W - ml - mr);
+  const py = a => mt + (1 - a) * (H - mt - mb);
+  c2.strokeStyle = "#e1dcc9"; c2.fillStyle = "#8a8171";
+  c2.font = '12px "Hiragino Mincho ProN"';
+  for (const yv of [0, 0.2, 0.5, 0.8, 1.0]) {
+    c2.beginPath(); c2.moveTo(ml, py(yv)); c2.lineTo(W - mr, py(yv)); c2.stroke();
+    c2.fillText(Math.round(yv * 100) + "%", 16, py(yv) + 4);
+  }
+  c2.setLineDash([4, 4]);
+  c2.beginPath(); c2.moveTo(ml, py(0.2)); c2.lineTo(W - mr, py(0.2)); c2.stroke();
+  c2.setLineDash([]);
+  M.gate_labels.forEach((l, gi) => c2.fillText(l, px(gi) - 30, H - 20));
+  COND_ORDER.forEach(cond => {
+    const col = COND_COLOR[cond];
+    c2.strokeStyle = col; c2.fillStyle = col; c2.lineWidth = 2.2;
+    let prev = null;
+    M.gate_labels.forEach((l, gi) => {
+      const a = acc(rec.filter(r => r.cond === cond && r.gate_idx === gi));
+      if (a === null) { prev = null; return; }
+      const x = px(gi), y = py(a);
+      c2.beginPath(); c2.arc(x, y, 4, 0, 7); c2.fill();
+      if (prev) { c2.beginPath(); c2.moveTo(prev[0], prev[1]); c2.lineTo(x, y); c2.stroke(); }
+      prev = [x, y];
+    });
+  });
+  COND_ORDER.forEach((cond, i) => {
+    c2.fillStyle = COND_COLOR[cond];
+    c2.fillRect(W - mr + 14, mt + i * 24, 14, 4);
+    c2.fillText(cond, W - mr + 34, mt + i * 24 + 6);
+  });
+  c2.fillStyle = "#8a8171";
+  c2.fillText("横軸=どこまで聞かせたか(音の中身の位置) 縦軸=正答率 点線=当てずっぽう(20%)", ml, 16);
 }
 
 function finish() {
   document.getElementById("trial").style.display = "none";
   const R = document.getElementById("result");
   R.style.display = "block";
-  let html = "";
-  for (const [key, title] of [["correct", "正答率"], ["conf", "平均確信度"], ["naturalness", "平均自然さ"]]) {
-    html += `<div class="qtitle" style="margin-top:14px">${title}（行=子音倍率, 列=母音倍率, 5かな込み）</div><table><tr><th></th>`;
-    M.scales.forEach(vs => html += `<th>母音×${vs}</th>`);
-    html += "</tr>";
-    for (const cs of M.scales) {
-      html += `<tr><th>子音×${cs}</th>`;
-      for (const vs of M.scales) {
-        const rows = rec.filter(r => r.cons_scale === cs && r.vowel_scale === vs);
-        html += `<td>${cell(rows, key)}</td>`;
-      }
-      html += "</tr>";
-    }
-    html += "</table>";
+  let html = "<div class='qtitle'>どこで分かるか（条件別の正答率曲線）</div>" +
+             "<canvas id='chart'></canvas>";
+  html += "<div class='qtitle' style='margin-top:16px'>正答率の表</div><table><tr><th>条件</th>";
+  M.gate_labels.forEach(l => html += `<th>${l}</th>`);
+  html += "<th>自然さ(全長)</th></tr>";
+  for (const cond of COND_ORDER) {
+    html += `<tr><th>${cond}</th>`;
+    M.gate_labels.forEach((l, gi) => {
+      const a = acc(rec.filter(r => r.cond === cond && r.gate_idx === gi));
+      html += `<td>${a === null ? "-" : Math.round(a * 100) + "%"}</td>`;
+    });
+    const nats = rec.filter(r => r.cond === cond && r.naturalness !== "");
+    const nm = nats.length ? (nats.reduce((a, r) => a + r.naturalness, 0) / nats.length).toFixed(1) : "-";
+    html += `<td>${nm}</td></tr>`;
   }
-  html += "<div style='margin-top:18px'><button class='primary' id='csv'>CSVを保存</button></div>";
+  html += "</table><div style='margin-top:18px'><button class='primary' id='csv'>CSVを保存</button></div>";
   R.innerHTML = html;
+  drawChart();
   document.getElementById("csv").onclick = () => {
     const head = Object.keys(rec[0]).join(",");
     const rows = rec.map(r => Object.values(r).join(","));
