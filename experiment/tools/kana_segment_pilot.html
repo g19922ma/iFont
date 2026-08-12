@@ -131,6 +131,13 @@ function nextTrial() {
       b.style.background = "#e6dcc0"; checkReady(); };
     ch.appendChild(b);
   });
+  const dk = document.createElement("button");
+  dk.textContent = "わからない";
+  dk.style.fontSize = "16px";
+  dk.onclick = () => { cur.choice = -1;
+    [...ch.children].forEach(x => x.style.background = "");
+    dk.style.background = "#e6dcc0"; checkReady(); };
+  ch.appendChild(dk);
   mkScale(document.getElementById("conf"), s => { cur.conf = s; checkReady(); });
   mkScale(document.getElementById("nat"), s => { cur.nat = s; checkReady(); });
   document.getElementById("next").disabled = true;
@@ -167,8 +174,8 @@ document.getElementById("next").onclick = () => {
             cons_scale: v.cons_scale, vowel_scale: v.vowel_scale,
             gate_idx: cur.gi, gate_label: M.gate_labels[cur.gi],
             gate_s: v.gates_s[cur.gi] ?? "",
-            choice: M.choices[cur.choice],
-            correct: M.choices[cur.choice] === v.kana ? 1 : 0,
+            choice: cur.choice === -1 ? "わからない" : M.choices[cur.choice],
+            correct: cur.choice !== -1 && M.choices[cur.choice] === v.kana ? 1 : 0,
             conf: cur.conf, naturalness: cur.nat ?? "",
             rt_ms: Date.now() - cur.t_play});
   nextTrial();
