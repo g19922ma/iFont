@@ -82,8 +82,10 @@ async function init() {
   M = await (await fetch("manifest.json")).json();
   ctx = new (window.AudioContext || window.webkitAudioContext)();
   for (const v of M.variants) {
-    const ab = await (await fetch(v.file)).arrayBuffer();
-    buffers[v.id] = await ctx.decodeAudioData(ab);
+    for (const f of v.fragments) {
+      const ab = await (await fetch(f.file)).arrayBuffer();
+      buffers[f.file] = await ctx.decodeAudioData(ab);
+    }
   }
   M.variants.forEach((v, vi) => v.gates_s.forEach((g, gi) => plan.push({vi, gi})));
   for (let i = plan.length - 1; i > 0; i--) {
@@ -155,18 +157,10 @@ function checkReady() {
 
 function doPlay() {
   const v = M.variants[cur.vi];
-  const gate = v.gates_s[cur.gi];
-  const buf = buffers[v.id];
   const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const g = ctx.createGain();
-  src.connect(g); g.connect(ctx.destination);
-  const t0 = ctx.currentTime + 0.05;
-  const dur = gate === null ? buf.duration : Math.min(gate, buf.duration);
-  g.gain.setValueAtTime(1, t0);
-  g.gain.setValueAtTime(1, t0 + Math.max(0, dur - 0.006));
-  g.gain.linearRampToValueAtTime(0, t0 + dur);
-  src.start(t0, 0, dur + 0.01);
+  src.buffer = buffers[v.fragments[cur.gi].file];   // 事前レンダリング済み断片(音量正規化済み)
+  src.connect(ctx.destination);
+  src.start();
   cur.t_play = Date.now();
   document.getElementById("playmsg").style.display = "none";
   document.getElementById("answerbox").style.display = "block";
@@ -178,6 +172,8 @@ document.getElementById("next").onclick = () => {
             cons_scale: v.cons_scale, vowel_scale: v.vowel_scale,
             gate_idx: cur.gi, gate_label: M.gate_labels[cur.gi],
             gate_s: v.gates_s[cur.gi] ?? "",
+            gain_db: v.fragments[cur.gi].gain_db,
+            gain_capped: v.fragments[cur.gi].capped ? 1 : 0,
             choice: cur.choice === -1 ? "わからない" : M.choices[cur.choice],
             correct: cur.choice !== -1 && M.choices[cur.choice] === v.kana ? 1 : 0,
             conf: cur.conf, naturalness: cur.nat ?? "",

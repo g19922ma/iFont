@@ -72,6 +72,35 @@ def stretch(x, spans):
     return res.values[0]
 
 
+TARGET_DB = -26.0     # 断片の目標音量(有音部RMS)
+MAX_GAIN_DB = 30.0    # 増幅の上限。これでも届かない断片は「物理的にほぼ無音」として記録
+
+
+def render_fragment(y, gate_s, path):
+    """全長波形 y の先頭〜gate_s を切り出し、末尾2msフェード+音量正規化して保存。
+    返り値 (適用ゲインdB, 頭打ちしたか)。"""
+    seg = y[:int(gate_s * SR)].copy() if gate_s else y.copy()
+    nf = int(0.002 * SR)
+    if len(seg) > nf:
+        seg[-nf:] *= np.linspace(1, 0, nf)
+    body = seg[int(0.05 * SR):]                      # 先頭無音50msを除いた有音部
+    rms = float(np.sqrt(np.mean(body ** 2))) if len(body) else 0.0
+    cur_db = 20 * math.log10(max(rms, 1e-9))
+    gain_db = TARGET_DB - cur_db
+    capped = gain_db > MAX_GAIN_DB
+    gain_db = min(gain_db, MAX_GAIN_DB)
+    seg = seg * (10 ** (gain_db / 20))
+    peak = float(np.max(np.abs(seg))) if len(seg) else 0.0
+    if peak > 0.95:
+        seg *= 0.95 / peak
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(SR)
+        w.writeframes((np.clip(seg, -1, 1) * 32767).astype("<i2").tobytes())
+    return round(gain_db, 1), capped
+
+
 def main(outdir, grid=False):
     os.makedirs(outdir, exist_ok=True)
     conds = ([(c, v) for c in SCALES for v in SCALES] if grid else CONDS)
@@ -85,22 +114,21 @@ def main(outdir, grid=False):
                 y = x.copy()
             else:
                 y = stretch(x, [(t_on, t_cv, cs), (t_cv, t_end, vs)])
-            path = os.path.join(outdir, vid + ".wav")
-            with wave.open(path, "wb") as w:
-                w.setnchannels(1)
-                w.setsampwidth(2)
-                w.setframerate(SR)
-                w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
             # 打ち切りゲート(伸縮後の時刻): 子音終わり / 母音1/3 / 母音2/3 / 全長
             cv = t_on + cons * cs
             gates = [round(cv, 3), round(cv + vowel * vs / 3, 3),
                      round(cv + vowel * vs * 2 / 3, 3), None]
-            variants.append(dict(id=vid, file=vid + ".wav", kana=ch,
+            frags = []
+            for gi, g in enumerate(gates):
+                fname = f"{vid}_g{gi}.wav"
+                gain_db, capped = render_fragment(y, g, os.path.join(outdir, fname))
+                frags.append(dict(file=fname, gate_s=g, gain_db=gain_db, capped=capped))
+            variants.append(dict(id=vid, kana=ch,
                                  cons_scale=cs, vowel_scale=vs,
                                  cons_ms=round(cons * cs * 1000),
                                  vowel_ms=round(vowel * vs * 1000),
-                                 gates_s=gates))
-        print(f"{ch}: 子音 {1000*cons:.0f}ms / 母音 {1000*vowel:.0f}ms → {len(conds)}変形")
+                                 gates_s=gates, fragments=frags))
+        print(f"{ch}: 子音 {1000*cons:.0f}ms / 母音 {1000*vowel:.0f}ms → {len(conds)}変形×{len(GATE_LABELS)}断片")
     manifest = dict(choices=KANAS, scales=SCALES, gate_labels=GATE_LABELS,
                     variants=variants,
                     speaker="東北きりたん(108)・B3・0.3秒", note="PSOLAで子音/母音を独立伸縮")
