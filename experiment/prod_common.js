@@ -64,6 +64,7 @@
     const full = Object.assign({
       participant_id: participantId, worker_id: workerId,
       completion_code: completionCode, ts: Date.now(),
+      audio_device: audioDevice,
     }, body);
     fsPost(full);                                   // Firestore(設定時のみ)
     if (!SUBMIT_URL) return;
@@ -89,9 +90,22 @@
   }
 
   // 同意画面(本番モードのみ冒頭に出す)。opts = {taskLabel, minutes, headphone, onOk}
+  // 聴覚課題の再生機器の申告(スピーカー/有線=OK、無線=NG)。選択は全回答と共に保存される。
+  let audioDevice = "";
+  const DEVICE_HTML = `
+      <div id="devBox" style="margin-top:14px;padding:12px 14px;background:#f6f8fb;border:1px solid #dde3ec;border-radius:8px">
+        <p style="margin:0 0 6px;font-size:15px"><b>音の再生に使う機器</b>を選んでください：</p>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="スピーカー"> スピーカー（PC内蔵・外付け）</label>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="有線ヘッドホン"> 有線のヘッドホン・イヤホン</label>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="無線"> 無線（Bluetooth）のヘッドホン・イヤホン</label>
+        <p id="devWarn" style="display:none;color:#b3261e;font-size:13.5px;margin:6px 0 0">
+          無線（Bluetooth）機器は音の頭が欠けることがあるため、本実験ではご利用いただけません。
+          <b>スピーカーか有線の機器に切り替えてから</b>、上の選択を変更してください。</p>
+      </div>`;
+
   function consentScreen(el, taskLabel, minutes, onOk, headphone) {
     const envNote = headphone
-      ? "ヘッドホンやイヤホンを使い、静かな環境でお願いします。"
+      ? "静かな環境でお願いします。音はスピーカーまたは有線ヘッドホンで再生してください（無線は不可）。"
       : "できればPC（パソコン）で、明るい静かな環境でお願いします。";
     el.innerHTML = `
       <h1>かなの認識に関する研究へのご協力のお願い</h1>
@@ -103,12 +117,27 @@
         <li>回答の正誤は報酬に影響しません。<b>難しくて当然の課題です。</b>分からなければ勘でお答えください。</li>
         <li>途中でやめる場合はブラウザを閉じてください。完了画面の<b>完了コード</b>を応募元に貼ると報酬の対象になります。</li>
       </ul>
+      ${headphone ? DEVICE_HTML : ""}
       <p style="margin-top:16px"><label style="font-size:15px"><input type="checkbox" id="cst"> 上記に同意し、18歳以上であることを確認しました。</label></p>
       <p><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
       <p class="muted">${envNote}</p>`;
     const cb = el.querySelector("#cst"), go = el.querySelector("#cstGo");
-    cb.addEventListener("change", () => { go.disabled = !cb.checked; go.style.opacity = cb.checked ? "1" : ".5"; });
-    go.addEventListener("click", () => { if (cb.checked) onOk(); });
+    const devRadios = el.querySelectorAll('input[name="dev"]');
+    const devWarn = el.querySelector("#devWarn");
+    function ready() {
+      const devOk = !headphone || (audioDevice && audioDevice !== "無線");
+      const ok = cb.checked && devOk;
+      go.disabled = !ok; go.style.opacity = ok ? "1" : ".5";
+    }
+    devRadios.forEach(r => r.addEventListener("change", () => {
+      audioDevice = r.value;
+      if (devWarn) devWarn.style.display = audioDevice === "無線" ? "block" : "none";
+      ready();
+    }));
+    cb.addEventListener("change", ready);
+    go.addEventListener("click", () => {
+      if (cb.checked && (!headphone || (audioDevice && audioDevice !== "無線"))) onOk();
+    });
   }
 
   // 完了画面のHTML(本番モードのみ)。完了コードを大きく表示。
