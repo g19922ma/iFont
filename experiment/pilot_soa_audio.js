@@ -336,7 +336,8 @@ function showResults() {
   const rows = byLevel();
   // 本番モード: セッション完了を記録し、完了コードを表示して終わる(結果グラフは出さない)。
   if (window.PROD && PROD.enabled) {
-    PROD.saveDone("soa_audio", prodMeta(), { byLevel: rows });
+    PROD.saveDone("soa_audio", prodMeta(),
+      { byLevel: rows, env: ENV, duration_s: Math.round((Date.now()-T0)/1000) });
     screen.innerHTML = PROD.completionHTML(Math.round((Date.now()-T0)/1000));
     return;
   }

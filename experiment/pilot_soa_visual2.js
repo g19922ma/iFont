@@ -279,7 +279,8 @@ function svgCurves(rows) {
 function showResults() {
   const rows = byLevel();
   if (window.PROD && PROD.enabled) {
-    PROD.saveDone("soa_visual", { version:VERSION, charset:CHARSET }, { byLevel: rows });
+    PROD.saveDone("soa_visual", { version:VERSION, charset:CHARSET },
+      { byLevel: rows, env: ENV, duration_s: Math.round((Date.now()-T0)/1000) });
     screen.innerHTML = PROD.completionHTML(Math.round((Date.now()-T0)/1000));
     return;
   }

@@ -162,12 +162,13 @@ function handleSoa(sheetId, body) {
     if (!s) {
       s = ss.insertSheet("soa_sessions");
       s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task",
-        "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s", "summary_json"]);
+        "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s",
+        "env_json", "summary_json"]);
     }
     s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
       body.completion_code || "", body.task || "", body.version || "", body.speaker || "",
       body.speaker_name || "", body.pitch || "", body.n_trials || "", body.duration_s || "",
-      JSON.stringify(body.byLevel || "")]);
+      JSON.stringify(body.env || ""), JSON.stringify(body.byLevel || "")]);
     return out({status: "ok"});
   }
   let s = ss.getSheetByName("soa_trials");
@@ -175,12 +176,15 @@ function handleSoa(sheetId, body) {
     s = ss.insertSheet("soa_trials");
     s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task", "trial_index",
       "version", "speaker", "pitch", "S", "c1", "c2", "c3", "resp1", "resp2",
-      "correct1", "correct2"]);
+      "correct1", "correct2", "actual_soa1", "actual_soa2", "actual_dur3"]);
   }
   s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
     body.completion_code || "", body.task || "", (body.trial_index === undefined ? "" : body.trial_index),
     body.version || "", body.speaker || "", body.pitch || "", body.S,
-    body.c1, body.c2, body.c3, body.resp1, body.resp2, !!body.correct1, !!body.correct2]);
+    body.c1, body.c2, body.c3, body.resp1, body.resp2, !!body.correct1, !!body.correct2,
+    (body.actual_soa1 === undefined ? "" : body.actual_soa1),
+    (body.actual_soa2 === undefined ? "" : body.actual_soa2),
+    (body.actual_dur3 === undefined ? "" : body.actual_dur3)]);
   return out({status: "ok", correct1: !!body.correct1, correct2: !!body.correct2});
 }
 
