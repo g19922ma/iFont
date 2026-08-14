@@ -278,3 +278,11 @@
   監査指摘(GASのactual_*/env列挙漏れ)を修正しコミット(23cfce726)。ページ側もenv/duration送信
 - 発注までの残り: ①GASデプロイ(栗原・修正版code.gsで) ②ブランチ→mainマージ(Pages配信)
   ③Yahoo発注画面確認。スケジュールは8/31投稿の圧縮版+実験トラック(8/26カットオフ)
+
+## 2026-08-14(続) Firestore二重書き込みを実装(丸山提案)
+
+- 根拠: GASは同時実行30本上限+no-cors投げっぱなしで混雑時の取りこぼしを検知できない。
+  Kikiwake(Firebase)の運用実績あり
+- prod_common.js に FIREBASE={projectId, apiKey} と fsPost を追加。設定時は
+  soa_trials/soa_sessionsコレクションへ並行保存(create-onlyルール)。GASと併用可
+- 手順書 docs/FIREBASE_SETUP.md(10分作業・ルール込み)。解析はFirestoreを正、GASを照合用

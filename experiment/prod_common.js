@@ -20,6 +20,11 @@
   // ▼ デプロイ前に、公開した Google Apps Script の /exec URL を貼る。
   const SUBMIT_URL = "";
 
+  // ▼ Firestore 二重書き込み(推奨)。GASは同時実行30本の上限があり、混雑時に
+  //   取りこぼす恐れがあるため、Firestore にも並行保存する(どちらか片方でも可)。
+  //   設定手順は docs/FIREBASE_SETUP.md。空のままなら Firestore への送信はスキップ。
+  const FIREBASE = { projectId: "", apiKey: "" };
+
   // クラウドソーシング(Yahoo!クラウドソーシング等)の作業者IDをURLから拾う。
   const workerId = P.get("worker_id") || P.get("wid") || P.get("worker") || "";
   const participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
@@ -30,16 +35,43 @@
 
   let sentTrials = 0;
 
+  // Firestore REST 用: JSの値を Firestore のフィールド型に変換する。
+  function fsValue(v) {
+    if (v === null || v === undefined) return { nullValue: null };
+    if (typeof v === "boolean") return { booleanValue: v };
+    if (typeof v === "number") return Number.isFinite(v) ? { doubleValue: v } : { nullValue: null };
+    if (typeof v === "object") return { stringValue: JSON.stringify(v) };
+    return { stringValue: String(v) };
+  }
+
+  function fsPost(body) {
+    if (!FIREBASE.projectId || !FIREBASE.apiKey) return;
+    const collection = body.kind === "soa_done" ? "soa_sessions" : "soa_trials";
+    const fields = {};
+    for (const k of Object.keys(body)) fields[k] = fsValue(body[k]);
+    try {
+      fetch(`https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}` +
+            `/databases/(default)/documents/${collection}?key=${FIREBASE.apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fields }),
+      }).then(r => { if (!r.ok) console.warn("firestore submit:", r.status); })
+        .catch(e => console.warn("firestore submit failed:", e));
+    } catch (e) { console.warn("firestore submit failed:", e); }
+  }
+
   function post(body) {
+    const full = Object.assign({
+      participant_id: participantId, worker_id: workerId,
+      completion_code: completionCode, ts: Date.now(),
+    }, body);
+    fsPost(full);                                   // Firestore(設定時のみ)
     if (!SUBMIT_URL) return;
     try {
       fetch(SUBMIT_URL, {
         method: "POST", mode: "no-cors",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(Object.assign({
-          participant_id: participantId, worker_id: workerId,
-          completion_code: completionCode, ts: Date.now(),
-        }, body)),
+        body: JSON.stringify(full),
       });
     } catch (e) { console.warn("submit failed:", e); }
   }
