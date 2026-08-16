@@ -171,17 +171,19 @@
   }
 
   // 同意画面(本番モードのみ冒頭に出す)。opts = {taskLabel, minutes, headphone, onOk}
-  // 聴覚課題の再生機器の申告(スピーカー/有線=OK、無線=NG)。選択は全回答と共に保存される。
+  // 聴覚課題の再生機器の申告。区分は接続方式で切る: 内蔵・有線接続=OK、無線(Bluetooth)=NG。
+  // Bluetoothスピーカーも無線ヘッドホンと同じく音の頭が欠けるため「無線」に含める。
+  // 選択は全回答と共に保存される。
   let audioDevice = "";
   const DEVICE_HTML = `
       <div id="devBox" style="margin-top:14px;padding:12px 14px;background:#f6f8fb;border:1px solid #dde3ec;border-radius:8px">
         <p style="margin:0 0 6px;font-size:15px"><b>音の再生に使う機器</b>を選んでください：</p>
-        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="スピーカー"> スピーカー（PC内蔵・外付け）</label>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="スピーカー"> スピーカー（PC内蔵、またはケーブルでつないだ外付け）</label>
         <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="有線ヘッドホン"> 有線のヘッドホン・イヤホン</label>
-        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="無線"> 無線（Bluetooth）のヘッドホン・イヤホン</label>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="無線"> 無線（Bluetooth）の機器（ヘッドホン・イヤホン・スピーカー）</label>
         <p id="devWarn" style="display:none;color:#b3261e;font-size:13.5px;margin:6px 0 0">
           無線（Bluetooth）機器は音の頭が欠けることがあるため、本実験ではご利用いただけません。
-          <b>スピーカーか有線の機器に切り替えてから</b>、上の選択を変更してください。</p>
+          <b>内蔵スピーカーか、ケーブルでつないだ機器に切り替えてから</b>、上の選択を変更してください。</p>
       </div>`;
 
   // opts.noEnvNote: 乙課題ページ用。機器申告と音量/見え方の確認画面が環境の案内を担うため、
