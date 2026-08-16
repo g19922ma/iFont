@@ -196,7 +196,7 @@
       : "できればPC（パソコン）で、明るい静かな環境でお願いします。";
     el.innerHTML = `
       <h1>かなの認識に関する研究へのご協力のお願い</h1>
-      <p>本実験は、${desc}（津田塾大学）。
+      <p>本実験は、${desc}。
       ${taskLabel}を行います。所要時間は約${minutes}分です。</p>
       <ul style="font-size:14px;line-height:1.9;color:#333">
         <li><b>取得するデータ</b>：各設問への回答と回答時間、参加者を区別するための識別子、端末の画面サイズなどの技術情報。</li>
@@ -208,7 +208,8 @@
       ${headphone ? DEVICE_HTML : ""}
       <p style="margin-top:16px"><label style="font-size:15px"><input type="checkbox" id="cst"> 上記に同意し、18歳以上であることを確認しました。</label></p>
       <p><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
-      ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}`;
+      ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}
+      <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
     const cb = el.querySelector("#cst"), go = el.querySelector("#cstGo");
     const devRadios = el.querySelectorAll('input[name="dev"]');
     const devWarn = el.querySelector("#devWarn");
