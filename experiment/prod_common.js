@@ -201,6 +201,7 @@
       <p>本実験は、${desc}。
       ${taskLabel}を行います。所要時間は約${minutes}分です。</p>
       <ul style="font-size:14px;line-height:1.9;color:#333">
+        <li><b>参加できる方</b>：18歳以上の方が参加いただけます。</li>
         <li><b>記録するもの</b>：各設問への回答と回答時間、参加者を区別するための識別子、端末の画面サイズなどの技術情報を記録します。</li>
         <li><b>記録しないもの</b>：氏名やメールアドレスなど、個人を直接特定する情報は記録しません。</li>
         <li><b>データの使いみち</b>：研究目的にのみ使用し、統計的に処理したうえで研究発表等に利用します。</li>
@@ -209,27 +210,25 @@
         <li><b>参加のとりやめ・完了</b>：途中でやめる場合はブラウザを閉じてください。最後まで完了すると<b>完了コード</b>が表示され、参加したサービス上でこのコードを入力すると報酬の対象となります。</li>
       </ul>
       ${headphone ? DEVICE_HTML : ""}
-      <p style="margin-top:16px"><label style="font-size:15px"><input type="checkbox" id="cst"> 上記に同意し、18歳以上であることを確認しました。</label></p>
-      <p><button class="primary" id="cstGo" disabled style="opacity:.5">実験を始める</button></p>
+      <p style="margin-top:16px"><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
       ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}
       <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
-    const cb = el.querySelector("#cst"), go = el.querySelector("#cstGo");
+    // 同意はボタン「同意して始める」に集約(チェックボックスは廃止・丸山判断 8/17)。
+    // 聴覚課題は機器の申告(無線以外)をするまでボタンを押せない。
+    const go = el.querySelector("#cstGo");
     const devRadios = el.querySelectorAll('input[name="dev"]');
     const devWarn = el.querySelector("#devWarn");
+    const devOk = () => !headphone || (audioDevice && audioDevice !== "無線");
     function ready() {
-      const devOk = !headphone || (audioDevice && audioDevice !== "無線");
-      const ok = cb.checked && devOk;
-      go.disabled = !ok; go.style.opacity = ok ? "1" : ".5";
+      go.disabled = !devOk(); go.style.opacity = devOk() ? "1" : ".5";
     }
+    ready();   // 機器申告のないページ(視覚など)は最初から押せる
     devRadios.forEach(r => r.addEventListener("change", () => {
       audioDevice = r.value;
       if (devWarn) devWarn.style.display = audioDevice === "無線" ? "block" : "none";
       ready();
     }));
-    cb.addEventListener("change", ready);
-    go.addEventListener("click", () => {
-      if (cb.checked && (!headphone || (audioDevice && audioDevice !== "無線"))) onOk();
-    });
+    go.addEventListener("click", () => { if (devOk()) onOk(); });
   }
 
   // 完了画面のHTML(本番モードのみ)。完了コードを大きく表示。
