@@ -286,3 +286,14 @@
 - prod_common.js に FIREBASE={projectId, apiKey} と fsPost を追加。設定時は
   soa_trials/soa_sessionsコレクションへ並行保存(create-onlyルール)。GASと併用可
 - 手順書 docs/FIREBASE_SETUP.md(10分作業・ルール込み)。解析はFirestoreを正、GASを照合用
+
+## 2026-08-16 公開体制の変更: 丸山フォークのPagesで公開(重要ルール)
+
+- origin/main(栗原氏の8月開発)をブランチへマージ(9521b4cfa)。手元=先生版+丸山追加49件の全部入り
+- **事故と復旧**: 「整えて公開したい」を誤解釈し qurihara/iFont の main へ push → ユーザー指摘で
+  即 force-with-lease により d4a5cf048(先生の最新)へ完全復元。先生側は無傷
+- **新ルール(記憶にも保存済)**: 先生のmainへは明示承認なしにpushしない。公開は丸山フォークで行う
+  - フォーク: g19922ma/iFont (remote名 `fork`)。丸山アカウントは学生アップグレード版
+  - 公開URL: **https://g19922ma.github.io/iFont/** (Pages有効化済・main配信)
+  - 合体版をフォークmainへpush済。主要ページ6本が200、新prod_common(FIREBASE/無線UI)配信を確認
+- 先生への反映は「URLを見せる→承認→プルリクエスト」の順で行う(未着手、タスク#5の栗原連絡に含める)
