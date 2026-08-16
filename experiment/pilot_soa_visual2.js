@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.1";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.2";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -137,12 +137,22 @@ function drawCountdown(ctx, sec) {
   ctx.fillText("中央を見て準備してください", SIZE/2, SIZE/2 + 52);
 }
 
+// 進行ヘッダー: ステップ表示と本番の進捗バー。問題と問題の間でのみ更新する(表示中は動かない)。
+function progressHeader(inPractice, t) {
+  if (inPractice) return `<div class="muted">ステップ1／練習 ${ti+1} / ${N_PRACTICE} (間隔=${t.S}ms)</div>`;
+  const nMain = trials.length - N_PRACTICE;
+  const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
+  return `<div class="muted" style="display:flex;align-items:center;gap:10px">
+    <span style="white-space:nowrap">ステップ2／本番 ${done+1} / ${nMain}</span>
+    <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
+    <span style="white-space:nowrap">${pct}% (間隔=${t.S}ms)</span></div>`;
+}
 function runTrial() {
   if (ti >= trials.length) return showResults();
   const t = trials[ti];
   const inPractice = t.practice;
   if (!inPractice && !mainStarted) { mainStarted = true; return showMainGate(runTrial); }
-  screen.innerHTML = `<div class="muted">${inPractice ? `練習 ${ti+1} / ${N_PRACTICE}` : `本番 ${ti-N_PRACTICE+1} / ${trials.length-N_PRACTICE}`} (間隔=${t.S}ms)</div><div id="stage"></div>`;
+  screen.innerHTML = `${progressHeader(inPractice, t)}<div id="stage"></div>`;
   const stage = document.getElementById("stage");
   startGate(stage, (ctx) => presentTrial(t, inPractice, ctx));
 }
@@ -266,14 +276,27 @@ function askOne(t, pos, sel, done) {
     ${picked ? `<div class="muted">選択済み — ${picked}</div>` : ""}
     <div class="muted">分からなければ勘でOK（見えなかったと感じても、あとの文字を答えずに勘で選んでください）</div></div>`;
   document.getElementById("grid")?.remove();
-  const grid = document.createElement("div"); grid.id="grid";
-  for (const row of GRID_KANA) for (const ch of row) {
-    if (ch==="") { const s=document.createElement("div"); s.className="kana spacer"; grid.appendChild(s); continue; }
-    const b=document.createElement("button"); b.className="kana"; b.textContent=ch;
-    b.onclick = () => done(ch);
-    grid.appendChild(b);
+  stage.parentElement.appendChild(buildKanaGrid(done));
+}
+// かな表(紙の五十音表式): 縦の列=行、右端があ行。上の表が清音(〜ん)、下の表が濁音・半濁音など。
+// DOMのグリッドは左から詰めるため、行の並びを逆順にして「右から左」の向きを作る。
+function buildKanaGrid(done) {
+  const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
+  for (const rowsBlock of [GRID_KANA.slice(0, 11), GRID_KANA.slice(11)]) {
+    if (!rowsBlock.length) continue;
+    const cols = [...rowsBlock].reverse();
+    const g = document.createElement("div");
+    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${cols.length},1fr)`;
+    g.style.gap = "6px"; g.style.marginTop = "14px";
+    for (let dan = 0; dan < 5; dan++) for (const col of cols) {
+      const ch = col[dan] || "";
+      if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
+      const b = document.createElement("button"); b.className = "kana"; b.textContent = ch;
+      b.onclick = () => done(ch); g.appendChild(b);
+    }
+    grid.appendChild(g);
   }
-  stage.parentElement.appendChild(grid);
+  return grid;
 }
 
 function byLevel() {
@@ -370,9 +393,26 @@ function intro() {
     そのときも、<b>あとから見えた文字を1文字目として答えず</b>、勘で選んでください。</p>
     <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
     <p class="muted">前の字は次の字に上書きされて見えにくくなります。分からなければ勘でOKです（外れも大切なデータ）。回答はこの端末の中だけで完結します。</p>
-    <p><button class="primary" id="go">${(resumeState&&resumeState.trials)?"続きから再開する":`練習を始める（${N_PRACTICE}問）`}</button></p>
+    <p><button class="primary" id="go">次へ：見え方の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 認知・知覚研究":"研究者向けパイロット版 v"+VERSION}</p>`;
-  document.getElementById("go").onclick = start;
+  document.getElementById("go").onclick = visionCheck;
+}
+// 2B: 見え方の確認。本番と同じ表示枠・同じ大きさで見本の字を出し、
+// 画面の距離・明るさのまま、はっきり見えることを確かめてから始める。
+function visionCheck() {
+  const resuming = !!(resumeState && resumeState.trials);
+  screen.innerHTML = `<h2 style="color:#1E2A5E">見え方の確認</h2>
+    <p>本番と同じ枠・同じ大きさで、見本の字「あ」を表示しています。
+    ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
+    <div id="vcheck" style="text-align:center"></div>
+    <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
+    <p><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : `練習を始める（${N_PRACTICE}問）`}</button></p>`;
+  const canvas = newCanvas(); canvas.style.display = "block"; canvas.style.margin = "0 auto";
+  document.getElementById("vcheck").appendChild(canvas);
+  drawChar(canvas.getContext("2d"), "あ");
+  const vc = document.getElementById("vc"), go2 = document.getElementById("go2");
+  vc.addEventListener("change", () => { go2.disabled = !vc.checked; go2.style.opacity = vc.checked ? "1" : ".5"; });
+  go2.onclick = () => { if (vc.checked) start(); };
 }
 
 const T0 = Date.now();   // 所要時間の起点

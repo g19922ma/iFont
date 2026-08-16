@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.3";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.4";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -246,12 +246,22 @@ function showMainGate(next) {
   document.addEventListener("keydown", key);
 }
 
+// 進行ヘッダー: ステップ表示と本番の進捗バー。問題と問題の間でのみ更新する(表示中は動かない)。
+function progressHeader(inPractice, t) {
+  if (inPractice) return `<div class="muted">ステップ1／練習 ${ti+1} / ${N_PRACTICE} (間隔=${t.S}ms)</div>`;
+  const nMain = trials.length - N_PRACTICE;
+  const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
+  return `<div class="muted" style="display:flex;align-items:center;gap:10px">
+    <span style="white-space:nowrap">ステップ2／本番 ${done+1} / ${nMain}</span>
+    <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
+    <span style="white-space:nowrap">${pct}% (間隔=${t.S}ms)</span></div>`;
+}
 function runTrial() {
   if (ti >= trials.length) return showResults();
   const t = trials[ti];
   const inPractice = t.practice;
   if (!inPractice && !mainStarted) { mainStarted = true; return showMainGate(runTrial); }
-  screen.innerHTML = `<div class="muted">${inPractice ? `練習 ${ti+1} / ${N_PRACTICE}` : `本番 ${ti-N_PRACTICE+1} / ${trials.length-N_PRACTICE}`} (間隔=${t.S}ms)</div>
+  screen.innerHTML = `${progressHeader(inPractice, t)}
     <div id="stage">♪</div>`;
   const stage = document.getElementById("stage");
   startGate(stage, () => {
@@ -343,14 +353,26 @@ function askOne(t, pos, sel, done) {
     ${picked ? `<div class="muted">選択済み — ${picked}</div>` : ""}
     <div class="muted">分からなければ勘でOK（聞こえなかったと感じても、あとの音を答えずに勘で選んでください）</div>`;
   document.getElementById("grid")?.remove();
-  const grid = document.createElement("div"); grid.id="grid";
-  for (const row of GRID_AUDIO) for (const ch of row) {
-    if (ch==="") { const s=document.createElement("div"); s.className="kana spacer"; grid.appendChild(s); continue; }
-    const b=document.createElement("button"); b.className="kana"; b.textContent=kanaLabel(ch);
-    b.onclick = () => done(ch);
-    grid.appendChild(b);
+  stage.parentElement.appendChild(buildKanaGrid(done));
+}
+// かな表(紙の五十音表式): 縦の列=行、右端があ行。上の表が清音、下の表が濁音・半濁音。
+// DOMのグリッドは左から詰めるため、行の並びを逆順にして「右から左」の向きを作る。
+function buildKanaGrid(done) {
+  const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
+  for (const rowsBlock of [GRID_AUDIO.slice(0, 10), GRID_AUDIO.slice(10)]) {
+    const cols = [...rowsBlock].reverse();
+    const g = document.createElement("div");
+    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${cols.length},1fr)`;
+    g.style.gap = "6px"; g.style.marginTop = "14px";
+    for (let dan = 0; dan < 5; dan++) for (const col of cols) {
+      const ch = col[dan] || "";
+      if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
+      const b = document.createElement("button"); b.className = "kana"; b.textContent = kanaLabel(ch);
+      b.onclick = () => done(ch); g.appendChild(b);
+    }
+    grid.appendChild(g);
   }
-  stage.parentElement.appendChild(grid);
+  return grid;
 }
 
 function byLevel() {
@@ -444,7 +466,7 @@ function intro() {
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。
-       下のサンプル音で音量の確認だけもう一度お願いします。</p>` : "";
+       次の画面で音量の確認だけもう一度お願いします。</p>` : "";
   screen.innerHTML = `<h1>iFont パイロット: 聴覚・連続する音の間隔掃引（乙課題）</h1>
     ${staleWarn}${resumeNote}
     <p><b>1問で答える音は「2つ」です。</b>かなの音声が<b>3つ</b>つづけて流れます（3つ目は答えない音です）。${startNote}以下の手順で進みます。</p>
@@ -460,26 +482,46 @@ function intro() {
     そのときも、<b>あとから聞こえた音を1つ目として答えず</b>、勘で選んでください。</p>
     <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
     <p class="muted">短く切り替わるので聞き取りにくい音もあります。分からなければ勘でOKです（外れも大切なデータ）。音声は単音プール(B3・0.2秒/モーラ)。</p>
-    <p style="background:#fff6f4;border:1px solid #f0d0c8;border-radius:8px;padding:10px 12px">
-      <button id="sample" style="font-size:14px;padding:6px 14px;border-radius:6px;border:1px solid #c9a9a0;background:#fff;cursor:pointer">サンプル音を鳴らす（あ・か・ん）</button>
-      <span class="muted" style="margin-left:8px">聞き取りやすい音量に合わせてください</span><br>
-      <label style="cursor:pointer;display:inline-block;margin-top:8px"><input type="checkbox" id="hp"> <b>ヘッドホン／イヤホンを装着し、音量を確認しました</b></label>
-      <span class="muted" style="display:block;margin-top:4px">${mobileNote}この課題はスピーカー再生では正しく測れません。</span></p>
-    <p><button class="primary" id="go" disabled style="opacity:.5">${(resumeState&&resumeState.trials)?"続きから再開する":`練習を始める（${N_PRACTICE}問）`}</button></p>
+    <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 認知・知覚研究":"研究者向けパイロット版 v"+VERSION}</p>`;
-  const hp = document.getElementById("hp"), go = document.getElementById("go");
-  // サンプル音: 各音を打ち切らずに(実音の全長で)0.5秒間隔で3つ鳴らす
+  document.getElementById("go").onclick = volumeCheck;
+}
+// サンプル音: 各音を打ち切らずに(実音の全長で)0.5秒間隔で3つ鳴らす
+function playSample() {
+  const ctx = ensureCtx(); ctx.resume();
+  ["あ","か","ん"].forEach((ch, i) => {
+    if (!bufByChar[ch]) return;
+    const src = ctx.createBufferSource();
+    src.buffer = gatedBuffer(ch, moraAvailS(ch));   // モーラの実体を最後まで鳴らす
+    src.connect(ctx.destination); src.start(ctx.currentTime + 0.1 + i*0.5);
+  });
+}
+// 2B: 音量確認の独立画面。サンプル音を一度も鳴らさないうちは先へ進めない
+// (無音・爆音のまま本番へ入る事故を防ぐ)。この音量のまま課題を行ってもらう。
+function volumeCheck() {
+  const resuming = !!(resumeState && resumeState.trials);
+  const mobileNote = ENV.touch
+    ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
+  screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
+    <p>下のボタンで<b>サンプル音（あ・か・ん）</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
+    調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
+    <p style="background:#fff6f4;border:1px solid #f0d0c8;border-radius:8px;padding:12px 14px">
+      <button id="sample" style="font-size:15px;padding:10px 18px;border-radius:8px;border:1px solid #c9a9a0;background:#fff;cursor:pointer">▶ サンプル音を鳴らす（あ・か・ん）</button>
+      <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
+      <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
+    <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
+    <p><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "この音量で続きから再開する" : `この音量で練習を始める（${N_PRACTICE}問）`}</button></p>
+    <p class="muted" id="volHint">まずサンプル音を鳴らしてください（鳴らすまで進めません）。</p>`;
+  let played = false;
+  const hp = document.getElementById("hp"), go2 = document.getElementById("go2");
+  const ready = () => { const ok = played && hp.checked; go2.disabled = !ok; go2.style.opacity = ok ? "1" : ".5"; };
   document.getElementById("sample").onclick = () => {
-    const ctx = ensureCtx(); ctx.resume();
-    ["あ","か","ん"].forEach((ch, i) => {
-      if (!bufByChar[ch]) return;
-      const src = ctx.createBufferSource();
-      src.buffer = gatedBuffer(ch, moraAvailS(ch));   // モーラの実体を最後まで鳴らす
-      src.connect(ctx.destination); src.start(ctx.currentTime + 0.1 + i*0.5);
-    });
+    playSample(); played = true;
+    document.getElementById("volHint").textContent = "小さすぎ・大きすぎと感じたら、端末の音量を変えてもう一度鳴らして確認してください。";
+    ready();
   };
-  hp.addEventListener("change", () => { go.disabled = !hp.checked; go.style.opacity = hp.checked ? "1" : ".5"; });
-  go.onclick = () => { if (hp.checked) start(); };
+  hp.addEventListener("change", ready);
+  go2.onclick = () => { if (played && hp.checked) start(); };
 }
 
 // v2.2: 音の点検モード(?check=1)。課題を通さずに、正規化後の68音を1音ずつ確かめる。
