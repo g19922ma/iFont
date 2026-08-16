@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.4";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.5";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -351,7 +351,7 @@ function askOne(t, pos, sel, done) {
     .map(p => `${p}つ目「<b>${kanaLabel(sel[p])}</b>」`).join(" ／ ");
   stage.innerHTML = `<div class="ask" style="font-size:18px">${label}</div>
     ${picked ? `<div class="muted">選択済み — ${picked}</div>` : ""}
-    <div class="muted">分からなければ勘でOK（聞こえなかったと感じても、あとの音を答えずに勘で選んでください）</div>`;
+    <div class="muted">分からないときも、もっとも近いと思う文字を選んでください（聞こえなかったと感じても、あとの音を答えないでください）</div>`;
   document.getElementById("grid")?.remove();
   stage.parentElement.appendChild(buildKanaGrid(done));
 }
@@ -479,9 +479,9 @@ function intro() {
     <p class="muted">かなは<b>単独で読んだときの音</b>です（「は」はハ、「へ」はヘ）。「じ／ぢ」のように<b>同じ音のかなは1つのボタンにまとめて</b>あり、どちらの字かを選ぶ必要はありません。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     <b>必ず3つ鳴ります。</b>間隔が短い問題では、1つ目が聞こえなかったと感じることがあります。
-    そのときも、<b>あとから聞こえた音を1つ目として答えず</b>、勘で選んでください。</p>
+    そのときも、<b>あとから聞こえた音を1つ目として答えず</b>、もっとも近いと思う文字を選んでください。</p>
     <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
-    <p class="muted">短く切り替わるので聞き取りにくい音もあります。分からなければ勘でOKです（外れも大切なデータ）。音声は単音プール(B3・0.2秒/モーラ)。</p>
+    <p class="muted">短く切り替わるので聞き取りにくい音もあります。分からない場合も、もっとも近いと思う文字を選んでください（外れも大切なデータです）。音声は単音プール(B3・0.2秒/モーラ)。</p>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 認知・知覚研究":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;
@@ -642,7 +642,8 @@ function prodMeta(){ return { version:VERSION, speaker:poolMeta.speaker,
         screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
         return;
       }
-      PROD.consentScreen(screen, "かなの聞き取りの課題（音声・約10分）", 10, intro, true);
+      PROD.consentScreen(screen, "かなの音声を聞き、聞こえた文字を回答する課題", 10, intro, true,
+        { noEnvNote: true, desc: "日本語のかな1文字が、短い音声からどの程度認識できるかを調べる研究です" });
     }
     else intro();
   }

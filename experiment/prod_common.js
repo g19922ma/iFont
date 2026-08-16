@@ -184,25 +184,31 @@
           <b>スピーカーか有線の機器に切り替えてから</b>、上の選択を変更してください。</p>
       </div>`;
 
-  function consentScreen(el, taskLabel, minutes, onOk, headphone) {
+  // opts.noEnvNote: 乙課題ページ用。機器申告と音量/見え方の確認画面が環境の案内を担うため、
+  //   末尾の環境注意文を出さない(frac課題ページは従来どおり表示)。
+  // opts.desc: 冒頭の研究説明の一文(「〜を調べる研究です」まで)。ページのモダリティに合わせる。
+  //   省略時は従来の汎用文(frac課題ページの互換のため)。
+  function consentScreen(el, taskLabel, minutes, onOk, headphone, opts) {
+    const o = opts || {};
+    const desc = o.desc || "日本語のかな1文字の分かりやすさを文字ごとに測る研究です";
     const envNote = headphone
       ? "静かな環境でお願いします。音はスピーカーまたは有線ヘッドホンで再生してください（無線は不可）。"
       : "できればPC（パソコン）で、明るい静かな環境でお願いします。";
     el.innerHTML = `
       <h1>かなの認識に関する研究へのご協力のお願い</h1>
-      <p>本実験は、日本語のかな1文字の分かりやすさを文字ごとに測る研究です（津田塾大学）。
+      <p>本実験は、${desc}（津田塾大学）。
       ${taskLabel}を行います。所要時間は約${minutes}分です。</p>
       <ul style="font-size:14px;line-height:1.9;color:#333">
-        <li><b>取得するデータ</b>：各設問への回答と所要時間、参加のための識別子、端末の画面サイズなど技術情報。</li>
-        <li><b>個人を特定する情報は集めません。</b>取得データは研究目的にのみ用い、統計的に処理して発表します。</li>
-        ${resumeAware ? `<li>進行状況の記録はお使いのブラウザ内にのみ保存され、外部には送信されません。</li>` : ""}
-        <li>回答の正誤は報酬に影響しません。<b>難しくて当然の課題です。</b>分からなければ勘でお答えください。</li>
-        <li>途中でやめる場合はブラウザを閉じてください。完了画面の<b>完了コード</b>を応募元に貼ると報酬の対象になります。</li>
+        <li><b>取得するデータ</b>：各設問への回答と回答時間、参加者を区別するための識別子、端末の画面サイズなどの技術情報。</li>
+        <li>氏名やメールアドレスなど、<b>個人を直接特定する情報は取得しません。</b>取得したデータは研究目的にのみ使用し、統計的に処理したうえで研究発表等に利用します。</li>
+        ${resumeAware ? `<li>途中で中断した場合に再開するための記録は、お使いのブラウザ内にのみ保存されます（研究者には送信されません）。</li>` : ""}
+        <li>回答の正誤によって報酬が変わることはありません。判別しにくい問題も含まれますので、分からない場合も、もっとも近いと思う文字を選んでください。</li>
+        <li>途中で参加をやめる場合はブラウザを閉じてください。最後まで完了すると<b>完了コード</b>が表示されます。参加したサービス上でこのコードを入力すると、報酬の対象となります。</li>
       </ul>
       ${headphone ? DEVICE_HTML : ""}
       <p style="margin-top:16px"><label style="font-size:15px"><input type="checkbox" id="cst"> 上記に同意し、18歳以上であることを確認しました。</label></p>
       <p><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
-      <p class="muted">${envNote}</p>`;
+      ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}`;
     const cb = el.querySelector("#cst"), go = el.querySelector("#cstGo");
     const devRadios = el.querySelectorAll('input[name="dev"]');
     const devWarn = el.querySelector("#devWarn");
