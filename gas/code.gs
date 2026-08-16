@@ -40,13 +40,15 @@
  * Schema appended to the "soa_trials" sheet (乙課題・1試行1行):
  *   ts, participant_id, worker_id, completion_code, task, trial_index,
  *   version, speaker, pitch, S, c1, c2, c3, resp1, resp2, correct1, correct2,
- *   actual_soa1, actual_soa2, actual_dur3, ua, dpr, screen, touch, refresh_hz
+ *   actual_soa1, actual_soa2, actual_dur3, ua, dpr, screen, touch, refresh_hz,
+ *   audio_device, resume_count
  *   - actual_* は requestAnimationFrame の実時刻から測った間隔(視覚乙課題)。
+ *   - resume_count はその試行までの途中再開の回数(0=中断なし)。
  *
  * Schema appended to the "soa_sessions" sheet (乙課題・セッション完了1行):
  *   ts, participant_id, worker_id, completion_code, task, version, speaker,
  *   speaker_name, pitch, n_trials, duration_s, summary_json,
- *   ua, dpr, screen, touch, refresh_hz
+ *   ua, dpr, screen, touch, refresh_hz, audio_device, resume_count, resume_gap_s
  *
  * 注意: シートのヘッダ行はシートを新規作成するときだけ書き込む。既存のシートに
  *       列を足したときは、ヘッダ行を手で追記するか、シートを作り直すこと。
@@ -219,7 +221,8 @@ function handleSoa(sheetId, body) {
       s = ss.insertSheet("soa_sessions");
       s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task",
         "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s", "summary_json",
-        "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device"]);
+        "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device",
+        "resume_count", "resume_gap_s"]);
     }
     s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
       body.completion_code || "", body.task || "", body.version || "", body.speaker || "",
@@ -227,7 +230,9 @@ function handleSoa(sheetId, body) {
       JSON.stringify(body.byLevel || ""),
       blank(body.ua), blank(body.dpr), blank(body.screen),
       (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
-      body.audio_device || ""]);
+      body.audio_device || "",
+      // 途中再開(同一ブラウザ)の統計。0なら中断なしで完走。
+      blank(body.resume_count), blank(body.resume_gap_s)]);
     return out({status: "ok"});
   }
   let s = ss.getSheetByName("soa_trials");
@@ -237,7 +242,7 @@ function handleSoa(sheetId, body) {
       "version", "speaker", "pitch", "S", "c1", "c2", "c3", "resp1", "resp2",
       "correct1", "correct2",
       "actual_soa1", "actual_soa2", "actual_dur3",
-      "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device"]);
+      "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device", "resume_count"]);
   }
   s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
     body.completion_code || "", body.task || "", (body.trial_index === undefined ? "" : body.trial_index),
@@ -247,7 +252,9 @@ function handleSoa(sheetId, body) {
     blank(body.actual_soa1), blank(body.actual_soa2), blank(body.actual_dur3),
     blank(body.ua), blank(body.dpr), blank(body.screen),
     (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
-    body.audio_device || ""]);
+    body.audio_device || "",
+    // その試行までの再開回数(0=中断なし)。中断直後の回答を解析で区別できる。
+    blank(body.resume_count)]);
   return out({status: "ok", correct1: !!body.correct1, correct2: !!body.correct2});
 }
 

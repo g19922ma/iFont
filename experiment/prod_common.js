@@ -38,14 +38,58 @@
   const FIREBASE = { projectId: "", apiKey: "" };
 
   // クラウドソーシング(Yahoo!クラウドソーシング等)の作業者IDをURLから拾う。
+  // participantId / completionCode は途中再開のとき保存時の値へ引き継ぐため let。
   const workerId = P.get("worker_id") || P.get("wid") || P.get("worker") || "";
-  const participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
+  let participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
   // 12桁の完了コード。報酬照合のためサーバにも各試行とともに記録される。
   const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  const completionCode = Array.from({ length: 12 },
+  let completionCode = Array.from({ length: 12 },
     () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 
   let sentTrials = 0;
+
+  // ---- 途中再開(同じブラウザ) -------------------------------------------
+  // 進行状況を参加者の端末の localStorage にのみ保存する(進行状況が外部へ送られることはない)。
+  // ブラウザクラッシュ・誤ってタブを閉じた場合に、同じブラウザで開き直せば続きから再開できる。
+  // 期限は RESUME_TTL_MIN 分。Yahoo側で設定する「制限時間」と同じ値にすること(発注時に要確認)。
+  const RESUME_TTL_MIN = 60;
+  let resumeInfo = null;     // {count, gapS}: 再開回数と中断合計秒。全送信レコードに載る。
+  let resumeAware = false;   // 再開機能を使うページのみ、同意画面に保存についての1行を出す
+  function resumeKey(task) { return "ifont_resume_" + task + "_" + (workerId || "anon"); }
+  // 保存された途中状態を読む。期限切れは捨てる。見つかったら参加者ID・完了コードを保存時の
+  // ものへ引き継ぎ、再開回数と中断秒を数える。ページ読み込みにつき1回だけ呼ぶこと。
+  function loadState(task) {
+    resumeAware = true;
+    if (!enabled) return null;
+    try {
+      const raw = localStorage.getItem(resumeKey(task));
+      if (!raw) return null;
+      const st = JSON.parse(raw);
+      if (!st || !st.saved_at) return null;
+      if (Date.now() - st.saved_at > RESUME_TTL_MIN * 60 * 1000) {
+        localStorage.removeItem(resumeKey(task)); return null;
+      }
+      if (st.participant_id) { participantId = st.participant_id; global.PROD.participantId = participantId; }
+      if (st.completion_code) { completionCode = st.completion_code; global.PROD.completionCode = completionCode; }
+      resumeInfo = { count: (st.resume_count || 0) + 1,
+                     gapS: (st.resume_gap_s || 0) + Math.round((Date.now() - st.saved_at) / 1000) };
+      return st;
+    } catch (e) { return null; }
+  }
+  // 途中状態を保存する。data はページ側が決める中身(出題順・何問目か・回答済みデータなど)。
+  function saveState(task, data) {
+    resumeAware = true;
+    if (!enabled) return;
+    try {
+      localStorage.setItem(resumeKey(task), JSON.stringify(Object.assign({}, data, {
+        participant_id: participantId, completion_code: completionCode,
+        resume_count: resumeInfo ? resumeInfo.count : 0,
+        resume_gap_s: resumeInfo ? resumeInfo.gapS : 0,
+        saved_at: Date.now(),
+      })));
+    } catch (e) { /* 保存できない環境では再開が効かないだけ(課題自体は続行できる) */ }
+  }
+  function clearState(task) { try { localStorage.removeItem(resumeKey(task)); } catch (e) {} }
 
   // Firestore REST 用: JSの値を Firestore のフィールド型に変換する。
   function fsValue(v) {
@@ -92,6 +136,8 @@
       participant_id: participantId, worker_id: workerId,
       completion_code: completionCode, ts: Date.now(),
       audio_device: audioDevice,
+      resume_count: resumeInfo ? resumeInfo.count : 0,
+      resume_gap_s: resumeInfo ? resumeInfo.gapS : 0,
     }, envBody(), body);
     fsPost(full);                                   // Firestore(設定時のみ)
     if (!SUBMIT_URL) return;
@@ -149,6 +195,7 @@
       <ul style="font-size:14px;line-height:1.9;color:#333">
         <li><b>取得するデータ</b>：各設問への回答と所要時間、参加のための識別子、端末の画面サイズなど技術情報。</li>
         <li><b>個人を特定する情報は集めません。</b>取得データは研究目的にのみ用い、統計的に処理して発表します。</li>
+        ${resumeAware ? `<li>進行状況の記録はお使いのブラウザ内にのみ保存され、外部には送信されません。</li>` : ""}
         <li>回答の正誤は報酬に影響しません。<b>難しくて当然の課題です。</b>分からなければ勘でお答えください。</li>
         <li>途中でやめる場合はブラウザを閉じてください。完了画面の<b>完了コード</b>を応募元に貼ると報酬の対象になります。</li>
       </ul>
@@ -182,12 +229,14 @@
       <p>下の<b>完了コード</b>を、応募元の入力欄に貼り付けてください。</p>
       <p style="font-size:30px;font-weight:800;letter-spacing:3px;color:#1E2A5E;
         background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:14px 8px;margin:14px auto;max-width:360px">${completionCode}</p>
+      <p><button class="primary" onclick="navigator.clipboard.writeText('${completionCode}').then(()=>{this.textContent='コピーしました ✓'},()=>{this.textContent='コピーできませんでした。上のコードを手動で選択してください'})">完了コードをコピー</button></p>
       <p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p></div>`;
   }
 
   global.PROD = {
     enabled, workerId, participantId, completionCode,
     setEnv, saveTrial, saveDone, saveFracTrial, consentScreen, completionHTML,
+    loadState, saveState, clearState,
     hasEndpoint: !!SUBMIT_URL,
   };
 })(window);

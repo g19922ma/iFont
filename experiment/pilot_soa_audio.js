@@ -72,6 +72,9 @@ function kanaLabel(ch){ return HOMOPHONE_LABEL[ch] || ch; }
 const screen = document.getElementById("screen");
 let audioCtx = null, stimByChar = {}, bufByChar = {}, onsets = {}, poolMeta = {};
 let trials = [], results = [], ti = 0, mainStarted = false;
+// 途中再開(本番モードのみ): 読み込み時に PROD.loadState が返した途中状態。
+// elapsedPrior は再開前までの経過秒(所要時間の通算用)。
+let resumeState = null, elapsedPrior = 0;
 // v3.0: 話者IDとスタイル名の対応(記録・表示用)。マニフェストのspeakerと突き合わせる。
 const SPEAKER_NAMES = { 2: "四国めたん/ノーマル", 108: "東北きりたん/ノーマル", 94: "中部つるぎ/ノーマル",
   9: "波音リツ/ノーマル", 21: "剣崎雌雄/ノーマル", 45: "櫻歌ミコ/ロリ", 53: "麒ヶ島宗麟/ノーマル" };
@@ -298,7 +301,11 @@ function respond(t, inPractice) {
         correct1:r1===t.c1, correct2:r2===t.c2 };
       results.push(rec);
       if (window.PROD) PROD.saveTrial("soa_audio", prodMeta(), rec, results.length-1);
-      ti++; runTrial(); return;
+      ti++;
+      // 1問確定するたびに途中状態を保存(出題順ごと)。再開時はこの続きから。
+      if (window.PROD && PROD.enabled) PROD.saveState("soa_audio",
+        { trials, results, ti, elapsed_s: Math.round(elapsedPrior + (Date.now()-T0)/1000) });
+      runTrial(); return;
     }
     // 練習: 3音の内訳を提示して流れを覚えてもらう
     const ok1 = r1===t.c1, ok2 = r2===t.c2;
@@ -380,9 +387,12 @@ function showResults() {
   const rows = byLevel();
   // 本番モード: セッション完了を記録し、完了コードを表示して終わる(結果グラフは出さない)。
   if (window.PROD && PROD.enabled) {
+    const durS = Math.round(elapsedPrior + (Date.now()-T0)/1000);
     PROD.saveDone("soa_audio", prodMeta(),
-      { byLevel: rows, env: ENV, duration_s: Math.round((Date.now()-T0)/1000) });
-    screen.innerHTML = PROD.completionHTML(Math.round((Date.now()-T0)/1000));
+      { byLevel: rows, env: ENV, duration_s: durS });
+    // 完了印に置き換える: 誤って閉じても期限内なら完了コードを再表示できる(途中状態は消える)
+    PROD.saveState("soa_audio", { completed: true, duration_s: durS });
+    screen.innerHTML = PROD.completionHTML(durS);
     return;
   }
   const pc=v=>v==null?"-":(v*100).toFixed(0)+"%";
@@ -406,7 +416,17 @@ function showResults() {
   };
 }
 
-function start() { ensureCtx().resume(); trials = buildTrials(); results = []; ti = 0; mainStarted = false; runTrial(); }
+function start() {
+  ensureCtx().resume();
+  if (resumeState && resumeState.trials) {
+    // 続きから: 出題順・回答済みデータ・位置を保存時のまま復元(順番は作り直さない)
+    trials = resumeState.trials; results = resumeState.results || [];
+    ti = resumeState.ti || 0; elapsedPrior = resumeState.elapsed_s || 0;
+    mainStarted = true;   // 練習と本番前の確認画面はとばす(済んでいるため)
+    return runTrial();
+  }
+  trials = buildTrials(); results = []; ti = 0; mainStarted = false; runTrial();
+}
 function intro() {
   // v2.3: 古い音源がキャッシュから読まれたまま本番をやるとデータが無効になるので、
   // 音そのものを実測して警告する(点検モードと同じ判定)。
@@ -421,8 +441,12 @@ function intro() {
     : START_MODE==="countdown" ? `各問題の前に${COUNTDOWN_S}秒のカウントダウンが出ます。` : ``;
   const mobileNote = ENV.touch
     ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
+  const resumeNote = (resumeState && resumeState.trials)
+    ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
+       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。
+       下のサンプル音で音量の確認だけもう一度お願いします。</p>` : "";
   screen.innerHTML = `<h1>iFont パイロット: 聴覚・連続する音の間隔掃引（乙課題）</h1>
-    ${staleWarn}
+    ${staleWarn}${resumeNote}
     <p><b>1問で答える音は「2つ」です。</b>かなの音声が<b>3つ</b>つづけて流れます（3つ目は答えない音です）。${startNote}以下の手順で進みます。</p>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
       <li>準備ができたら <b>開始</b>（ボタン／スペース）</li>
@@ -441,7 +465,7 @@ function intro() {
       <span class="muted" style="margin-left:8px">聞き取りやすい音量に合わせてください</span><br>
       <label style="cursor:pointer;display:inline-block;margin-top:8px"><input type="checkbox" id="hp"> <b>ヘッドホン／イヤホンを装着し、音量を確認しました</b></label>
       <span class="muted" style="display:block;margin-top:4px">${mobileNote}この課題はスピーカー再生では正しく測れません。</span></p>
-    <p><button class="primary" id="go" disabled style="opacity:.5">練習を始める（${N_PRACTICE}問）</button></p>
+    <p><button class="primary" id="go" disabled style="opacity:.5">${(resumeState&&resumeState.trials)?"続きから再開する":`練習を始める（${N_PRACTICE}問）`}</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 認知・知覚研究":"研究者向けパイロット版 v"+VERSION}</p>`;
   const hp = document.getElementById("hp"), go = document.getElementById("go");
   // サンプル音: 各音を打ち切らずに(実音の全長で)0.5秒間隔で3つ鳴らす
@@ -570,7 +594,14 @@ function prodMeta(){ return { version:VERSION, speaker:poolMeta.speaker,
     await preload();
     if (POOL || P.has("check")) return showCheck();
     // 本番モード(?prod=1)は同意画面を挟んでから教示へ。研究者パイロットは従来どおり直行。
-    if (window.PROD && PROD.enabled) PROD.consentScreen(screen, "かなの聞き取りの課題（音声・約10分）", 10, intro, true);
+    if (window.PROD && PROD.enabled) {
+      resumeState = PROD.loadState("soa_audio");   // 同じブラウザの途中状態(期限内)を拾う
+      if (resumeState && resumeState.completed) {  // 完了済み: 完了コードを再表示するだけ
+        screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
+        return;
+      }
+      PROD.consentScreen(screen, "かなの聞き取りの課題（音声・約10分）", 10, intro, true);
+    }
     else intro();
   }
   catch(e){ screen.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}</p>`; }

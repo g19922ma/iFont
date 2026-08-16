@@ -63,6 +63,9 @@ const CHARS = GRID_CHARS.filter(c => !SMALL_KANA.includes(c));   // 出題に使
 const screen = document.getElementById("screen");
 const imgs = {};
 let trials = [], results = [], ti = 0, mainStarted = false;
+// 途中再開(本番モードのみ): 読み込み時に PROD.loadState が返した途中状態。
+// elapsedPrior は再開前までの経過秒(所要時間の通算用)。
+let resumeState = null, elapsedPrior = 0;
 
 function loadImage(ch) {
   return new Promise((res, rej) => {
@@ -221,7 +224,11 @@ function respond(t, inPractice) {
       };
       results.push(rec);
       if (window.PROD) PROD.saveTrial("soa_visual", { version:VERSION, charset:CHARSET }, rec, results.length-1);
-      ti++; runTrial(); return;
+      ti++;
+      // 1問確定するたびに途中状態を保存(出題順ごと)。再開時はこの続きから。
+      if (window.PROD && PROD.enabled) PROD.saveState("soa_visual",
+        { trials, results, ti, elapsed_s: Math.round(elapsedPrior + (Date.now()-T0)/1000) });
+      runTrial(); return;
     }
     // 練習: 3文字の内訳を提示して流れを覚えてもらう
     const ok1 = r1===t.c1, ok2 = r2===t.c2;
@@ -302,9 +309,12 @@ function svgCurves(rows) {
 function showResults() {
   const rows = byLevel();
   if (window.PROD && PROD.enabled) {
+    const durS = Math.round(elapsedPrior + (Date.now()-T0)/1000);
     PROD.saveDone("soa_visual", { version:VERSION, charset:CHARSET },
-      { byLevel: rows, env: ENV, duration_s: Math.round((Date.now()-T0)/1000) });
-    screen.innerHTML = PROD.completionHTML(Math.round((Date.now()-T0)/1000));
+      { byLevel: rows, env: ENV, duration_s: durS });
+    // 完了印に置き換える: 誤って閉じても期限内なら完了コードを再表示できる(途中状態は消える)
+    PROD.saveState("soa_visual", { completed: true, duration_s: durS });
+    screen.innerHTML = PROD.completionHTML(durS);
     return;
   }
   const pc=v=>v==null?"-":(v*100).toFixed(0)+"%";
@@ -324,7 +334,16 @@ function showResults() {
   };
 }
 
-function start() { trials = buildTrials(); results = []; ti = 0; mainStarted = false; runTrial(); }
+function start() {
+  if (resumeState && resumeState.trials) {
+    // 続きから: 出題順・回答済みデータ・位置を保存時のまま復元(順番は作り直さない)
+    trials = resumeState.trials; results = resumeState.results || [];
+    ti = resumeState.ti || 0; elapsedPrior = resumeState.elapsed_s || 0;
+    mainStarted = true;   // 練習と本番前の確認画面はとばす(済んでいるため)
+    return runTrial();
+  }
+  trials = buildTrials(); results = []; ti = 0; mainStarted = false; runTrial();
+}
 function intro() {
   const startNote = START_MODE==="click"
     ? `各問題は、準備ができたら <b>ボタン（またはスペースキー）</b> を押して自分のペースで始めます。`
@@ -333,8 +352,11 @@ function intro() {
     ? `<p class="muted" style="color:#C25B4E">この実験は表示のタイミングが重要です。<b>できればPC（パソコン）での参加を推奨します。</b>スマートフォンの場合は横向き・明るさ最大でお願いします。</p>` : ``;
   const charsetNote = CHARSET==="full"
     ? `<p class="muted" style="color:#2E7D8F">基礎データモードです。回答の表に ゐ・ゑ・小書きかな を含みます（出題は小書きを除く${CHARS.length}字）。</p>` : ``;
+  const resumeNote = (resumeState && resumeState.trials)
+    ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
+       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。</p>` : "";
   screen.innerHTML = `<h1>iFont パイロット: 視覚・連続する文字の間隔掃引（乙課題）</h1>
-    ${pcNote}${charsetNote}
+    ${pcNote}${charsetNote}${resumeNote}
     <p><b>1問で答える文字は「2つ」です。</b>同じ場所に、かなが<b>3文字</b>つづけて出ます（3文字目は答えない字です）。${startNote}以下の手順で進みます。</p>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
       <li>表示枠の中央にある <b>＋</b> を見つめる</li>
@@ -348,7 +370,7 @@ function intro() {
     そのときも、<b>あとから見えた文字を1文字目として答えず</b>、勘で選んでください。</p>
     <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
     <p class="muted">前の字は次の字に上書きされて見えにくくなります。分からなければ勘でOKです（外れも大切なデータ）。回答はこの端末の中だけで完結します。</p>
-    <p><button class="primary" id="go">練習を始める（${N_PRACTICE}問）</button></p>
+    <p><button class="primary" id="go">${(resumeState&&resumeState.trials)?"続きから再開する":`練習を始める（${N_PRACTICE}問）`}</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 認知・知覚研究":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = start;
 }
@@ -359,7 +381,14 @@ const T0 = Date.now();   // 所要時間の起点
   try {
     await preload();
     // 本番モード(?prod=1)は同意画面を挟んでから教示へ。研究者パイロットは従来どおり直行。
-    if (window.PROD && PROD.enabled) PROD.consentScreen(screen, "かなの見分けの課題（画面表示・約10分）", 10, intro);
+    if (window.PROD && PROD.enabled) {
+      resumeState = PROD.loadState("soa_visual");  // 同じブラウザの途中状態(期限内)を拾う
+      if (resumeState && resumeState.completed) {  // 完了済み: 完了コードを再表示するだけ
+        screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
+        return;
+      }
+      PROD.consentScreen(screen, "かなの見分けの課題（画面表示・約10分）", 10, intro);
+    }
     else intro();
   }
   catch(e){ screen.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}<br>このページは experiment/ 内でHTTP配信して開いてください。</p>`; }
