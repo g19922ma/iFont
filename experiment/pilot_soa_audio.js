@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.14";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.15";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -114,7 +114,9 @@ async function loadAnswerKey() {
 
 async function preload() {
   screen.innerHTML = `<div style="min-height:60vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
-    <h1 style="border:none">読み込み中…</h1><p class="muted"></p></div>`;
+    <h1 style="border:none">読み込み中…</h1>
+    <div style="width:min(320px,80%);height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden;margin-top:10px">
+      <div id="loadBar" style="height:100%;width:0%;background:#2E7D8F"></div></div></div>`;
   const mres = await fetch(`${POOL_BASE}audio1char_manifest.json`, {cache:"no-store"});
   if (!mres.ok) throw new Error("audio1char_manifest.json が読めない");
   const manifest = await mres.json();
@@ -140,7 +142,8 @@ async function preload() {
     const s = stimByChar[ch];
     const r = await fetch(`${POOL_BASE}audio1char_stimuli/${s.file}?v=${VERSION}`);
     bufByChar[ch] = await ensureCtx().decodeAudioData(await r.arrayBuffer());
-    done++; screen.querySelector("p").textContent = `${Math.round(done / have.length * 100)}%`;
+    done++; const bar = document.getElementById("loadBar");
+    if (bar) bar.style.width = `${Math.round(done / have.length * 100)}%`;
   }));
 }
 

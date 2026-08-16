@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.12";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.13";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -77,8 +77,15 @@ function loadImage(ch) {
 }
 async function preload() {
   screen.innerHTML = `<div style="min-height:60vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
-    <h1 style="border:none">読み込み中…</h1></div>`;
-  await Promise.all(CHARS.map(async ch => { imgs[ch] = await loadImage(ch); }));
+    <h1 style="border:none">読み込み中…</h1>
+    <div style="width:min(320px,80%);height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden;margin-top:10px">
+      <div id="loadBar" style="height:100%;width:0%;background:#1E2A5E"></div></div></div>`;
+  let done = 0;
+  await Promise.all(CHARS.map(async ch => {
+    imgs[ch] = await loadImage(ch);
+    done++; const bar = document.getElementById("loadBar");
+    if (bar) bar.style.width = `${Math.round(done / CHARS.length * 100)}%`;
+  }));
 }
 
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
