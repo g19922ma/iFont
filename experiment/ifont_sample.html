@@ -100,6 +100,7 @@
   <p class="k">論文に記した iFont の動画生成CLIツール（<code>ifont-render</code>）が出力した、字幕と実声が同期した動画です。
   論文の実験と同じく、画面中央の固定領域に1文字ずつ提示し、その文字の音が流れる区間の中で徐々に鮮明化します（時間ゲート提示）。
   表記（<b>は</b>・<b>ゐ</b>・<b>づ</b>）はそのまま示し、下に金色でその字の音（→ワ・→イ・→ズ）を添えます。声は東北きりたんの実声です。</p>
+  <div class="note"><b>この節の動画には既知の不具合があります。</b>字の鮮明化が効いておらず、各字が不透明のまま出て消える提示になっています。描画の際に塗りの不透明度が背景と混ざらないまま書き込まれていたためで、2026年8月7日に原因を特定して直しましたが、これらの動画は作り直していません。<b>音声と、字が切り替わるタイミングは正しい</b>ので、速さと同期の様子はそのまま見ていただけます。鮮明化が効いた提示は、下の「提示速度をそろえた読み上げ」の6本でご覧ください。</div>
   <div class="videos">
     <figure>
       <video src="sample_assets/waka_ifont.mp4" controls preload="metadata" playsinline></video>
@@ -113,10 +114,57 @@
 </div>
 
 <div class="panel">
+  <h2>提示速度をそろえた読み上げ（1モーラの長さを固定）</h2>
+  <p class="k">同じ文「日本で一番高い山は何？」を、<b>1モーラの長さを固定したまま流暢に</b>読み上げた6本です。
+  音の高さとアクセントは合成エンジンにまかせているので、<b>抑揚は自然なまま、速さだけが一定</b>になります。
+  長さをそろえるときは<b>子音と母音を同じ倍率で伸縮</b>しており、子音と母音の比は自然のまま保たれます。
+  速さを3通り（200・167・133ミリ秒）、字の鮮明化のしかたを2通り（一次関数・ロジスティック曲線）で組み合わせました。
+  鮮明化はどちらも実験前の仮の g で、文字によらず同じ形です。声は東北きりたんの実声です。</p>
+
+  <p class="k" style="margin-top:16px"><b>鮮明化を一次関数にした版</b>——区間の始まりで明瞭度0％、終わりで100％まで、まっすぐに立ち上がります。</p>
+  <div class="videos">
+    <figure>
+      <video src="sample_assets/quiz_linear_200.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 200ミリ秒</b>（毎秒5.0モーラ・約4.3秒）／一次関数。競技かるたの読み上げ規則と同じ速さで、日本語能力試験のもっとも易しい級の聴解音声（毎秒5.05モーラ）にあたります。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_linear_167.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 167ミリ秒</b>（毎秒6.0モーラ・約3.8秒）／一次関数。上と下の中間にあたる速さです。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_linear_133.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 133ミリ秒</b>（毎秒7.5モーラ・約3.2秒）／一次関数。アナウンサーの標準的な読み上げに相当し、日本語能力試験の最上級（毎秒7.07モーラ）をわずかに上回ります。</figcaption>
+    </figure>
+  </div>
+
+  <p class="k" style="margin-top:16px"><b>鮮明化をロジスティック曲線にした版</b>——区間の中央で明瞭度50％、そこでの傾きが1になる曲線です。
+  裾を持つ形なので、区間の始まりで12％、終わりで88％になり、うっすら見えた状態から始まり、完全な不透明には達しません。</p>
+  <div class="videos">
+    <figure>
+      <video src="sample_assets/quiz_logistic_200.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 200ミリ秒</b>（毎秒5.0モーラ・約4.3秒）／ロジスティック曲線。競技かるたの読み上げ規則と同じ速さで、日本語能力試験のもっとも易しい級の聴解音声（毎秒5.05モーラ）にあたります。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_logistic_167.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 167ミリ秒</b>（毎秒6.0モーラ・約3.8秒）／ロジスティック曲線。上と下の中間にあたる速さです。</figcaption>
+    </figure>
+    <figure>
+      <video src="sample_assets/quiz_logistic_133.mp4" controls preload="metadata" playsinline></video>
+      <figcaption><b>1モーラ 133ミリ秒</b>（毎秒7.5モーラ・約3.2秒）／ロジスティック曲線。アナウンサーの標準的な読み上げに相当し、日本語能力試験の最上級（毎秒7.07モーラ）をわずかに上回ります。</figcaption>
+    </figure>
+  </div>
+
+  <p class="k" style="margin-top:14px">iFontを成立させるには、この提示速度で「続けて出しても認識が落ちない」ことと、
+  「その速度での認識率曲線」の2つが要ります。前者を第1段階の乙課題が、後者を第2段階のfrac課題が引き受けます。
+  どの速さを運用点にするか、そして鮮明化をどんな形にするかは、実験の結果から決めます。</p>
+</div>
+
+<div class="panel">
   <h2>競技かるたの公式ルールに沿った読み上げ</h2>
   <p class="k">一般社団法人全日本かるた協会の
   <a href="https://www.karuta.or.jp/wp/wp-content/uploads/2026/06/%E7%AB%B6%E6%8A%80%E3%81%8B%E3%82%8B%E3%81%9F%E8%AA%AD%E6%89%8B%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E6%94%B9%E8%A8%82%E7%89%8820250401%EF%BC%9CHP%E6%8E%B2%E8%BC%89%E7%94%A8%EF%BC%9E.pdf" target="_blank" rel="noopener">競技かるた読手テキスト</a>
   の「読唱上の決まり」を、iFontの動画生成CLIツールでそのまま再現しました。声は東北きりたんの実声です。</p>
+  <div class="note"><b>この節の動画には既知の不具合があります。</b>字の鮮明化が効いておらず、各字が不透明のまま出て消える提示になっています。描画の際に塗りの不透明度が背景と混ざらないまま書き込まれていたためで、2026年8月7日に原因を特定して直しましたが、これらの動画は作り直していません。<b>音声と、字が切り替わるタイミングは正しい</b>ので、速さと同期の様子はそのまま見ていただけます。鮮明化が効いた提示は、下の「提示速度をそろえた読み上げ」の6本でご覧ください。</div>
   <div class="videos">
     <figure>
       <video src="sample_assets/karuta_5316.mp4" controls preload="metadata" playsinline></video>

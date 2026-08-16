@@ -1,13 +1,25 @@
 // =========================================================================
 // iFont 本番化の共通配管 (同意・参加者ID・GAS保存・完了コード)
-//   乙課題(pilot_soa_audio / pilot_soa_visual2)を、クラウドソーシングで
-//   実施できる本番仕様に引き上げるための最小の共通部品。
+//   乙課題(pilot_soa_audio / pilot_soa_visual2)と frac課題(audio1char /
+//   audio2char / visual1char / visual2char)を、クラウドソーシングで
+//   実施できる本番仕様に引き上げるための共通部品。
 //
 //   使い方: 各実験ページの <script> より前に読み込む。
 //     <script src="prod_common.js"></script>
 //   ?prod=1 (または ?mode=prod) のときだけ「本番モード」になり、
 //     ・冒頭に同意画面を出す ・各試行をGASへ送る ・最後に完了コードを出す。
 //   ?prod が無ければ従来どおり(研究者パイロット・ローカルDL)。
+//
+//   参加者ID・完了コード・送信先URLはここに一本化してある。各実験ページは
+//   PROD.participantId / PROD.completionCode を参照し、独自に持たないこと。
+//
+//   送信の種類は2つある。
+//     ・乙課題:   PROD.saveTrial / PROD.saveDone → kind を持つ (soa_trials / soa_sessions シート)
+//     ・frac課題: PROD.saveFracTrial            → kind を持たない従来形式 ("trials" シート)
+//
+//   端末環境は PROD.setEnv(ENV) で各ページから登録する。登録したオブジェクトは
+//   参照として保持し、送信のたびに現在値を読む(リフレッシュレートのように
+//   読み込み後に非同期で確定する項目があるため)。
 //
 //   デプロイ時: 下の SUBMIT_URL に GAS ウェブアプリの /exec URL を貼る。
 //   空のままだと送信をスキップする(本番モードでも画面は本番仕様になる)。
@@ -46,7 +58,8 @@
 
   function fsPost(body) {
     if (!FIREBASE.projectId || !FIREBASE.apiKey) return;
-    const collection = body.kind === "soa_done" ? "soa_sessions" : "soa_trials";
+    const collection = body.kind === "soa_done" ? "soa_sessions"
+                     : body.kind === "soa_trial" ? "soa_trials" : "trials";
     const fields = {};
     for (const k of Object.keys(body)) fields[k] = fsValue(body[k]);
     try {
@@ -60,12 +73,26 @@
     } catch (e) { console.warn("firestore submit failed:", e); }
   }
 
+  // 端末環境。各実験ページが測ったオブジェクトを登録する(参照を保持する)。
+  let envRef = null;
+  function setEnv(env) { envRef = env || null; }
+  // 送信本文に載せる形に整える。ページ側のキー名(refreshHz)と列名(refresh_hz)の橋渡しもここで行う。
+  function envBody() {
+    if (!envRef) return {};
+    const hz = (envRef.refreshHz != null) ? envRef.refreshHz
+             : (envRef.refresh_hz != null) ? envRef.refresh_hz : "";
+    return {
+      ua: envRef.ua || "", dpr: envRef.dpr || "",
+      screen: envRef.screen || "", touch: !!envRef.touch, refresh_hz: hz,
+    };
+  }
+
   function post(body) {
     const full = Object.assign({
       participant_id: participantId, worker_id: workerId,
       completion_code: completionCode, ts: Date.now(),
       audio_device: audioDevice,
-    }, body);
+    }, envBody(), body);
     fsPost(full);                                   // Firestore(設定時のみ)
     if (!SUBMIT_URL) return;
     try {
@@ -87,6 +114,14 @@
   function saveDone(task, meta, summary) {
     if (!enabled) return;
     post(Object.assign({ kind: "soa_done", task: task, n_trials: sentTrials }, meta, summary));
+  }
+  // frac課題(audio1char / audio2char / visual1char / visual2char)の1試行を送る。
+  // 乙課題と違い kind を持たない従来形式で、GAS 側は answer_key で採点して
+  // "trials" シートに1行追記する。参加者ID・完了コード・端末環境・ts は post() が付ける。
+  function saveFracTrial(trial) {
+    if (!enabled) return;
+    sentTrials++;
+    post(trial);
   }
 
   // 同意画面(本番モードのみ冒頭に出す)。opts = {taskLabel, minutes, headphone, onOk}
@@ -152,7 +187,7 @@
 
   global.PROD = {
     enabled, workerId, participantId, completionCode,
-    saveTrial, saveDone, consentScreen, completionHTML,
+    setEnv, saveTrial, saveDone, saveFracTrial, consentScreen, completionHTML,
     hasEndpoint: !!SUBMIT_URL,
   };
 })(window);

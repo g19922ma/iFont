@@ -32,9 +32,18 @@
   }
   .completion-code { font-family: monospace; font-size: 24px; background: #ffe; padding: 12px;
                      border: 1px solid #cc9; display: inline-block; letter-spacing: 0.1em; }
+  /* 本番モード(?prod=1)で prod_common.js が描く同意画面・完了画面の見た目。 */
+  .prod-consent { max-width: 620px; margin: 24px auto; background: #fff; border: 1px solid #e3e6ee;
+                  border-radius: 10px; padding: 18px 22px; line-height: 1.8; text-align: left; }
+  .prod-consent h1 { font-size: 20px; }
+  button.primary { font-size: 16px; padding: 10px 20px; border-radius: 8px; border: 0;
+                   background: #355aa3; color: #fff; cursor: pointer; }
+  .muted { color: #6b7280; font-size: 13px; }
 </style>
 </head>
 <body>
+<!-- 本番化の共通配管(同意画面・参加者ID・GAS送信・完了コード)。課題スクリプトより先に読む。 -->
+<script src="prod_common.js"></script>
 <script src="audio2char.js"></script>
 </body>
 </html>

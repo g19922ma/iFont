@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.2";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.3";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -24,7 +24,11 @@ const POOL_NAMES = { legacy_metan: "参考: 旧 四国めたん", cand94: "候�
   cand9: "候補: 波音リツ", cand21: "候補: 剣崎雌雄(男)", cand45: "候補: 櫻歌ミコ", cand53: "候補: 麒ヶ島宗麟(男)",
   // 音高違い。E4=かるたのメイン音程(栗原指摘)。
   // C4=男性読手いなばくんの実測主音程(262Hzが75%。オクターブ下げないと判明)。
-  cand108e4: "きりたん・E4版", cand21c4: "剣崎雌雄・C4版(いなば音程)", cand53c4: "麒ヶ島宗麟・C4版(いなば音程)" };
+  cand108e4: "きりたん・E4版", cand21c4: "剣崎雌雄・C4版(いなば音程)", cand53c4: "麒ヶ島宗麟・C4版(いなば音程)",
+  // モーラ長違い(試作)。本番は1モーラ0.2秒だが、応用の重心が早押しクイズに移ったため、
+  // より自然な読み上げ速度である133ミリ秒前後でも音として成立するかを確かめる。
+  // 実体は13フレーム=138.67ミリ秒(VOICEVOXの量子化の格子に合わせた値)。話者・音高・品質処方は本番と同じ。
+  slot133: "試作: きりたん・1モーラ133ミリ秒相当(実体138.67ms)" };
 const POOL_LABEL = POOL ? (POOL_NAMES[POOL] || POOL) : "本番: 東北きりたん";
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);
@@ -33,9 +37,17 @@ const COUNTDOWN_S = Number(P.get("countdown") ?? 5); // countdownモード時の
 const START_MODE = P.get("start") || "click";        // "click"(既定・自己ペース) / "countdown" / "none"
 const FADE_S = 0.008;                       // 打ち切りのクリック音を避けるフェード
 
-// 端末環境(解析用にログ)
+// 端末環境(解析用にログ)。リフレッシュレートは聴覚課題の成績には関わらないが、
+// 端末の素性を1つの列で見比べられるように視覚課題と同じ形で測っておく。
 const ENV = { ua: navigator.userAgent, dpr: window.devicePixelRatio || 1,
-  screen: `${window.screen.width}x${window.screen.height}`, touch: (navigator.maxTouchPoints || 0) > 0 };
+  screen: `${window.screen.width}x${window.screen.height}`, touch: (navigator.maxTouchPoints || 0) > 0, refreshHz: null };
+(function measureRefresh(){ let n=0; const t0=performance.now();
+  function f(now){ n++; if(n<40) requestAnimationFrame(f); else ENV.refreshHz = Math.round(1000/((now-t0)/n)); }
+  requestAnimationFrame(f);
+})();
+// 本番モードの送信本文にも端末環境を載せる(オブジェクトの参照を渡すので、
+// あとから確定するリフレッシュレートも送信時の値が読まれる)。
+if (window.PROD) PROD.setEnv(ENV);
 
 // v1.5: 「区別できる音」68音のグリッド。を・ぢ・づ は現代標準語で お・じ・ず と同音
 // (本番プールでも同一の音声ファイル)、ゔ は日本語話者の多くが ぶ と区別して聞かないため、
@@ -177,6 +189,18 @@ function buildTrials() {
 // クリップの「実際に音が始まる位置から d 秒」をゲートして再生するバッファを作る。
 // v1.8: 起点をスロット先頭でなく実測の音響的開始(audio1char_onsets.json)に置く。
 // これによりS=50でも「音の先頭50ms」が必ず鳴る(以前はほぼ無音だった)。
+// v3.3: 窓の終わりもモーラの実体に合わせる(mora_avail_ms)。
+//   以前は名目のスロット長 char_dur_s から引き算していたが、char_dur_s は合成時に指定した
+//   名目値で、VOICEVOX の音素長の量子化(10.667ms格子)も mp3 の復号遅れ(46.042ms)も
+//   見込んでいない。そのため窓の終わりだけが名目の位置に取り残され、モーラ末尾(母音の
+//   後半)が切り落とされていた(0.2秒のモーラのうち実際に鳴るのは約150ms=78%だった)。
+function moraAvailS(ch) {
+  const o = onsets[ch] || {};
+  if (typeof o.mora_avail_ms === "number") return Math.max(0.01, o.mora_avail_ms / 1000);
+  // 古い onsets(mora_avail_ms なし)への保険。末尾が切れるが再生自体は続く。
+  const s = stimByChar[ch];
+  return Math.max(0.01, s.char_dur_s - ((o.acoustic_onset_ms || 0) / 1000));
+}
 function gatedBuffer(ch, gateS) {
   const s = stimByChar[ch], src = bufByChar[ch];
   const sr = src.sampleRate;
@@ -184,7 +208,7 @@ function gatedBuffer(ch, gateS) {
   // v1.9: クリップ間の音量差(最大36倍)を正規化する。増幅率は事前計算(有音部RMSを中央値に揃え、ピーク0.85で頭打ち)。
   const gain = (onsets[ch] && onsets[ch].gain) || 1.0;
   const start = Math.floor((s.char_onset_s + onMs/1000) * sr);
-  const avail = Math.max(0.01, s.char_dur_s - onMs/1000);   // スロット末までの残り
+  const avail = moraAvailS(ch);                             // 音響的開始からモーラ末尾までの残り
   const dur = Math.min(gateS, avail);
   const n = Math.max(1, Math.floor(dur * sr));
   const out = ensureCtx().createBuffer(1, n, sr);
@@ -406,7 +430,7 @@ function intro() {
     ["あ","か","ん"].forEach((ch, i) => {
       if (!bufByChar[ch]) return;
       const src = ctx.createBufferSource();
-      src.buffer = gatedBuffer(ch, 0.2);
+      src.buffer = gatedBuffer(ch, moraAvailS(ch));   // モーラの実体を最後まで鳴らす
       src.connect(ctx.destination); src.start(ctx.currentTime + 0.1 + i*0.5);
     });
   };
@@ -419,7 +443,30 @@ function intro() {
 // 「すべて順に再生」は五十音順に流し、いま鳴っている音のかなを表示する。
 function playOne(ch){
   const ctx = ensureCtx(); ctx.resume();
-  const s = ctx.createBufferSource(); s.buffer = gatedBuffer(ch, 0.2); s.connect(ctx.destination); s.start();
+  // モーラの実体を最後まで鳴らす(打ち切らない)。以前は 0.2 秒で頭打ちにしていたが、
+  // 窓の長さそのものがプールによって違う(本番=約195ms、slot133=約131ms)ため値で書かない。
+  const s = ctx.createBufferSource(); s.buffer = gatedBuffer(ch, moraAvailS(ch));
+  s.connect(ctx.destination); s.start();
+}
+// 点検モードの見出しに出す「モーラ長」。VOICEVOX の量子化で本番プールは3種類に割れる。
+function moraLenText(){
+  const c = {};
+  for (const ch of avail()) {
+    const v = (onsets[ch] && onsets[ch].mora_len_ms);
+    if (typeof v === "number") { const k = v.toFixed(1); c[k] = (c[k] || 0) + 1; }
+  }
+  const ks = Object.keys(c).sort((a, b) => Number(a) - Number(b));
+  if (!ks.length) return `${(poolMeta.mora_dur_s * 1000).toFixed(1)}ms(指定値)`;
+  if (ks.length === 1) return `${ks[0]}ms`;
+  return ks.map(k => `${k}ms×${c[k]}音`).join(" / ");
+}
+// 点検モードの見出しに出す「実際に鳴る長さ」。かなによって音響的開始が違うぶんだけ幅が出る。
+function availRangeText(){
+  const v = avail().map(moraAvailS).map(x => x * 1000);
+  if (!v.length) return "";
+  const lo = Math.min(...v), hi = Math.max(...v);
+  return (Math.round(lo) === Math.round(hi))
+    ? `${lo.toFixed(0)}ms` : `${lo.toFixed(0)}〜${hi.toFixed(0)}ms`;
 }
 
 // v2.3: いま鳴らしている音源が再合成後のものかを、メタデータでなく
@@ -432,8 +479,11 @@ function poolFingerprint(){
   const per = {};
   for (const ch of avail()) {
     const s = stimByChar[ch], src = bufByChar[ch], sr = src.sampleRate;
-    const a = Math.floor(s.char_onset_s * sr);
-    const b = Math.floor((s.char_onset_s + s.char_dur_s) * sr);
+    // モーラの実体の区間で測る(名目のスロットではない。v3.3 で窓の定義を直したのに合わせた)。
+    const o = onsets[ch] || {};
+    const a = Math.floor((s.char_onset_s + (o.acoustic_onset_ms || 0) / 1000) * sr);
+    const b = Math.floor(((typeof o.mora_end_ms === "number")
+      ? o.mora_end_ms / 1000 : s.char_onset_s + s.char_dur_s) * sr);
     const d = src.getChannelData(0);
     let pk = 0;
     for (let i = a; i < b && i < d.length; i++) { const v = Math.abs(d[i]); if (v > pk) pk = v; }
@@ -467,7 +517,10 @@ function showCheck(){
     <p style="font-size:15px;line-height:2.2">話者を切り替えて聴き比べ:
       ${links.map(([q, label]) => poolLink(q, label)).join(" ")}</p>
     ${box}
-    <p class="muted">かなを押すと、その音が<b>本番とまったく同じ処理</b>(増幅・200ms)で1回鳴ります。
+    <p class="muted">かなを押すと、その音が<b>本番とまったく同じ処理</b>(音響的開始からモーラ末尾まで・増幅つき)で1回鳴ります。
+    このプールのモーラ長は <b>${moraLenText()}</b>、
+    実際に鳴る長さは <b>${availRangeText()}</b> です
+    (音響的な立ち上がりから鳴らすので、子音の立ち上がりが遅い音ほど短くなります)。
     「すべて順に再生」は五十音順に0.7秒間隔で流します。弱い・聞こえない・別の音に聞こえるものがあればメモして報告してください。</p>
     <p><button class="primary" id="playAll">すべて順に再生</button>
        <span id="nowCh" style="font-size:32px;font-weight:700;color:#2E7D8F;margin-left:16px"></span></p>

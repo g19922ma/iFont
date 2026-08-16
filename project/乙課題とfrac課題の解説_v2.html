@@ -1,0 +1,944 @@
+<title>乙課題とfrac課題 — 何をやり、何が分かるのか（v2）</title>
+<style>
+  :root{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82;
+    --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea;
+    --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f;  --bad-soft:#f6e5e0;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Songti SC",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+    --shadow:0 1px 2px rgba(20,30,50,.04),0 6px 22px rgba(20,30,50,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+      --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+      --line:#2b323d; --line-soft:#242a34;
+      --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2;
+      --teal:#5bc2c8;
+      --good:#79c79b; --good-soft:#1a2c22;
+      --warn:#e0b871; --warn-soft:#2e2717;
+      --bad:#e59178;  --bad-soft:#31201b;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82; --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea; --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f; --bad-soft:#f6e5e0;
+  }
+  :root[data-theme="dark"]{
+    --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+    --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+    --line:#2b323d; --line-soft:#242a34;
+    --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2; --teal:#5bc2c8;
+    --good:#79c79b; --good-soft:#1a2c22; --warn:#e0b871; --warn-soft:#2e2717;
+    --bad:#e59178; --bad-soft:#31201b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.85;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    font-size:16px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px 120px}
+  .breakout{max-width:960px;margin-left:auto;margin-right:auto}
+
+  /* --- 見出し --- */
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.35}
+  .eyebrow{font-family:var(--sans);font-size:12px;letter-spacing:.14em;font-weight:700;
+    color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+  header.top{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  header.top h1{font-size:33px;margin:0 0 14px;letter-spacing:.01em}
+  header.top .lead{font-size:16.5px;color:var(--ink-soft);margin:0;max-width:64ch}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:22px}
+  .chip{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+  .chip b{color:var(--ink)}
+
+  .part-head{margin:64px 0 6px;padding-top:20px;border-top:2px solid var(--accent)}
+  .part-head .num{font-family:var(--serif);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.1em}
+  h2{font-size:26px;margin:6px 0 4px}
+  .part-sub{color:var(--ink-soft);font-size:15px;margin:0 0 8px}
+  h3{font-size:20px;margin:38px 0 6px;padding-left:12px;border-left:3px solid var(--accent)}
+  h4{font-size:16.5px;margin:26px 0 4px;color:var(--ink)}
+  p{margin:12px 0}
+  .wrap>section>p, .wrap>section>section>p{max-width:70ch}
+  b,strong{font-weight:700;color:var(--ink)}
+  a{color:var(--accent-ink);text-underline-offset:2px}
+  em{font-style:normal;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+
+  /* 数式 */
+  .m{font-family:var(--serif);font-style:italic}
+  .eq{font-family:var(--serif);background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:14px 18px;margin:16px 0;font-size:17px;text-align:center;
+    overflow-x:auto;box-shadow:var(--shadow)}
+  .eq .m{font-style:italic}
+  sub,sup{font-size:.72em}
+
+  /* コールアウト */
+  .note{border-radius:12px;padding:15px 18px;margin:20px 0;font-size:14.5px;border:1px solid var(--line)}
+  .note .lab{font-weight:700;font-family:var(--sans);font-size:12.5px;letter-spacing:.06em;
+    text-transform:uppercase;display:block;margin-bottom:5px}
+  .note.key{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 32%,transparent)}
+  .note.key .lab{color:var(--accent-ink)}
+  .note.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+  .note.warn .lab{color:var(--warn)}
+  .note.misc{background:var(--panel);border-style:dashed}
+  .note.misc .lab{color:var(--ink-faint)}
+  .ifont{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);
+    border-radius:10px;padding:14px 18px;margin:20px 0;font-size:14.5px;box-shadow:var(--shadow)}
+  .ifont .lab{font-weight:700;font-size:12.5px;letter-spacing:.06em;color:var(--teal);
+    text-transform:uppercase;display:block;margin-bottom:5px}
+
+  /* 図 */
+  figure{margin:26px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:20px 20px 8px;box-shadow:var(--shadow)}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--ink-soft);margin:12px 2px 6px;line-height:1.7}
+  figcaption b{color:var(--ink)}
+  .svg-t{font-family:var(--sans);font-weight:700;fill:var(--ink)}
+  .svg-l{font-family:var(--sans);fill:var(--ink-soft)}
+  .svg-n{font-family:var(--mono);fill:var(--ink-soft)}
+  .svg-s{font-family:var(--sans);fill:var(--ink-faint)}
+
+  /* 表 */
+  .tbl{overflow-x:auto;margin:22px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink-soft);
+    font-weight:700;margin-bottom:8px;font-family:var(--sans)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  thead th{background:var(--panel-2);font-family:var(--sans);font-weight:700}
+  tbody th{background:color-mix(in srgb,var(--panel-2) 60%,transparent);font-weight:600;white-space:nowrap}
+  td .m{font-size:.95em}
+
+  /* コード */
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;margin:16px 0;color:var(--ink)}
+  pre .c{color:var(--ink-faint)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+
+  /* TOC */
+  nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;margin:30px 0;box-shadow:var(--shadow)}
+  nav.toc .lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin-bottom:10px}
+  nav.toc ol{margin:0;padding-left:0;list-style:none;counter-reset:toc}
+  nav.toc>ol>li{counter-increment:toc;margin:9px 0;padding-left:34px;position:relative;font-weight:600}
+  nav.toc>ol>li::before{content:counter(toc);position:absolute;left:0;top:0;width:24px;height:24px;
+    background:var(--accent-soft);color:var(--accent-ink);border-radius:7px;font-family:var(--serif);
+    font-size:13px;display:grid;place-items:center;font-weight:700}
+  nav.toc a{color:var(--ink);text-decoration:none}
+  nav.toc a:hover{color:var(--accent-ink)}
+  nav.toc .sub{font-weight:400;color:var(--ink-soft);font-size:13px;margin-top:2px}
+  ul.plain{margin:12px 0;padding-left:22px}
+  ul.plain li{margin:7px 0}
+  .refs{font-size:13.5px;color:var(--ink-soft)}
+  .refs li{margin:9px 0}
+  hr.soft{border:0;border-top:1px solid var(--line);margin:40px 0}
+  .lead-q{font-family:var(--serif);font-size:17px;color:var(--ink-soft);font-style:italic;
+    border-left:3px solid var(--line);padding-left:16px;margin:16px 0}
+  @media (max-width:560px){ header.top h1{font-size:26px} h2{font-size:22px} body{font-size:15px} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">iFont実験 · 解説ノート v2</p>
+  <h1>乙課題とfrac課題 — 何をやり、何が分かるのか</h1>
+  <p class="lead">iFontの本実験は2段階からできています。第1段階の乙課題で、どの提示速度まで続けて出しても認識が落ちないかを決め、第2段階のfrac課題で、その速度でのかな1文字ごとの認識率曲線を測ります。この2つで何をやり、何が言えるようになるのかを、前提知識なしで読めるようにまとめました。</p>
+  <div class="meta">
+    <span class="chip">所要 <b>約40分</b></span>
+    <span class="chip">前提 <b>特になし</b></span>
+    <span class="chip">対象 <b>初見の方・共同研究者・実験協力者</b></span>
+    <span class="chip">末尾に <b>よくある質問</b></span>
+  </div>
+</header>
+
+<!-- ============ PART 0 ============ -->
+<section id="p0">
+  <div class="part-head">
+    <div class="num">PART 0 · 見取り図</div>
+    <h2>全体の見取り図</h2>
+    <p class="part-sub">提示速度という軸と、2つの課題の分担。</p>
+  </div>
+
+  <h3>0.1 iFontが作りたいもの</h3>
+  <p>競技かるたや早押しクイズは、言葉が音声で少しずつ届くからこそ「どこで分かるか」を競える遊びです。文字で全部見せてしまえば勝負になりません。だから聴覚に頼れない人は、この遊びのおもしろさごと閉ざされています。普通の字幕は一度に全部見えてしまうので、代わりになりません。</p>
+  <p>iFontは、<b>文字を「少しずつ分かるように」時間をかけて見せることで、目でも同じ勝負を成立させます</b>。設計目標は一文で書けます。</p>
+  <p class="lead-q">音声を聞いている人と、字幕を見ている人が、同じ時点に同じだけ分かること。</p>
+  <p>これを実現するには、感覚に頼らず数値が要ります。かな1文字について「音をどこまで聞かせたら何％の人が分かるか」と「字をどれだけ見せたら何％の人が分かるか」を測り、<b>同じ認識率になる点どうしを対応づける</b>。この対応づけを<b>変換 <span class="m">g</span></b> と呼びます。<span class="m">g</span> が決まれば、音声の進み方に合わせて各字の見せ方を機械的に設計できます。</p>
+
+  <h3>0.2 提示速度という軸</h3>
+  <p>ここで、はじめに押さえておくべき軸があります。<b>提示速度</b>です。</p>
+  <p>運用では、かなが一定の速さで次々に届きます。1モーラあたり何ミリ秒か、というこの速さを<b>提示速度</b>と呼びます。iFontの基準は <b>1モーラ 200ミリ秒（毎秒5.0モーラ）</b> です。競技かるたの読み上げ規則がこの速さで、日本語能力試験のもっとも易しい級の聴解音声（毎秒5.05モーラ）ともほぼ一致します。<b>聴覚の刺激もこの速さで合成してあります。</b></p>
+  <div class="note key">
+    <span class="lab">ある速度で成立させるには、2つ要る</span>
+    <b>1. その速度で続けて出しても、認識が落ちないという保証。</b>文字が次々に来ることで手前の文字の認識が妨げられるなら、孤立して測った曲線は運用の場面を予測しません。<br>
+    <b>2. その速度での認識率曲線。</b>かな1文字ごとに、どこまで提示すれば何％の人が分かるかの曲線。<br>
+    <b>乙課題が1を、frac課題が2を引き受けます。</b>
+  </div>
+
+  <h3>0.3 2つの課題の役割</h3>
+  <p><b>第1段階の乙課題では、どの提示速度まで使えるかを決めます。</b>かなを3つ続けて提示し、間隔を7水準に振って、後ろから次の文字が来ることで手前の文字の認識が落ちないかを判定します。確認的な主判定は基準速度の200ミリ秒で行い、他の水準は副次的な判定として扱います。</p>
+  <p><b>第2段階のfrac課題では、その速度での曲線を測ります。</b>かな1文字（1音）をどこまで提示すれば分かるかを0％から100％まで21段階で掃引し、字ごとの認識率曲線を推定します。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 300" role="img" aria-label="乙課題とfrac課題が変換gにつながる流れの図">
+      <text class="svg-t" x="20" y="24" font-size="15">2つの課題と、最終的な出力の関係</text>
+
+      <rect x="30" y="52" width="200" height="66" rx="10" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-t" x="130" y="80" font-size="14" text-anchor="middle">乙課題</text>
+      <text class="svg-s" x="130" y="100" font-size="11.5" text-anchor="middle">3つ続けて出し、間隔を振る</text>
+
+      <rect x="30" y="182" width="200" height="66" rx="10" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-t" x="130" y="210" font-size="14" text-anchor="middle">frac課題</text>
+      <text class="svg-s" x="130" y="230" font-size="11.5" text-anchor="middle">1文字を途中まで出す</text>
+
+      <path d="M230 85 H300" stroke="var(--line)" stroke-width="1.6" marker-end="url(#ar1)"/>
+      <path d="M230 215 H300" stroke="var(--line)" stroke-width="1.6" marker-end="url(#ar1)"/>
+      <defs><marker id="ar1" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M0 0 L9 4.5 L0 9 z" fill="var(--ink-faint)"/></marker></defs>
+
+      <rect x="300" y="52" width="250" height="66" rx="10" fill="var(--good-soft)" stroke="var(--good)"/>
+      <text class="svg-l" x="425" y="78" font-size="12.5" text-anchor="middle" fill="var(--good)" font-weight="700">0.2秒で続けても落ちない</text>
+      <text class="svg-s" x="425" y="98" font-size="11.5" text-anchor="middle">という使用の保証</text>
+
+      <rect x="300" y="182" width="250" height="66" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-l" x="425" y="208" font-size="12.5" text-anchor="middle" fill="var(--accent-ink)" font-weight="700">字ごとの認識率曲線</text>
+      <text class="svg-s" x="425" y="228" font-size="11.5" text-anchor="middle">聴覚68音・視覚78字</text>
+
+      <path d="M425 118 V172" stroke="var(--good)" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#ar1)"/>
+      <text class="svg-s" x="437" y="150" font-size="11.5">この保証があってはじめて使える</text>
+
+      <path d="M550 215 H620" stroke="var(--line)" stroke-width="1.6" marker-end="url(#ar1)"/>
+      <rect x="620" y="182" width="120" height="66" rx="10" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+      <text class="svg-t" x="680" y="222" font-size="20" text-anchor="middle" fill="var(--accent-ink)">変換 g</text>
+
+      <path d="M740 215 H800" stroke="var(--line)" stroke-width="1.6" marker-end="url(#ar1)"/>
+      <text class="svg-l" x="800" y="205" font-size="12" >音声と同期して</text>
+      <text class="svg-l" x="800" y="222" font-size="12" >少しずつ現れる</text>
+      <text class="svg-l" x="800" y="239" font-size="12" >かな列の設計</text>
+    </svg>
+    <figcaption><b>図0.1</b> 2つの課題の役割分担。frac課題が曲線という<b>中身</b>を作り、乙課題がその曲線を運用に持ち込んでよいという<b>条件</b>を確かめる。どちらが欠けてもgという数値は意味を持たない。乙課題は主結果ではなく、主結果を成立させる条件を確かめる課題であり、予算の配分もそうしてある（乙課題2本で約2.7万円、frac課題4本で約8万円）。</figcaption>
+  </figure>
+
+  <div class="note misc">
+    <span class="lab">名前について</span>
+    「乙課題」は内容を表す名前ではありません。この文書では<b>較正の課題</b>という言い方も併用します。frac課題の frac は fraction（割合）で、刺激をどこまで提示したかの割合を指します。
+  </div>
+</section>
+
+<!-- ============ PART 1 ============ -->
+<section id="p1">
+  <div class="part-head">
+    <div class="num">PART 1 · 第1段階</div>
+    <h2>乙課題でやること</h2>
+    <p class="part-sub">どの提示速度まで使えるかを決める。</p>
+  </div>
+
+  <h3>1.1 課題の形</h3>
+  <p><b>かな（音）を3つ続けて提示し、間隔Sを変えながら、1番目と2番目が何だったかを答えてもらいます。</b>この間隔Sが提示速度そのものです。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 200" role="img" aria-label="乙課題は3つの刺激を間隔Sで続けて出し、1番目と2番目を答えさせる">
+      <text class="svg-t" x="20" y="24" font-size="15">乙課題の1試行</text>
+      <g>
+        <rect x="40" y="52" width="110" height="66" rx="9" fill="var(--panel-2)" stroke="var(--line)"/>
+        <text class="svg-l" x="95" y="92" font-size="22" text-anchor="middle" fill="var(--ink-faint)">＋</text>
+        <text class="svg-s" x="95" y="134" font-size="11.5" text-anchor="middle">注視点</text>
+
+        <rect x="185" y="52" width="130" height="66" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text class="svg-t" x="250" y="92" font-size="14" text-anchor="middle" fill="var(--accent-ink)">1文字目</text>
+        <text class="svg-s" x="250" y="134" font-size="11.5" text-anchor="middle" fill="var(--accent-ink)">これを答える</text>
+
+        <rect x="350" y="52" width="130" height="66" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text class="svg-t" x="415" y="92" font-size="14" text-anchor="middle" fill="var(--accent-ink)">2文字目</text>
+        <text class="svg-s" x="415" y="134" font-size="11.5" text-anchor="middle" fill="var(--accent-ink)">これも答える</text>
+
+        <rect x="515" y="52" width="130" height="66" rx="9" fill="var(--panel-2)" stroke="var(--line)"/>
+        <text class="svg-t" x="580" y="92" font-size="14" text-anchor="middle" fill="var(--ink-faint)">3文字目</text>
+        <text class="svg-s" x="580" y="134" font-size="11.5" text-anchor="middle">答えない</text>
+
+        <rect x="680" y="52" width="110" height="66" rx="9" fill="var(--panel)" stroke="var(--line)" stroke-dasharray="4 3"/>
+        <text class="svg-s" x="735" y="92" font-size="12.5" text-anchor="middle">白紙</text>
+      </g>
+      <g stroke="var(--ink-faint)" stroke-width="1.2">
+        <path d="M250 158 H415" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+        <path d="M415 158 H580" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+      </g>
+      <defs><marker id="ar2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M0 4 L8 1 L8 7 z" fill="var(--ink-faint)"/></marker></defs>
+      <text class="svg-s" x="332" y="153" font-size="11.5" text-anchor="middle">間隔 S</text>
+      <text class="svg-s" x="497" y="153" font-size="11.5" text-anchor="middle">間隔 S</text>
+      <text class="svg-n" x="20" y="182" font-size="12">S = 50・83・133・200・300・450・700 ミリ秒（7段階）　　1人あたり 練習2問＋本番42問（各段階6問）　所要10分前後</text>
+    </svg>
+    <figcaption><b>図1.1</b> 乙課題の1試行。間隔Sの7水準は毎秒のモーラ数に直すと20・12・7.5・5.0・3.3・2.2・1.4にあたる。聴覚版（68音）と視覚版（72字）を、同じ設計で別々に実施する。</figcaption>
+  </figure>
+
+  <ul class="plain">
+    <li>1人あたり練習2問と本番42問（各水準6問）、所要は10分前後</li>
+    <li>3つの刺激はすべて別の字（音）にする。同じ字が再登場すると「最初の字は何だったか」の判断が壊れるため</li>
+    <li>字の割り当ては混ぜた一覧から順に配る。同じ字が偶然何度も出て、特定の水準の成績を歪めることを防ぐ</li>
+    <li>各試行は参加者がボタンを押してから始まる。押すまで回答は選べない</li>
+    <li>画面に実際に表示された時刻と、端末の画面書き換え頻度を毎回記録する</li>
+  </ul>
+
+  <h3>1.2 判定に使うのは1番目</h3>
+  <p><b>主判定に使うのは1番目の正答率だけ</b>です。1番目は、後ろから2番目・3番目が来る状況で提示されます。だから「後続の文字によって、手前の文字の認識が妨げられるか」をそのまま測っています。</p>
+  <p>2番目も答えてもらいますが、その正答率は副次的な指標として扱います。理由は1.6節で述べます。</p>
+  <p>3番目は答えません。それでも3番目を出すのは、<b>2番目の見え終わり・聞こえ終わりを、実際の運用と同じ形（次の文字が来る）にそろえるため</b>です。運用では文字が延々と続くので、どの文字にも必ず次の文字が来ます。3番目を出さないと2番目だけが「後ろに何も来ない特別扱い」になり、1番目と条件が揃いません。</p>
+
+  <h3>1.3 頭打ちと比べる</h3>
+  <p>判定は、<b>間隔を十分長くとったときの成績</b>を基準に行います。</p>
+  <p>耳や目の良さは人によって違いますし、その日の集中も違います。だから「0.2秒間隔での正答率が70％」という数字だけでは、良いのか悪いのか判断できません。そこで450ミリ秒と700ミリ秒の水準を同じ人に同じセッションで行ってもらいます。ここでの成績がその人の「急かされていないときの実力」であり、これを<b>頭打ち</b>と呼びます。</p>
+  <div class="eq"><span class="m">Δ</span> ＝（頭打ちの正答率）−（判定する速度での正答率）</div>
+  <p>同じ人の中の引き算なので、個人差も日による調子も消えます。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 300" role="img" aria-label="間隔に対する正答率の曲線と、頭打ちと運用点の比較">
+      <text class="svg-t" x="20" y="24" font-size="15">間隔Sに対する正答率と、比べる2点</text>
+      <line x1="90" y1="250" x2="760" y2="250" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="90" y1="46" x2="90" y2="250" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="425" y="288" font-size="12" text-anchor="middle">間隔 S（ミリ秒）</text>
+      <text class="svg-s" x="34" y="150" font-size="12" transform="rotate(-90 34 150)" text-anchor="middle">1文字目の正答率</text>
+
+      <g class="svg-s" font-size="11" text-anchor="middle">
+        <text x="120" y="270">50</text><text x="180" y="270">83</text><text x="255" y="270">133</text>
+        <text x="345" y="270">200</text><text x="465" y="270">300</text><text x="600" y="270">450</text><text x="740" y="270">700</text>
+      </g>
+
+      <line x1="90" y1="80" x2="760" y2="80" stroke="var(--good)" stroke-width="1.4" stroke-dasharray="5 4"/>
+      <text class="svg-l" x="600" y="70" font-size="12.5" fill="var(--good)" font-weight="700">頭打ち（急かされていないときの実力）</text>
+
+      <path d="M120 212 C 190 192, 262 138, 345 112 S 560 82, 740 79" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <g fill="var(--accent)">
+        <circle cx="120" cy="212" r="4.5"/><circle cx="180" cy="184" r="4.5"/><circle cx="255" cy="140" r="4.5"/>
+        <circle cx="465" cy="88" r="4.5"/>
+      </g>
+      <circle cx="345" cy="112" r="7" fill="var(--panel)" stroke="var(--accent)" stroke-width="3"/>
+      <circle cx="600" cy="80" r="5.5" fill="var(--good)"/>
+      <circle cx="740" cy="79" r="5.5" fill="var(--good)"/>
+
+      <line x1="345" y1="112" x2="345" y2="250" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 4"/>
+      <text class="svg-l" x="356" y="140" font-size="12.5" fill="var(--accent-ink)" font-weight="700">運用点（0.2秒）</text>
+
+      <defs><marker id="ard" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+        <path d="M0 4 L8 1 L8 7 z" fill="var(--bad)"/></marker></defs>
+      <path d="M298 112 V 80" stroke="var(--bad)" stroke-width="2" marker-start="url(#ard)" marker-end="url(#ard)"/>
+      <line x1="290" y1="80" x2="352" y2="80" stroke="var(--bad)" stroke-width="1" stroke-dasharray="3 3"/>
+      <line x1="290" y1="112" x2="345" y2="112" stroke="var(--bad)" stroke-width="1" stroke-dasharray="3 3"/>
+      <text class="svg-l" x="130" y="100" font-size="12.5" fill="var(--bad)" font-weight="700">この差 Δ を判定する</text>
+    </svg>
+    <figcaption><b>図1.2</b> 主判定に使うのは、頭打ち（450・700ミリ秒をまとめたもの）と基準速度（200ミリ秒）の差 <span class="m">Δ</span>。同じ手続きを他の水準にも当てはめると、その速度での判定になる。</figcaption>
+  </figure>
+
+  <h3>1.4 判定の手続き</h3>
+  <p>「差が有意でなかった」は「差がない証拠」になりません。雑な実験ほど有意差は出にくいので、手を抜くほど「干渉なし」に見えるという倒錯が起きます。そこで<b>非劣性検定</b>を使います。「差はゼロか」ではなく「<b>差は、実務上どうでもいいと言えるくらい小さいか</b>」を問い、その境界を<b>マージン <span class="m">δ</span></b> として、データを見る前に決めておきます。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 260" role="img" aria-label="信頼区間の位置による3通りの判定">
+      <text class="svg-t" x="20" y="24" font-size="15">差 Δ の信頼区間がどこに来るかで、3通りに判定する</text>
+      <line x1="130" y1="230" x2="820" y2="230" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="340" y1="44" x2="340" y2="238" stroke="var(--line)" stroke-width="1.3" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="340" y="252" font-size="12" text-anchor="middle">Δ = 0（劣化なし）</text>
+      <line x1="640" y1="44" x2="640" y2="238" stroke="var(--bad)" stroke-width="2"/>
+      <text class="svg-s" x="640" y="252" font-size="12" text-anchor="middle" fill="var(--bad)">δ（許容の境界）</text>
+
+      <rect x="130" y="56" width="510" height="22" fill="var(--good-soft)" rx="4"/>
+      <line x1="230" y1="67" x2="450" y2="67" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="230" y1="59" x2="230" y2="75" stroke="var(--good)" stroke-width="3.5"/>
+      <line x1="450" y1="59" x2="450" y2="75" stroke="var(--good)" stroke-width="3.5"/>
+      <circle cx="340" cy="67" r="4.5" fill="var(--good)"/>
+      <text class="svg-l" x="666" y="64" font-size="13" fill="var(--good)" font-weight="700">干渉なし</text>
+      <text class="svg-s" x="666" y="82" font-size="11.5">上限が δ より左</text>
+
+      <line x1="310" y1="136" x2="700" y2="136" stroke="var(--warn)" stroke-width="3.5"/>
+      <line x1="310" y1="128" x2="310" y2="144" stroke="var(--warn)" stroke-width="3.5"/>
+      <line x1="700" y1="128" x2="700" y2="144" stroke="var(--warn)" stroke-width="3.5"/>
+      <circle cx="480" cy="136" r="4.5" fill="var(--warn)"/>
+      <text class="svg-l" x="722" y="133" font-size="13" fill="var(--warn)" font-weight="700">保留</text>
+      <text class="svg-s" x="722" y="151" font-size="11.5">δ をまたぐ</text>
+
+      <line x1="540" y1="200" x2="790" y2="200" stroke="var(--bad)" stroke-width="3.5"/>
+      <line x1="540" y1="192" x2="540" y2="208" stroke="var(--bad)" stroke-width="3.5"/>
+      <line x1="790" y1="192" x2="790" y2="208" stroke="var(--bad)" stroke-width="3.5"/>
+      <circle cx="660" cy="200" r="4.5" fill="var(--bad)"/>
+      <text class="svg-l" x="130" y="190" font-size="12" >下限まで 0 より右</text>
+      <text class="svg-l" x="130" y="208" font-size="13" fill="var(--bad)" font-weight="700">干渉あり</text>
+    </svg>
+    <figcaption><b>図1.3</b> 差 <span class="m">Δ</span> の信頼区間の置かれ方で3通りに判定する。使う統計量は、いつものt検定と信頼区間だけ。変わるのは「0からどれだけ離れているか」ではなく「<b><span class="m">δ</span> の内側にどれだけ確実に収まっているか</b>」を見るという向きだけ。</figcaption>
+  </figure>
+
+  <p>予算を段階的に使う二段階の手続きをとります。</p>
+  <ul class="plain">
+    <li><b>第一段</b>: 聴覚60名・視覚40名、<span class="m">δ</span>＝8ポイントで判定する</li>
+    <li><b>第二段</b>: 保留になったときだけ、聴覚130名・視覚80名まで増員し、<span class="m">δ</span>＝5ポイントで判定し直す</li>
+    <li>検定は各段とも片側2.5％とし、二段階を通じた誤りの確率を5％以内に保つ</li>
+  </ul>
+
+  <div class="tbl">
+  <table>
+    <caption>1万回のシミュレーションによる判定確率（真の差がゼロのとき）</caption>
+    <thead><tr><th>　</th><th>第一段で「干渉なし」</th><th>最終的に「干渉なし」</th><th>最終的に「保留」</th></tr></thead>
+    <tbody>
+      <tr><th>聴覚</th><td>77.6％</td><td><b>84.5％</b></td><td>11.7％</td></tr>
+      <tr><th>視覚</th><td>89.3％</td><td><b>92.7％</b></td><td>4.5％</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>本当に8ポイントの劣化があるときに「干渉あり」と検出できる確率は、両モダリティとも96％です。</p>
+
+  <h3>1.5 δ＝8ポイントの根拠</h3>
+  <p><span class="m">δ</span> は分野横断の既定値が存在しない値で、「研究の中身から正当化して事前に決めよ」というのが規範です。参考までに、割合を評価する医学の試験では10ポイントを置くことが最も多くなっています。</p>
+  <p>iFontの根拠は<b>測定の精度</b>です。frac課題は字ごとに約88観測を集める設計で、このとき字ごとの推定の標準誤差は約5.4ポイントになります。<b>推定の誤差より小さい一様な劣化は、字ごとの曲線の順位を変えないので、gの設計を変えません。</b>この論法から、第一段の8ポイントと増員後の5ポイントが出ています。医学の相場の10ポイントより厳しい側です。</p>
+
+  <h3>1.6 2番目も答えてもらう理由</h3>
+  <p>2番目の正答率は、3番目による後ろからの妨害と、2つ覚えておくという記憶の負荷とが混ざった量になります。単一の原因に帰せないので、副次的な指標として扱います。それでも回答してもらうのは、<b>データのためではなく、課題の要求を運用の場面と同じにするため</b>です。</p>
+  <div class="note key">
+    <span class="lab">核心</span>
+    実際の運用では、読み手はどの文字も読み取ろうとしています。「1番目だけ答えればよい」と教示すると、課題は「最初の1文字を取ったら、あとの2つは無視してよい」に変わります。すると測ろうとしている干渉のうち、<b>後続の文字を処理するために資源が取られるぶん</b>が落ちます。これは干渉を小さく見積もる方向、すなわち<b>「干渉なし」という結論に有利な方向のバイアス</b>です。非劣性を主張する実験で、自分の結論に有利なバイアスは避けなければなりません。
+  </div>
+  <p>負担の配分にも配慮してあります。<b>1番目を先に答えてもらう</b>ので、判定に使う項目は保持時間が最短で、五十音表を探すことによる干渉も受けません。長い保持と探索の負担は、副次的な2番目のほうに寄せてあります。</p>
+  <p>なお、2つ覚えることによる負荷は頭打ちの水準を下げえます。この影響は数値で押さえてあり、頭打ちが70％から60％に下がっても「干渉なし」の判定力は85.4％から81.9％にとどまり、誤判定率は名目どおりに制御されます。また判定は同じ人の中の引き算なので、一様にかかる負荷は打ち消されます。</p>
+
+  <h3>1.7 主判定は200ミリ秒、他の水準は副次判定</h3>
+  <p>7水準すべてを測りますが、<b>確認的な主判定は基準速度の200ミリ秒で行います</b>。二段階の設計も必要人数の計算も、この1点を前提に組んであります。</p>
+  <p>残りの水準は、あらかじめ定めた<b>副次的な判定</b>として扱います。ここから2つのものが得られます。</p>
+  <ul class="plain">
+    <li><b>非劣性を保てる最速の提示速度。</b>提示速度を「かるたの読み上げ規則だから0.2秒」と借りてくるのではなく、<b>成績が落ちない最速の速度を実測して選んだ</b>と言えるようになります。</li>
+    <li><b>133ミリ秒での保証。</b>これが、frac課題の視覚1文字課題で133ミリ秒の条件を置く根拠になります（2.7節、3.1節）。</li>
+  </ul>
+  <p>追加の参加者も費用もかかりません。7水準はもともと測るからです。</p>
+
+  <h3>1.8 乙課題で分かること・分からないこと</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>　</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><th>分かる</th><td>各提示速度で、手前の文字の認識が単独提示より落ちるかどうか／落ちない最速の速度はどこか／聴覚と視覚で干渉の様子がどう違うか</td></tr>
+      <tr><th>分からない</th><td><b>字ごとの曲線</b>。乙課題は間隔だけを変えて全体の正答率を見る課題で、字ごとの推定に必要な観測数はない。曲線はfrac課題の担当である</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ PART 2 ============ -->
+<section id="p2">
+  <div class="part-head">
+    <div class="num">PART 2 · 第2段階</div>
+    <h2>frac課題でやること</h2>
+    <p class="part-sub">その速度での曲線を、字ごとに測る。</p>
+  </div>
+
+  <h3>2.1 課題の形</h3>
+  <p>かな1文字（1音）を<b>途中まで</b>提示して、それが何だったかを答えてもらいます。「途中まで」の度合いを0％から100％まで <b>21段階</b>（0・5・10・…・95・100）で変えながらくり返すと、提示の度合いに対する正答率の曲線が引けます。これがそのまま認識率曲線です。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 260" role="img" aria-label="聴覚は音を途中で打ち切り、視覚は鮮明化の途中で消すことを示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">「途中まで」の意味は、モダリティで違う</text>
+
+      <text class="svg-t" x="30" y="62" font-size="13">聴覚</text>
+      <text class="svg-s" x="30" y="80" font-size="11.5">音の先頭から</text>
+      <text class="svg-s" x="30" y="96" font-size="11.5">一部だけ再生</text>
+      <rect x="150" y="50" width="480" height="52" rx="6" fill="var(--panel-2)" stroke="var(--line)"/>
+      <path d="M155 76 q10 -20 20 0 q10 22 20 0 q10 -26 20 0 q10 24 20 0 q10 -20 20 0 q10 18 20 0 q10 -22 20 0 q10 20 20 0 q10 -16 20 0 q10 14 20 0 q10 -12 20 0 q10 10 20 0 q10 -8 20 0 q10 7 20 0 q10 -5 20 0 q10 4 20 0 q10 -3 20 0 q10 2 20 0 q10 -2 20 0 q10 1 20 0 q10 -1 20 0 q10 1 20 0 q10 0 25 0"
+        fill="none" stroke="var(--ink-soft)" stroke-width="1.4"/>
+      <rect x="150" y="50" width="215" height="52" rx="6" fill="var(--accent-soft)" opacity=".55"/>
+      <line x1="365" y1="42" x2="365" y2="112" stroke="var(--bad)" stroke-width="2.4"/>
+      <text class="svg-s" x="365" y="128" font-size="11.5" text-anchor="middle" fill="var(--bad)">ここで打ち切る（frac＝45％）</text>
+      <text class="svg-s" x="640" y="80" font-size="11.5">最後まで＝100％</text>
+
+      <text class="svg-t" x="30" y="182" font-size="13">視覚</text>
+      <text class="svg-s" x="30" y="200" font-size="11.5">字がだんだん</text>
+      <text class="svg-s" x="30" y="216" font-size="11.5">鮮明になる途中で消す</text>
+      <g font-family="var(--serif)" text-anchor="middle">
+        <text x="190" y="205" font-size="40" fill="var(--ink)" opacity="0.08">あ</text>
+        <text x="280" y="205" font-size="40" fill="var(--ink)" opacity="0.22">あ</text>
+        <text x="370" y="205" font-size="40" fill="var(--ink)" opacity="0.42">あ</text>
+        <text x="460" y="205" font-size="40" fill="var(--ink)" opacity="0.62">あ</text>
+        <text x="550" y="205" font-size="40" fill="var(--ink)" opacity="0.82">あ</text>
+        <text x="640" y="205" font-size="40" fill="var(--ink)" opacity="1">あ</text>
+      </g>
+      <line x1="150" y1="222" x2="680" y2="222" stroke="var(--line)" stroke-width="1.4"/>
+      <text class="svg-s" x="190" y="240" font-size="11" text-anchor="middle">0％</text>
+      <text class="svg-s" x="640" y="240" font-size="11" text-anchor="middle">100％</text>
+      <line x1="415" y1="160" x2="415" y2="228" stroke="var(--bad)" stroke-width="2.4" stroke-dasharray="4 3"/>
+      <text class="svg-s" x="700" y="205" font-size="11.5">この途中で消す</text>
+    </svg>
+    <figcaption><b>図2.1</b> 聴覚は音声の先頭から一部だけ再生して打ち切り、視覚は字が鮮明になっていく途中で消す。fracは「どこまで進んだか」を表す無次元の量なので、<b>実際の露光時間は frac × 提示速度</b>になる。<b>聴覚の打ち切りは、ファイルの先頭ではなく音響的な立ち上がりの位置を起点にする</b>——合成した音声の先頭には40〜90ミリ秒の無音があり、ファイル先頭を起点にすると低い割合の条件が全部「ただの無音」になってしまうため。</figcaption>
+  </figure>
+
+  <p><b>視覚の鮮明化は1種類の見せ方に固定します</b>（透明度がだんだん上がる fade を想定）。見せ方を複数用意すると、字ごとの観測がその数だけ分割され、必要な人数がそのぶん増えるからです。</p>
+  <p>回答は、<b>50音表の形に並んだ固定のグリッドから1つを選んでもらいます</b>。表は毎回同じ並びなので、探す手間が試行ごとに変わりません。強制選択なので「分からない」と書かれて解析できなくなることもありません。分からなくても勘で答えてもらいます。選択肢が多いので当てずっぽうで当たる確率は1〜2％しかなく、曲線の下限がほぼ0から始まります。</p>
+
+  <h3>2.2 4つの課題</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>課題</th><th>提示するもの</th><th>答えるもの</th><th>提示速度</th><th>何を測るか</th></tr></thead>
+    <tbody>
+      <tr><th>聴覚1文字</th><td>1音をfrac％で打ち切る</td><td>その音（68音から）</td><td>200ms</td><td>音ごとの認識率曲線</td></tr>
+      <tr><th>聴覚2文字</th><td>前の音を全部、続く音をfrac％で打ち切る</td><td>後ろの音（68音から）</td><td>200ms</td><td>前の音とのつながりが認識をどれだけ助けるか</td></tr>
+      <tr><th>視覚1文字</th><td>1字をfrac％まで鮮明にして消す</td><td>その字（78字から）</td><td><b>200msと133ms</b></td><td>字ごとの認識率曲線と、その速度依存性</td></tr>
+      <tr><th>視覚2文字</th><td>前の字を全部、続く字をfrac％で打ち切る</td><td>後ろの字（78字から）</td><td>200ms</td><td>前の字が残る提示の効果</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note key">
+    <span class="lab">聴覚は1点だけ</span>
+    <b>聴覚は200ミリ秒の1点だけです。</b>モーラの長さを変えることは別の合成をすることであり、母音の崩れや子音の相対的な位置が変わって、速度と音の中身が混ざるためです。視覚の字は何ミリ秒で出しても同じ画像なので、速度だけを独立に操作できます。この非対称は、<b>文字が持続する物体であり、音声が時間上の出来事である</b>というモダリティの本質的な違いの現れでもあります。
+  </div>
+
+  <h3>2.3 聴覚が68で視覚が78である理由</h3>
+  <p>音と字は1対1に対応していません。</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>　</th><th>数</th><th>数え方</th></tr></thead>
+    <tbody>
+      <tr><th>音（聴覚）</th><td>68</td><td>日本語で互いに聞き分けられる音だけ。「を」は「お」と、「ぢ」は「じ」と、「づ」は「ず」と現代の標準的な発音では同じ音になる（合成音声でも実際に同一の音声データになる）。「ゔ」も多くの人が「ぶ」と区別して聞かない。「っ・ゃ・ゅ・ょ」はそれ単独では音にならない</td></tr>
+      <tr><th>かな（視覚）</th><td>78</td><td>画面に実際に出る字形すべて。表記どおりに出すので「を」「ゐ」「ゑ」も小書きの字もそのまま現れる。とくに百人一首では、札が取れるかを決める先頭2文字の領域に「を」が21組も現れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>このずれは<b>読みでつなぎます</b>。同じ音を持つ字はその音の曲線と同期させます（を↔オ、ゑ↔エ、ゐ↔イ、ゔ↔ブ）。音を持たない小書きの字は、隣の字と組にする描画の規則で同期させます。</p>
+
+  <h3>2.4 字ごとに1本ずつ推定する</h3>
+  <p>かな全体で1本の曲線を引けば話は簡単ですが、それでは足りません。<b>字によって難しさがまるで違う</b>からです。ごく短い提示で最後まで取れないのは、たいてい濁点・半濁点の有無です（「ぎ」を「き」と、「ぷ」を「ぶ」と取り違える）。字形が似ている組や、母音だけが違う組も混同されやすい。全体の平均で1本の曲線を引くと、こうした構造が全部ならされて消えてしまいます。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 320" role="img" aria-label="字ごとに認識率曲線の立ち上がりが違うことを示す模式図">
+      <text class="svg-t" x="20" y="24" font-size="15">字ごとに曲線の立ち上がりが違う（模式図）</text>
+      <line x1="90" y1="270" x2="700" y2="270" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="90" y1="50" x2="90" y2="270" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="395" y="296" font-size="12" text-anchor="middle">提示の度合い frac（％）</text>
+      <text class="svg-s" x="90" y="290" font-size="11" text-anchor="middle">0</text>
+      <text class="svg-s" x="700" y="290" font-size="11" text-anchor="middle">100</text>
+      <text class="svg-s" x="42" y="60" font-size="11">100％</text>
+      <text class="svg-s" x="52" y="272" font-size="11">0</text>
+      <text class="svg-s" x="30" y="165" font-size="12" transform="rotate(-90 30 165)" text-anchor="middle">正答率</text>
+      <line x1="90" y1="55" x2="700" y2="55" stroke="var(--line-soft)" stroke-width="1" stroke-dasharray="3 4"/>
+
+      <path d="M90 268 C 190 260, 240 120, 320 80 S 520 58, 700 56" fill="none" stroke="var(--good)" stroke-width="2.6"/>
+      <text class="svg-l" x="330" y="72" font-size="12.5" fill="var(--good)" font-weight="700">やさしい字（あ・い など）</text>
+
+      <path d="M90 269 C 240 266, 330 210, 430 130 S 610 62, 700 58" fill="none" stroke="var(--accent)" stroke-width="2.6"/>
+      <text class="svg-l" x="440" y="122" font-size="12.5" fill="var(--accent-ink)" font-weight="700">ふつうの字</text>
+
+      <path d="M90 269 C 320 268, 450 250, 545 190 S 660 90, 700 70" fill="none" stroke="var(--bad)" stroke-width="2.6"/>
+      <text class="svg-l" x="470" y="238" font-size="12.5" fill="var(--bad)" font-weight="700">むずかしい字（ぎ・ぷ など濁点つき）</text>
+
+      <text class="svg-s" x="718" y="60" font-size="11.5">100％まで出せば</text>
+      <text class="svg-s" x="718" y="76" font-size="11.5">どの字もほぼ取れる</text>
+      <text class="svg-s" x="718" y="200" font-size="11.5">差が出るのは</text>
+      <text class="svg-s" x="718" y="216" font-size="11.5">この途中の領域</text>
+    </svg>
+    <figcaption><b>図2.2</b> 字ごとの認識率曲線の模式図（実データではない）。100％まで出せばどの字もほぼ正解できるので、差が現れるのは途中の領域だけ。<b>実際の字幕の設計で必要なのは平均ではなく「濁点のある字はどれだけ長めに・鮮明に出せばよいか」という字ごとの答え</b>なので、字ごとに1本ずつ推定する。</figcaption>
+  </figure>
+
+  <p>観測が少ない字も安定して推定できるように、解析では<b>字を変量効果に置いた階層モデル</b>を使います。全体の傾向を借りながら各字の個性を推定する方法で、字ごとに独立に推定するよりずっと少ない観測で曲線が引けます。</p>
+  <div class="note key">
+    <span class="lab">精度の目標</span>
+    <b>字（音）ごとに約88観測を21段階に散らします。</b>1つの段階あたり平均4観測ほどにしかなりませんが、推定するのが段階ごとの独立な値ではなく<b>なめらかな1本の曲線</b>なので、これで足ります。この88観測が字ごとの標準誤差 約5.4ポイントを与え、それが1.5節の <span class="m">δ</span>＝8ポイントの根拠になっています。<b>速度や条件の水準を持つ課題では、水準ごとにこの88観測を確保します。</b>
+  </div>
+
+  <h3>2.5 副産物 — 混同の構造</h3>
+  <p>frac課題は「当たったか外れたか」だけでなく、<b>外れたときに何と間違えたか</b>を全部記録します。ここから<b>混同行列</b>——どの字がどの字と取り違えられるかの表——が作れます。</p>
+  <p>これは聴覚の音声研究で古くから使われてきた記述の形式です。iFontの視覚側の測定を、聴覚研究と同じ通貨で語れるようになります。「視覚の理解度が何％」ではなく「どの字とどの字が、どの提示量で分離するか」という水準で、聴覚と視覚を突き合わせられます。</p>
+
+  <h3>2.6 聴覚2文字課題 — 共調音の寄与</h3>
+  <p>前の音（C1）を最後まで提示してから、目標の音（C2）を途中で打ち切り、<b>C2が何だったか</b>を答えてもらいます。</p>
+  <p>日本語の流暢な発話では、前の音の終わりに次の音の準備がすでに現れています（共調音）。だから「か」の後の「き」と、単独の「き」とでは、物理的な音が違います。実測でも、同じかなでも単独の発音と語中の発音の違いは、別のかなどうしの違いの<b>約2倍</b>ありました。</p>
+  <p>したがって「単音の曲線を合成すれば連続音声を予測できるか」は、それ自体が検証すべき問いになります。1文字課題が<b>測定の原子</b>、2文字課題が<b>結合を含む分子</b>、製品の流暢な音声が<b>その先</b>という3層の構造です。</p>
+
+  <h3>2.7 視覚1文字課題 — 200ミリ秒と133ミリ秒</h3>
+  <p>字が0％から100％まで鮮明になるのにかける時間を、<b>200ミリ秒</b>と<b>133ミリ秒</b>の2水準にします。同じ参加者が両方を行います。</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>速度</th><th>毎秒のモーラ数</th><th>位置づけ</th></tr></thead>
+    <tbody>
+      <tr><th>200ミリ秒</th><td>5.0</td><td><b>基準速度</b>。聴覚の刺激もこの速さで作ってあるので、聴覚と視覚を対応づけられるのはこの点である</td></tr>
+      <tr><th>133ミリ秒</th><td>7.5</td><td>アナウンサーの標準的な読み上げに相当。日本語能力試験の最上級（毎秒7.07モーラ）をわずかに上回る。乙課題の間隔の水準にも133ミリ秒がある</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="lab">2つは対等な運用点ではない</span>
+    <b>200ミリ秒は変換gを作るための点</b>です。聴覚の曲線がこの速度でしか存在しないので、聴覚と視覚を認識率で結べるのはここだけです。<br>
+    <b>133ミリ秒は、視覚の曲線が提示速度にどう依存するかを測るための点</b>です。これ単独ではgを与えません（聴覚側の相手がいないため）。
+  </div>
+  <p>133ミリ秒を測る意味は、次の問いに答えることにあります。</p>
+  <p class="lead-q">認識率は「どれだけの時間見えていたか」だけで決まるのか、それとも「どれだけ速く現れたか」にも依存するのか。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 240" role="img" aria-label="2つの提示速度で露光時間の範囲が重なることを示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">2つの速度は、露光時間の範囲が重なる</text>
+      <line x1="120" y1="200" x2="800" y2="200" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="460" y="228" font-size="12" text-anchor="middle">露光時間（ミリ秒）</text>
+      <g class="svg-s" font-size="11" text-anchor="middle">
+        <text x="120" y="220">0</text><text x="573" y="220">133</text><text x="800" y="220">200</text>
+      </g>
+
+      <rect x="120" y="60" width="680" height="40" rx="7" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-l" x="136" y="85" font-size="12.5" fill="var(--accent-ink)" font-weight="700">200ミリ秒条件</text>
+      <text class="svg-s" x="786" y="85" font-size="11.5" text-anchor="end" fill="var(--accent-ink)">frac 0〜100％ が 0〜200ms に対応</text>
+
+      <rect x="120" y="120" width="453" height="40" rx="7" fill="var(--good-soft)" stroke="var(--good)"/>
+      <text class="svg-l" x="136" y="145" font-size="12.5" fill="var(--good)" font-weight="700">133ミリ秒条件</text>
+      <text class="svg-s" x="559" y="145" font-size="11.5" text-anchor="end" fill="var(--good)">frac 0〜100％ が 0〜133ms に対応</text>
+
+      <line x1="573" y1="52" x2="573" y2="206" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <rect x="120" y="168" width="453" height="20" rx="4" fill="var(--warn-soft)"/>
+      <text class="svg-s" x="346" y="182" font-size="11.5" text-anchor="middle" fill="var(--warn)">この範囲で両条件を比べられる</text>
+    </svg>
+    <figcaption><b>図2.3</b> 2つの速度では露光時間の範囲が重なる。この重なりを使って、<b>認識率が露光時間だけで決まるのか、現れる速さにも依存するのか</b>を分離できる。露光時間だけで決まるなら視覚の曲線は速度をまたいで移せる。依存するなら、速度ごとに測り直さなければならないことが分かる。どちらであるかは、この測定なしには言えない。</figcaption>
+  </figure>
+
+  <p>なお、133ミリ秒の<b>測定そのもの</b>には乙課題の保証は要りません。孤立した1文字を測るだけだからです。保証が要るのは、その曲線を133ミリ秒で動く製品に<b>持ち込むとき</b>であり、それは乙課題の133ミリ秒水準の副次判定が担います（1.7節、3.1節）。</p>
+
+  <h3>2.8 視覚2文字課題 — 先行文字の残存を2条件</h3>
+  <p>提示速度は基準の200ミリ秒に固定し、2文字目が出ているあいだの1文字目の扱いを2水準にします。同じ参加者が両方を行います。</p>
+  <ul class="plain">
+    <li><b>統制の条件</b>: 1文字目が消えてから2文字目が出る</li>
+    <li><b>残存の条件</b>: 2文字目が出ているあいだも、1文字目が薄くなりながら同じ枠に重なって残る。薄れ方は指数減衰で、時定数は聴覚で前の音が後の音に影響する時間の長さから決める</li>
+  </ul>
+  <p>これを測るのは、<b>流暢な音声には時間の文脈がもともと入っている</b>からです。前の音の響きが残り、次の音の準備が先に聞こえる。素の字幕にはそれがありません。つまり1文字ずつ順に出すだけの提示は、流暢な音声の視覚的な等価物ではなく、<b>音を単純につなげただけの音声の等価物</b>にとどまります。残存の条件は、聴覚が無償で持っている時間の文脈を、視覚に同じ量だけ移植する試みです。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 250" role="img" aria-label="残存条件では1文字目の可視時間だけが増え、2文字目の可視時間は変わらないことを示す図">
+      <text class="svg-t" x="20" y="24" font-size="15">増えるのは1文字目の見える時間だけ。答える2文字目は変わらない</text>
+
+      <text class="svg-l" x="30" y="76" font-size="12.5" font-weight="700">統制の条件</text>
+      <rect x="180" y="56" width="230" height="34" rx="6" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-s" x="295" y="78" font-size="12" text-anchor="middle">1文字目</text>
+      <rect x="410" y="56" width="180" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-s" x="500" y="78" font-size="12" text-anchor="middle" fill="var(--accent-ink)">2文字目（答える）</text>
+
+      <text class="svg-l" x="30" y="152" font-size="12.5" font-weight="700">残存の条件</text>
+      <rect x="180" y="132" width="230" height="34" rx="6" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-s" x="295" y="154" font-size="12" text-anchor="middle">1文字目</text>
+      <path d="M410 132 H590 V166 H410 Z" fill="var(--warn-soft)" stroke="var(--warn)" stroke-dasharray="4 3"/>
+      <text class="svg-s" x="500" y="154" font-size="11.5" text-anchor="middle" fill="var(--warn)">1文字目が薄れながら残る</text>
+      <rect x="410" y="176" width="180" height="34" rx="6" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-s" x="500" y="198" font-size="12" text-anchor="middle" fill="var(--accent-ink)">2文字目（答える）</text>
+
+      <line x1="410" y1="46" x2="410" y2="222" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <line x1="590" y1="46" x2="590" y2="222" stroke="var(--ink-faint)" stroke-width="1.2" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="500" y="238" font-size="11.5" text-anchor="middle">2文字目の開始と打ち切りの時刻は、両条件でまったく同じ</text>
+      <text class="svg-s" x="620" y="200" font-size="11.5" fill="var(--accent-ink)">可視時間は不変</text>
+    </svg>
+    <figcaption><b>図2.4</b> 答えるのは2文字目。この条件で増えるのは<b>1文字目の見える時間だけ</b>で、2文字目の見える時間は一切変わらない。したがって「長く見せただけではないか」という反論が当たらず、露光量をそろえるための追加の条件を立てずに済む。実装でも、両条件で2文字目の実測提示時間が完全に一致することを1512通りの組み合わせで確認してある。</figcaption>
+  </figure>
+
+  <div class="note warn">
+    <span class="lab">成績が下がる可能性を先に書いておく</span>
+    消えた刺激が後から現れた刺激の知覚を妨げるという現象が知られており、その効果は0.2秒前後の帯域で最大になります。つまりこの条件は<b>成績を下げる可能性があります</b>。どちらに転んでも、時間の文脈が視覚でどう働くかについての知見になるので、予測は先に書いておきます。「改善する方式である」という売り方はしません。
+  </div>
+
+  <h3>2.9 出題の配り方と品質管理</h3>
+  <ul class="plain">
+    <li>毎回独立にくじを引くのではなく、<b>水準ごとに均等な試行数を割り当ててから順序を混ぜます</b>。独立なくじ引きだと段階ごとの試行数がばらつき、観測が1つも入らない組み合わせが出るためです。字の出現も同様に均等化します。</li>
+    <li><b>水準を持つ課題では、水準ごとに88観測を確保します。</b>視覚1文字が本番320試行（速度ごとに160）、視覚2文字が本番400試行（条件ごとに200）なのはこのためです。水準を2つに割ったまま試行数を据え置くと、標準誤差が約7.6ポイントに悪化して <span class="m">δ</span> の正当化が崩れます。</li>
+    <li>全体の5％を、<b>最後まで提示する統制の問題</b>として混ぜます。まじめに取り組んでいれば高い確率で正解する問題です。</li>
+    <li>この統制問題の正答率が半分に満たない回答者は解析から除きます。まじめな参加者が誤って除かれる確率は1.2％と見積もられます。</li>
+    <li>各問は参加者がボタンを押してから始まる自己ペース方式で、押すまで回答は選べません。</li>
+    <li>画面に実際に表示された時刻と、端末の画面書き換え頻度を毎回記録し、名目の値ではなく実測値で解析します。</li>
+  </ul>
+
+  <h3>2.10 frac課題で分かること・分からないこと</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>　</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><th>分かる</th><td>かな1文字ごとの認識率曲線（聴覚68音・視覚78字）／どの字がどの字と混同されるかの構造／基準速度での変換 <span class="m">g</span>／<b>前から後ろへの影響</b>——先行する文字（音）が、あとに来る文字の認識をどれだけ助けるか、あるいは妨げるか／視覚の認識率が提示速度にどう依存するか／視覚に時間の文脈を足すと認識がどう変わるか</td></tr>
+      <tr><th>分からない</th><td><b>後ろから前への影響</b>——その文字の後ろに次の文字が来ることによって、その文字自身の認識が妨げられるかどうか。frac課題は答えてもらう文字を系列の<b>最後</b>に置くので、この向きは構造的に測れない。これは乙課題の担当である</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ PART 3 ============ -->
+<section id="p3">
+  <div class="part-head">
+    <div class="num">PART 3 · 関係</div>
+    <h2>2つの課題の関係</h2>
+    <p class="part-sub">速度ごとに対になり、影響の向きで分担する。</p>
+  </div>
+
+  <h3>3.1 提示速度ごとに、保証と曲線が対になる</h3>
+  <p>乙課題の保証も、frac課題の曲線も、<b>提示速度ごとに存在します</b>。iFontを成立させるには、その速度で両方がそろわなければなりません。実際にそろうのは次のとおりです。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 300" role="img" aria-label="提示速度ごとに乙課題の判定とfrac課題の曲線がどこまでそろうかを示す表">
+      <text class="svg-t" x="18" y="24" font-size="15">提示速度ごとに、乙課題の保証とfrac課題の曲線が対になる</text>
+
+      <rect x="500.9" y="40" width="94.3" height="222" fill="var(--accent-soft)"/>
+      <rect x="595.2" y="40" width="94.3" height="222" fill="var(--warn-soft)"/>
+
+      <text class="svg-s" x="18" y="58" font-size="11.5">提示速度（ミリ秒）</text>
+      <text class="svg-s" x="18" y="76" font-size="10.5">毎秒モーラ</text>
+      <g class="svg-t" font-size="12.5" text-anchor="middle">
+        <text x="265" y="58">700</text><text x="359" y="58">450</text><text x="454" y="58">300</text>
+        <text x="548" y="58" fill="var(--accent-ink)">200</text><text x="642" y="58" fill="var(--warn)">133</text>
+        <text x="737" y="58">83</text><text x="831" y="58">50</text>
+      </g>
+      <g class="svg-s" font-size="10.5" text-anchor="middle">
+        <text x="265" y="76">1.4</text><text x="359" y="76">2.2</text><text x="454" y="76">3.3</text>
+        <text x="548" y="76">5.0</text><text x="642" y="76">7.5</text><text x="737" y="76">12</text><text x="831" y="76">20</text>
+      </g>
+
+      <g stroke="var(--line)" stroke-width="1">
+        <line x1="18" y1="88" x2="878" y2="88"/><line x1="18" y1="128" x2="878" y2="128"/>
+        <line x1="18" y1="168" x2="878" y2="168"/><line x1="18" y1="208" x2="878" y2="208"/>
+        <line x1="18" y1="248" x2="878" y2="248"/>
+      </g>
+
+      <g class="svg-l" font-size="12.5">
+        <text x="18" y="114">乙課題の判定</text>
+        <text x="18" y="154">聴覚の曲線</text>
+        <text x="18" y="194">視覚の曲線</text>
+        <text x="18" y="234">変換 g</text>
+      </g>
+
+      <g class="svg-s" font-size="11.5" text-anchor="middle">
+        <text x="265" y="114">基準</text><text x="359" y="114">基準</text><text x="454" y="114">副次</text>
+        <text x="548" y="114" font-size="12.5" font-weight="700" fill="var(--accent-ink)">主判定</text>
+        <text x="642" y="114" font-weight="700" fill="var(--warn)">副次</text>
+        <text x="737" y="114">副次</text><text x="831" y="114">副次</text>
+      </g>
+      <g class="svg-s" font-size="13" text-anchor="middle">
+        <text x="265" y="154">—</text><text x="359" y="154">—</text><text x="454" y="154">—</text>
+        <text x="548" y="155" font-size="16" fill="var(--accent-ink)">○</text>
+        <text x="642" y="154">—</text><text x="737" y="154">—</text><text x="831" y="154">—</text>
+
+        <text x="265" y="194">—</text><text x="359" y="194">—</text><text x="454" y="194">—</text>
+        <text x="548" y="195" font-size="16" fill="var(--accent-ink)">○</text>
+        <text x="642" y="195" font-size="16" fill="var(--warn)">○</text>
+        <text x="737" y="194">—</text><text x="831" y="194">—</text>
+
+        <text x="265" y="234">—</text><text x="359" y="234">—</text><text x="454" y="234">—</text>
+        <text x="548" y="235" font-size="16" fill="var(--accent-ink)">○</text>
+        <text x="642" y="234">—</text><text x="737" y="234">—</text><text x="831" y="234">—</text>
+      </g>
+
+      <text class="svg-s" x="18" y="282" font-size="11.5">○＝測る／—＝測らない。「基準」は頭打ちとして判定の基準に使う水準。変換gは両方の曲線がそろう200ミリ秒でだけ定義できる。</text>
+    </svg>
+    <figcaption><b>図3.1</b> 乙課題は7つの速度すべてを判定できるが、frac課題の曲線は聴覚が200ミリ秒の1点、視覚が200ミリ秒と133ミリ秒の2点である。<b>変換gが定義できるのは、両方の曲線がそろう200ミリ秒だけ</b>。</figcaption>
+  </figure>
+
+  <p>読み方は3つあります。</p>
+  <ul class="plain">
+    <li><b>変換gが定義できるのは200ミリ秒だけです。</b>gは聴覚の曲線と視覚の曲線を認識率で結ぶものなので、両方がそろう速度でしか作れません。聴覚の曲線は200ミリ秒の1点しかないので、gも1点です。これは制約であり、限界として正直に書きます。</li>
+    <li><b>133ミリ秒は、視覚の曲線の速度依存性を測る点です。</b>gを2つ作るためではありません。ここで得られるのは「視覚の認識率が露光時間だけで決まるのか、現れる速さにも依存するのか」という答えで、これは視覚の性質そのものなので、聴覚側の相手がいなくても意味を持ちます。将来この速度で聴覚の曲線を測れば、そのときgが作れます。</li>
+    <li><b>133ミリ秒を運用に使えるかどうかは、乙課題の133ミリ秒水準が決めます。</b>副次判定で「干渉なし」なら、その速度での連続提示は安全です。「干渉あり」なら運用点としては使えませんが、その場合でも視覚の速度依存性という知見は残り、加えて<b>使ってよい速度の上限が200ミリ秒と133ミリ秒のあいだにある</b>ことが分かります。どちらに転んでも無駄になりません。</li>
+  </ul>
+
+  <h3>3.2 影響の向きで分担している</h3>
+  <p>frac課題には2文字版があるので、「文字が続く場面」はもう測れているように見えます。しかし<b>2つの課題は、測っている影響の向きが違います</b>。</p>
+
+  <figure class="breakout">
+<svg viewBox="0 0 900 290" role="img" aria-label="frac課題は前から後ろへの影響を、乙課題は後ろから前への影響を測ることを示す図">
+      <defs>
+        <marker id="arF" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="var(--accent)"/></marker>
+        <marker id="arB" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="var(--bad)"/></marker>
+      </defs>
+      <text class="svg-t" x="20" y="24" font-size="15">同じ「続けて出す」でも、測っている影響の向きが違う</text>
+
+      <text class="svg-t" x="24" y="70" font-size="13">frac課題</text>
+      <text class="svg-s" x="24" y="88" font-size="11.5">（2文字版）</text>
+      <rect x="186" y="48" width="150" height="44" rx="8" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-s" x="261" y="68" font-size="12" text-anchor="middle">1文字目</text>
+      <text class="svg-s" x="261" y="84" font-size="10.5" text-anchor="middle">最後まで提示</text>
+      <rect x="348" y="48" width="150" height="44" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+      <text class="svg-l" x="423" y="68" font-size="12" text-anchor="middle" fill="var(--accent-ink)" font-weight="700">2文字目</text>
+      <text class="svg-s" x="423" y="84" font-size="10.5" text-anchor="middle" fill="var(--accent-ink)">これを答える</text>
+      <rect x="510" y="48" width="150" height="44" rx="8" fill="none" stroke="var(--line)" stroke-dasharray="4 4"/>
+      <text class="svg-s" x="585" y="76" font-size="11.5" text-anchor="middle">何も来ない</text>
+      <path d="M261 106 H 415" stroke="var(--accent)" stroke-width="2" marker-end="url(#arF)"/>
+      <text class="svg-l" x="425" y="110" font-size="12" fill="var(--accent-ink)" font-weight="700">前 → 後ろ</text>
+
+      <text class="svg-t" x="24" y="190" font-size="13">乙課題</text>
+      <rect x="186" y="168" width="150" height="44" rx="8" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="2"/>
+      <text class="svg-l" x="261" y="188" font-size="12" text-anchor="middle" fill="var(--bad)" font-weight="700">1文字目</text>
+      <text class="svg-s" x="261" y="204" font-size="10.5" text-anchor="middle" fill="var(--bad)">これで判定する</text>
+      <rect x="348" y="168" width="150" height="44" rx="8" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-s" x="423" y="194" font-size="12" text-anchor="middle">2文字目</text>
+      <rect x="510" y="168" width="150" height="44" rx="8" fill="var(--panel-2)" stroke="var(--line)"/>
+      <text class="svg-s" x="585" y="194" font-size="12" text-anchor="middle">3文字目</text>
+      <path d="M585 226 H 275" stroke="var(--bad)" stroke-width="2" marker-end="url(#arB)"/>
+      <text class="svg-l" x="600" y="230" font-size="12" fill="var(--bad)" font-weight="700">後ろ → 前</text>
+
+      <line x1="24" y1="252" x2="876" y2="252" stroke="var(--line)" stroke-width="1"/>
+      <text class="svg-s" x="24" y="274" font-size="11.5">frac課題は答える文字を系列の最後に置く設計なので、後続による妨害が入り込む余地が構造的にない。だから両方を行う。</text>
+    </svg>
+    <figcaption><b>図3.2</b> frac課題の守備範囲は<b>文字数で決まっているのではない</b>。答える文字を系列の最後に置く設計なので、後続による妨害という向きが構造的に測れない。乙課題はその向きを担当する。</figcaption>
+  </figure>
+
+  <div class="tbl">
+  <table>
+    <thead><tr><th>　</th><th>答える文字</th><th>その前</th><th>その後ろ</th><th>測れる影響の向き</th></tr></thead>
+    <tbody>
+      <tr><th>frac課題（2文字版）</th><td>2文字目</td><td>1文字目（最後まで提示）</td><td><b>何も来ない</b></td><td>前 → 後ろ</td></tr>
+      <tr><th>乙課題</th><td>1文字目</td><td>何も来ない</td><td>2文字目・3文字目</td><td><b>後ろ → 前</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>3.3 向きの重要度は、聞くことと見ることで逆になる</h3>
+  <p>ある刺激が別の刺激の知覚を妨げるマスキングには2つの向きがあり、<b>どちらが強いかが聴覚と視覚で逆</b>です。</p>
+  <ul class="plain">
+    <li><b>聴覚では、前から後ろへの妨害が強い。</b>前の音の響きが次の音にかぶり、その影響は数百ミリ秒におよびます。逆向きは20ミリ秒に満たない。</li>
+    <li><b>視覚では、後ろから前への妨害が強い。</b>あとから同じ場所に出た字が、直前の字の処理を途中で打ち切ってしまいます。</li>
+  </ul>
+  <div class="note key">
+    <span class="lab">だから両方が要る</span>
+    <b>聴覚で警戒すべき向きはfrac課題の2文字版が押さえ、視覚で警戒すべき向きは乙課題が押さえます。</b>両方の課題を両方のモダリティで行って、はじめて双方向の安全が確認できます。
+  </div>
+  <p>この非対称は、iFontの設計そのものの土台でもあります。聴覚と視覚を同じ物差しで結ぶには、向きの違いを吸収した提示を設計しなければなりません。2.8節の「前の字が残る条件」は、この非対称から演繹されるものです。</p>
+
+  <h3>3.4 論理の連鎖</h3>
+  <figure class="breakout">
+<svg viewBox="0 0 900 300" role="img" aria-label="乙課題からfrac課題を経て最終的な主張に至る論理の連鎖">
+      <defs><marker id="ar3" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+        <path d="M0 0 L9 4.5 L0 9 z" fill="var(--accent)"/></marker></defs>
+      <g>
+        <rect x="60" y="34" width="780" height="40" rx="9" fill="var(--good-soft)" stroke="var(--good)"/>
+        <text class="svg-l" x="80" y="59" font-size="13" fill="var(--good)" font-weight="700">乙課題で「0.2秒間隔でも1文字目の認識は落ちない」ことを示す</text>
+
+        <path d="M450 76 V 94" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar3)"/>
+        <rect x="60" y="98" width="780" height="40" rx="9" fill="var(--panel-2)" stroke="var(--line)"/>
+        <text class="svg-l" x="80" y="123" font-size="13">孤立して測った曲線を、連続提示の場面に持ち込んでよい</text>
+
+        <path d="M450 140 V 158" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar3)"/>
+        <rect x="60" y="162" width="780" height="40" rx="9" fill="var(--accent-soft)" stroke="var(--accent)"/>
+        <text class="svg-l" x="80" y="187" font-size="13" fill="var(--accent-ink)" font-weight="700">frac課題で得た字ごとの曲線から、認識率が同じ点どうしを結んで変換 g を作る</text>
+
+        <path d="M450 204 V 222" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar3)"/>
+        <rect x="60" y="226" width="780" height="44" rx="9" fill="var(--panel)" stroke="var(--accent)" stroke-width="2"/>
+        <text class="svg-l" x="80" y="253" font-size="13.5" fill="var(--accent-ink)" font-weight="700">音声を聞いている人と、字幕を見ている人が、同じ時点に同じだけ分かる</text>
+      </g>
+    </svg>
+    <figcaption><b>図3.3</b> この連鎖のどこか1つが欠けると、最後の主張が立たない。133ミリ秒の測定は、この連鎖を将来ほかの速度へ広げられるかを調べる枝にあたる。</figcaption>
+  </figure>
+</section>
+
+<!-- ============ PART 4 ============ -->
+<section id="p4">
+  <div class="part-head">
+    <div class="num">PART 4 · 実施</div>
+    <h2>実施の設計</h2>
+    <p class="part-sub">人数・試行数・解析計画の扱い。</p>
+  </div>
+
+  <div class="tbl">
+  <table>
+    <caption>課題ごとの内訳（募集はクラウドソーシング。除外を15％見込んで枠を上乗せ）</caption>
+    <thead><tr><th>課題</th><th>1人あたり</th><th>所要</th><th>謝礼</th><th>募集枠</th><th>何を測るか</th></tr></thead>
+    <tbody>
+      <tr><th>第1段階 聴覚 乙課題</th><td>練習2＋本番42</td><td>10〜12分</td><td>130pt</td><td>71名</td><td>各速度で音の認識が落ちないか</td></tr>
+      <tr><th>第1段階 視覚 乙課題</th><td>練習2＋本番42</td><td>約10分</td><td>130pt</td><td>48名</td><td>各速度で字の認識が落ちないか</td></tr>
+      <tr><th>第2段階 聴覚1文字</th><td>練習5＋本番140</td><td>約14分</td><td>170pt</td><td>53名</td><td>68音の認識率曲線（200ms）</td></tr>
+      <tr><th>第2段階 視覚1文字</th><td>練習5＋本番320</td><td>約25分</td><td>300pt</td><td>53名</td><td>78字の認識率曲線（200msと133ms）</td></tr>
+      <tr><th>第2段階 聴覚2文字</th><td>練習5＋本番120</td><td>13〜14分</td><td>170pt</td><td>48名</td><td>前の音の影響を含む曲線（200ms）</td></tr>
+      <tr><th>第2段階 視覚2文字</th><td>練習5＋本番400</td><td>約26分</td><td>300pt</td><td>48名</td><td>前の字が残る提示の効果（200ms・条件2水準）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>総額はおよそ14万円（本体107,382円＋保留になったときの増員に備える予備費28,413円）です。</p>
+
+  <h3>4.1 解析計画の扱い</h3>
+  <p>制度としての事前登録は行いません。人間とコンピュータの相互作用の分野に事前登録の慣行が確立していないためです。その代わり、<b>判定手続き・除外基準・検出力の根拠をデータ収集の前に確定し、公開リポジトリのコミットとして時点を固定します</b>。コミットの記録は第三者が検証できるので、「データを見る前に決めた」ことの証明としては事前登録と同等に機能します。論文には、解析計画を募集開始前に確定した旨とそのコミットを記載します。</p>
+</section>
+
+<!-- ============ PART 5 ============ -->
+<section id="p5">
+  <div class="part-head">
+    <div class="num">PART 5 · FAQ</div>
+    <h2>よくある質問</h2>
+  </div>
+
+  <h4>乙課題の主判定は200ミリ秒なのに、frac課題の視覚は133ミリ秒でも測るのですか。</h4>
+  <p>測ります。ただし2つの速度は役割が違います。200ミリ秒は変換gを作るための基準速度で、133ミリ秒は<b>視覚の曲線が提示速度にどう依存するかを測るための点</b>です。133ミリ秒でgを作るわけではありません（2.7節、3.1節）。</p>
+
+  <h4>133ミリ秒の測定に、乙課題の保証は要らないのですか。</h4>
+  <p>測定そのものには要りません。孤立した1文字を測るだけだからです。保証が要るのは、その曲線を133ミリ秒で動く製品に持ち込むときで、それは乙課題の133ミリ秒水準の副次判定が担います。7水準のうちに133ミリ秒が入っているので、追加の測定は要りません。</p>
+
+  <h4>乙課題の133ミリ秒で「干渉あり」と出たら、視覚の133ミリ秒の測定は無駄になりますか。</h4>
+  <p>なりません。視覚の曲線の速度依存性という知見はそのまま残ります。加えて、使ってよい速度の上限が200ミリ秒と133ミリ秒のあいだにあることが分かります。</p>
+
+  <h4>133ミリ秒でも変換gを作れないのですか。</h4>
+  <p>作れません。gは聴覚と視覚の曲線を認識率で結ぶものですが、聴覚の曲線は200ミリ秒の1点しかないためです。聴覚の速度を変えるには音源を作り直す必要があり、そうすると音そのものが変わって速度と音響が混ざります（2.2節）。これは本研究の限界として論文にも書きます。</p>
+
+  <h4>frac課題に2文字版があるのに、なぜ乙課題が要るのですか。</h4>
+  <p>測っている影響の向きが違うからです。frac課題は答える文字を系列の最後に置くので、後続による妨害という向きが構造的に測れません（3.2節）。</p>
+
+  <h4>乙課題で2番目まで答えさせるのは、記憶の負荷が高いのではありませんか。</h4>
+  <p>負荷はたしかにあります。それでも答えてもらうのは、データのためではなく、<b>後続の文字も同定しなければならないという課題の要求を、運用の場面と同じにするため</b>です。「1番目だけ答えればよい」とすると後続は無視してよい刺激になり、干渉を小さく見積もる方向——つまり「干渉なし」という結論に有利な方向——にバイアスがかかります。なお1番目を先に答えてもらうので、判定に使う項目の負担は最小になるよう配分してあります（1.6節）。</p>
+
+  <h4>どちらを答えるか予告しない方式にすれば、負荷が軽くなるのでは。</h4>
+  <p>なりません。手がかりを予告しない部分報告法は、符号化の段階で取捨選択できないようにする仕掛けで、負荷を減らすためのものではありません。むしろ<b>1番目を優先して構えることができなくなる</b>ため、判定に使う項目の成績を下げる方向に働きます。</p>
+
+  <h4>なぜ乙課題を流暢な音声で行わないのですか。</h4>
+  <p>乙課題は間隔S以外のすべてを固定して、聞き手の側で起きる干渉だけを取り出す設計です。流暢な音声で話す速さを変えると<b>音そのものが変わる</b>（母音が崩れ、共調音が深まる）ため、成績が落ちたときに「聞き手の干渉」なのか「音にもともと情報がない」のか区別できません。加えてS＝50〜83ミリ秒は毎秒12〜20モーラに相当し、人間の発話の上限（毎秒8〜10モーラ）を超えます。流暢な音声の居場所は聴覚2文字のfrac課題です。</p>
+
+  <h4>なぜfrac課題を「前の字が残る」提示で行わないのですか。</h4>
+  <p>1文字課題については原理的にできません。frac課題の測定量は「その字をどこまで提示したか」の割合で、隣の字が同じ枠に重なるとこの割合が定義できなくなります。文脈の効果は、対象の字の提示率を定義できたまま前の字の扱いだけを変えられる<b>2文字課題</b>で測ります。</p>
+
+  <h4>なぜ基準速度が200ミリ秒なのですか。</h4>
+  <p>外部の基準を持つ点だからです。日本語能力試験のもっとも易しい級の聴解音声とほぼ同じ速さで、競技かるたの読み上げ規則もこの速さです。ただしこの値を前提として固定しているわけではなく、乙課題から「非劣性を保てる最速の速度」を推定して、選択の根拠を実測で置きます（1.7節）。</p>
+
+  <h4>「有意差がなかった」ではだめなのですか。</h4>
+  <p>だめです。有意差の不在は差の不在の証拠になりません。データが足りないだけでも有意差は出ないので、雑な実験ほど「干渉なし」に見えてしまいます。そこで差が許容できる幅 <span class="m">δ</span> より小さいことを積極的に検定します（1.4節）。</p>
+
+  <h4>乙課題で「干渉あり」と出たら、実験は失敗ですか。</h4>
+  <p>失敗ではありません。その場合は<b>連続提示のもとで測り直す</b>ことになります。聴覚にはもともと2文字課題があり、視覚も2文字課題を用意してあるので、その枠組みがそのまま使えます。乙課題はどちらの測り方を採るかを決める分岐点であって、どちらに転んでも先へ進めます。</p>
+
+  <h4>「前の字が残る条件」で成績が下がったら失敗ですか。</h4>
+  <p>失敗ではありません。消えた刺激が後の刺激の知覚を妨げる現象は0.2秒前後で最大になるので、下がる可能性は事前に予測として書いてあります。どちらに転んでも、時間の文脈が視覚でどう働くかについての知見になります。</p>
+
+  <h4>かな全体で1本の曲線ではだめですか。</h4>
+  <p>だめです。字によって難しさがまるで違い、平均を取るとその構造が消えます。字幕の設計で必要なのは「濁点のある字はどれだけ長めに・鮮明に出せばよいか」という字ごとの答えです（2.4節）。</p>
+
+  <h4>水準を足したのに、なぜ試行数まで増やすのですか。</h4>
+  <p>水準ごとに88観測を確保しないと、字ごとの標準誤差が約5.4ポイントから約7.6ポイントに悪化し、<span class="m">δ</span>＝8ポイントの正当化が崩れるためです（2.9節）。</p>
+
+  <h4>事前登録はしないのですか。</h4>
+  <p>制度としては行いません。分野に慣行が確立していないためです。代わりに解析計画をデータ収集前に確定し、公開リポジトリのコミットで時点を固定します（4.1節）。</p>
+
+  <hr class="soft">
+
+  <h3>付録: 用語の短い辞書</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>用語</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><th>モーラ</th><td>日本語の音の長さの単位。かな1文字がおおむね1モーラにあたる（小書きの字を除く）</td></tr>
+      <tr><th>提示速度</th><td>1モーラあたり何ミリ秒で提示するか。iFontの基準は200ミリ秒（毎秒5.0モーラ）</td></tr>
+      <tr><th>frac</th><td>刺激をどこまで提示したかの割合。0％から100％まで21段階。露光時間は frac × 提示速度</td></tr>
+      <tr><th>頭打ち</th><td>間隔を十分長くとったときの正答率。その参加者の「急かされていないときの実力」</td></tr>
+      <tr><th>非劣性</th><td>「差がゼロ」ではなく「差が許容できる幅より小さい」ことを積極的に示す枠組み</td></tr>
+      <tr><th>マージン <span class="m">δ</span></th><td>その許容できる幅。データを見る前に決めておく</td></tr>
+      <tr><th>変換 <span class="m">g</span></th><td>聴覚の認識率曲線と視覚の認識率曲線を、同じ認識率の点どうしで対応づけたもの。基準速度で定義される</td></tr>
+      <tr><th>共調音</th><td>前後の音がたがいの発音に影響しあうこと。前の音の終わりに次の音の準備が現れる</td></tr>
+      <tr><th>混同行列</th><td>どの字がどの字と取り違えられるかを表にしたもの</td></tr>
+      <tr><th>統制の問題</th><td>最後まで提示する、まじめに答えていれば正解できる問題。除外の判定に使う</td></tr>
+      <tr><th>階層モデル</th><td>全体の傾向と個々の字の個性を同時に推定する枠組み。観測の少ない字を全体の傾向で補える</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>関連する文書</h3>
+  <ul class="plain refs">
+    <li><code>project/統計3概念の学習ノート.md</code> / <code>.html</code> — 非劣性・階層モデルの統計的な中身</li>
+    <li><code>docs/prereg_interference.md</code> — 乙課題の解析計画書（判定手続きと除外基準の確定版）</li>
+    <li><code>docs/session_design.md</code> — 人数と予算の算出根拠</li>
+    <li><code>experiment/PRODUCTION.md</code> — 実験プログラムの運用手順</li>
+  </ul>
+</section>
+
+</div>

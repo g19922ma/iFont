@@ -109,14 +109,20 @@ def render_frames_gated(segments, out_dir, font_path, fps=30,
             op = gmodel.reveal_opacity(s["char"], local)
         a = int(255 * op)
         if a > 0:
-            bb = draw.textbbox((0, 0), s["char"], font=font)
-            draw.text((cx - (bb[2] - bb[0]) / 2 - bb[0], cy - (bb[3] - bb[1]) / 2 - bb[1]),
-                      s["char"], font=font, fill=FG + (a,))
+            # 文字は透明な層に描いてから背景へ重ねる。RGBA の画像へ直に描くと
+            # 塗りのアルファがそのまま画素に書き込まれ、RGB へ変換した時点で
+            # 背景と混ざらないまま不透明になってしまうため(鮮明化が効かない)。
+            layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            ld = ImageDraw.Draw(layer)
+            bb = ld.textbbox((0, 0), s["char"], font=font)
+            ld.text((cx - (bb[2] - bb[0]) / 2 - bb[0], cy - (bb[3] - bb[1]) / 2 - bb[1]),
+                    s["char"], font=font, fill=FG + (a,))
             snd = s.get("sound")
             if snd and snd != s["char"]:
-                hb = draw.textbbox((0, 0), "→" + snd, font=f_hint)
-                draw.text((cx - (hb[2] - hb[0]) / 2, int(height * 0.80)),
-                          "→" + snd, font=f_hint, fill=(213, 179, 87, a))
+                hb = ld.textbbox((0, 0), "→" + snd, font=f_hint)
+                ld.text((cx - (hb[2] - hb[0]) / 2, int(height * 0.80)),
+                        "→" + snd, font=f_hint, fill=(213, 179, 87, a))
+            img = Image.alpha_composite(img, layer)
         img.convert("RGB").save(os.path.join(out_dir, f"f{fi:05d}.png"))
         paths.append(os.path.join(out_dir, f"f{fi:05d}.png"))
     return paths, total + tail

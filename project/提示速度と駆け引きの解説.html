@@ -1,0 +1,497 @@
+<title>提示速度と駆け引き — 速さを変えると、何が変わるのか</title>
+<style>
+  :root{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82;
+    --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea;
+    --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f;  --bad-soft:#f6e5e0;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Noto Serif JP","Songti SC",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Noto Sans JP",system-ui,-apple-system,sans-serif;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Courier New",monospace;
+    --shadow:0 1px 2px rgba(20,30,50,.04),0 6px 22px rgba(20,30,50,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+      --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+      --line:#2b323d; --line-soft:#242a34;
+      --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2;
+      --teal:#5bc2c8;
+      --good:#79c79b; --good-soft:#1a2c22;
+      --warn:#e0b871; --warn-soft:#2e2717;
+      --bad:#e59178;  --bad-soft:#31201b;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f6f7f9; --panel:#ffffff; --panel-2:#eef1f5;
+    --ink:#1b2430; --ink-soft:#4a5666; --ink-faint:#8793a3;
+    --line:#dbe0e8; --line-soft:#e8ecf2;
+    --accent:#3a52a4; --accent-soft:#eaeef8; --accent-ink:#2c3f82; --teal:#1f7a80;
+    --good:#2f7d55; --good-soft:#e4f1ea; --warn:#9a6b17; --warn-soft:#f6eddb;
+    --bad:#b0432f; --bad-soft:#f6e5e0;
+  }
+  :root[data-theme="dark"]{
+    --paper:#111419; --panel:#181c23; --panel-2:#1f2530;
+    --ink:#e7ecf3; --ink-soft:#aeb8c6; --ink-faint:#7a8595;
+    --line:#2b323d; --line-soft:#242a34;
+    --accent:#8aa0e6; --accent-soft:#20283c; --accent-ink:#b8c6f2; --teal:#5bc2c8;
+    --good:#79c79b; --good-soft:#1a2c22; --warn:#e0b871; --warn-soft:#2e2717;
+    --bad:#e59178; --bad-soft:#31201b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    line-height:1.85;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    font-size:16px}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px 120px}
+  .breakout{max-width:960px;margin-left:auto;margin-right:auto}
+
+  /* --- 見出し --- */
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.35}
+  .eyebrow{font-family:var(--sans);font-size:12px;letter-spacing:.14em;font-weight:700;
+    color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+  header.top{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  header.top h1{font-size:33px;margin:0 0 14px;letter-spacing:.01em}
+  header.top .lead{font-size:16.5px;color:var(--ink-soft);margin:0;max-width:64ch}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 12px;margin-top:22px}
+  .chip{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);
+    border:1px solid var(--line);border-radius:999px;padding:5px 13px}
+  .chip b{color:var(--ink)}
+
+  .part-head{margin:64px 0 6px;padding-top:20px;border-top:2px solid var(--accent)}
+  .part-head .num{font-family:var(--serif);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.1em}
+  h2{font-size:26px;margin:6px 0 4px}
+  .part-sub{color:var(--ink-soft);font-size:15px;margin:0 0 8px}
+  h3{font-size:20px;margin:38px 0 6px;padding-left:12px;border-left:3px solid var(--accent)}
+  h4{font-size:16.5px;margin:26px 0 4px;color:var(--ink)}
+  p{margin:12px 0}
+  .wrap>section>p, .wrap>section>section>p{max-width:70ch}
+  b,strong{font-weight:700;color:var(--ink)}
+  a{color:var(--accent-ink);text-underline-offset:2px}
+  em{font-style:normal;background:var(--accent-soft);padding:0 3px;border-radius:3px}
+
+  /* 数式 */
+  .m{font-family:var(--serif);font-style:italic}
+  .eq{font-family:var(--serif);background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:14px 18px;margin:16px 0;font-size:17px;text-align:center;
+    overflow-x:auto;box-shadow:var(--shadow)}
+  .eq .m{font-style:italic}
+  sub,sup{font-size:.72em}
+
+  /* コールアウト */
+  .note{border-radius:12px;padding:15px 18px;margin:20px 0;font-size:14.5px;border:1px solid var(--line)}
+  .note .lab{font-weight:700;font-family:var(--sans);font-size:12.5px;letter-spacing:.06em;
+    text-transform:uppercase;display:block;margin-bottom:5px}
+  .note.key{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 32%,transparent)}
+  .note.key .lab{color:var(--accent-ink)}
+  .note.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+  .note.warn .lab{color:var(--warn)}
+  .note.misc{background:var(--panel);border-style:dashed}
+  .note.misc .lab{color:var(--ink-faint)}
+  .ifont{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--teal);
+    border-radius:10px;padding:14px 18px;margin:20px 0;font-size:14.5px;box-shadow:var(--shadow)}
+  .ifont .lab{font-weight:700;font-size:12.5px;letter-spacing:.06em;color:var(--teal);
+    text-transform:uppercase;display:block;margin-bottom:5px}
+
+  /* 図 */
+  figure{margin:26px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:20px 20px 8px;box-shadow:var(--shadow)}
+  figure svg{display:block;width:100%;height:auto}
+  figcaption{font-size:13px;color:var(--ink-soft);margin:12px 2px 6px;line-height:1.7}
+  figcaption b{color:var(--ink)}
+  .svg-t{font-family:var(--sans);font-weight:700;fill:var(--ink)}
+  .svg-l{font-family:var(--sans);fill:var(--ink-soft)}
+  .svg-n{font-family:var(--mono);fill:var(--ink-soft)}
+  .svg-s{font-family:var(--sans);fill:var(--ink-faint)}
+
+  /* 表 */
+  .tbl{overflow-x:auto;margin:22px 0}
+  table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+  caption{caption-side:top;text-align:left;font-size:13px;color:var(--ink-soft);
+    font-weight:700;margin-bottom:8px;font-family:var(--sans)}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  thead th{background:var(--panel-2);font-family:var(--sans);font-weight:700}
+  tbody th{background:color-mix(in srgb,var(--panel-2) 60%,transparent);font-weight:600;white-space:nowrap}
+  td .m{font-size:.95em}
+
+  /* コード */
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.7;margin:16px 0;color:var(--ink)}
+  pre .c{color:var(--ink-faint)}
+  code{font-family:var(--mono);font-size:.9em;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+
+  /* TOC */
+  nav.toc{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 22px;margin:30px 0;box-shadow:var(--shadow)}
+  nav.toc .lab{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);
+    font-weight:700;margin-bottom:10px}
+  nav.toc ol{margin:0;padding-left:0;list-style:none;counter-reset:toc}
+  nav.toc>ol>li{counter-increment:toc;margin:9px 0;padding-left:34px;position:relative;font-weight:600}
+  nav.toc>ol>li::before{content:counter(toc);position:absolute;left:0;top:0;width:24px;height:24px;
+    background:var(--accent-soft);color:var(--accent-ink);border-radius:7px;font-family:var(--serif);
+    font-size:13px;display:grid;place-items:center;font-weight:700}
+  nav.toc a{color:var(--ink);text-decoration:none}
+  nav.toc a:hover{color:var(--accent-ink)}
+  nav.toc .sub{font-weight:400;color:var(--ink-soft);font-size:13px;margin-top:2px}
+  ul.plain{margin:12px 0;padding-left:22px}
+  ul.plain li{margin:7px 0}
+  .refs{font-size:13.5px;color:var(--ink-soft)}
+  .refs li{margin:9px 0}
+  hr.soft{border:0;border-top:1px solid var(--line);margin:40px 0}
+  .lead-q{font-family:var(--serif);font-size:17px;color:var(--ink-soft);font-style:italic;
+    border-left:3px solid var(--line);padding-left:16px;margin:16px 0}
+  @media (max-width:560px){ header.top h1{font-size:26px} h2{font-size:22px} body{font-size:15px} }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">iFont · 解説ノート</p>
+  <h1>提示速度と駆け引き — 速さを変えると、何が変わるのか</h1>
+  <p class="lead">iFontの出発点は、1モーラ0.2秒で読まれる競技かるたの駆け引きを字幕でも成立させることでした。では早押しクイズ応用で検討している133ミリ秒のような速い提示では、駆け引きそのものが消えて、iFontの意義が薄れてしまうのでしょうか。この心配を2つに分解し、図を使って答えます。</p>
+  <div class="meta">
+    <span class="chip">所要 <b>約20分</b></span>
+    <span class="chip">前提 <b>特になし</b></span>
+    <span class="chip">発端 <b>PIの問題提起（2026-08-07）</b></span>
+  </div>
+</header>
+
+<!-- ============ PART 0 ============ -->
+<section id="p0">
+  <div class="part-head">
+    <div class="num">PART 0 · 問い</div>
+    <h2>この文書の問い</h2>
+    <p class="part-sub">速すぎる世界では、frac実験は無駄になるのか。</p>
+  </div>
+
+  <p>競技かるたは1モーラ0.2秒で読まれ、その速さでは<b>音素レベルの聞き分けの速さが勝敗を分けます</b>。「く」まで聞いた時点で札が取れる人と、「くら」まで必要な人がいる。この駆け引きを字幕でも成立させることが、iFontの最初の動機でした。</p>
+  <p>一方、133ミリ秒/モーラのような速い提示では、次の心配が立ちます。</p>
+  <p class="lead-q">速すぎてモーラ内の駆け引きなど成立しない世界かもしれない。もしそうなら、曲線を測るまでもなく「各モーラの開始時刻に明瞭度100％で出す」のと大差なく、iFontの意義が薄れるのではないか。</p>
+  <p>答えは2段構えです。<b>第1部</b>で、駆け引きが消えた世界でもiFontは「開始時刻に100％」に退化しないことを示します。<b>第2部</b>で、「分かる地点はプレイヤ固定で、速度はそれを比例シフトするだけ」という仮定（<b>仮定A</b>）が3つの機構で崩れること、そしてその3つとも既に組んである実験が測ることを示します。</p>
+</section>
+
+<!-- ============ PART 1 ============ -->
+<section id="p1">
+  <div class="part-head">
+    <div class="num">PART 1 · ナイーブ案</div>
+    <h2>「階段で出せばよい」がどれも正解にならない理由</h2>
+    <p class="part-sub">開始・中間・終了、どこに置いても別々の向きに間違える。</p>
+  </div>
+
+  <h3>1.1 音声の情報は、モーラの中で徐々に届く</h3>
+  <p>音声を聞いている人は、モーラの開始時点では情報を何も受け取っていません。子音の破裂、有声開始（VOT）、フォルマント遷移、母音——手がかりはモーラの時間の中に順番に並んでいて、聞き手の確信は<b>徐々に積み上がります</b>。frac課題が測る認識率曲線は、この積み上がりの形そのものです。</p>
+
+  <h3>1.2 3つのナイーブ案は、それぞれ別の向きに間違える</h3>
+  <p>「フェードなど不要ではないか」という案には3つの変種が考えられます。モーラの<b>開始</b>時刻に100％で出す、<b>終了</b>時刻に100％で出す、<b>中間点</b>で100％で出す。どれも「明瞭度は階段関数でよい」という同じ主張の、置き場所違いです。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 360" role="img" aria-label="聴覚の情報の積み上がりと3つの階段案の比較">
+      <text class="svg-t" x="20" y="24" font-size="15">聴覚の情報の積み上がりと、3つの階段案</text>
+
+      <!-- 軸 -->
+      <line x1="80" y1="300" x2="840" y2="300" stroke="var(--line)" stroke-width="1.5"/>
+      <line x1="80" y1="60" x2="80" y2="300" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="80" y="322" font-size="11.5" text-anchor="middle">モーラ開始</text>
+      <text class="svg-s" x="800" y="322" font-size="11.5" text-anchor="middle">モーラ終了</text>
+      <text class="svg-s" x="66" y="66" font-size="11.5" text-anchor="end">100%</text>
+      <text class="svg-s" x="66" y="304" font-size="11.5" text-anchor="end">0%</text>
+      <text class="svg-s" x="30" y="180" font-size="11.5" text-anchor="middle" transform="rotate(-90 30 180)">明瞭度・受け取った情報</text>
+
+      <!-- 開始で100%: 赤系の階段 -->
+      <path d="M80 300 L80 62 L800 62" fill="none" stroke="var(--bad)" stroke-width="2.4"/>
+      <text class="svg-l" x="95" y="52" font-size="12" fill="var(--bad)" font-weight="700">案1: 開始で100%（視覚が有利すぎる）</text>
+
+      <!-- 中間で100%: warn -->
+      <path d="M80 300 L440 300 L440 66 L800 66" fill="none" stroke="var(--warn)" stroke-width="2.4" stroke-dasharray="7 4"/>
+      <text class="svg-l" x="452" y="96" font-size="12" fill="var(--warn)" font-weight="700">案2: 中間で100%（位置の根拠がない）</text>
+
+      <!-- 終了で100%: muted -->
+      <path d="M80 300 L796 300 L796 70" fill="none" stroke="var(--ink-faint)" stroke-width="2.4" stroke-dasharray="3 4"/>
+      <text class="svg-l" x="560" y="284" font-size="12" fill="var(--ink-soft)" font-weight="700">案3: 終了で100%（視覚が不利すぎる）</text>
+
+      <!-- 聴覚の積み上がり: accent の S字 -->
+      <path d="M80 300 C 260 298, 300 270, 400 200 C 500 130, 560 92, 800 72" fill="none" stroke="var(--accent)" stroke-width="3.2"/>
+      <text class="svg-l" x="330" y="238" font-size="12.5" fill="var(--accent-ink)" font-weight="700">聴覚の情報の積み上がり（frac課題が測る実測対象）</text>
+    </svg>
+    <figcaption><b>図1.1</b> どの階段案も、聴覚の積み上がりの曲線（青）から別々の向きにずれる。案1は常に曲線の上（視覚が先行）、案3は常に下（視覚が遅れる）、案2は前半で下・後半で上。<b>正しい字幕は曲線そのものに合わせる以外にない</b>。その形が急峻なら結果的に階段に近くなるが、どこでどれだけ急峻かは測らないと分からない。</figcaption>
+  </figure>
+
+  <ul class="plain">
+    <li><b>開始で100％</b> — 音声側がまだ0％しか受け取っていない時点で、視覚側は全部見えている。<b>視覚が常に半モーラぶん先行</b>し、公平ではない。</li>
+    <li><b>終了で100％</b> — 音声側はモーラの途中の部分情報で先に同定できる（決まり字の駆け引きはモーラ完了前に起きる）のに、視覚側は完了まで確定しない。<b>視覚が常に不利</b>になる。</li>
+    <li><b>中間で100％</b> — 折衷だが、位置を決める根拠がない。しかも正しい位置は<b>字ごとに違う</b>（第2部）。</li>
+  </ul>
+
+  <h3>1.3 「そもそも意味があるのか」は、実験が裁定する問いである</h3>
+  <p>仮に133ミリ秒での聴覚の曲線が完全な階段（モーラが終わって初めて分かる）だったとします。そのときの正しい字幕は「モーラの<b>終わり</b>に100％」であって、開始でも中間でもありません。そしてその結論は「iFontが無意味だった」ではなく、<b>「この速度帯では明瞭度の設計は不要で、タイミング同期だけで足りる」という設計指針の発見</b>です。駆け引きが成立する速度帯の上限が測定された、ということになります。</p>
+  <div class="note key">
+    <span class="lab">第1部の結論</span>
+    駆け引きが消えた世界でも、「聴覚の届き方に視覚を合わせる」という等化の仕事は消えない。合わせた結果がどんな形になるか（フェードか、実質階段か）を決めるのがfrac課題であり、<b>「そもそも意味があるのか」という問いは、実験の外にある前提問題ではなく、実験がそのまま裁定する経験的な問い</b>である。
+  </div>
+</section>
+
+<!-- ============ PART 2 ============ -->
+<section id="p2">
+  <div class="part-head">
+    <div class="num">PART 2 · 仮定A</div>
+    <h2>仮定Aが崩れる3つの機構</h2>
+    <p class="part-sub">優劣が保存される、という直観はどこで破れるか。</p>
+  </div>
+
+  <p>仮定Aをもう一度書きます。</p>
+  <p class="lead-q">プレイヤは「ここまで受け取れば分かる」という固定の地点を持ち、速度を変えてもその地点が比例してシフトするだけなので、プレイヤ間の優劣は変わらない。</p>
+  <p>これが成り立つなら、速度は「差が見えやすいか」だけの問題です。しかし次の3つの機構で崩れます。</p>
+
+  <h3>2.1 機構1 — 手がかりは絶対時間に寄っている（ただし完全にではない）</h3>
+  <p>fracは割合の目盛りですが、音響的な手がかりの一部は<b>絶対時間に寄っています</b>。代表が有声開始時間（VOT）です。</p>
+  <p>まず<b>人間の発話</b>について正確に言うと、<b>話速を上げるとVOTも短くなります</b>。これは確立した知見で、聞き手の側も文脈の話速に合わせて有声・無声の境界を調整します（話速の正規化）。ただし<b>比例して縮むのではなく、母音のほうが大きく縮み、子音は縮みにくい</b>。つまり絶対時間に固定でも割合に固定でもなく、<b>その中間</b>です。</p>
+  <p>次に<b>我々の合成</b>について。VOICEVOXの話速の指定は、実測すると<b>完全に一様</b>でした。</p>
+  <div class="tbl">
+  <table>
+    <caption>話速の指定を変えたときの、子音長と母音長（「かたぱたきつぷ」で実測）</caption>
+    <thead><tr><th>話速の指定</th><th>モーラ長</th><th>子音長</th><th>母音長</th><th>子音の割合</th></tr></thead>
+    <tbody>
+      <tr><th>1.0</th><td>130.9ms</td><td>26.0ms</td><td>104.8ms</td><td><b>19.9%</b></td></tr>
+      <tr><th>1.25</th><td>104.7ms</td><td>20.8ms</td><td>83.9ms</td><td><b>19.9%</b></td></tr>
+      <tr><th>1.5</th><td>87.2ms</td><td>17.3ms</td><td>69.9ms</td><td><b>19.9%</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="note warn">
+    <span class="lab">ここは誤りやすい</span>
+    iFontの133ミリ秒版のプールでVOTが保たれているのは、<b>子音長に触れず母音だけを縮める作りにしたから</b>です。エンジンや人間の性質ではなく、<b>我々の合成手順の設計</b>です。
+  </div>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 390" role="img" aria-label="200msと、一様伸縮した133msと、子音を保った133msのモーラ構造の比較">
+      <text class="svg-t" x="20" y="24" font-size="15">同じ字を133ミリ秒にする2つのやり方は、まったく別の刺激になる（例: 無声破裂音）</text>
+
+      <text class="svg-t" x="24" y="86" font-size="11.5">現行 200ms</text>
+      <rect x="170" y="60" width="122" height="44" fill="var(--warn-soft)" stroke="var(--warn)"/>
+      <rect x="292" y="60" width="578" height="44" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-s" x="231" y="86" font-size="11.5" text-anchor="middle">VOT 35ms</text>
+      <text class="svg-s" x="581" y="86" font-size="11.5" text-anchor="middle">母音 165ms</text>
+      <text class="svg-s" x="292" y="122" font-size="11" text-anchor="middle" fill="var(--warn)">frac 17.5%</text>
+
+      <text class="svg-t" x="24" y="184" font-size="11.5">一様伸縮 133ms</text>
+      <rect x="170" y="158" width="82" height="44" fill="var(--bad-soft)" stroke="var(--bad)"/>
+      <rect x="252" y="158" width="384" height="44" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-s" x="211" y="184" font-size="11" text-anchor="middle" fill="var(--bad)">VOT 23ms</text>
+      <text class="svg-s" x="444" y="184" font-size="11.5" text-anchor="middle">母音 110ms</text>
+      <text class="svg-s" x="252" y="220" font-size="11" text-anchor="middle" fill="var(--warn)">frac 17.5%（不変）</text>
+      <text class="svg-l" x="648" y="184" font-size="12" fill="var(--bad)" font-weight="700">← 自然な下限25msを割る</text>
+
+      <text class="svg-t" x="24" y="282" font-size="11.5">子音を保つ 133ms</text>
+      <rect x="170" y="256" width="122" height="44" fill="var(--warn-soft)" stroke="var(--warn)"/>
+      <rect x="292" y="256" width="343" height="44" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text class="svg-s" x="231" y="282" font-size="11.5" text-anchor="middle">VOT 35ms</text>
+      <text class="svg-s" x="463" y="282" font-size="11.5" text-anchor="middle">母音 98ms</text>
+      <text class="svg-s" x="292" y="318" font-size="11" text-anchor="middle" fill="var(--warn)">frac 26%（動く）</text>
+      <text class="svg-l" x="648" y="282" font-size="12" fill="var(--warn)" font-weight="700">← さ行では母音が42.7msに</text>
+
+      <line x1="24" y1="342" x2="876" y2="342" stroke="var(--line)" stroke-width="1"/>
+      <text class="svg-s" x="24" y="364" font-size="11.5">一様伸縮はfracの位置を保つが手がかりの絶対値を壊す。子音を保つとVOTは守れるがfracの位置が動く。</text>
+      <text class="svg-s" x="24" y="382" font-size="11.5">人間の速い発話はこの2つの中間にあり、そこがどこかはまだ測っていない。</text>
+    </svg>
+    <figcaption><b>図2.1</b> 133ミリ秒にする2つのやり方は、<b>まったく別の刺激</b>になる。一様伸縮はfracの位置を保つ代わりにVOTを25ミリ秒の床より下に落とし、子音を保つとVOTは守れる代わりにfracの位置が字ごとに違う量だけ動く。<b>どちらの極端も人間の速い発話ではない。</b>手がかりが部分的にでも絶対時間に寄っている限り、速度を変えると曲線がfrac軸上で字ごとに違う量だけ変形し、頼る手がかりの違うプレイヤ間で<b>優劣の逆転が起こりうる</b>。仮定Aは「完全に割合で決まる」という極端な主張である。</figcaption>
+  </figure>
+
+  <div class="note key">
+    <span class="lab">実務的な含意</span>
+    エンジンが一様に縮める以上、<b>133ミリ秒で素直に合成した製品の音声はVOTが20ミリ秒台に落ち、清濁が濁って聞こえるはず</b>です。だから133ミリ秒でも品質の処方を当て直す必要があり、候補プールが子音を保っているのは「同じ品質基準を各速度で適用する」という一貫した方針として正当化できます。ただしそれが<b>速い発話として自然に聞こえるか</b>は別問題で、試聴で確かめるしかありません。
+  </div>
+
+  <h3>2.2 では、一様に伸縮すれば g を機械的に外挿できるのか</h3>
+  <p>自然な発想として、次の近道が考えられます。</p>
+  <p class="lead-q">ある速度で測ったデータを一様に伸縮すれば、fracは定義上そのまま保たれる。だから新しくfrac課題をやらなくても、g は機械的に外挿できるのではないか。</p>
+  <p><b>数学としては正しく、しかし2つの理由で使えません。</b></p>
+  <ul class="plain">
+    <li><b>理由1（実務）— 我々自身の品質基準を壊す。</b>一様伸縮はVOTを21〜30ミリ秒に落とし、自然な下限として設定した25ミリ秒の床を割ります。これは「ぷ→ぐ」「ぽ→ご」の清濁混同を起こした、まさにその領域です。数ヶ月かけて直した欠陥が復活します。</li>
+    <li><b>理由2（理論）— それは仮定であって、検証すべき仮説そのものである。</b>「一様に伸縮しても知覚が保たれる」は自明ではありません。聴覚の時間統合は絶対時間の窓を持ち、話速の正規化の研究は聞き手の境界が文脈の話速で動くことを示しています。</li>
+  </ul>
+  <div class="note key">
+    <span class="lab">この近道は、実験が測ろうとしている当のもの</span>
+    <b>視覚1文字課題の2水準は、まさにこの仮説の検定になっています。</b>視覚では提示時間を変えることが文字どおり一様伸縮にあたり、しかも<b>刺激の中身がまったく変わらない唯一のモダリティ</b>です（同じ画像を何ミリ秒で出すかだけの違い）。<br>
+    曲線が一致すれば → 一様伸縮での外挿が支持され、聴覚でも同じ仮定を置く根拠になります（証明ではありません）。<br>
+    一致しなければ → 機械的な外挿は使えず、速度ごとに測るしかないことが分かります。
+  </div>
+
+  <h3>2.3 機構2 — 縮まない固定費が、腕の差を呑み込む</h3>
+  <p>速度を上げても縮まないものがもう1つあります。<b>運動反応のゆらぎ</b>（標準偏差でおよそ20〜30ミリ秒）、注意の切り替え、決定の時間といった固定費です。</p>
+  <p>簡単な算数をします。プレイヤAは字の60％で、プレイヤBは80％で同定できるとします。閾値の差は20ポイントで固定（仮定Aどおり）としても、<b>絶対時間に直した差は速度に比例して縮みます</b>。</p>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 330" role="img" aria-label="速度ごとの腕の差の絶対時間と運動ノイズの比較">
+      <text class="svg-t" x="20" y="24" font-size="15">閾値の差20ポイント（A=60%・B=80%）が、絶対時間では速度とともに縮む</text>
+
+      <!-- 軸 -->
+      <line x1="120" y1="270" x2="860" y2="270" stroke="var(--line)" stroke-width="1.5"/>
+      <text class="svg-s" x="60" y="160" font-size="11.5" text-anchor="middle" transform="rotate(-90 60 160)">AとBの差（ミリ秒）</text>
+
+      <!-- ノイズ帯: 25ms -->
+      <rect x="120" y="145" width="740" height="125" fill="var(--bad-soft)" opacity="0.55"/>
+      <line x1="120" y1="145" x2="860" y2="145" stroke="var(--bad)" stroke-width="1.6" stroke-dasharray="6 4"/>
+      <text class="svg-l" x="690" y="118" font-size="12" text-anchor="middle" fill="var(--bad)" font-weight="700">運動ノイズ ≈ 25ms</text>
+      <text class="svg-s" x="690" y="136" font-size="11" text-anchor="middle" fill="var(--bad)">この下に沈むと勝負が運になる</text>
+
+      <!-- bars: 40,33,27,20 ms → height *5px/ms -->
+      <g>
+        <rect x="170" y="70"  width="90" height="200" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+        <text class="svg-t" x="215" y="60" font-size="13" text-anchor="middle">40ms</text>
+        <text class="svg-s" x="215" y="292" font-size="12" text-anchor="middle">200ms/モーラ</text>
+        <text class="svg-l" x="215" y="310" font-size="11.5" text-anchor="middle" fill="var(--good)" font-weight="700">比 1.6 — 腕が出る</text>
+
+        <rect x="360" y="105" width="90" height="165" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+        <text class="svg-t" x="405" y="95" font-size="13" text-anchor="middle">33ms</text>
+        <text class="svg-s" x="405" y="292" font-size="12" text-anchor="middle">167ms/モーラ</text>
+        <text class="svg-l" x="405" y="310" font-size="11.5" text-anchor="middle" fill="var(--good)" font-weight="700">比 1.3</text>
+
+        <rect x="550" y="135" width="90" height="135" fill="var(--warn-soft)" stroke="var(--warn)" stroke-width="1.5"/>
+        <text class="svg-t" x="595" y="125" font-size="13" text-anchor="middle">27ms</text>
+        <text class="svg-s" x="595" y="292" font-size="12" text-anchor="middle">133ms/モーラ</text>
+        <text class="svg-l" x="595" y="310" font-size="11.5" text-anchor="middle" fill="var(--warn)" font-weight="700">比 1.1 — 際どい</text>
+
+        <rect x="740" y="170" width="90" height="100" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+        <text class="svg-t" x="785" y="160" font-size="13" text-anchor="middle">20ms</text>
+        <text class="svg-s" x="785" y="292" font-size="12" text-anchor="middle">100ms/モーラ</text>
+        <text class="svg-l" x="785" y="310" font-size="11.5" text-anchor="middle" fill="var(--bad)" font-weight="700">比 0.8 — 運の勝負</text>
+      </g>
+    </svg>
+    <figcaption><b>図2.2</b> 速い世界では、閾値の順序が逆転するのではなく、<b>順序の差がノイズ床の下に沈んで勝敗に統計的に反映されなくなる</b>。駆け引きは「不可能になる」のではなく「見えなくなる」。逆に読むと、競技かるたの200ミリ秒は自然発話（毎秒8モーラ超）よりわざわざ遅く、<b>知覚の個人差を運動ノイズの上まで引き伸ばして「腕の差が勝敗に現れる信号対雑音比」を確保する装置</b>として機能している可能性がある。</figcaption>
+  </figure>
+
+  <div class="note key">
+    <span class="lab">追加費用ゼロで検証できる</span>
+    この「拡大装置」説はfrac曲線が取れれば計算できます。曲線の傾きから「閾値の個人差○ポイントが、速度sでは絶対時間○ミリ秒の差になる」が出て、反応時間のばらつきと比べれば「速度sにおいて腕の差が勝敗に反映される度合い」が関数として書けます。追加の実験は不要です。
+  </div>
+
+  <h3>2.4 機構3 — Xを超えると、競技の種目が変わる</h3>
+  <p>限界独立速度X（干渉が生じないぎりぎりの速さ。乙課題で測る）を超えると、後続の文字が手前の文字の処理を壊し始めます。この帯域では勝負を決めるのは「どちらが早く同定するか」ではなく「そもそも流れについていけるか」であり、<b>モーラ内の弁別レースから、処理容量の耐久勝負へ、競技の種目そのものが変わります</b>。</p>
+  <p>つまりXは、測定の有効範囲の境界というだけでなく、<b>弁別の駆け引きという競技が成立する速度帯の上限</b>でもあります。</p>
+
+  <h3>2.5 まとめの表</h3>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>機構</th><th>速度を上げると壊れるもの</th><th>測る装置</th></tr></thead>
+    <tbody>
+      <tr><th>1. 手がかりが絶対時間に寄っている</th><td>曲線の形と、字ごと・人ごとの優劣</td><td>視覚1文字の2水準＋VOTの実測</td></tr>
+      <tr><th>2. 縮まない固定費</th><td>腕の差の可視性（信号対雑音比）</td><td>frac曲線の傾き＋反応時間のばらつき</td></tr>
+      <tr><th>3. 干渉（X超え）</th><td>情報そのもの</td><td>乙課題</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============ PART 3 ============ -->
+<section id="p3">
+  <div class="part-head">
+    <div class="num">PART 3 · 地図</div>
+    <h2>速度の地図と、応用ごとの価値</h2>
+    <p class="part-sub">2つの境界は、どちらも実測から出る。</p>
+  </div>
+
+  <figure class="breakout">
+    <svg viewBox="0 0 900 250" role="img" aria-label="提示速度の軸の上に3つの帯域と2つの境界を示した地図">
+      <text class="svg-t" x="20" y="24" font-size="15">速度の地図 — 3つの帯域と、2つの経験的な境界</text>
+
+      <!-- 帯 -->
+      <rect x="60"  y="70" width="300" height="70" fill="var(--good-soft)" stroke="var(--good)"/>
+      <rect x="360" y="70" width="260" height="70" fill="var(--warn-soft)" stroke="var(--warn)"/>
+      <rect x="620" y="70" width="230" height="70" fill="var(--bad-soft)" stroke="var(--bad)"/>
+
+      <text class="svg-l" x="210" y="98" font-size="13" text-anchor="middle" fill="var(--good)" font-weight="700">駆け引きが見える帯</text>
+      <text class="svg-s" x="210" y="120" font-size="11.5" text-anchor="middle">腕の差が勝敗に出る</text>
+      <text class="svg-l" x="490" y="98" font-size="13" text-anchor="middle" fill="var(--warn)" font-weight="700">差がノイズに沈む帯</text>
+      <text class="svg-s" x="490" y="120" font-size="11.5" text-anchor="middle">勝負が運に近づく</text>
+      <text class="svg-l" x="735" y="98" font-size="13" text-anchor="middle" fill="var(--bad)" font-weight="700">干渉で情報が壊れる帯</text>
+      <text class="svg-s" x="735" y="120" font-size="11.5" text-anchor="middle">ついていけるかの勝負</text>
+
+      <!-- 軸 -->
+      <line x1="60" y1="170" x2="850" y2="170" stroke="var(--ink-soft)" stroke-width="1.6" marker-end="url(#arrS)"/>
+      <defs><marker id="arrS" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="var(--ink-soft)"/></marker></defs>
+      <text class="svg-s" x="60" y="192" font-size="11.5">遅い（ミリ秒/モーラが大きい）</text>
+      <text class="svg-s" x="850" y="192" font-size="11.5" text-anchor="end">速い</text>
+
+      <!-- markers -->
+      <line x1="200" y1="140" x2="200" y2="170" stroke="var(--good)" stroke-width="2"/>
+      <text class="svg-s" x="200" y="212" font-size="11.5" text-anchor="middle">かるた 200ms はここ</text>
+      <line x1="360" y1="140" x2="360" y2="170" stroke="var(--warn)" stroke-width="2" stroke-dasharray="4 3"/>
+      <text class="svg-s" x="360" y="230" font-size="11.5" text-anchor="middle">境界1: SNR≈1 の速度</text>
+      <text class="svg-s" x="360" y="246" font-size="10.5" text-anchor="middle">frac曲線＋反応時間から出る</text>
+      <line x1="620" y1="140" x2="620" y2="170" stroke="var(--bad)" stroke-width="2" stroke-dasharray="4 3"/>
+      <text class="svg-s" x="620" y="230" font-size="11.5" text-anchor="middle">境界2: 限界独立速度 X</text>
+      <text class="svg-s" x="620" y="246" font-size="10.5" text-anchor="middle">乙課題から出る</text>
+    </svg>
+    <figcaption><b>図3.1</b> 2つの境界の位置はどちらもまだ分からない（だから測る）。境界の相対的な順序（SNR境界がXより遅い側にあるか）も実測しだいである。</figcaption>
+  </figure>
+
+  <p>そして応用ごとに、iFontの価値の源泉が違います。</p>
+  <div class="tbl">
+  <table>
+    <thead><tr><th>　</th><th>競技かるた（200ms）</th><th>早押しクイズ（133ms前後）</th></tr></thead>
+    <tbody>
+      <tr><th>ゲームの本体</th><td>モーラ内の弁別レース</td><td>知識の想起と、意味が絞れる地点の予測</td></tr>
+      <tr><th>勝負の粒度</th><td>音素（決まり字）</td><td>語・句（問題文の一意化）</td></tr>
+      <tr><th>iFontの価値</th><td><b>弁別レースへの参加資格の平等</b></td><td><b>理解の同時性</b>（同じ時点に同じだけ分かる）</td></tr>
+      <tr><th>曲線の精密さ</th><td>そのまま製品の質になる</td><td>タイムラインの正確さのほうが効く</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>「133ミリ秒では駆け引きが薄れるかもしれない」はおそらく事実です。しかし<b>クイズ応用は駆け引きの拡大を売りにしていない</b>ので、意義の毀損にはなりません。毀損になるのは「かるたの駆け引きを高速の世界でも再現する」と主張した場合だけで、そうは主張しません。かるたが旗艦、クイズは理解同期、と価値を分けて立てます。</p>
+</section>
+
+<!-- ============ PART 4 ============ -->
+<section id="p4">
+  <div class="part-head">
+    <div class="num">PART 4 · 対応と限界</div>
+    <h2>実験との対応と、正直な限界</h2>
+  </div>
+
+  <ul class="plain">
+    <li><b>「駆け引きが存在するか」</b>は、聴覚のfrac曲線の形が答える。曲線がなだらかならモーラ内の部分情報に構造があり（駆け引きの余地がある）、階段に近ければその速度帯では明瞭度の設計は不要である。</li>
+    <li><b>「仮定Aの割合説」</b>は、視覚1文字課題の2水準が答える。</li>
+    <li><b>「競技が成立する速度の上限」</b>は、乙課題のXが与える。</li>
+  </ul>
+
+  <div class="note warn">
+    <span class="lab">限界</span>
+    聴覚の曲線は1つの速度でしか測らないので、機構1を聴覚側で直接確かめる手段はありません。子音が母音より縮みにくいことは知られているので方向は予測できますが、曲線がどれだけ動くかは測らないと分かりません。ここは「視覚の2水準の結果＋音響実測からの推論」で論じます。
+  </div>
+
+  <div class="note key">
+    <span class="lab">副次解析の提案（追加費用ゼロ）</span>
+    曲線が取れた後の解析メニューに、<b>「知覚閾値の個人差が勝敗に反映される度合いの、速度依存性」</b>を加える。frac曲線の傾きと反応時間の分布から計算でき、「かるたの200ミリ秒/モーラは腕の差の拡大装置である」という主張に実データの裏づけを与えられる。
+  </div>
+</section>
+
+<!-- ============ PART 5 ============ -->
+<section id="p5">
+  <div class="part-head">
+    <div class="num">PART 5 · FAQ</div>
+    <h2>よくある質問</h2>
+  </div>
+
+  <h4>「開始で100％」でなく「終了で100％」や「中間で100％」ならよいのでは。</h4>
+  <p>本質は変わりません。3案とも「明瞭度は階段関数でよい」という同じ主張の置き場所違いで、開始案は視覚が有利すぎ、終了案は視覚が不利すぎ、中間案は位置の根拠がありません。正しい置き場所（そもそも階段でよいのか）は聴覚の積み上がりの形が決めることで、それを測るのがfrac課題です（1.2節・図1.1）。</p>
+
+  <h4>133ミリ秒で駆け引きが消えていたら、iFontは無意味になるのか。</h4>
+  <p>なりません。クイズ応用の価値は駆け引きの拡大ではなく理解の同時性にあり、そのためには速度によらず「聴覚の情報の届き方に視覚を合わせる」仕事が要ります（第1部・第3部）。駆け引きの拡大が価値になるのは、かるた応用です。</p>
+
+  <h4>仮定Aが正しかったら、どうなるのか。</h4>
+  <p>そのときは曲線が速度をまたいで割合の目盛りのまま移せるので、1つの速度で測った曲線が全速度で使えます。これはこれで大きな収穫です（測定が1回で済む）。正しいかどうかを検証するのが視覚1文字課題の2水準で、どちらに転んでも設計に必要な知識が得られます。</p>
+
+  <h4>VOTが速度で変わらないのは、人間でもそうなのか。</h4>
+  <p>違います。人間の発話では話速を上げるとVOTも短くなります（ただし比例より緩やかで、母音のほうが大きく縮む）。iFontの133ミリ秒版でVOTが保たれているのは、子音長に触れず母音だけを縮める作りにしたためで、合成手順の設計であって一般的な事実ではありません。VOICEVOXの話速指定そのものは完全に一様に縮めます（2.1節）。</p>
+
+  <h4>データを一様に伸縮すれば、frac課題をやり直さずに g を外挿できるのでは。</h4>
+  <p>数学としては正しいのですが、2つの理由で使えません。一様伸縮はVOTを25ミリ秒の床より下に落として清濁の混同を復活させ（実務）、そもそも「一様伸縮で知覚が保たれる」は検証すべき仮説です（理論）。そしてその仮説を検定するのが視覚1文字課題の2水準です（2.2節）。</p>
+
+  <h4>なぜ聴覚は1つの速度でしか測らないのか。</h4>
+  <p>モーラの長さを変えることは別の合成をすることであり、音そのものが変わって速度と音響が交絡するためです。視覚の字は何ミリ秒で出しても同じ画像なので、速度だけを独立に操作できます。この非対称が、速度依存性の検証を視覚側に置く理由です。</p>
+</section>
+
+</div>

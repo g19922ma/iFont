@@ -1,0 +1,553 @@
+{
+ "あ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.09
+ },
+ "い": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 0.99
+ },
+ "う": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 175,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.993
+ },
+ "え": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.0
+ },
+ "お": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.011
+ },
+ "か": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.982
+ },
+ "が": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 180,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.992
+ },
+ "き": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.996
+ },
+ "ぎ": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.0
+ },
+ "く": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.948
+ },
+ "ぐ": {
+  "acoustic_onset_ms": 40,
+  "voiced_end_ms": 175,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 140.708,
+  "gain": 1.094
+ },
+ "け": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.943
+ },
+ "げ": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.004
+ },
+ "こ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.002
+ },
+ "ご": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.983
+ },
+ "さ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 215,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.954
+ },
+ "ざ": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 180,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.997
+ },
+ "し": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 200,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.002
+ },
+ "じ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.03
+ },
+ "す": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 210,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.055
+ },
+ "ず": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 175,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.916
+ },
+ "せ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 215,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.925
+ },
+ "ぜ": {
+  "acoustic_onset_ms": 60,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 120.708,
+  "gain": 1.04
+ },
+ "そ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 215,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.937
+ },
+ "ぞ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.021
+ },
+ "た": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.988
+ },
+ "だ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 180,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.04
+ },
+ "ち": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 200,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.967
+ },
+ "つ": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.853
+ },
+ "て": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.008
+ },
+ "で": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.034
+ },
+ "と": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.014
+ },
+ "ど": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.043
+ },
+ "な": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.016
+ },
+ "に": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 0.97
+ },
+ "ぬ": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.004
+ },
+ "ね": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 0.993
+ },
+ "の": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.006
+ },
+ "は": {
+  "acoustic_onset_ms": 70,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 110.708,
+  "gain": 0.908
+ },
+ "ば": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.966
+ },
+ "ぱ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.976
+ },
+ "ひ": {
+  "acoustic_onset_ms": 70,
+  "voiced_end_ms": 210,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 110.708,
+  "gain": 0.928
+ },
+ "び": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.998
+ },
+ "ぴ": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.004
+ },
+ "ふ": {
+  "acoustic_onset_ms": 70,
+  "voiced_end_ms": 215,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 110.708,
+  "gain": 0.904
+ },
+ "ぶ": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 175,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 0.99
+ },
+ "ぷ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 175,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.072
+ },
+ "へ": {
+  "acoustic_onset_ms": 85,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 95.708,
+  "gain": 1.04
+ },
+ "べ": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.989
+ },
+ "ぺ": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.015
+ },
+ "ほ": {
+  "acoustic_onset_ms": 70,
+  "voiced_end_ms": 205,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 110.708,
+  "gain": 0.992
+ },
+ "ぼ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.032
+ },
+ "ぽ": {
+  "acoustic_onset_ms": 85,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 284.708,
+  "mora_avail_ms": 99.708,
+  "gain": 0.997
+ },
+ "ま": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.995
+ },
+ "み": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.991
+ },
+ "む": {
+  "acoustic_onset_ms": 45,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 135.708,
+  "gain": 1.01
+ },
+ "め": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.009
+ },
+ "も": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.021
+ },
+ "や": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.005
+ },
+ "ゆ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.025
+ },
+ "よ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.019
+ },
+ "ら": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 185,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.0
+ },
+ "り": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 1.0
+ },
+ "る": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 0.997
+ },
+ "れ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.011
+ },
+ "ろ": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.022
+ },
+ "わ": {
+  "acoustic_onset_ms": 55,
+  "voiced_end_ms": 195,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 125.708,
+  "gain": 0.994
+ },
+ "ん": {
+  "acoustic_onset_ms": 50,
+  "voiced_end_ms": 190,
+  "mora_len_ms": 138.667,
+  "mora_end_ms": 280.708,
+  "mora_avail_ms": 130.708,
+  "gain": 1.0
+ },
+ "_meta": {
+  "note": "mora_avail_ms = 音響的立ち上がり(char_onset_s + acoustic_onset_ms)からモーラ末尾までの長さ(ミリ秒)。再生側はこの値を窓の長さに使う。mora_end_ms は復号後のファイル先頭から数えたモーラ末尾の位置。",
+  "codec_delay_ms": 46.042,
+  "pre_phoneme_ms": 96.0,
+  "frame_ms": 10.6667,
+  "aw_rms_target": 0.030325
+ }
+}

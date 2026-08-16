@@ -26,11 +26,41 @@ def visual_threshold(ch: str) -> float:
     return _THR_LOW + (_THR_HIGH - _THR_LOW) * _stable_unit(ch)
 
 
+# 鮮明化のしかた。"mock" は上の擬似 g（文字ごとに閾値が違う）、
+# "linear" と "logistic" は文字によらない仮の g で、実データが無い段階で
+# 「速さと同期」だけを見せたいときに使う。
+_MODE = "mock"
+_SLOPE = 1.0
+
+
+def set_mode(mode: str, slope: float = 1.0) -> None:
+    """鮮明化のしかたを選ぶ。"mock"(既定) / "linear" / "logistic"。
+
+    slope は logistic のときの、区間の中央(frac=50%)における傾き。
+    1.0 なら「frac 50% で明瞭度 50%、そこでの傾きが 1」の曲線になる。
+    """
+    global _MODE, _SLOPE
+    if mode not in ("mock", "linear", "logistic"):
+        raise ValueError(f"g のモードが不正: {mode}（mock / linear / logistic）")
+    _MODE = mode
+    _SLOPE = float(slope)
+
+
 def reveal_opacity(ch: str, local_t: float) -> float:
     """文字 ch の、区間内での相対時刻 local_t(0..1) における不透明度(0..1)。
 
-    thr までで 0→1 に立ち上がり、以降は 1 を保つ（fade 提示）。
+    mock:     文字ごとの閾値 thr までで 0→1 に立ち上がり、以降は 1 を保つ（smoothstep）。
+    linear:   文字によらず、区間の始まりから終わりまで一次関数で 0→1 に立ち上がる。
+    logistic: 区間の中央で明瞭度 50%、そこでの傾きが _SLOPE のロジスティック曲線。
+              傾き1のとき区間の両端は 0.12 と 0.88 になり、始まりで薄く見え、
+              終わりでも完全な不透明には達しない（心理測定関数と同じ、裾を持つ形）。
     """
+    x = max(0.0, min(1.0, local_t))
+    if _MODE == "linear":
+        return x
+    if _MODE == "logistic":
+        import math
+        return 1.0 / (1.0 + math.exp(-4.0 * _SLOPE * (x - 0.5)))
     thr = max(visual_threshold(ch), 1e-3)
     x = max(0.0, min(1.0, local_t / thr))
     # smoothstep でなめらかに
