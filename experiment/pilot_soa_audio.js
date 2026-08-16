@@ -289,31 +289,51 @@ function runCountdown(stage, done) {
   }, 1000);
 }
 function respond(t, inPractice) {
-  askOne(t, 1, (r1) => {
-    askOne(t, 2, (r2) => {
-      if (!inPractice) {
-        const rec = { c1:t.c1, c2:t.c2, c3:t.c3, S:t.S, resp1:r1, resp2:r2,
-          correct1:r1===t.c1, correct2:r2===t.c2 };
-        results.push(rec);
-        if (window.PROD) PROD.saveTrial("soa_audio", prodMeta(), rec, results.length-1);
-        ti++; runTrial(); return;
-      }
-      // 練習: 3音の内訳を提示して流れを覚えてもらう
-      const ok1 = r1===t.c1, ok2 = r2===t.c2;
-      screen.innerHTML = `<div style="text-align:center;padding:30px">
-        <p>正解 — 1つ目「<b style="font-size:20px">${t.c1}</b>」<span style="color:${ok1?'#2E7D8F':'#C25B4E'}">${ok1?'◯':'×'}</span>
-        ／ 2つ目「<b style="font-size:20px">${t.c2}</b>」<span style="color:${ok2?'#2E7D8F':'#C25B4E'}">${ok2?'◯':'×'}</span></p>
-        <p class="muted">3つ目は「${t.c3}」でした（これは<b>答えない</b>音です）。</p>
-        <p class="muted">これは練習です。本番も同じ流れ（1つ目 → 2つ目 → 3つ目 → 2つ回答）をくり返します。</p></div>`;
-      setTimeout(() => { ti++; runTrial(); }, 2000);
-    });
-  });
+  // 回答の記録・送信は「これで決定」を押した時のみ。それまでは選び直せる。
+  const sel = { 1: null, 2: null };
+  const finish = () => {
+    const r1 = sel[1], r2 = sel[2];
+    if (!inPractice) {
+      const rec = { c1:t.c1, c2:t.c2, c3:t.c3, S:t.S, resp1:r1, resp2:r2,
+        correct1:r1===t.c1, correct2:r2===t.c2 };
+      results.push(rec);
+      if (window.PROD) PROD.saveTrial("soa_audio", prodMeta(), rec, results.length-1);
+      ti++; runTrial(); return;
+    }
+    // 練習: 3音の内訳を提示して流れを覚えてもらう
+    const ok1 = r1===t.c1, ok2 = r2===t.c2;
+    screen.innerHTML = `<div style="text-align:center;padding:30px">
+      <p>正解 — 1つ目「<b style="font-size:20px">${t.c1}</b>」<span style="color:${ok1?'#2E7D8F':'#C25B4E'}">${ok1?'◯':'×'}</span>
+      ／ 2つ目「<b style="font-size:20px">${t.c2}</b>」<span style="color:${ok2?'#2E7D8F':'#C25B4E'}">${ok2?'◯':'×'}</span></p>
+      <p class="muted">3つ目は「${t.c3}」でした（これは<b>答えない</b>音です）。</p>
+      <p class="muted">これは練習です。本番も同じ流れ（1つ目 → 2つ目 → 3つ目 → 2つ回答）をくり返します。</p></div>`;
+    setTimeout(() => { ti++; runTrial(); }, 2000);
+  };
+  const confirmScreen = () => {
+    const stage = document.getElementById("stage");
+    stage.style.height = "auto";
+    document.getElementById("grid")?.remove();
+    stage.innerHTML = `<div class="ask" style="font-size:18px">この回答で決定しますか？</div>
+      <div style="font-size:20px;margin:12px 0">1つ目「<b>${kanaLabel(sel[1])}</b>」 ／ 2つ目「<b>${kanaLabel(sel[2])}</b>」</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button id="fix1" style="padding:10px 16px;font-size:15px">1つ目を直す</button>
+        <button id="fix2" style="padding:10px 16px;font-size:15px">2つ目を直す</button>
+        <button class="primary" id="selOk">これで決定</button></div>`;
+    document.getElementById("fix1").onclick = () => askOne(t, 1, sel, (ch) => { sel[1]=ch; confirmScreen(); });
+    document.getElementById("fix2").onclick = () => askOne(t, 2, sel, (ch) => { sel[2]=ch; confirmScreen(); });
+    document.getElementById("selOk").onclick = finish;
+  };
+  askOne(t, 1, sel, (ch) => { sel[1]=ch;
+    askOne(t, 2, sel, (ch2) => { sel[2]=ch2; confirmScreen(); }); });
 }
-function askOne(t, pos, done) {
+function askOne(t, pos, sel, done) {
   const stage = document.getElementById("stage");
   stage.style.height = "auto";   // 聴取エリアの空欄を詰めて、かなの表をプロンプト直下に出す
   const label = pos===1 ? "1つ目（最初に聞こえた音）は？" : "2つ目（2番目に聞こえた音）は？";
+  const picked = [1,2].filter(p => p!==pos && sel[p])
+    .map(p => `${p}つ目「<b>${kanaLabel(sel[p])}</b>」`).join(" ／ ");
   stage.innerHTML = `<div class="ask" style="font-size:18px">${label}</div>
+    ${picked ? `<div class="muted">選択済み — ${picked}</div>` : ""}
     <div class="muted">分からなければ勘でOK（聞こえなかったと感じても、あとの音を答えずに勘で選んでください）</div>`;
   document.getElementById("grid")?.remove();
   const grid = document.createElement("div"); grid.id="grid";
