@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.4";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.5";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -76,7 +76,7 @@ function loadImage(ch) {
   });
 }
 async function preload() {
-  screen.innerHTML = `<h1>読み込み中…</h1><p class="muted">かな画像を読み込んでいます。</p>`;
+  screen.innerHTML = `<h1>読み込み中…</h1>`;
   await Promise.all(CHARS.map(async ch => { imgs[ch] = await loadImage(ch); }));
 }
 
