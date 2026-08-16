@@ -210,7 +210,7 @@
       </ul>
       ${headphone ? DEVICE_HTML : ""}
       <p style="margin-top:16px"><label style="font-size:15px"><input type="checkbox" id="cst"> 上記に同意し、18歳以上であることを確認しました。</label></p>
-      <p><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
+      <p><button class="primary" id="cstGo" disabled style="opacity:.5">実験を始める</button></p>
       ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}
       <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
     const cb = el.querySelector("#cst"), go = el.querySelector("#cstGo");
