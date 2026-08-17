@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.6";
+const VERSION = "3.7";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -337,7 +337,7 @@ function showTryGate(t) {
   screen.innerHTML = `<div style="text-align:center;padding:30px 20px">
     <h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
     <p>まず1問ずつ練習できます（別の問題で何度でも）。納得したら本番へ進んでください。</p>
-    <p style="margin:18px 0"><button id="tryBtn" class="playbtn" style="background:${accent}">${modName}を1問練習する${tried ? `（${tried}回ずみ）` : ""}</button></p>
+    <p style="margin:18px 0"><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}を1問練習する`}</button></p>
     <p><button class="primary" id="goMain" ${tried ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
     ${tried ? "" : `<p class="muted">1回以上練習すると本番に進めます。</p>`}</div>`;
   document.getElementById("tryBtn").onclick = () => {
