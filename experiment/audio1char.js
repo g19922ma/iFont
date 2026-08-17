@@ -3,7 +3,7 @@
 //   - 1人の参加者が「聞き取り(A)」と「見分け(V)」を SET_TRIALS問×4ブロックで行う。
 //     ブロック順は AVAV / VAVA / AVVA / VAAV の4パターンからランダムに割り当て、
 //     全レコードに block_order / block_pos として記録する(順序・疲労の釣り合い)。
-//   - 既定は 25問×4=合計100問(聴覚50・視覚50)・約10分。?set=50 で50問×4に変更可(研究者用)。
+//   - 既定は 20問×4=合計80問(聴覚40・視覚40)・約8分。?set=50 で50問×4に変更可(研究者用)。
 //   - 聴覚: 単一のかな音声(B3・0.2秒/モーラ)を frac% まで再生して打ち切る(v2 と同一)。
 //     開始合図音1回 → 音声 → 終了合図音2回。「もう一度きく」可(回数を記録)。
 //   - 視覚: 単一のかな(base/<char>.png・256px)を CHAR_MS(200ms)×frac% だけ表示して消す。
@@ -20,9 +20,9 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.11";
+const VERSION = "3.12";
 const P = new URLSearchParams(location.search);
-const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
+const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
 const N_PRACTICE_A = 3, N_PRACTICE_V = 3;                 // 各モダリティ初回ブロック前の練習
 const CATCH_RATE = 0.05;
