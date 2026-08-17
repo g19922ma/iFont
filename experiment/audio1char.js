@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.19";
+const VERSION = "3.20";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -632,12 +632,20 @@ function intro() {
   const blocksSvg = [...blockOrder].map((m, i) => {
     const x = 15 + i * 158;
     const name = m === "A" ? "聴覚" : "視覚";
-    const icon = m === "A" ? "👂" : "👁";
     const col = m === "A" ? "#2E7D8F" : "#1E2A5E";
     const fill = m === "A" ? "#eef4f6" : "#fff";
+    // 単色の線画アイコン: 聴覚=ヘッドホン、視覚=目
+    const icon = m === "A"
+      ? `<g transform="translate(${x+34},50)" stroke="${col}" fill="none" stroke-width="2.5" stroke-linecap="round">
+           <path d="M -11 6 A 11 11 0 0 1 11 6"/>
+           <rect x="-14" y="4" width="5" height="11" rx="2.5" fill="${col}" stroke="none"/>
+           <rect x="9" y="4" width="5" height="11" rx="2.5" fill="${col}" stroke="none"/></g>`
+      : `<g transform="translate(${x+34},52)" stroke="${col}" fill="none" stroke-width="2.5">
+           <ellipse cx="0" cy="0" rx="14" ry="8.5"/>
+           <circle cx="0" cy="0" r="3.5" fill="${col}" stroke="none"/></g>`;
     return `<rect x="${x}" y="20" width="132" height="64" rx="10" fill="${fill}" stroke="${col}"/>
-      <text x="${x+34}" y="62" font-size="26" text-anchor="middle" fill="${col}">${icon}</text>
-      <text x="${x+84}" y="58" font-size="15" text-anchor="middle" fill="#1b2030">${name}</text>` +
+      ${icon}
+      <text x="${x+86}" y="58" font-size="15" text-anchor="middle" fill="#1b2030">${name}</text>` +
       (i < 3 ? `<text x="${x+146}" y="57" font-size="15" text-anchor="middle" fill="#6b7280">→</text>` : "");
   }).join("");
   screen.innerHTML = `<h1>課題の進め方</h1>
