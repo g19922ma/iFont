@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.27";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.28";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -252,13 +252,15 @@ function showMainGate(next) {
 
 // 進行ヘッダー: ステップ表示と本番の進捗バー。問題と問題の間でのみ更新する(表示中は動かない)。
 function progressHeader(inPractice, t) {
-  if (inPractice) return `<div class="muted">ステップ1／練習 ${ti+1} / ${N_PRACTICE} (間隔=${t.S}ms)</div>`;
+  // 条件(間隔)の表示は研究者モードのみ。参加者には出さない。
+  const dev = (window.PROD && PROD.enabled) ? "" : ` (間隔=${t.S}ms)`;
+  if (inPractice) return `<div class="muted">練習 ${ti+1} / ${N_PRACTICE}${dev}</div>`;
   const nMain = trials.length - N_PRACTICE;
   const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">ステップ2／本番 ${done+1} / ${nMain}</span>
+    <span style="white-space:nowrap">本番 ${done+1} / ${nMain}</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
-    <span style="white-space:nowrap">${pct}% (間隔=${t.S}ms)</span></div>`;
+    <span style="white-space:nowrap">${pct}%${dev}</span></div>`;
 }
 function runTrial() {
   if (ti >= trials.length) return showResults();
@@ -285,7 +287,7 @@ function startGate(stage, onPlay) {
   stage.style.height = "auto";
   stage.innerHTML = `<div style="text-align:center;padding:24px">
     <button class="primary" id="startBtn">準備ができたら開始（またはスペースキー）</button>
-    <div class="muted" style="margin-top:8px">押すと少し後に、音が3つ続けて鳴ります。耳を澄ませてください。</div></div>`;
+    <div class="muted" style="margin-top:8px">押すと少し後に、音が3つ続けて鳴ります。</div></div>`;
   const key = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); go(); } };
   function go(){ document.removeEventListener("keydown", key); begin(); }
   document.getElementById("startBtn").addEventListener("click", go, { once: true });
@@ -297,7 +299,7 @@ function runCountdown(stage, done) {
   let s = COUNTDOWN_S;
   const render = () => { stage.innerHTML =
     `<div style="text-align:center"><div style="font-size:64px;font-weight:700;color:#2E7D8F">${s}</div>` +
-    `<div class="muted">まもなく音が鳴ります（耳を澄ませて）</div></div>`; };
+    `<div class="muted">まもなく音が鳴ります</div></div>`; };
   render();
   const iv = setInterval(() => {
     s -= 1;

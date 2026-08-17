@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.23";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.24";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -147,13 +147,15 @@ function drawCountdown(ctx, sec) {
 
 // 進行ヘッダー: ステップ表示と本番の進捗バー。問題と問題の間でのみ更新する(表示中は動かない)。
 function progressHeader(inPractice, t) {
-  if (inPractice) return `<div class="muted">ステップ1／練習 ${ti+1} / ${N_PRACTICE} (間隔=${t.S}ms)</div>`;
+  // 条件(間隔)の表示は研究者モードのみ。参加者には出さない。
+  const dev = (window.PROD && PROD.enabled) ? "" : ` (間隔=${t.S}ms)`;
+  if (inPractice) return `<div class="muted">練習 ${ti+1} / ${N_PRACTICE}${dev}</div>`;
   const nMain = trials.length - N_PRACTICE;
   const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">ステップ2／本番 ${done+1} / ${nMain}</span>
+    <span style="white-space:nowrap">本番 ${done+1} / ${nMain}</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
-    <span style="white-space:nowrap">${pct}% (間隔=${t.S}ms)</span></div>`;
+    <span style="white-space:nowrap">${pct}%${dev}</span></div>`;
 }
 function runTrial() {
   if (ti >= trials.length) return showResults();
