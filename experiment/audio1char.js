@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.5";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.6";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -194,7 +194,7 @@ function progressHeader(inPractice, t) {
   const nMain = trials.length - N_PRACTICE;
   const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">本番 ${done+1} / ${nMain}</span>
+    <span style="white-space:nowrap">本番</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
     <span style="white-space:nowrap">${pct}%${dev}</span></div>`;
 }

@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.34";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.35";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -258,7 +258,7 @@ function progressHeader(inPractice, t) {
   const nMain = trials.length - N_PRACTICE;
   const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">本番 ${done+1} / ${nMain}</span>
+    <span style="white-space:nowrap">本番</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
     <span style="white-space:nowrap">${pct}%${dev}</span></div>`;
 }

@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.29";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.30";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -153,7 +153,7 @@ function progressHeader(inPractice, t) {
   const nMain = trials.length - N_PRACTICE;
   const done = ti - N_PRACTICE, pct = Math.round(done / nMain * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">本番 ${done+1} / ${nMain}</span>
+    <span style="white-space:nowrap">本番</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
     <span style="white-space:nowrap">${pct}%${dev}</span></div>`;
 }
