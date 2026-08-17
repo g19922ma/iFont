@@ -157,6 +157,8 @@ function doPost(e) {
         "char_ms", "overlap", "tau_ms",
         // 再生機器の申告(聴覚課題のみ。スピーカー/有線。無線は参加不可)
         "audio_device",
+        // 1文字統合セッション(v3)のブロック釣り合い(AVAV等)と何ブロック目か
+        "block_order", "block_pos",
       ]);
     }
     trials.appendRow([
@@ -198,6 +200,8 @@ function doPost(e) {
       blank(body.overlap),
       blank(body.tau_ms),
       body.audio_device || "",
+      blank(body.block_order),
+      blank(body.block_pos),
     ]);
 
     return out({status: "ok", correct: correct});
