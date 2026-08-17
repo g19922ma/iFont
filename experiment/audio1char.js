@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.36";
+const VERSION = "3.37";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -606,7 +606,7 @@ function showResults() {
   }
   const main = results.filter(r => !r.practice);
   screen.innerHTML = `<div style="text-align:center;padding:26px 10px">
-    <h1 style="border:none">終了です</h1>
+    <h1 style="border:none">全ての実験が終了しました</h1>
     <p>ご協力ありがとうございました。</p>
     <p style="margin-top:18px"><button class="primary" id="dl">結果JSONをダウンロード</button></p>
     <p class="muted" style="margin-top:14px">研究者向け表示（${main.length}問・ブロック順 ${blockOrder}）。本番モード(?prod=1)では完了コードが表示されます。</p></div>`;

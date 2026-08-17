@@ -235,8 +235,9 @@
   // 完了画面のHTML(本番モードのみ)。完了コードを大きく表示。
   function completionHTML(seconds) {
     return `<div style="text-align:center;padding:24px 10px">
-      <h1>ご協力ありがとうございました</h1>
-      <p>下の<b>完了コード</b>を、応募元の入力欄に貼り付けてください。</p>
+      <h1>全ての実験が終了しました</h1>
+      <p>ご協力ありがとうございました。</p>
+      <p>下の<b>完了コード</b>を、参加したサービスの入力欄に貼り付けてください。</p>
       <p style="font-size:30px;font-weight:800;letter-spacing:3px;color:#1E2A5E;
         background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:14px 8px;margin:14px auto;max-width:360px">${completionCode}</p>
       <p><button class="primary" onclick="navigator.clipboard.writeText('${completionCode}').then(()=>{this.textContent='コピーしました ✓'},()=>{this.textContent='コピーできませんでした。上のコードを手動で選択してください'})">完了コードをコピー</button></p>
