@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.8";
+const VERSION = "3.9";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -351,8 +351,7 @@ function audioGuideHTML() {
       <li>聞こえたかなを表から選びます（<b>何度でも聞き直せます</b>）</li>
     </ol>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>
-    <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」）。「じ／ぢ」のように同じ音になるかなは、1つの選択肢にまとめています。</p>`;
+    ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
 function visualGuideHTML() {
   return `
