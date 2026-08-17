@@ -20,9 +20,9 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.38";
+const VERSION = "3.39";
 const P = new URLSearchParams(location.search);
-const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
+let SET_TRIALS = Number(P.get("set") || 20);              // 1ブロックの問題数(既定20=合計80問・約8分)。短縮版チェックで2に。
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
 const N_PRACTICE_A = 3, N_PRACTICE_V = 3;                 // 各モダリティ初回ブロック前の練習
 const CATCH_RATE = 0.05;
@@ -599,29 +599,10 @@ function runVisualTrial(t) {
 // ---- 完了 -----------------------------------------------------------------
 function showResults() {
   const durS = Math.round(elapsedPrior + (Date.now() - T0) / 1000);
-  if (window.PROD && PROD.enabled) {
-    PROD.saveState("audio1char", { completed: true, duration_s: durS });
-    screen.innerHTML = PROD.completionHTML(durS);
-    return;
-  }
-  const main = results.filter(r => !r.practice);
-  screen.innerHTML = `<div style="text-align:center;padding:26px 10px">
-    <h1 style="border:none">全ての実験が終了しました</h1>
-    <p>ご協力ありがとうございました。</p>
-    <p style="margin-top:18px"><button class="primary" id="dl">結果JSONをダウンロード</button></p>
-    <p class="muted" style="margin-top:14px">研究者向け表示（${main.length}問・ブロック順 ${blockOrder}）。本番モード(?prod=1)では完了コードが表示されます。</p></div>`;
-  document.getElementById("dl").onclick = () => {
-    const blob = new Blob([JSON.stringify({
-      config: { VERSION, SET_TRIALS, BLOCK_ORDERS, blockOrder, N_PRACTICE_A, N_PRACTICE_V,
-        CATCH_RATE, FRAC_GRID, CHAR_MS, pitch_scheme: "B3" },
-      env: ENV, duration_s: durS, trials: main }, null, 2)], {type: "application/json"});
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-    a.download = `onechar_session_${Date.now()}.json`; a.click();
-  };
+  if (window.PROD && PROD.enabled) PROD.saveState("audio1char", { completed: true, duration_s: durS });
+  // 研究者モードでも本番と全く同じ完了画面(完了コード表示)を出す。
+  screen.innerHTML = PROD.completionHTML(durS);
 }
-
-let triedA = 0, triedV = 0, tryReturn = null;
-
 function start() {
   ensureCtx();
   if (resumeState && resumeState.trials) {
@@ -670,7 +651,12 @@ function intro() {
       <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">詳しい説明と練習は、各セッションの前にあります。</text>
     </svg>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：音量の確認</button></p>
+    ${(window.PROD&&PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（各セッション2問・動作確認用）</label></p>`}
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
+  const shortRun = document.getElementById("shortRun");
+  if (shortRun) shortRun.addEventListener("change", () => {
+    SET_TRIALS = shortRun.checked ? 2 : Number(P.get("set") || 20);
+  });
   document.getElementById("go").onclick = volumeCheck;
 }
 
@@ -735,11 +721,11 @@ const T0 = Date.now();
         screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
         return;
       }
-      PROD.consentScreen(screen, "かなの課題", 15, intro, true,
-        { noEnvNote: true, allowWireless: true,
-          desc: "日本語のかな1文字が、短い音声や短い表示からどの程度認識できるかを調べる研究です" });
     }
-    else intro();
+    // 研究者モード(?prodなし)でも本番と全く同じ流れ(同意画面から)。送信・再開保存だけが無効。
+    PROD.consentScreen(screen, "かなの課題", 15, intro, true,
+      { noEnvNote: true, allowWireless: true,
+        desc: "日本語のかな1文字が、短い音声や短い表示からどの程度認識できるかを調べる研究です" });
   }
   catch (e) { screen.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}</p>`; }
 })();
