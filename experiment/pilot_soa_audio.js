@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.22";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.23";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -462,30 +462,26 @@ function intro() {
      <b style="color:#a72b2b">★ 古い音源がブラウザのキャッシュから読み込まれています。</b>
      このまま実施するとデータが使えません。<b>強制再読み込み（Macは Command+Shift+R）</b>してから始めてください。
      <span class="muted">(最も小さい音「${fp.minCh}」の音源ピーク=${fp.minPeak.toFixed(3)}、新しい音源なら0.1前後)</span></p>`;
-  const startNote = START_MODE==="click"
-    ? `各問題は、準備ができたら <b>ボタン（またはスペースキー）</b> を押して自分のペースで始めます。`
-    : START_MODE==="countdown" ? `各問題の前に${COUNTDOWN_S}秒のカウントダウンが出ます。` : ``;
   const mobileNote = ENV.touch
     ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。
        次の画面で音量の確認だけもう一度お願いします。</p>` : "";
-  screen.innerHTML = `<h1>iFont パイロット: 聴覚・連続する音の間隔掃引（乙課題）</h1>
+  screen.innerHTML = `<h1>聞き取り課題の進め方</h1>
     ${staleWarn}${resumeNote}
-    <p><b>1問で答える音は「2つ」です。</b>かなの音声が<b>3つ</b>つづけて流れます（3つ目は答えない音です）。${startNote}以下の手順で進みます。</p>
+    <p>この課題では、かなの音声が<b>3つ</b>続けて流れます。<b>最初の2つの音を、聞こえた順番に答えてください。</b>3つ目の音は回答しません。</p>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
-      <li>準備ができたら <b>開始</b>（ボタン／スペース）</li>
-      <li><b>1つ目</b>の音（かな）が鳴る（<b>${SOA_LEVELS.join("・")}ms</b> のいずれかの間隔で次の音に切り替わる）</li>
-      <li>すぐ <b>2つ目</b>、つづけて <b>3つ目</b> の音が鳴る</li>
-      <li><b>1つ目 → 2つ目</b> の順に、かなの表から選ぶ（<b>3つ目は答えない</b>）</li>
+      <li>${START_MODE==="countdown" ? `${COUNTDOWN_S}秒のカウントダウンのあと、` : `準備ができたら<b>「開始」ボタン</b>またはスペースキーを押すと、`}かなの音声が3つ続けて流れます</li>
+      <li><b>1つ目</b>に聞こえたかなを表から選びます</li>
+      <li><b>2つ目</b>に聞こえたかなを表から選びます</li>
     </ol>
-    <p class="muted">かなは<b>単独で読んだときの音</b>です（「は」はハ、「へ」はヘ）。「じ／ぢ」のように<b>同じ音のかなは1つのボタンにまとめて</b>あり、どちらの字かを選ぶ必要はありません。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    <b>必ず3つ鳴ります。</b>間隔が短い問題では、1つ目が聞こえなかったと感じることがあります。
-    そのときも、<b>あとから聞こえた音を1つ目として答えず</b>、もっとも近いと思う文字を選んでください。</p>
-    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
-    <p class="muted">短く切り替わるので聞き取りにくい音もあります。分からない場合も、もっとも近いと思う文字を選んでください（外れも大切なデータです）。音声は単音プール(B3・0.2秒/モーラ)。</p>
+    音と音の切り替わりがとても速い問題もあります。そのため、最初の音がはっきり聞こえないことがあります。
+    その場合も、<b>後から聞こえた音をずらして回答せず</b>、1つ目・2つ目それぞれについて、もっとも近いと思う文字を選んでください。</p>
+    <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」、「へ」は「ヘ」）。「じ／ぢ」のように同じ音になるかなは、1つの選択肢にまとめています。</p>
+    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">最初に<b>練習 ${N_PRACTICE}問</b>を行います。練習では正解が表示されます。その後、<b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>を行います。本番では正解は表示されません。</p>
+    <p class="muted">聞き取りにくくても問題ありません。分からない場合も、もっとも近いと思う文字を選んでください。所要時間は8〜12分程度です。</p>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;

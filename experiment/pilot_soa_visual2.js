@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.20";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.21";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -376,9 +376,6 @@ function start() {
   trials = buildTrials(); results = []; ti = 0; mainStarted = false; runTrial();
 }
 function intro() {
-  const startNote = START_MODE==="click"
-    ? `各問題は、準備ができたら <b>ボタン（またはスペースキー）</b> を押して自分のペースで始めます。`
-    : START_MODE==="countdown" ? `各問題の前に${COUNTDOWN_S}秒のカウントダウンが出ます。` : ``;
   const pcNote = ENV.touch
     ? `<p class="muted" style="color:#C25B4E">この実験は表示のタイミングが重要です。<b>できればPC（パソコン）での参加を推奨します。</b>スマートフォンの場合は横向き・明るさ最大でお願いします。</p>` : ``;
   const charsetNote = CHARSET==="full"
@@ -386,21 +383,20 @@ function intro() {
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。</p>` : "";
-  screen.innerHTML = `<h1>iFont パイロット: 視覚・連続する文字の間隔掃引（乙課題）</h1>
+  screen.innerHTML = `<h1>見分け課題の進め方</h1>
     ${pcNote}${charsetNote}${resumeNote}
-    <p><b>1問で答える文字は「2つ」です。</b>同じ場所に、かなが<b>3文字</b>つづけて出ます（3文字目は答えない字です）。${startNote}以下の手順で進みます。</p>
+    <p>この課題では、同じ場所にかなが<b>3文字</b>続けて表示されます。<b>最初の2文字を、出た順番に答えてください。</b>3文字目は回答しません。</p>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
-      <li>表示枠の中央にある <b>＋</b> を見つめる</li>
-      <li>見たまま、枠の下の <b>[開始]</b> ボタン（またはスペース）を押す</li>
-      <li><b>1文字目</b> が出る（<b>${SOA_LEVELS.join("・")}ms</b> のいずれかの間隔）</li>
-      <li>同じ場所に <b>2文字目</b>、つづけて <b>3文字目</b> が出て、前の字を順に上書きする</li>
-      <li>白紙になったら、<b>1文字目 → 2文字目</b> の順に、かなの表から選ぶ（<b>3文字目は答えない</b>）</li>
+      <li>表示枠の中央にある <b>＋</b> を見つめ、${START_MODE==="countdown" ? `${COUNTDOWN_S}秒のカウントダウンを待ちます` : `準備ができたら<b>「開始」ボタン</b>またはスペースキーを押します`}</li>
+      <li>同じ場所にかなが3文字続けて表示されます（前の字は次の字で上書きされます）</li>
+      <li><b>1文字目</b>に出たかなを表から選びます</li>
+      <li><b>2文字目</b>に出たかなを表から選びます</li>
     </ol>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    <b>必ず3文字出ます。</b>間隔が短い問題では、1文字目が見えなかったと感じることがあります。
-    そのときも、<b>あとから見えた文字を1文字目として答えず</b>、もっとも近いと思う文字を選んでください。</p>
-    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">まず <b>練習 ${N_PRACTICE}問</b>（正解を表示）→ そのあと <b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>（各2文字回答・正解は非表示・記録あり）を行います。所要8〜12分。</p>
-    <p class="muted">前の字は次の字に上書きされて見えにくくなります。分からない場合も、もっとも近いと思う文字を選んでください（外れも大切なデータです）。${(window.PROD&&PROD.enabled)?"":"回答はこの端末の中だけで完結します。"}</p>
+    文字の切り替わりがとても速い問題もあります。そのため、最初の文字がはっきり見えないことがあります。
+    その場合も、<b>後から見えた文字をずらして回答せず</b>、1文字目・2文字目それぞれについて、もっとも近いと思う文字を選んでください。</p>
+    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">最初に<b>練習 ${N_PRACTICE}問</b>を行います。練習では正解が表示されます。その後、<b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>を行います。本番では正解は表示されません。</p>
+    <p class="muted">見えにくくても問題ありません。分からない場合も、もっとも近いと思う文字を選んでください。所要時間は8〜12分程度です。${(window.PROD&&PROD.enabled)?"":"回答はこの端末の中だけで完結します。"}</p>
     <p><button class="primary" id="go">次へ：見え方の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = visionCheck;
