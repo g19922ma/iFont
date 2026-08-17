@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.17";
+const VERSION = "3.18";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -268,7 +268,7 @@ function buildTrials() {
 const N_MAIN = () => SET_TRIALS * 4;
 function mainDone() { return results.filter(r => !r.practice).length; }
 function progressHeader(t) {
-  const modName = t.mod === "A" ? "聴覚" : "視覚";
+  const modName = t.mod === "A" ? "耳" : "目";
   if (t.practice) return `<div class="muted">${modName}の練習</div>`;
   const pct = Math.round(mainDone() / N_MAIN() * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
@@ -317,7 +317,7 @@ function runTrial() {
 // ブロックの区切り画面。
 function showGate(t) {
   if (t.gate === "try") return showTryGate(t);
-  const modName = t.mod === "A" ? "聴覚" : "視覚";
+  const modName = t.mod === "A" ? "耳" : "目";
   const body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（セッション ${t.block_pos} / 4）</h2>
       <p>やり方はさきほどの${modName}の課題と同じです。</p>`;
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">${body}
@@ -332,7 +332,7 @@ function audioGuideHTML() {
   return `
     <p>ひらがな<b>1文字</b>の読み上げが流れます。<b>聞こえた文字を、かなの表から選んでください。</b>
     読み上げは<b>途中までしか流れない</b>ことがあります。</p>
-    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="聴覚課題の流れの図">
+    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="耳の課題の流れの図">
       <rect x="30" y="22" width="130" height="72" rx="10" fill="#eef4f6" stroke="#2E7D8F"/>
       <rect x="30" y="22" width="52" height="72" rx="10" fill="#d8ecf0"/>
       <text x="70" y="68" font-size="30" text-anchor="middle" fill="#2E7D8F">♪</text>
@@ -353,7 +353,7 @@ function visualGuideHTML() {
   return `
     <p>同じ場所に、ひらがな<b>1文字</b>が短く表示されて消えます。<b>見えた文字を、かなの表から選んでください。</b>
     表示は<b>とても短い</b>ことがあります。</p>
-    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="視覚課題の流れの図">
+    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="目の課題の流れの図">
       <rect x="20" y="22" width="66" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
       <text x="53" y="68" font-size="32" text-anchor="middle" fill="#1b2030">か</text>
       <text x="103" y="60" font-size="14" text-anchor="middle" fill="#6b7280">→</text>
@@ -373,13 +373,13 @@ function visualGuideHTML() {
 }
 function showTryGate(t) {
   tryReturn = () => showTryGate(t);
-  const modName = t.mod === "A" ? "聴覚" : "視覚";
+  const modName = t.mod === "A" ? "耳" : "目";
   const tried = t.mod === "A" ? triedA : triedV;
   const accent = t.mod === "A" ? "#2E7D8F" : "#1E2A5E";
   screen.innerHTML = `<h2 style="color:#1E2A5E">【${modName}】の課題（セッション ${t.block_pos} / 4）</h2>
     ${t.mod === "A" ? audioGuideHTML() : visualGuideHTML()}
     <div style="text-align:center;margin-top:16px">
-      <p><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}を1問練習する`}</button></p>
+      <p><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}の課題を1問練習する`}</button></p>
       <p><button class="primary" id="goMain" ${tried ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
       ${tried ? "" : `<p class="muted">1回以上練習すると本番に進めます。</p>`}
     </div>`;
@@ -631,7 +631,7 @@ function intro() {
        <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
   const blocksSvg = [...blockOrder].map((m, i) => {
     const x = 15 + i * 158;
-    const name = m === "A" ? "聴覚" : "視覚";
+    const name = m === "A" ? "耳" : "目";
     const icon = m === "A" ? "♪" : "あ";
     const col = m === "A" ? "#2E7D8F" : "#1E2A5E";
     const fill = m === "A" ? "#eef4f6" : "#fff";
