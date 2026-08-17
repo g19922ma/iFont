@@ -190,6 +190,8 @@
   //   末尾の環境注意文を出さない(frac課題ページは従来どおり表示)。
   // opts.desc: 冒頭の研究説明の一文(「〜を調べる研究です」まで)。ページのモダリティに合わせる。
   //   省略時は従来の汎用文(frac課題ページの互換のため)。
+  // opts.allowWireless: 無線(Bluetooth)でも参加可にする(申告は必須のまま・控えめな注意のみ)。
+  //   合図音で頭欠けを吸収できるページ(1文字統合セッション)用。乙課題は合図音が無いため禁止のまま。
   function consentScreen(el, taskLabel, minutes, onOk, headphone, opts) {
     const o = opts || {};
     const desc = o.desc || "日本語のかな1文字の分かりやすさを文字ごとに測る研究です";
@@ -216,11 +218,16 @@
     const go = el.querySelector("#cstGo");
     const devRadios = el.querySelectorAll('input[name="dev"]');
     const devWarn = el.querySelector("#devWarn");
-    const devOk = () => !headphone || (audioDevice && audioDevice !== "無線");
+    const devOk = () => !headphone || (audioDevice && (o.allowWireless || audioDevice !== "無線"));
     function ready() {
       go.disabled = !devOk(); go.style.opacity = devOk() ? "1" : ".5";
     }
     ready();   // 機器申告のないページ(視覚など)は最初から押せる
+    if (o.allowWireless && devWarn) {
+      // 無線可のページでは、ブロックせず控えめなおすすめ表示に差し替える。
+      devWarn.innerHTML = "無線（Bluetooth）機器は音の始まりが欠けることがあります。できればスピーカーか有線接続がおすすめですが、このままでも参加できます。";
+      devWarn.style.color = "#8a6d1a";
+    }
     devRadios.forEach(r => r.addEventListener("change", () => {
       audioDevice = r.value;
       if (devWarn) devWarn.style.display = audioDevice === "無線" ? "block" : "none";

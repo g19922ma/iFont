@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.0";
+const VERSION = "3.1";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -629,7 +629,7 @@ function playSample() {
 }
 function volumeCheck() {
   const mobileNote = ENV.touch
-    ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
+    ? `スマートフォンの場合は、静かな場所で、音量をやや大きめにすると聞き取りやすくなります。` : ``;
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
     <p>下のボタンで<b>サンプル音</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
@@ -679,7 +679,8 @@ const T0 = Date.now();
         return;
       }
       PROD.consentScreen(screen, "かなの課題", 15, intro, true,
-        { noEnvNote: true, desc: "日本語のかな1文字が、短い音声や短い表示からどの程度認識できるかを調べる研究です" });
+        { noEnvNote: true, allowWireless: true,
+          desc: "日本語のかな1文字が、短い音声や短い表示からどの程度認識できるかを調べる研究です" });
     }
     else intro();
   }
