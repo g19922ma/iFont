@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.11";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.12";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -431,7 +431,7 @@ function volumeCheck() {
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
     <p>下のボタンで<b>サンプル音</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
-    <p style="background:#fff6f4;border:1px solid #f0d0c8;border-radius:8px;padding:12px 14px">
+    <p style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:12px 14px">
       <button id="sample" class="playbtn">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
       <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
