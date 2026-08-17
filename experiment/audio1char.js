@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.35";
+const VERSION = "3.36";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -605,9 +605,11 @@ function showResults() {
     return;
   }
   const main = results.filter(r => !r.practice);
-  screen.innerHTML = `<h1>パイロット完了</h1>
-    <p class="muted">回答 ${main.length} 問（ブロック順 ${blockOrder}）。聴覚の採点は answer_key を持つ解析側で行う。</p>
-    <p><button class="primary" id="dl">結果JSONをダウンロード</button></p>`;
+  screen.innerHTML = `<div style="text-align:center;padding:26px 10px">
+    <h1 style="border:none">終了です</h1>
+    <p>ご協力ありがとうございました。</p>
+    <p style="margin-top:18px"><button class="primary" id="dl">結果JSONをダウンロード</button></p>
+    <p class="muted" style="margin-top:14px">研究者向け表示（${main.length}問・ブロック順 ${blockOrder}）。本番モード(?prod=1)では完了コードが表示されます。</p></div>`;
   document.getElementById("dl").onclick = () => {
     const blob = new Blob([JSON.stringify({
       config: { VERSION, SET_TRIALS, BLOCK_ORDERS, blockOrder, N_PRACTICE_A, N_PRACTICE_V,
