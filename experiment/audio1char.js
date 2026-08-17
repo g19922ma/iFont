@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.2";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.3";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -264,12 +264,15 @@ function runTrial() {
     }
     results.push(Object.assign({practice: true}, rec));
     // 練習: 本人の答えだけを見せる(正解表は端末に無いため正解は表示できない)。
+    // 解説は初回だけ詳しく、2問目からは答えの確認のみ(毎回読ませない)。
+    const note = (ti === 0)
+      ? `<p class="muted" style="line-height:1.8">これは練習です（答えは記録されません）。<br>
+         ほとんど聞こえない問もありますが、もっとも近いと思う文字を選べばOKです。※この課題は正解を表示しません。</p>`
+      : `<p class="muted">これは練習です。</p>`;
     screen.innerHTML = `<div style="text-align:center;padding:30px">
       <p style="font-size:17px">あなたの答え: <b style="font-size:24px">${picked ? kanaLabel(picked) : "（未選択）"}</b></p>
-      <p class="muted" style="line-height:1.8">これは練習です。答えは記録されません。<br>
-        ほとんど何も聞こえない問もあります。その場合も、もっとも近いと思う文字を選んでください。<br>
-        （この課題では正解をお見せできません。答えはこの端末に置いていないためです。）</p></div>`;
-    setTimeout(() => { ti++; runTrial(); }, 3000);
+      ${note}</div>`;
+    setTimeout(() => { ti++; runTrial(); }, ti === 0 ? 3000 : 1400);
   };
 
   const showConfirm = () => {
