@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.29";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.30";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -242,7 +242,7 @@ function showMainGate(next) {
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">
     <h2 style="color:#1E2A5E">これから本番です</h2>
     <p>本番では <b>正解は表示されません</b>。ここからの回答が記録されます。</p>
-    <p class="muted">本番は <b>${nMain}問</b>（各2文字回答）です。やり方は練習と同じです。ヘッドホンの装着を確認してください。</p>
+    <p class="muted">本番は <b>${nMain}問</b>です。やり方は練習と同じです。</p>
     <p style="margin-top:20px"><button class="primary" id="mainGo">本番を始める（またはスペースキー）</button></p></div>`;
   const key = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); go(); } };
   function go(){ document.removeEventListener("keydown", key); next(); }

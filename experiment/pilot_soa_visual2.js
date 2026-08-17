@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.25";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.26";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -173,7 +173,7 @@ function showMainGate(next) {
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">
     <h2 style="color:#1E2A5E">これから本番です</h2>
     <p>本番では <b>正解は表示されません</b>。ここからの回答が記録されます。</p>
-    <p class="muted">本番は <b>${nMain}問</b>（各2文字回答）です。やり方は練習と同じです。</p>
+    <p class="muted">本番は <b>${nMain}問</b>です。やり方は練習と同じです。</p>
     <p style="margin-top:20px"><button class="primary" id="mainGo">本番を始める（またはスペースキー）</button></p></div>`;
   const key = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); go(); } };
   function go(){ document.removeEventListener("keydown", key); next(); }
