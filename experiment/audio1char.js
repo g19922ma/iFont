@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.6";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.7";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -235,6 +235,7 @@ function runTrial() {
   let tStim = null;      // 最初に鳴らし始めた時刻(反応時間の起点)
   let replays = 0;       // 「もう一度きく」を押した回数
   let picked = null, pickedRt = null;
+  let autoTimer = null;  // 2問目以降の自動再生タイマー
 
   screen.innerHTML = `${progressHeader(inPractice, t)}
     <div id="stage">
@@ -250,6 +251,7 @@ function runTrial() {
 
   const finalize = () => {
     document.removeEventListener("keydown", keyHandler);
+    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     stopAll();
     const rec = { stimulus_id: t.id, response_char: picked, modality: "audio1char",
       q_set: "all", pitch_scheme: "B3", frac: t.frac, n_choices: N_CHOICES,
@@ -301,6 +303,7 @@ function runTrial() {
   };
 
   const play = () => {
+    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     if (tStim === null) {
       tStim = performance.now();
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
@@ -318,6 +321,8 @@ function runTrial() {
   playBtn.onclick = play;
   document.addEventListener("keydown", keyHandler);
   showGrid();
+  // 2問目以降は自動で再生を始める(クリック回数の削減・丸山判断 8/17)。初回のみ手動開始。
+  if (playBtnIntroduced) autoTimer = setTimeout(play, 700);
 }
 
 // 練習の後、本番に入る前の確認画面。
