@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.38";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.39";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -478,8 +478,8 @@ function intro() {
     ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
-       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。
-       次の画面で音量の確認だけもう一度お願いします。</p>` : "";
+       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
   screen.innerHTML = `<h1>聞き取り課題の進め方</h1>
     ${staleWarn}${resumeNote}
     <p>この課題では、かなの音声が<b>3つ</b>続けて流れます。<b>最初の2つの音を、聞こえた順番に答えてください。</b>3つ目の音は回答しません。</p>

@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.33";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.34";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -390,7 +390,8 @@ function intro() {
     ? `<p class="muted" style="color:#2E7D8F">基礎データモードです。回答の表に ゐ・ゑ・小書きかな を含みます（出題は小書きを除く${CHARS.length}字）。</p>` : ``;
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
-       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。</p>` : "";
+       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。</span></p>` : "";
   screen.innerHTML = `<h1>見分け課題の進め方</h1>
     ${pcNote}${charsetNote}${resumeNote}
     <p>この課題では、同じ場所にかなが<b>3文字</b>続けて表示されます。<b>最初の2文字を、出た順番に答えてください。</b>3文字目は回答しません。</p>

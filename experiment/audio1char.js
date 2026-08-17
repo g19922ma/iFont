@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.10";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.11";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -376,8 +376,8 @@ function start() {
 function intro() {
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
-       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。練習はとばします。
-       次の画面で音量の確認だけもう一度お願いします。</p>` : "";
+       <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
   screen.innerHTML = `<h1>聞き取り課題の進め方</h1>
     ${resumeNote}
     <p>この課題では、ひらがな<b>1文字</b>の読み上げが流れます。<b>聞こえた文字を、かなの表から選んでください。</b>
