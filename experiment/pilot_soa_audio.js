@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.31";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.32";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -483,6 +483,25 @@ function intro() {
   screen.innerHTML = `<h1>聞き取り課題の進め方</h1>
     ${staleWarn}${resumeNote}
     <p>この課題では、かなの音声が<b>3つ</b>続けて流れます。<b>最初の2つの音を、聞こえた順番に答えてください。</b>3つ目の音は回答しません。</p>
+    <svg viewBox="0 0 640 150" style="width:100%;max-width:580px;display:block;margin:4px auto 8px" role="img" aria-label="課題の流れの図">
+      <rect x="20" y="22" width="72" height="72" rx="10" fill="#eef4f6" stroke="#2E7D8F"/>
+      <text x="56" y="68" font-size="30" text-anchor="middle" fill="#2E7D8F">♪</text>
+      <text x="56" y="118" font-size="13" text-anchor="middle" fill="#1b2030">1つ目</text>
+      <text x="103" y="64" font-size="16" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="114" y="22" width="72" height="72" rx="10" fill="#eef4f6" stroke="#2E7D8F"/>
+      <text x="150" y="68" font-size="30" text-anchor="middle" fill="#2E7D8F">♪</text>
+      <text x="150" y="118" font-size="13" text-anchor="middle" fill="#1b2030">2つ目</text>
+      <text x="197" y="64" font-size="16" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="208" y="22" width="72" height="72" rx="10" fill="#f4f4f4" stroke="#b0b6c2" stroke-dasharray="5 4"/>
+      <text x="244" y="68" font-size="30" text-anchor="middle" fill="#9aa1ad">♪</text>
+      <text x="244" y="118" font-size="13" text-anchor="middle" fill="#6b7280">3つ目（答えない）</text>
+      <text x="322" y="64" font-size="20" text-anchor="middle" fill="#2E7D8F">➡</text>
+      <rect x="356" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
+      ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${372+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
+      <text x="401" y="41" font-size="12" text-anchor="middle" fill="#2E7D8F">1</text>
+      <text x="459" y="67" font-size="12" text-anchor="middle" fill="#2E7D8F">2</text>
+      <text x="487" y="122" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1つ目 → 2つ目 の順に選ぶ</text>
+    </svg>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
       <li>${START_MODE==="countdown" ? `${COUNTDOWN_S}秒のカウントダウンのあと、` : `準備ができたら<b>「開始」ボタン</b>またはスペースキーを押すと、`}かなの音声が3つ続けて流れます</li>
       <li><b>1つ目</b>に聞こえたかなを表から選びます</li>

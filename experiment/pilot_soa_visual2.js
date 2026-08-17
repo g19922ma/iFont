@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.26";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.27";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -394,6 +394,26 @@ function intro() {
   screen.innerHTML = `<h1>見分け課題の進め方</h1>
     ${pcNote}${charsetNote}${resumeNote}
     <p>この課題では、同じ場所にかなが<b>3文字</b>続けて表示されます。<b>最初の2文字を、出た順番に答えてください。</b>3文字目は回答しません。</p>
+    <svg viewBox="0 0 640 162" style="width:100%;max-width:580px;display:block;margin:4px auto 8px" role="img" aria-label="課題の流れの図">
+      <rect x="20" y="22" width="72" height="72" rx="10" fill="#fff" stroke="#1E2A5E"/>
+      <text x="56" y="72" font-size="38" text-anchor="middle" fill="#1b2030">か</text>
+      <text x="56" y="118" font-size="13" text-anchor="middle" fill="#1b2030">1文字目</text>
+      <text x="103" y="64" font-size="16" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="114" y="22" width="72" height="72" rx="10" fill="#fff" stroke="#1E2A5E"/>
+      <text x="150" y="72" font-size="38" text-anchor="middle" fill="#1b2030">さ</text>
+      <text x="150" y="118" font-size="13" text-anchor="middle" fill="#1b2030">2文字目</text>
+      <text x="197" y="64" font-size="16" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="208" y="22" width="72" height="72" rx="10" fill="#f4f4f4" stroke="#b0b6c2" stroke-dasharray="5 4"/>
+      <text x="244" y="72" font-size="38" text-anchor="middle" fill="#9aa1ad">と</text>
+      <text x="244" y="118" font-size="13" text-anchor="middle" fill="#6b7280">3文字目（答えない）</text>
+      <text x="322" y="64" font-size="20" text-anchor="middle" fill="#1E2A5E">➡</text>
+      <rect x="356" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
+      ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${372+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
+      <text x="401" y="41" font-size="12" text-anchor="middle" fill="#1E2A5E">1</text>
+      <text x="459" y="67" font-size="12" text-anchor="middle" fill="#1E2A5E">2</text>
+      <text x="487" y="122" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1文字目 → 2文字目 の順に選ぶ</text>
+      <text x="150" y="146" font-size="12" text-anchor="middle" fill="#6b7280">※実際は同じ場所に、前の字を上書きしながら表示されます</text>
+    </svg>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
       <li>表示枠の中央にある <b>＋</b> を見つめ、${START_MODE==="countdown" ? `${COUNTDOWN_S}秒のカウントダウンを待ちます` : `準備ができたら<b>「開始」ボタン</b>またはスペースキーを押します`}</li>
       <li>同じ場所にかなが3文字続けて表示されます（前の字は次の字で上書きされます）</li>
