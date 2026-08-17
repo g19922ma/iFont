@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.7";
+const VERSION = "3.8";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -328,18 +328,69 @@ function showGate(t) {
   document.getElementById("gateGo").addEventListener("click", go, { once: true });
   document.addEventListener("keydown", key);
 }
-// 初回ブロックの練習ゲート: そのモダリティを1問ずつ何度でも練習でき、1回以上で本番へ。
+// 初回ブロックの練習ゲート: その課題の説明+練習(何度でも)。1回以上で本番へ。
+function audioGuideHTML() {
+  return `
+    <p>ひらがな<b>1文字</b>の読み上げが流れます。<b>聞こえた文字を、かなの表から選んでください。</b>
+    読み上げは<b>途中までしか流れない</b>ことがあります。</p>
+    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="聞き取りの流れの図">
+      <rect x="30" y="22" width="130" height="72" rx="10" fill="#eef4f6" stroke="#2E7D8F"/>
+      <rect x="30" y="22" width="52" height="72" rx="10" fill="#d8ecf0"/>
+      <text x="70" y="68" font-size="30" text-anchor="middle" fill="#2E7D8F">♪</text>
+      <line x1="82" y1="26" x2="82" y2="90" stroke="#2E7D8F" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="95" y="118" font-size="13" text-anchor="middle" fill="#1b2030">途中で切れることがある</text>
+      <text x="210" y="64" font-size="20" text-anchor="middle" fill="#2E7D8F">➡</text>
+      <rect x="250" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
+      ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${266+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
+      <rect x="324" y="52" width="22" height="20" rx="4" fill="#2E7D8F"/>
+      <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
+      <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">聞こえた文字を表から選ぶ</text>
+    </svg>
+    <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
+      <li>「ピッ」と<b>1回</b>鳴ったあとに読み上げが流れ、終わると「ピッピッ」と<b>2回</b>鳴ります</li>
+      <li>聞こえたかなを表から選びます（<b>何度でも聞き直せます</b>）</li>
+    </ol>
+    <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
+    ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>
+    <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」）。「じ／ぢ」のように同じ音になるかなは、1つの選択肢にまとめています。</p>`;
+}
+function visualGuideHTML() {
+  return `
+    <p>同じ場所に、ひらがな<b>1文字</b>が短く表示されて消えます。<b>見えた文字を、かなの表から選んでください。</b>
+    表示は<b>とても短い</b>ことがあります。</p>
+    <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="見分けの流れの図">
+      <rect x="20" y="22" width="66" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
+      <text x="53" y="68" font-size="32" text-anchor="middle" fill="#1b2030">か</text>
+      <text x="103" y="60" font-size="14" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="120" y="22" width="66" height="66" rx="8" fill="#f6f6f6" stroke="#b0b6c2" stroke-dasharray="5 4"/>
+      <text x="153" y="62" font-size="13" text-anchor="middle" fill="#9aa1ad">白紙</text>
+      <text x="103" y="118" font-size="13" text-anchor="middle" fill="#1b2030">短く表示されて消える</text>
+      <text x="220" y="64" font-size="20" text-anchor="middle" fill="#1E2A5E">➡</text>
+      <rect x="250" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
+      ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${266+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
+      <rect x="324" y="52" width="22" height="20" rx="4" fill="#1E2A5E"/>
+      <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
+      <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
+    </svg>
+    <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
+      <li>中央の <b>＋</b> のあとに、かなが短く表示されて消えます</li>
+      <li>見えたかなを表から選びます（<b>もう一度表示できます</b>）</li>
+    </ol>
+    <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
+    ほとんど見えない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
+}
 function showTryGate(t) {
   tryReturn = () => showTryGate(t);
   const modName = t.mod === "A" ? "聞き取り" : "見分け";
   const tried = t.mod === "A" ? triedA : triedV;
   const accent = t.mod === "A" ? "#2E7D8F" : "#1E2A5E";
-  screen.innerHTML = `<div style="text-align:center;padding:30px 20px">
-    <h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
-    <p>まず1問ずつ練習できます（別の問題で何度でも）。納得したら本番へ進んでください。</p>
-    <p style="margin:18px 0"><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}を1問練習する`}</button></p>
-    <p><button class="primary" id="goMain" ${tried ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
-    ${tried ? "" : `<p class="muted">1回以上練習すると本番に進めます。</p>`}</div>`;
+  screen.innerHTML = `<h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
+    ${t.mod === "A" ? audioGuideHTML() : visualGuideHTML()}
+    <div style="text-align:center;margin-top:16px">
+      <p><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}を1問練習する`}</button></p>
+      <p><button class="primary" id="goMain" ${tried ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
+      ${tried ? "" : `<p class="muted">1回以上練習すると本番に進めます。</p>`}
+    </div>`;
   document.getElementById("tryBtn").onclick = () => {
     if (t.mod === "A") { triedA++; runAudioTrial(buildTryout("A")); }
     else { triedV++; runVisualTrial(buildTryout("V")); }
@@ -588,38 +639,9 @@ function intro() {
        <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
   screen.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
-    <p>この課題は<b>2種類</b>あり、交互にブロックで行います。どちらも、ひらがな<b>1文字</b>が出題され、
-    <b>分かった文字を、かなの表から選んでください。</b>音や表示は<b>途中までしか出ない</b>ことがあります。</p>
-    <svg viewBox="0 0 640 232" style="width:100%;max-width:580px;display:block;margin:4px auto 8px" role="img" aria-label="課題の流れの図">
-      <text x="20" y="48" font-size="14" fill="#1b2030">聞き取り</text>
-      <rect x="90" y="14" width="120" height="60" rx="10" fill="#eef4f6" stroke="#2E7D8F"/>
-      <rect x="90" y="14" width="46" height="60" rx="10" fill="#d8ecf0"/>
-      <text x="124" y="52" font-size="26" text-anchor="middle" fill="#2E7D8F">♪</text>
-      <line x1="136" y1="18" x2="136" y2="70" stroke="#2E7D8F" stroke-width="2" stroke-dasharray="4 3"/>
-      <text x="150" y="94" font-size="12" text-anchor="middle" fill="#6b7280">途中で切れることがある</text>
-      <text x="20" y="168" font-size="14" fill="#1b2030">見分け</text>
-      <rect x="90" y="128" width="60" height="60" rx="8" fill="#fff" stroke="#1E2A5E"/>
-      <text x="120" y="170" font-size="30" text-anchor="middle" fill="#1b2030">か</text>
-      <text x="172" y="162" font-size="14" fill="#6b7280">→</text>
-      <rect x="190" y="128" width="60" height="60" rx="8" fill="#fff" stroke="#b0b6c2" stroke-dasharray="5 4"/>
-      <text x="220" y="170" font-size="13" text-anchor="middle" fill="#9aa1ad">白紙</text>
-      <text x="170" y="212" font-size="12" text-anchor="middle" fill="#6b7280">とても短く表示されて消える</text>
-      <text x="300" y="112" font-size="20" text-anchor="middle" fill="#2E7D8F">➡</text>
-      <rect x="330" y="62" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
-      ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${346+c*29}" y="${74+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
-      <rect x="404" y="100" width="22" height="20" rx="4" fill="#2E7D8F"/>
-      <text x="415" y="114" font-size="12" text-anchor="middle" fill="#fff">選</text>
-      <text x="461" y="170" font-size="13" text-anchor="middle" fill="#1b2030">分かった文字を表から選ぶ</text>
-    </svg>
-    <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
-      <li><b>聞き取り</b>：「ピッ」と1回鳴ったあとに読み上げが流れ、終わると「ピッピッ」と2回鳴ります</li>
-      <li><b>見分け</b>：中央の ＋ のあとに、かなが短く表示されて消えます</li>
-      <li>分かった文字を表から選びます（<b>聞き直し・再表示は何度でも</b>できます）</li>
-    </ol>
-    <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    ほとんど何も聞こえない・見えない問題もあります。
-    その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>
-    <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」）。聞き取りでは「じ／ぢ」のように同じ音になるかなを1つの選択肢にまとめています。</p>
+    <p>この課題は<b>2種類</b>（聞き取り・見分け）あり、ブロックで交互に行います。
+    どちらも、ひらがな<b>1文字</b>が出題され、<b>分かった文字をかなの表から選びます</b>。</p>
+    <p class="muted">それぞれのくわしいやり方は、各課題が始まる前に説明と練習があります。</p>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;
