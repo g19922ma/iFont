@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.41";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.42";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -225,10 +225,25 @@ function gatedBuffer(ch, gateS) {
   for (let i=0;i<nf;i++){ b[i]*=i/nf; b[n-1-i]*=i/nf; }   // 立上げ/立下げフェード
   return out;
 }
+// v3.42: 3音の前に合図音(ピッ)→0.6秒の間を置く。無線(Bluetooth)機器の再生開始時に
+// 最初の音の頭が欠けるのを、合図音が接続を起こすことで防ぐ(1文字統合セッションと同じ構成)。
+const BEEP_HZ = 880, BEEP_MS = 80, BEEP_LEAD_MS = 600;
+function playBeep(when) {
+  const ctx = ensureCtx();
+  const osc = ctx.createOscillator(); const g = ctx.createGain();
+  osc.type = "sine"; osc.frequency.value = BEEP_HZ;
+  osc.connect(g); g.connect(ctx.destination);
+  g.gain.setValueAtTime(0.0001, when);
+  g.gain.exponentialRampToValueAtTime(0.12, when + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, when + BEEP_MS / 1000);
+  osc.start(when); osc.stop(when + BEEP_MS / 1000 + 0.02);
+}
 // v1.7: 雑音バーストを廃止し、「答えさせない3音目」で2音目の聞こえ終わりを揃える(視覚の乙課題と対称)。
 function playSeq(t) {
   const ctx = ensureCtx();
-  const t0 = ctx.currentTime + 0.15;
+  const tb = ctx.currentTime + 0.05;
+  playBeep(tb);                                  // 合図音(1回)。0.6秒後に1音目。
+  const t0 = tb + BEEP_LEAD_MS / 1000;
   const S = t.S/1000;
   const s1 = ctx.createBufferSource(); s1.buffer = gatedBuffer(t.c1, S); s1.connect(ctx.destination); s1.start(t0);
   const s2 = ctx.createBufferSource(); s2.buffer = gatedBuffer(t.c2, S); s2.connect(ctx.destination); s2.start(t0 + S);
@@ -475,7 +490,7 @@ function intro() {
      このまま実施するとデータが使えません。<b>強制再読み込み（Macは Command+Shift+R）</b>してから始めてください。
      <span class="muted">(最も小さい音「${fp.minCh}」の音源ピーク=${fp.minPeak.toFixed(3)}、新しい音源なら0.1前後)</span></p>`;
   const mobileNote = ENV.touch
-    ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
+    ? `スマートフォンの場合は、静かな場所で、音量をやや大きめにすると聞き取りやすくなります。` : ``;
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>（本番 ${resumeState.ti - N_PRACTICE + 1}問目から）。
@@ -532,7 +547,7 @@ function playSample() {
 function volumeCheck() {
   const resuming = !!(resumeState && resumeState.trials);
   const mobileNote = ENV.touch
-    ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
+    ? `スマートフォンの場合は、静かな場所で、音量をやや大きめにすると聞き取りやすくなります。` : ``;
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
     <p>下のボタンで<b>サンプル音（あ・い・う・え・お）</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
@@ -674,7 +689,8 @@ function prodMeta(){ return { version:VERSION, speaker:poolMeta.speaker,
         return;
       }
       PROD.consentScreen(screen, "かなの音声を聞き、聞こえた文字を回答する課題", 10, intro, true,
-        { noEnvNote: true, desc: "日本語のかな1文字が、短い音声からどの程度認識できるかを調べる研究です" });
+        { noEnvNote: true, allowWireless: true,
+          desc: "日本語のかな1文字が、短い音声からどの程度認識できるかを調べる研究です" });
     }
     else intro();
   }
