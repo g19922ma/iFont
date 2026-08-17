@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.20";
+const VERSION = "3.21";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -653,7 +653,7 @@ function intro() {
     <p>課題には<b>4つのセッション</b>があります。この順番に行います。</p>
     <svg viewBox="0 0 640 120" style="width:100%;max-width:580px;display:block;margin:8px auto" role="img" aria-label="ブロックの順番">
       ${blocksSvg}
-      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">くわしい説明と練習は、各セッションの前にあります。</text>
+      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">詳しい説明と練習は、各セッションの前にあります。</text>
     </svg>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
