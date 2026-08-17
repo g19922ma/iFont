@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.28";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.29";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -425,7 +425,7 @@ function intro() {
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     文字の切り替わりがとても速い問題もあります。そのため、最初の文字がはっきり見えないことがあります。
     その場合も、1文字目・2文字目それぞれについて、もっとも近いと思う文字を選んでください。</p>
-    <p class="muted">所要時間は8〜12分程度です。${(window.PROD&&PROD.enabled)?"":"回答はこの端末の中だけで完結します。"}</p>
+    ${(window.PROD&&PROD.enabled)?"":`<p class="muted">回答はこの端末の中だけで完結します。</p>`}
     <p><button class="primary" id="go">次へ：見え方の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = visionCheck;
