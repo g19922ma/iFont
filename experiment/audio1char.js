@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.24";
+const VERSION = "3.25";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -367,7 +367,7 @@ function visualGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
-    <p class="muted">中央の ＋ のあとに表示されます。もう一度表示することもできます。</p>
+    <p class="muted">中央の ＋ のあとに自動で表示されます。「もう一度みる」で再表示できます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     ほとんど見えない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
@@ -496,9 +496,9 @@ function runVisualTrial(t) {
     <div id="stage">
       <div id="vbox" style="text-align:center;margin:10px 0 6px"></div>
       <div style="text-align:center;margin:6px 0 10px">
-        <button id="playBtn" class="playbtn" style="background:#1E2A5E">${vIntroduced ? "▶ 表示する" : "▶ 準備ができたら表示する（またはスペースキー）"}</button>
+        <button id="playBtn" style="display:none;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #1E2A5E;background:#fff;color:#1E2A5E;cursor:pointer">▶ もう一度みる</button>
       </div>
-      ${vIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ を見つめてボタンを押すと、ひらがな1文字が短く表示されます。見えた文字を下の表から選んでください。</div>`}
+      ${vIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。まもなく、ひらがな1文字が短く表示されます。</div>`}
       <div id="answerArea"></div>
     </div>`;
   const playBtn = document.getElementById("playBtn");
@@ -553,9 +553,9 @@ function runVisualTrial(t) {
       if (!isFirstShow) return;
       tStim = performance.now();   // 反応時間の起点=最初の提示開始
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      playBtn.textContent = "▶ もう一度みる";
+      playBtn.style.display = "inline-block";
       const pr = document.getElementById("prompt");
-      if (pr) pr.textContent = "見えた文字を下の表から選んでください。もう一度表示することもできます。";
+      if (pr) pr.textContent = "見えた文字を下の表から選んでください。";
       vIntroduced = true;
     };
     function frame(now) {
@@ -584,7 +584,8 @@ function runVisualTrial(t) {
   playBtn.onclick = present;
   document.addEventListener("keydown", keyHandler);
   showGrid();
-  if (vIntroduced) autoTimer = setTimeout(present, AUTO_START_MS);
+  // 視覚は常に自動表示(ボタン押下不要)。初回だけ読み時間を長めに取る。
+  autoTimer = setTimeout(present, vIntroduced ? AUTO_START_MS : 1200);
 }
 
 // ---- 完了 -----------------------------------------------------------------
