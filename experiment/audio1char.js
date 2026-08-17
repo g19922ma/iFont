@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.34";
+const VERSION = "3.35";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -325,8 +325,7 @@ function runTrial() {
 function showGate(t) {
   if (t.gate === "try") return showTryGate(t);
   const modName = t.mod === "A" ? "聴覚" : "視覚";
-  const body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（セッション ${t.block_pos} / 4）</h2>
-      <p>やり方はさきほどの${modName}の課題と同じです。</p>`;
+  const body = `<h2 style="color:#1E2A5E">【${modName}】の課題（セッション ${t.block_pos} / 4）</h2>`;
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">${body}
     <p style="margin-top:20px"><button class="primary" id="gateGo">始める（またはスペースキー）</button></p></div>`;
   const key = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); go(); } };
