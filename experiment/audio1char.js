@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.12";
+const VERSION = "3.13";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -246,7 +246,7 @@ function buildTryout(mod) {
 // セッション全体: ブロック順に従い、区切り画面(gate)と練習を差し込む。
 // モダリティごとに SET_TRIALS×2 問を作って半分ずつ配る(2ブロック合計で刺激とfracが均等)。
 function buildTrials() {
-  blockOrder = BLOCK_ORDERS[Math.floor(Math.random() * BLOCK_ORDERS.length)];
+  if (!blockOrder) blockOrder = BLOCK_ORDERS[Math.floor(Math.random() * BLOCK_ORDERS.length)];
   const allA = buildModality("A", SET_TRIALS * 2);
   const allV = buildModality("V", SET_TRIALS * 2);
   const setsA = [allA.slice(0, SET_TRIALS), allA.slice(SET_TRIALS)];
@@ -629,11 +629,24 @@ function intro() {
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>。
        <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
+  const blocksSvg = [...blockOrder].map((m, i) => {
+    const x = 15 + i * 158;
+    const name = m === "A" ? "聞き取り" : "見分け";
+    const icon = m === "A" ? "♪" : "あ";
+    const col = m === "A" ? "#2E7D8F" : "#1E2A5E";
+    const fill = m === "A" ? "#eef4f6" : "#fff";
+    return `<rect x="${x}" y="20" width="132" height="64" rx="10" fill="${fill}" stroke="${col}"/>
+      <text x="${x+34}" y="62" font-size="26" text-anchor="middle" fill="${col}">${icon}</text>
+      <text x="${x+84}" y="58" font-size="15" text-anchor="middle" fill="#1b2030">${name}</text>` +
+      (i < 3 ? `<text x="${x+146}" y="57" font-size="15" text-anchor="middle" fill="#6b7280">→</text>` : "");
+  }).join("");
   screen.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
-    <p>この課題は<b>2種類</b>（聞き取り・見分け）あり、ブロックで交互に行います。
-    どちらも、ひらがな<b>1文字</b>が出題され、<b>分かった文字をかなの表から選びます</b>。</p>
-    <p class="muted">それぞれのくわしいやり方は、各課題が始まる前に説明と練習があります。</p>
+    <p>ひらがな<b>1文字</b>が出ます。<b>分かった文字を、かなの表から選びます。</b></p>
+    <svg viewBox="0 0 640 120" style="width:100%;max-width:580px;display:block;margin:8px auto" role="img" aria-label="ブロックの順番">
+      ${blocksSvg}
+      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">この順番の4ブロックで行います。くわしい説明と練習は各課題の前にあります。</text>
+    </svg>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;
@@ -695,8 +708,10 @@ const T0 = Date.now();
 (async function () {
   try {
     await preload();
+    blockOrder = BLOCK_ORDERS[Math.floor(Math.random() * BLOCK_ORDERS.length)];
     if (window.PROD && PROD.enabled) {
       resumeState = PROD.loadState("audio1char");
+      if (resumeState && resumeState.blockOrder) blockOrder = resumeState.blockOrder;
       if (resumeState && resumeState.completed) {
         screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
         return;
