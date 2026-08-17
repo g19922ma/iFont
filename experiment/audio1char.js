@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.25";
+const VERSION = "3.26";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -270,9 +270,11 @@ function mainDone() { return results.filter(r => !r.practice).length; }
 function progressHeader(t) {
   const modName = t.mod === "A" ? "聴覚" : "視覚";
   if (t.practice) return `<div class="muted">${modName}の練習</div>`;
-  const pct = Math.round(mainDone() / N_MAIN() * 100);
+  // 進捗はセッション単位(各SET_TRIALS問で100%)。
+  const done = results.filter(r => !r.practice && r.block_pos === t.block_pos).length;
+  const pct = Math.round(done / SET_TRIALS * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
-    <span style="white-space:nowrap">${modName}</span>
+    <span style="white-space:nowrap">${modName}（セッション ${t.block_pos} / 4）</span>
     <span style="flex:1;height:8px;background:#e3e6ee;border-radius:4px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:#2E7D8F"></span></span>
     <span style="white-space:nowrap">${pct}%</span></div>`;
 }
