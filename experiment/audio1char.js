@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.31";
+const VERSION = "3.32";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -354,7 +354,7 @@ function audioGuideHTML() {
     </svg>
     <p class="muted">「ピッ」1回のあとに自動で読み上げが流れ、終わると「ピッピッ」と2回鳴ります。「もう一度きく」で聞き直せます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
+    聞こえなくても、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
 function visualGuideHTML() {
   return `
@@ -378,7 +378,7 @@ function visualGuideHTML() {
     </svg>
     <p class="muted">中央の ＋ のあとに自動で始まります。「もう一度みる」で再表示できます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    ほとんど見えない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
+    見えなくても、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
 function showTryGate(t) {
   tryReturn = () => showTryGate(t);
