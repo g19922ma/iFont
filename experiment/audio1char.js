@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.15";
+const VERSION = "3.16";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -647,7 +647,7 @@ function intro() {
       ${blocksSvg}
       <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">くわしい説明と練習は、各ブロックの前にあります。</text>
     </svg>
-    <p><button class="primary" id="go">次へ：音量の確認</button></p>
+    <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;
 }
@@ -674,7 +674,7 @@ function volumeCheck() {
       <button id="sample" class="playbtn">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
-    <p><button class="primary" id="go2" disabled style="opacity:.5">次へ：見え方の確認</button></p>
+    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">次へ：見え方の確認</button></p>
     <p class="muted" id="volHint"></p>`;
   let played = false;
   const hp = document.getElementById("hp"), go2 = document.getElementById("go2");
@@ -694,7 +694,7 @@ function visionCheck() {
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
+    <p style="text-align:center;margin-top:14px"><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
   const canvas = newCanvas();
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");

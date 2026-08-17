@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.36";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.37";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -427,7 +427,7 @@ function intro() {
     文字の切り替わりがとても速い問題もあります。そのため、最初の文字がはっきり見えないことがあります。
     その場合も、1文字目・2文字目それぞれについて、もっとも近いと思う文字を選んでください。</p>
     ${(window.PROD&&PROD.enabled)?"":`<p class="muted">回答はこの端末の中だけで完結します。</p>`}
-    <p><button class="primary" id="go">次へ：見え方の確認</button></p>
+    <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：見え方の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = visionCheck;
 }
@@ -440,7 +440,7 @@ function visionCheck() {
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : `練習を始める（${N_PRACTICE}問）`}</button></p>`;
+    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : `練習を始める（${N_PRACTICE}問）`}</button></p>`;
   const canvas = newCanvas(); canvas.style.display = "block"; canvas.style.margin = "0 auto";
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");
