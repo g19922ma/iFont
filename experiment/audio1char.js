@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.39";
+const VERSION = "3.40";
 const P = new URLSearchParams(location.search);
 let SET_TRIALS = Number(P.get("set") || 20);              // 1ブロックの問題数(既定20=合計80問・約8分)。短縮版チェックで2に。
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -603,6 +603,9 @@ function showResults() {
   // 研究者モードでも本番と全く同じ完了画面(完了コード表示)を出す。
   screen.innerHTML = PROD.completionHTML(durS);
 }
+// 練習画面の状態: 各モダリティの練習回数と、練習後に戻るゲート。
+let triedA = 0, triedV = 0, tryReturn = null;
+
 function start() {
   ensureCtx();
   if (resumeState && resumeState.trials) {
