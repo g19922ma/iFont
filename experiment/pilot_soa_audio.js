@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.30";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.31";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -337,12 +337,12 @@ function respond(t, inPractice) {
     stage.style.height = "auto";
     stage.style.display = "block";
     document.getElementById("grid")?.remove();
-    stage.innerHTML = `<div class="ask" style="font-size:18px">この回答で決定しますか？</div>
+    stage.innerHTML = `<div style="text-align:center"><div class="ask" style="font-size:18px">この回答で決定しますか？</div>
       <div style="font-size:20px;margin:12px 0">1つ目「<b>${kanaLabel(sel[1])}</b>」 ／ 2つ目「<b>${kanaLabel(sel[2])}</b>」</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button id="fix1" style="padding:10px 16px;font-size:15px">1つ目を直す</button>
         <button id="fix2" style="padding:10px 16px;font-size:15px">2つ目を直す</button>
-        <button class="primary" id="selOk">これで決定</button></div>`;
+        <button class="primary" id="selOk">これで決定</button></div></div>`;
     document.getElementById("fix1").onclick = () => askOne(t, 1, sel, (ch) => { sel[1]=ch; confirmScreen(); });
     document.getElementById("fix2").onclick = () => askOne(t, 2, sel, (ch) => { sel[2]=ch; confirmScreen(); });
     document.getElementById("selOk").onclick = finish;
