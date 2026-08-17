@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.40";
+const VERSION = "3.41";
 const P = new URLSearchParams(location.search);
 let SET_TRIALS = Number(P.get("set") || 20);              // 1ブロックの問題数(既定20=合計80問・約8分)。短縮版チェックで2に。
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -726,8 +726,9 @@ const T0 = Date.now();
       }
     }
     // 研究者モード(?prodなし)でも本番と全く同じ流れ(同意画面から)。送信・再開保存だけが無効。
-    PROD.consentScreen(screen, "かなの課題", 15, intro, true,
-      { noEnvNote: true, allowWireless: true,
+    // 機器の申告は廃止(無線可のため参加可否に関与しない・丸山決定 8/17。audio_device列は空になる)
+    PROD.consentScreen(screen, "かなの課題", 15, intro, false,
+      { noEnvNote: true,
         desc: "日本語のかな1文字が、短い音声や短い表示からどの程度認識できるかを調べる研究です" });
   }
   catch (e) { screen.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}</p>`; }
