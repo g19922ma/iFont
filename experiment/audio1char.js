@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.0";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.1";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -61,6 +61,7 @@ let trials = [], results = [], ti = 0, mainStarted = false;
 // 途中再開(本番モードのみ)。elapsedPrior は再開前までの経過秒。
 let resumeState = null, elapsedPrior = 0;
 let manifest = null;
+const stimByChar = {};   // サンプル音用: かな→刺激(正解表が読めたときだけ埋まる)
 
 function ensureCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -132,6 +133,17 @@ async function preload() {
   manifest = await res.json();
   const pool = manifest.stimuli || [];
   if (!pool.length) throw new Error("audio1char_manifest に刺激がありません");
+  // サンプル音(あいうえお)用に、公開の正解表から かな→刺激 の対応を引く(無ければランダムに戻る)。
+  try {
+    const kres = await fetch("answer_key_merged.json", {cache: "no-store"});
+    if (kres.ok) {
+      const akey = await kres.json();
+      for (const st of pool) {
+        const rec = akey[`audio1char|${st.id}`];
+        if (rec && rec.char) stimByChar[rec.char] = st;
+      }
+    }
+  } catch (e) { /* 対応表なしでも課題は成立する */ }
   let done = 0;
   await Promise.all(pool.map(async st => {
     const r = await fetch(`audio1char_stimuli/${st.id}.mp3`, {cache: "force-cache"});
@@ -386,12 +398,14 @@ function intro() {
   document.getElementById("go").onclick = volumeCheck;
 }
 
-// サンプル音: 刺激プールから3つを全長(frac=100)で0.5秒間隔で鳴らす。
+// サンプル音: 「あ・い・う・え・お」を全長(frac=100)・0.5秒間隔で順に鳴らす(乙課題と同じ)。
+// 正解表が読めず対応が引けない場合は、プールからのランダム3音に切り替える。
 function playSample() {
   const ctx = ensureCtx();
   stopAll();
-  const pool = shuffle([...manifest.stimuli]).slice(0, 3);
-  pool.forEach((st, i) => {
+  const aiueo = ["あ","い","う","え","お"].map(c => stimByChar[c]).filter(Boolean);
+  const list = aiueo.length === 5 ? aiueo : shuffle([...manifest.stimuli]).slice(0, 3);
+  list.forEach((st, i) => {
     const s = ctx.createBufferSource();
     s.buffer = gatedBuffer(bufById[st.id], Object.assign({}, st, {frac: 100}));
     s.connect(ctx.destination); s.start(ctx.currentTime + 0.1 + i * 0.5);
@@ -407,7 +421,7 @@ function volumeCheck() {
     <p>下のボタンで<b>サンプル音</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
     <p style="background:#fff6f4;border:1px solid #f0d0c8;border-radius:8px;padding:12px 14px">
-      <button id="sample" class="playbtn">▶ サンプル音を鳴らす</button>
+      <button id="sample" class="playbtn">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
       <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
