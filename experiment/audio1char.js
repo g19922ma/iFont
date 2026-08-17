@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.26";
+const VERSION = "3.27";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -686,19 +686,16 @@ function volumeCheck() {
     <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
       <button id="sample" style="font-size:16px;padding:12px 26px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
-    <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
     <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">次へ：見え方の確認</button></p>
     <p class="muted" id="volHint"></p>`;
   let played = false;
-  const hp = document.getElementById("hp"), go2 = document.getElementById("go2");
-  const ready = () => { const ok = played && hp.checked; go2.disabled = !ok; go2.style.opacity = ok ? "1" : ".5"; };
+  const go2 = document.getElementById("go2");
   document.getElementById("sample").onclick = () => {
     playSample(); played = true;
     document.getElementById("volHint").textContent = "小さすぎ・大きすぎと感じたら、端末の音量を変えてもう一度鳴らして確認してください。";
-    ready();
+    go2.disabled = false; go2.style.opacity = "1";
   };
-  hp.addEventListener("change", ready);
-  go2.onclick = () => { if (played && hp.checked) visionCheck(); };
+  go2.onclick = () => { if (played) visionCheck(); };
 }
 function visionCheck() {
   const resuming = !!(resumeState && resumeState.trials);
