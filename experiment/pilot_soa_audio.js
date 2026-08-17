@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.26";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.27";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -511,7 +511,7 @@ function volumeCheck() {
       <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
     <p><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "この音量で続きから再開する" : `この音量で練習を始める（${N_PRACTICE}問）`}</button></p>
-    <p class="muted" id="volHint">まずサンプル音を鳴らしてください（鳴らすまで進めません）。</p>`;
+    <p class="muted" id="volHint"></p>`;
   let played = false;
   const hp = document.getElementById("hp"), go2 = document.getElementById("go2");
   const ready = () => { const ok = played && hp.checked; go2.disabled = !ok; go2.style.opacity = ok ? "1" : ".5"; };
