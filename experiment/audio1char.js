@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.1";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.2";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -26,7 +26,7 @@ const FADE_MS = 8;
 // 各問の音声の前後に鳴らす合図音(ビープ)。開始と終了が分かるようにするため。
 const BEEP_HZ = 880;         // 合図音の高さ
 const BEEP_MS = 80;          // 合図音1回の長さ
-const BEEP_LEAD_MS = 300;    // 開始の合図音から、文字の音声が始まるまでの間隔
+const BEEP_LEAD_MS = 600;    // 開始の合図音から、文字の音声が始まるまでの間隔(v1=300。短すぎて構えが間に合わないため延長・丸山判断 8/17)
 const END_GAP_MS = 500;      // 文字の音声が終わってから、終了の合図音までの間隔
 const END_BEEP_GAP_MS = 140; // 終了の合図音を2回鳴らすときの、1回目と2回目の間隔
 
