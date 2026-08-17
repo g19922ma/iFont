@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.25";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.26";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -489,7 +489,7 @@ function intro() {
 // サンプル音: 各音を打ち切らずに(実音の全長で)0.5秒間隔で3つ鳴らす
 function playSample() {
   const ctx = ensureCtx(); ctx.resume();
-  ["あ","か","ん"].forEach((ch, i) => {
+  ["あ","い","う","え","お"].forEach((ch, i) => {
     if (!bufByChar[ch]) return;
     const src = ctx.createBufferSource();
     src.buffer = gatedBuffer(ch, moraAvailS(ch));   // モーラの実体を最後まで鳴らす
@@ -503,10 +503,10 @@ function volumeCheck() {
   const mobileNote = ENV.touch
     ? `スマートフォンの内蔵スピーカーでは正しく聞き取れません。必ず<b>ヘッドホン／イヤホン</b>を使ってください。` : ``;
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
-    <p>下のボタンで<b>サンプル音（あ・か・ん）</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
+    <p>下のボタンで<b>サンプル音（あ・い・う・え・お）</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
     <p style="background:#fff6f4;border:1px solid #f0d0c8;border-radius:8px;padding:12px 14px">
-      <button id="sample" style="font-size:15px;padding:10px 18px;border-radius:8px;border:1px solid #c9a9a0;background:#fff;cursor:pointer">▶ サンプル音を鳴らす（あ・か・ん）</button>
+      <button id="sample" style="font-size:15px;padding:10px 18px;border-radius:8px;border:1px solid #c9a9a0;background:#fff;cursor:pointer">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
       <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
