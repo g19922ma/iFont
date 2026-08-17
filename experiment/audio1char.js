@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.30";
+const VERSION = "3.31";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -417,7 +417,6 @@ function finalizeCommon(t, rec, picked) {
     ti++; saveProgress(); runTrial(); return;
   }
   results.push(Object.assign({practice: true}, rec));
-  const isFirst = results.filter(r => r.practice).length === 1;
   let note;
   if (t.mod === "V") {
     const ok = picked === t.char;
@@ -426,12 +425,8 @@ function finalizeCommon(t, rec, picked) {
   } else {
     note = `<p style="font-size:17px">あなたの答え: <b style="font-size:24px">${picked ? kanaLabel(picked) : "（未選択）"}</b></p>`;
   }
-  const extra = isFirst
-    ? `<p class="muted" style="line-height:1.8">これは練習です（答えは記録されません）。<br>
-       ほとんど分からない問もありますが、もっとも近いと思う文字を選べばOKです。</p>`
-    : `<p class="muted">これは練習です。</p>`;
-  screen.innerHTML = `<div style="text-align:center;padding:30px">${note}${extra}</div>`;
-  setTimeout(() => { if (tryReturn) tryReturn(); }, isFirst ? 3000 : 2000);   // 練習後はゲートへ戻る
+  screen.innerHTML = `<div style="text-align:center;padding:30px">${note}<p class="muted">これは練習です。</p></div>`;
+  setTimeout(() => { if (tryReturn) tryReturn(); }, 1600);   // 練習後はゲートへ戻る
 }
 
 // ---- 聴覚の1問 ------------------------------------------------------------
