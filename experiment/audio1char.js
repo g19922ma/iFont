@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.10";
+const VERSION = "3.11";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -345,10 +345,7 @@ function audioGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">聞こえた文字を表から選ぶ</text>
     </svg>
-    <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
-      <li>「ピッ」と<b>1回</b>鳴ったあとに読み上げが流れ、終わると「ピッピッ」と<b>2回</b>鳴ります</li>
-      <li>聞こえたかなを表から選びます（<b>何度でも聞き直せます</b>）</li>
-    </ol>
+    <p class="muted">「ピッ」1回のあとに読み上げが流れ、終わると「ピッピッ」と2回鳴ります。何度でも聞き直せます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
@@ -370,10 +367,7 @@ function visualGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
-    <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
-      <li>中央の <b>＋</b> のあとに、かなが短く表示されて消えます</li>
-      <li>見えたかなを表から選びます（<b>もう一度表示できます</b>）</li>
-    </ol>
+    <p class="muted">中央の ＋ のあとに表示されます。もう一度表示することもできます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     ほとんど見えない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
