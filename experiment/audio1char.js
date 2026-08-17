@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.33";
+const VERSION = "3.34";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -435,7 +435,7 @@ function runAudioTrial(t) {
   screen.innerHTML = `${progressHeader(t)}
     <div id="stage">
       <div style="text-align:center;margin:30px 0 12px">
-        <button id="playBtn" style="display:none;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ もう一度きく</button>
+        <button id="playBtn" style="visibility:hidden;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ もう一度きく</button>
       </div>
       ${aIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">まもなく、ひらがな1文字の読み上げが流れます。</div>`}
       <div id="answerArea"></div>
@@ -477,7 +477,7 @@ function runAudioTrial(t) {
     if (tStim === null) {
       tStim = performance.now();
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      playBtn.style.display = "inline-block";
+      playBtn.style.visibility = "visible";
       const pr = document.getElementById("prompt");
       if (pr) pr.textContent = "聞こえた文字を下の表から選んでください。";
       aIntroduced = true;
@@ -500,7 +500,7 @@ function runVisualTrial(t) {
     <div id="stage">
       <div id="vbox" style="text-align:center;margin:10px 0 6px"></div>
       <div style="text-align:center;margin:6px 0 10px">
-        <button id="playBtn" style="display:none;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #1E2A5E;background:#fff;color:#1E2A5E;cursor:pointer">▶ もう一度みる</button>
+        <button id="playBtn" style="visibility:hidden;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #1E2A5E;background:#fff;color:#1E2A5E;cursor:pointer">▶ もう一度みる</button>
       </div>
       ${vIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。まもなく、ひらがな1文字が短く表示されます。</div>`}
       <div id="answerArea"></div>
@@ -557,7 +557,7 @@ function runVisualTrial(t) {
       if (!isFirstShow) return;
       tStim = performance.now();   // 反応時間の起点=最初の提示開始
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      playBtn.style.display = "inline-block";
+      playBtn.style.visibility = "visible";
       const pr = document.getElementById("prompt");
       if (pr) pr.textContent = "見えた文字を下の表から選んでください。";
       vIntroduced = true;
