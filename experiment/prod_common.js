@@ -178,7 +178,7 @@
   const DEVICE_HTML = `
       <div id="devBox" style="margin-top:14px;padding:12px 14px;background:#f6f8fb;border:1px solid #dde3ec;border-radius:8px">
         <p style="margin:0 0 6px;font-size:15px"><b>音の再生に使う機器</b>を選んでください：</p>
-        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="スピーカー"> スピーカー</label>
+        <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="スピーカー"> PC・スマホのスピーカー</label>
         <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="有線ヘッドホン"> 有線のヘッドホン・イヤホン</label>
         <label style="display:block;font-size:14.5px;margin:4px 0"><input type="radio" name="dev" value="無線"> 無線（Bluetooth）の機器（ヘッドホン・イヤホン・スピーカー）</label>
         <p id="devWarn" style="display:none;color:#b3261e;font-size:13.5px;margin:6px 0 0">
