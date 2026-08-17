@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.16";
+const VERSION = "3.17";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -318,7 +318,7 @@ function runTrial() {
 function showGate(t) {
   if (t.gate === "try") return showTryGate(t);
   const modName = t.mod === "A" ? "聴覚" : "視覚";
-  const body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（ブロック ${t.block_pos} / 4）</h2>
+  const body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（セッション ${t.block_pos} / 4）</h2>
       <p>やり方はさきほどの${modName}の課題と同じです。</p>`;
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">${body}
     <p style="margin-top:20px"><button class="primary" id="gateGo">始める（またはスペースキー）</button></p></div>`;
@@ -376,7 +376,7 @@ function showTryGate(t) {
   const modName = t.mod === "A" ? "聴覚" : "視覚";
   const tried = t.mod === "A" ? triedA : triedV;
   const accent = t.mod === "A" ? "#2E7D8F" : "#1E2A5E";
-  screen.innerHTML = `<h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
+  screen.innerHTML = `<h2 style="color:#1E2A5E">【${modName}】の課題（セッション ${t.block_pos} / 4）</h2>
     ${t.mod === "A" ? audioGuideHTML() : visualGuideHTML()}
     <div style="text-align:center;margin-top:16px">
       <p><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : `${modName}を1問練習する`}</button></p>
@@ -642,10 +642,10 @@ function intro() {
   }).join("");
   screen.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
-    <p>次の<b>4つのブロック</b>を、この順番に行います。</p>
+    <p>課題には<b>4つのセッション</b>があります。この順番に行います。</p>
     <svg viewBox="0 0 640 120" style="width:100%;max-width:580px;display:block;margin:8px auto" role="img" aria-label="ブロックの順番">
       ${blocksSvg}
-      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">くわしい説明と練習は、各ブロックの前にあります。</text>
+      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">くわしい説明と練習は、各セッションの前にあります。</text>
     </svg>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
