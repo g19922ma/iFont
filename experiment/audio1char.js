@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.27";
+const VERSION = "3.28";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -151,6 +151,11 @@ function newCanvas() { const c = document.createElement("canvas"); c.id = "stim"
   c.style.background = "#fff"; c.style.border = "1px solid #ddd"; c.style.display = "block"; c.style.margin = "0 auto"; return c; }
 function drawBlank(ctx) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, SIZE, SIZE); }
 function drawChar(ctx, ch) { drawBlank(ctx); if (imgs[ch]) ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE); }
+// フェードイン提示: 透明度 alpha (0..1) で描く。
+function drawCharAlpha(ctx, ch, alpha) {
+  drawBlank(ctx);
+  if (imgs[ch]) { ctx.globalAlpha = alpha; ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE); ctx.globalAlpha = 1; }
+}
 function drawFix(ctx) {
   drawBlank(ctx);
   ctx.fillStyle = "#333"; ctx.font = "40px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
@@ -353,15 +358,17 @@ function audioGuideHTML() {
 }
 function visualGuideHTML() {
   return `
-    <p>同じ場所に、ひらがな<b>1文字</b>が短く表示されて消えます。<b>見えた文字を、かなの表から選んでください。</b>
-    表示は<b>とても短い</b>ことがあります。</p>
+    <p>ひらがな<b>1文字</b>が、うすい状態から<b>だんだん濃くなり、濃くなり切る前に消えます</b>。
+    <b>見えた文字を、かなの表から選んでください。</b></p>
     <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="視覚課題の流れの図">
-      <rect x="20" y="22" width="66" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
-      <text x="53" y="68" font-size="32" text-anchor="middle" fill="#1b2030">か</text>
-      <text x="103" y="60" font-size="14" text-anchor="middle" fill="#6b7280">→</text>
-      <rect x="120" y="22" width="66" height="66" rx="8" fill="#f6f6f6" stroke="#b0b6c2" stroke-dasharray="5 4"/>
-      <text x="153" y="62" font-size="13" text-anchor="middle" fill="#9aa1ad">白紙</text>
-      <text x="103" y="118" font-size="13" text-anchor="middle" fill="#1b2030">短く表示されて消える</text>
+      <rect x="14" y="22" width="54" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
+      <text x="41" y="68" font-size="30" text-anchor="middle" fill="#1b2030" opacity="0.15">か</text>
+      <rect x="76" y="22" width="54" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
+      <text x="103" y="68" font-size="30" text-anchor="middle" fill="#1b2030" opacity="0.5">か</text>
+      <text x="140" y="60" font-size="14" text-anchor="middle" fill="#6b7280">→</text>
+      <rect x="152" y="22" width="54" height="66" rx="8" fill="#f6f6f6" stroke="#b0b6c2" stroke-dasharray="5 4"/>
+      <text x="179" y="62" font-size="13" text-anchor="middle" fill="#9aa1ad">白紙</text>
+      <text x="110" y="118" font-size="13" text-anchor="middle" fill="#1b2030">だんだん濃くなり、途中で消える</text>
       <text x="220" y="64" font-size="20" text-anchor="middle" fill="#1E2A5E">➡</text>
       <rect x="250" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
       ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${266+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
@@ -369,7 +376,7 @@ function visualGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
-    <p class="muted">中央の ＋ のあとに自動で表示されます。「もう一度みる」で再表示できます。</p>
+    <p class="muted">中央の ＋ のあとに自動で始まります。「もう一度みる」で再表示できます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     ほとんど見えない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
@@ -514,7 +521,7 @@ function runVisualTrial(t) {
     document.removeEventListener("keydown", keyHandler);
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     finalizeCommon(t, { stimulus_id: t.char, target_char: t.char, response_char: picked,
-      modality: "visual1char", q_set: "all", frac: t.frac, n_choices: N_CHOICES_V,
+      modality: "visual1char", q_set: "all", algo: "fade_linear", frac: t.frac, n_choices: N_CHOICES_V,
       replays, rt_ms: pickedRt, is_catch: t.is_catch,
       actual_ms: actualMs, actual_frames: actualFrames, char_ms: CHAR_MS,
       block_order: blockOrder, block_pos: t.block_pos, version: VERSION }, picked);
@@ -563,7 +570,11 @@ function runVisualTrial(t) {
     function frame(now) {
       const el = now - t0;
       if (phase === "fix" && el >= fixDur) {
-        if (t.frac > 0) { phase = "char"; drawChar(ctx, t.char); tOn = now; frames = 1; unlock(); }
+        if (t.frac > 0) {
+          // フェードイン: 透明度が CHAR_MS かけて 0→100% に上がる。frac% の時点で消える
+          // (上がり切る前に打ち切られる)。到達する最大の濃さ = frac%。
+          phase = "char"; drawCharAlpha(ctx, t.char, 0); tOn = now; frames = 1; unlock();
+        }
         else {           // frac=0: 何も出さずに終わる(実測0)
           drawBlank(ctx); unlock();
           if (isFirstShow) { actualMs = 0; actualFrames = 0; }
@@ -576,6 +587,7 @@ function runVisualTrial(t) {
           if (isFirstShow) { actualMs = Math.round(now - tOn); actualFrames = frames; }
           presenting = false; return;
         }
+        drawCharAlpha(ctx, t.char, Math.min(1, (now - tOn) / CHAR_MS));
         frames++;
       }
       requestAnimationFrame(frame);
