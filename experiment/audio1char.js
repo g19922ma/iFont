@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.14";
+const VERSION = "3.15";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -642,10 +642,10 @@ function intro() {
   }).join("");
   screen.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
-    <p>ひらがな<b>1文字</b>が出ます。<b>分かった文字を、かなの表から選びます。</b></p>
+    <p>次の<b>4つのブロック</b>を、この順番に行います。</p>
     <svg viewBox="0 0 640 120" style="width:100%;max-width:580px;display:block;margin:8px auto" role="img" aria-label="ブロックの順番">
       ${blocksSvg}
-      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">この順番の4ブロックで行います。くわしい説明と練習は各課題の前にあります。</text>
+      <text x="320" y="110" font-size="13" text-anchor="middle" fill="#6b7280">くわしい説明と練習は、各ブロックの前にあります。</text>
     </svg>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
