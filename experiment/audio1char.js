@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.5";
+const VERSION = "3.6";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -255,7 +255,8 @@ function buildTrials() {
   const out = [];
   [...blockOrder].forEach((mod, bi) => {
     const pos = bi + 1;
-    out.push({gate: "block", mod, block_pos: pos, first: !seen[mod]});
+    out.push(seen[mod] ? {gate: "block", mod, block_pos: pos}
+                       : {gate: "try", mod, block_pos: pos});
     seen[mod] = true;
     const set = (mod === "A" ? setsA : setsV).shift();
     for (const t of set) out.push(Object.assign(t, {block_pos: pos}));
@@ -316,21 +317,37 @@ function runTrial() {
 
 // ブロックの区切り画面。
 function showGate(t) {
+  if (t.gate === "try") return showTryGate(t);
   const modName = t.mod === "A" ? "聞き取り" : "見分け";
-  let body;
-  if (t.first) {
-    body = `<h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
-      <p>ここからの回答が記録されます。やり方は練習と同じです。</p>`;
-  } else {
-    body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（ブロック ${t.block_pos} / 4）</h2>
+  const body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（ブロック ${t.block_pos} / 4）</h2>
       <p>やり方はさきほどの${modName}の課題と同じです。</p>`;
-  }
   screen.innerHTML = `<div style="text-align:center;padding:40px 20px">${body}
     <p style="margin-top:20px"><button class="primary" id="gateGo">始める（またはスペースキー）</button></p></div>`;
   const key = (e) => { if (e.code === "Space" || e.key === " ") { e.preventDefault(); go(); } };
   function go() { document.removeEventListener("keydown", key); ti++; saveProgress(); runTrial(); }
   document.getElementById("gateGo").addEventListener("click", go, { once: true });
   document.addEventListener("keydown", key);
+}
+// 初回ブロックの練習ゲート: そのモダリティを1問ずつ何度でも練習でき、1回以上で本番へ。
+function showTryGate(t) {
+  tryReturn = () => showTryGate(t);
+  const modName = t.mod === "A" ? "聞き取り" : "見分け";
+  const tried = t.mod === "A" ? triedA : triedV;
+  const accent = t.mod === "A" ? "#2E7D8F" : "#1E2A5E";
+  screen.innerHTML = `<div style="text-align:center;padding:30px 20px">
+    <h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
+    <p>まず1問ずつ練習できます（別の問題で何度でも）。納得したら本番へ進んでください。</p>
+    <p style="margin:18px 0"><button id="tryBtn" class="playbtn" style="background:${accent}">${modName}を1問練習する${tried ? `（${tried}回ずみ）` : ""}</button></p>
+    <p><button class="primary" id="goMain" ${tried ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
+    ${tried ? "" : `<p class="muted">1回以上練習すると本番に進めます。</p>`}</div>`;
+  document.getElementById("tryBtn").onclick = () => {
+    if (t.mod === "A") { triedA++; runAudioTrial(buildTryout("A")); }
+    else { triedV++; runVisualTrial(buildTryout("V")); }
+  };
+  document.getElementById("goMain").onclick = () => {
+    if (!(t.mod === "A" ? triedA : triedV)) return;
+    tryReturn = null; ti++; saveProgress(); runTrial();
+  };
 }
 
 function saveProgress() {
@@ -360,7 +377,7 @@ function finalizeCommon(t, rec, picked) {
        ほとんど分からない問もありますが、もっとも近いと思う文字を選べばOKです。</p>`
     : `<p class="muted">これは練習です。</p>`;
   screen.innerHTML = `<div style="text-align:center;padding:30px">${note}${extra}</div>`;
-  setTimeout(() => { tryScreen(); }, isFirst ? 3000 : 2000);   // 練習後は練習画面へ戻る
+  setTimeout(() => { if (tryReturn) tryReturn(); }, isFirst ? 3000 : 2000);   // 練習後はゲートへ戻る
 }
 
 // ---- 聴覚の1問 ------------------------------------------------------------
@@ -547,21 +564,7 @@ function showResults() {
   };
 }
 
-// 練習画面: 両方を1回以上練習すると本番に進める。何度でも別の問題で練習できる。
-let triedA = 0, triedV = 0;
-function tryScreen() {
-  screen.innerHTML = `<h2 style="color:#1E2A5E">練習</h2>
-    <p>本番の前に、それぞれの課題を<b>1問ずつ練習できます</b>（別の問題で何度でも）。
-    納得したら本番へ進んでください。</p>
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0">
-      <button id="tryA" class="playbtn">聞き取りを1問練習する${triedA ? `（${triedA}回ずみ）` : ""}</button>
-      <button id="tryV" class="playbtn" style="background:#1E2A5E">見分けを1問練習する${triedV ? `（${triedV}回ずみ）` : ""}</button></div>
-    <p style="text-align:center"><button class="primary" id="goMain" ${triedA && triedV ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
-    ${triedA && triedV ? "" : `<p class="muted" style="text-align:center">両方を1回ずつ練習すると本番に進めます。</p>`}`;
-  document.getElementById("tryA").onclick = () => { triedA++; runAudioTrial(buildTryout("A")); };
-  document.getElementById("tryV").onclick = () => { triedV++; runVisualTrial(buildTryout("V")); };
-  document.getElementById("goMain").onclick = () => { if (triedA && triedV) start(); };
-}
+let triedA = 0, triedV = 0, tryReturn = null;
 
 function start() {
   ensureCtx();
@@ -570,6 +573,7 @@ function start() {
     ti = resumeState.ti || 0; elapsedPrior = resumeState.elapsed_s || 0;
     blockOrder = resumeState.blockOrder || "";
     aIntroduced = true; vIntroduced = true;   // 丁寧な文言・手動開始は初回扱いにしない
+    triedA = 1; triedV = 1;                   // 練習ゲートに戻っても即「本番を始める」を押せる
     return runTrial();
   }
   trials = buildTrials(); results = []; ti = 0;
@@ -663,13 +667,13 @@ function visionCheck() {
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "次へ：練習"}</button></p>`;
+    <p><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
   const canvas = newCanvas();
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");
   const vc = document.getElementById("vc"), go3 = document.getElementById("go3");
   vc.addEventListener("change", () => { go3.disabled = !vc.checked; go3.style.opacity = vc.checked ? "1" : ".5"; });
-  go3.onclick = () => { if (!vc.checked) return; if (resuming) start(); else tryScreen(); };
+  go3.onclick = () => { if (vc.checked) start(); };
 }
 
 const T0 = Date.now();
