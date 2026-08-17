@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.3";
+const VERSION = "3.4";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -233,14 +233,15 @@ function buildModality(mod, n) {
   }
   return shuffle(out);
 }
-function buildPractice(mod) {
-  const ladder = [100, 60, 30];
+// お試し1問(本番前に何度でも・記録しない)。fracは中くらい〜全部の中からランダム。
+function buildTryout(mod) {
+  const frac = [100, 60, 40, 20][Math.floor(Math.random() * 4)];
   if (mod === "A") {
-    const stims = dealEven(manifest.stimuli, N_PRACTICE_A);
-    return stims.map((st, i) => Object.assign({}, st, {mod: "A", frac: ladder[i % ladder.length], is_catch: false, practice: true}));
+    const st = manifest.stimuli[Math.floor(Math.random() * manifest.stimuli.length)];
+    return Object.assign({}, st, {mod: "A", frac, is_catch: false, practice: true, block_pos: 0});
   }
-  const chars = dealEven(CHARS_V, N_PRACTICE_V);
-  return chars.map((ch, i) => ({mod: "V", char: ch, frac: ladder[i % ladder.length], is_catch: false, practice: true}));
+  const ch = CHARS_V[Math.floor(Math.random() * CHARS_V.length)];
+  return {mod: "V", char: ch, frac, is_catch: false, practice: true, block_pos: 0};
 }
 // セッション全体: ブロック順に従い、区切り画面(gate)と練習を差し込む。
 // モダリティごとに SET_TRIALS×2 問を作って半分ずつ配る(2ブロック合計で刺激とfracが均等)。
@@ -255,11 +256,7 @@ function buildTrials() {
   [...blockOrder].forEach((mod, bi) => {
     const pos = bi + 1;
     out.push({gate: "block", mod, block_pos: pos, first: !seen[mod]});
-    if (!seen[mod]) {
-      for (const p of buildPractice(mod)) out.push(Object.assign(p, {block_pos: pos}));
-      out.push({gate: "main", mod, block_pos: pos});
-      seen[mod] = true;
-    }
+    seen[mod] = true;
     const set = (mod === "A" ? setsA : setsV).shift();
     for (const t of set) out.push(Object.assign(t, {block_pos: pos}));
   });
@@ -272,11 +269,7 @@ function mainDone() { return results.filter(r => !r.practice).length; }
 function progressHeader(t) {
   const modName = t.mod === "A" ? "聞き取り" : "見分け";
   const dev = (window.PROD && PROD.enabled) ? "" : ` (frac=${t.frac}%${t.is_catch ? "・catch" : ""})`;
-  if (t.practice) {
-    const n = t.mod === "A" ? N_PRACTICE_A : N_PRACTICE_V;
-    const k = results.filter(r => r.practice && r.modality === (t.mod === "A" ? "audio1char" : "visual1char")).length;
-    return `<div class="muted">${modName}の練習 ${k+1} / ${n}${dev}</div>`;
-  }
+  if (t.practice) return `<div class="muted">${modName}のお試し${dev}</div>`;
   const pct = Math.round(mainDone() / N_MAIN() * 100);
   return `<div class="muted" style="display:flex;align-items:center;gap:10px">
     <span style="white-space:nowrap">${modName}</span>
@@ -325,12 +318,9 @@ function runTrial() {
 function showGate(t) {
   const modName = t.mod === "A" ? "聞き取り" : "見分け";
   let body;
-  if (t.gate === "main") {
-    body = `<h2 style="color:#1E2A5E">ここから本番です</h2>
-      <p>本番では、ここからの回答が記録されます。やり方は練習と同じです。</p>`;
-  } else if (t.first) {
+  if (t.first) {
     body = `<h2 style="color:#1E2A5E">【${modName}】の課題（ブロック ${t.block_pos} / 4）</h2>
-      <p>まず練習 ${t.mod === "A" ? N_PRACTICE_A : N_PRACTICE_V}問を行います。</p>`;
+      <p>ここからの回答が記録されます。やり方はお試しと同じです。</p>`;
   } else {
     body = `<h2 style="color:#1E2A5E">ふたたび【${modName}】の課題です（ブロック ${t.block_pos} / 4）</h2>
       <p>やり方はさきほどの${modName}の課題と同じです。</p>`;
@@ -370,7 +360,7 @@ function finalizeCommon(t, rec, picked) {
        ほとんど分からない問もありますが、もっとも近いと思う文字を選べばOKです。</p>`
     : `<p class="muted">これは練習です。</p>`;
   screen.innerHTML = `<div style="text-align:center;padding:30px">${note}${extra}</div>`;
-  setTimeout(() => { ti++; runTrial(); }, isFirst ? 3000 : 1600);
+  setTimeout(() => { tryScreen(); }, isFirst ? 3000 : 2000);   // お試しはお試し画面へ戻る
 }
 
 // ---- 聴覚の1問 ------------------------------------------------------------
@@ -557,6 +547,22 @@ function showResults() {
   };
 }
 
+// お試し画面: 両方を1回以上試すと本番に進める。何度でも別の問題で試せる。
+let triedA = 0, triedV = 0;
+function tryScreen() {
+  screen.innerHTML = `<h2 style="color:#1E2A5E">お試し</h2>
+    <p>本番の前に、それぞれの課題を<b>1問ずつ試せます</b>（別の問題で何度でも）。
+    納得したら本番へ進んでください。</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0">
+      <button id="tryA" class="playbtn">聞き取りを1問試す${triedA ? `（${triedA}回ずみ）` : ""}</button>
+      <button id="tryV" class="playbtn" style="background:#1E2A5E">見分けを1問試す${triedV ? `（${triedV}回ずみ）` : ""}</button></div>
+    <p style="text-align:center"><button class="primary" id="goMain" ${triedA && triedV ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
+    ${triedA && triedV ? "" : `<p class="muted" style="text-align:center">両方を1回ずつ試すと本番に進めます。</p>`}`;
+  document.getElementById("tryA").onclick = () => { triedA++; runAudioTrial(buildTryout("A")); };
+  document.getElementById("tryV").onclick = () => { triedV++; runVisualTrial(buildTryout("V")); };
+  document.getElementById("goMain").onclick = () => { if (triedA && triedV) start(); };
+}
+
 function start() {
   ensureCtx();
   if (resumeState && resumeState.trials) {
@@ -575,7 +581,7 @@ function intro() {
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>。
-       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">お試しはとばします。音量の確認だけもう一度お願いします。</span></p>` : "";
   screen.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
     <p>この課題は<b>2種類</b>あり、交互にブロックで行います。どちらも、ひらがな<b>1文字</b>が出題され、
@@ -657,13 +663,13 @@ function visionCheck() {
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題を始める"}</button></p>`;
+    <p><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "次へ：お試し"}</button></p>`;
   const canvas = newCanvas();
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");
   const vc = document.getElementById("vc"), go3 = document.getElementById("go3");
   vc.addEventListener("change", () => { go3.disabled = !vc.checked; go3.style.opacity = vc.checked ? "1" : ".5"; });
-  go3.onclick = () => { if (vc.checked) start(); };
+  go3.onclick = () => { if (!vc.checked) return; if (resuming) start(); else tryScreen(); };
 }
 
 const T0 = Date.now();
