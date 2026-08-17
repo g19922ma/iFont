@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.32";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.33";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -498,9 +498,11 @@ function intro() {
       <text x="322" y="64" font-size="20" text-anchor="middle" fill="#2E7D8F">➡</text>
       <rect x="356" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
       ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${372+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
-      <text x="401" y="41" font-size="12" text-anchor="middle" fill="#2E7D8F">1</text>
-      <text x="459" y="67" font-size="12" text-anchor="middle" fill="#2E7D8F">2</text>
-      <text x="487" y="122" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1つ目 → 2つ目 の順に選ぶ</text>
+      <rect x="401" y="26" width="22" height="20" rx="4" fill="#2E7D8F"/>
+      <text x="412" y="40" font-size="12" text-anchor="middle" fill="#fff">1</text>
+      <rect x="459" y="52" width="22" height="20" rx="4" fill="#2E7D8F"/>
+      <text x="470" y="66" font-size="12" text-anchor="middle" fill="#fff">2</text>
+      <text x="487" y="118" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1つ目 → 2つ目 の順に選ぶ</text>
     </svg>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
       <li>${START_MODE==="countdown" ? `${COUNTDOWN_S}秒のカウントダウンのあと、` : `準備ができたら<b>「開始」ボタン</b>またはスペースキーを押すと、`}かなの音声が3つ続けて流れます</li>
@@ -509,9 +511,8 @@ function intro() {
     </ol>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     音と音の切り替わりがとても速い問題もあります。そのため、最初の音がはっきり聞こえないことがあります。
-    その場合も、<b>後から聞こえた音をずらして回答せず</b>、1つ目・2つ目それぞれについて、もっとも近いと思う文字を選んでください。</p>
+    その場合も、1つ目・2つ目それぞれについて、もっとも近いと思う文字を選んでください。</p>
     <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」、「へ」は「ヘ」）。「じ／ぢ」のように同じ音になるかなは、1つの選択肢にまとめています。</p>
-    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">最初に<b>練習 ${N_PRACTICE}問</b>を行います。練習では正解が表示されます。その後、<b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>を行います。本番では正解は表示されません。</p>
     <p class="muted">所要時間は8〜12分程度です。</p>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;

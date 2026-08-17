@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.27";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.28";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -409,9 +409,11 @@ function intro() {
       <text x="322" y="64" font-size="20" text-anchor="middle" fill="#1E2A5E">➡</text>
       <rect x="356" y="14" width="262" height="88" rx="10" fill="#fff" stroke="#cdd3e6"/>
       ${[0,1].map(r=>[0,1,2,3,4,5,6,7].map(c=>`<rect x="${372+c*29}" y="${26+r*26}" width="22" height="20" rx="4" fill="#fbfcff" stroke="#cdd3e6"/>`).join("")).join("")}
-      <text x="401" y="41" font-size="12" text-anchor="middle" fill="#1E2A5E">1</text>
-      <text x="459" y="67" font-size="12" text-anchor="middle" fill="#1E2A5E">2</text>
-      <text x="487" y="122" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1文字目 → 2文字目 の順に選ぶ</text>
+      <rect x="401" y="26" width="22" height="20" rx="4" fill="#1E2A5E"/>
+      <text x="412" y="40" font-size="12" text-anchor="middle" fill="#fff">1</text>
+      <rect x="459" y="52" width="22" height="20" rx="4" fill="#1E2A5E"/>
+      <text x="470" y="66" font-size="12" text-anchor="middle" fill="#fff">2</text>
+      <text x="487" y="118" font-size="13" text-anchor="middle" fill="#1b2030">かなの表から 1文字目 → 2文字目 の順に選ぶ</text>
       <text x="150" y="146" font-size="12" text-anchor="middle" fill="#6b7280">※実際は同じ場所に、前の字を上書きしながら表示されます</text>
     </svg>
     <ol style="font-size:15px;line-height:1.9;padding-left:1.2em">
@@ -422,8 +424,7 @@ function intro() {
     </ol>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     文字の切り替わりがとても速い問題もあります。そのため、最初の文字がはっきり見えないことがあります。
-    その場合も、<b>後から見えた文字をずらして回答せず</b>、1文字目・2文字目それぞれについて、もっとも近いと思う文字を選んでください。</p>
-    <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">最初に<b>練習 ${N_PRACTICE}問</b>を行います。練習では正解が表示されます。その後、<b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>を行います。本番では正解は表示されません。</p>
+    その場合も、1文字目・2文字目それぞれについて、もっとも近いと思う文字を選んでください。</p>
     <p class="muted">所要時間は8〜12分程度です。${(window.PROD&&PROD.enabled)?"":"回答はこの端末の中だけで完結します。"}</p>
     <p><button class="primary" id="go">次へ：見え方の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
