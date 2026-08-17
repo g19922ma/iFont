@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.22";
+const VERSION = "3.23";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -701,14 +701,11 @@ function visionCheck() {
     <p>本番と同じ枠・同じ大きさで、見本の字「あ」を表示しています。
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
-    <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p style="text-align:center;margin-top:14px"><button class="primary" id="go3" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
+    <p style="text-align:center;margin-top:16px"><button class="primary" id="go3">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
   const canvas = newCanvas();
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");
-  const vc = document.getElementById("vc"), go3 = document.getElementById("go3");
-  vc.addEventListener("change", () => { go3.disabled = !vc.checked; go3.style.opacity = vc.checked ? "1" : ".5"; });
-  go3.onclick = () => { if (vc.checked) start(); };
+  document.getElementById("go3").onclick = start;
 }
 
 const T0 = Date.now();

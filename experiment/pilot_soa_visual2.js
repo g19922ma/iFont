@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.37";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.38";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -439,14 +439,11 @@ function visionCheck() {
     <p>本番と同じ枠・同じ大きさで、見本の字「あ」を表示しています。
     ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" style="text-align:center"></div>
-    <p><label style="cursor:pointer"><input type="checkbox" id="vc"> <b>枠の中の文字がはっきり見えます</b></label></p>
-    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : `練習を始める（${N_PRACTICE}問）`}</button></p>`;
+    <p style="text-align:center;margin-top:16px"><button class="primary" id="go2">${resuming ? "続きから再開する" : `練習を始める（${N_PRACTICE}問）`}</button></p>`;
   const canvas = newCanvas(); canvas.style.display = "block"; canvas.style.margin = "0 auto";
   document.getElementById("vcheck").appendChild(canvas);
   drawChar(canvas.getContext("2d"), "あ");
-  const vc = document.getElementById("vc"), go2 = document.getElementById("go2");
-  vc.addEventListener("change", () => { go2.disabled = !vc.checked; go2.style.opacity = vc.checked ? "1" : ".5"; });
-  go2.onclick = () => { if (vc.checked) start(); };
+  document.getElementById("go2").onclick = start;
 }
 
 const T0 = Date.now();   // 所要時間の起点
