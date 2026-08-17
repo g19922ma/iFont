@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.24";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.25";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -481,7 +481,7 @@ function intro() {
     その場合も、<b>後から聞こえた音をずらして回答せず</b>、1つ目・2つ目それぞれについて、もっとも近いと思う文字を選んでください。</p>
     <p class="muted">かなは、単独で読んだときの音で流れます（例：「は」は「ハ」、「へ」は「ヘ」）。「じ／ぢ」のように同じ音になるかなは、1つの選択肢にまとめています。</p>
     <p style="background:#eef4f6;border-radius:8px;padding:10px 12px">最初に<b>練習 ${N_PRACTICE}問</b>を行います。練習では正解が表示されます。その後、<b>本番 ${SOA_LEVELS.length*PER_LEVEL}問</b>を行います。本番では正解は表示されません。</p>
-    <p class="muted">聞き取りにくくても問題ありません。分からない場合も、もっとも近いと思う文字を選んでください。所要時間は8〜12分程度です。</p>
+    <p class="muted">所要時間は8〜12分程度です。</p>
     <p><button class="primary" id="go">次へ：音量の確認</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD&&PROD.enabled)?"津田塾大学 栗原研究室":"研究者向けパイロット版 v"+VERSION}</p>`;
   document.getElementById("go").onclick = volumeCheck;
