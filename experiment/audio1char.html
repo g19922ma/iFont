@@ -27,8 +27,10 @@
   .spacer { visibility:hidden; }
   .muted { color:#6b7280; font-size:13px; }
   .ask { font-weight:700; color:#2E7D8F; }
-  .playbtn { font-size:16px; padding:11px 22px; border-radius:999px; border:1px solid #c9a9a0;
-             background:#fff; cursor:pointer; }
+  .playbtn { font-size:18px; padding:16px 36px; border-radius:999px; border:0;
+             background:#2E7D8F; color:#fff; cursor:pointer; letter-spacing:.02em;
+             box-shadow: 0 4px 14px rgba(46,125,143,.25); transition: filter .15s; }
+  .playbtn:hover { filter: brightness(1.1); }
   table { border-collapse:collapse; width:100%; font-size:14px; }
   td,th { border:1px solid #e3e6ee; padding:6px 8px; text-align:center; }
 </style>
@@ -36,7 +38,7 @@
 <body>
 <div id="app"><div class="card" id="screen"></div></div>
 <!-- ?v= はJS側の VERSION と揃える(キャッシュ対策)。本番化の共通配管は課題スクリプトより先に読む。 -->
-<script src="prod_common.js?v=2.3"></script>
-<script src="audio1char.js?v=2.3"></script>
+<script src="prod_common.js?v=2.4"></script>
+<script src="audio1char.js?v=2.4"></script>
 </body>
 </html>

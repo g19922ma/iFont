@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.3";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.4";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -237,7 +237,7 @@ function runTrial() {
 
   screen.innerHTML = `${progressHeader(inPractice, t)}
     <div id="stage">
-      <div style="text-align:center;margin:14px 0 4px">
+      <div style="text-align:center;margin:30px 0 12px">
         <button id="playBtn" class="playbtn">▶ 準備ができたら音をきく（またはスペースキー）</button>
       </div>
       <div class="muted" id="prompt" style="text-align:center">ボタンを押すと、ひらがな1文字の読み上げが流れます。聞こえた文字を下の表から選んでください。</div>
