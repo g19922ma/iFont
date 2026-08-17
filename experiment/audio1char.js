@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.2";
+const VERSION = "3.3";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 25);            // 1ブロックの問題数(既定25=合計100問・約10分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -633,10 +633,9 @@ function volumeCheck() {
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
     <p>下のボタンで<b>サンプル音</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
-    <p style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:12px 14px">
+    <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
       <button id="sample" class="playbtn">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
-      <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
-      <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
+      <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
     <p><button class="primary" id="go2" disabled style="opacity:.5">次へ：見え方の確認</button></p>
     <p class="muted" id="volHint"></p>`;

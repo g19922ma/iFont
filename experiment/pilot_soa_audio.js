@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.43";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.44";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -551,10 +551,9 @@ function volumeCheck() {
   screen.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
     <p>下のボタンで<b>サンプル音（あ・い・う・え・お）</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
     調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
-    <p style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:12px 14px">
+    <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
       <button id="sample" style="font-size:15px;padding:10px 22px;border-radius:999px;border:0;background:#2E7D8F;color:#fff;cursor:pointer">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
-      <span class="muted" style="margin-left:8px">何度でも鳴らせます</span>
-      <span class="muted" style="display:block;margin-top:6px">${mobileNote}この課題は静かな環境で行ってください。</span></p>
+      <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
     <p><label style="cursor:pointer"><input type="checkbox" id="hp"> <b>聞き取りやすい音量に調節しました</b></label></p>
     <p><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "この音量で続きから再開する" : `この音量で練習を始める（${N_PRACTICE}問）`}</button></p>
     <p class="muted" id="volHint"></p>`;
