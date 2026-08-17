@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.28";
+const VERSION = "3.29";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -352,7 +352,7 @@ function audioGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">聞こえた文字を表から選ぶ</text>
     </svg>
-    <p class="muted">「ピッ」1回のあとに読み上げが流れ、終わると「ピッピッ」と2回鳴ります。何度でも聞き直せます。</p>
+    <p class="muted">「ピッ」1回のあとに自動で読み上げが流れ、終わると「ピッピッ」と2回鳴ります。「もう一度きく」で聞き直せます。</p>
     <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
     ほとんど何も聞こえない問題もあります。その場合も、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
 }
@@ -440,9 +440,9 @@ function runAudioTrial(t) {
   screen.innerHTML = `${progressHeader(t)}
     <div id="stage">
       <div style="text-align:center;margin:30px 0 12px">
-        <button id="playBtn" class="playbtn">${aIntroduced ? "▶ 音をきく" : "▶ 準備ができたら音をきく（またはスペースキー）"}</button>
+        <button id="playBtn" style="display:none;font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ もう一度きく</button>
       </div>
-      ${aIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">ボタンを押すと、ひらがな1文字の読み上げが流れます。聞こえた文字を下の表から選んでください。</div>`}
+      ${aIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">まもなく、ひらがな1文字の読み上げが流れます。</div>`}
       <div id="answerArea"></div>
     </div>`;
   const playBtn = document.getElementById("playBtn");
@@ -482,9 +482,9 @@ function runAudioTrial(t) {
     if (tStim === null) {
       tStim = performance.now();
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      playBtn.textContent = "▶ もう一度きく";
+      playBtn.style.display = "inline-block";
       const pr = document.getElementById("prompt");
-      if (pr) pr.textContent = "聞こえた文字を下の表から選んでください。何度でも聞き直せます。";
+      if (pr) pr.textContent = "聞こえた文字を下の表から選んでください。";
       aIntroduced = true;
     } else { replays += 1; }
     playGated(t);
@@ -493,8 +493,8 @@ function runAudioTrial(t) {
   playBtn.onclick = play;
   document.addEventListener("keydown", keyHandler);
   showGrid();
-  // 2問目以降は自動で再生(クリック回数の削減)。各モダリティの初回のみ手動開始。
-  if (aIntroduced) autoTimer = setTimeout(play, AUTO_START_MS);
+  // 聴覚も常に自動再生(ボタン押下不要)。初回だけ読み時間を長めに取る。
+  autoTimer = setTimeout(play, aIntroduced ? AUTO_START_MS : 1200);
 }
 
 // ---- 視覚の1問 ------------------------------------------------------------
