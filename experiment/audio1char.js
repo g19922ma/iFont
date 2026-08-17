@@ -20,7 +20,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.23";
+const VERSION = "3.24";
 const P = new URLSearchParams(location.search);
 const SET_TRIALS = Number(P.get("set") || 20);            // 1ブロックの問題数(既定20=合計80問・約8分)
 const BLOCK_ORDERS = ["AVAV", "VAVA", "AVVA", "VAAV"];    // A=聴覚, V=視覚
@@ -393,9 +393,11 @@ function showTryGate(t) {
   };
 }
 
+const SESSION_V = 3;   // 途中データの互換版。構造が変わったら上げる(古い途中データは捨てて最初から)。
 function saveProgress() {
   if (window.PROD && PROD.enabled) PROD.saveState("audio1char",
-    { trials, results, ti, blockOrder, elapsed_s: Math.round(elapsedPrior + (Date.now() - T0) / 1000) });
+    { session_v: SESSION_V, trials, results, ti, blockOrder,
+      elapsed_s: Math.round(elapsedPrior + (Date.now() - T0) / 1000) });
 }
 
 // 記録して次へ。練習は本人の答え(視覚は正解も)を見せる。
@@ -716,6 +718,9 @@ const T0 = Date.now();
     blockOrder = BLOCK_ORDERS[Math.floor(Math.random() * BLOCK_ORDERS.length)];
     if (window.PROD && PROD.enabled) {
       resumeState = PROD.loadState("audio1char");
+      // 旧バージョンで保存された途中データ(session_v不一致)は復元しない。
+      // 例: 聴覚のみだった頃のデータを復元すると、視覚の問題で出す文字が無く白紙になる。
+      if (resumeState && !resumeState.completed && resumeState.session_v !== 3) resumeState = null;
       if (resumeState && resumeState.blockOrder) blockOrder = resumeState.blockOrder;
       if (resumeState && resumeState.completed) {
         screen.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
