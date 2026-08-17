@@ -223,11 +223,7 @@
       go.disabled = !devOk(); go.style.opacity = devOk() ? "1" : ".5";
     }
     ready();   // 機器申告のないページ(視覚など)は最初から押せる
-    if (o.allowWireless && devWarn) {
-      // 無線可のページでは、ブロックせず控えめなおすすめ表示に差し替える。
-      devWarn.innerHTML = "無線（Bluetooth）機器は音の始まりが欠けることがあります。できればスピーカーか有線接続がおすすめですが、このままでも参加できます。";
-      devWarn.style.color = "#8a6d1a";
-    }
+    if (o.allowWireless && devWarn) devWarn.remove();   // 無線可のページでは注意書きを出さない
     devRadios.forEach(r => r.addEventListener("change", () => {
       audioDevice = r.value;
       if (devWarn) devWarn.style.display = audioDevice === "無線" ? "block" : "none";
