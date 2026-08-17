@@ -17,7 +17,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "2.4";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
+const VERSION = "2.5";    // v1=jsPsych版(先生のmain)。v2=乙課題と同じ自前実装。
 const N_TRIALS = 200;
 const N_PRACTICE = 5;
 const CATCH_RATE = 0.05;
@@ -60,6 +60,7 @@ const bufById = {};
 let trials = [], results = [], ti = 0, mainStarted = false;
 // 途中再開(本番モードのみ)。elapsedPrior は再開前までの経過秒。
 let resumeState = null, elapsedPrior = 0;
+let playBtnIntroduced = false;   // 再生ボタンの丁寧な文言は最初の1問だけ(以降は短く)
 let manifest = null;
 const stimByChar = {};   // サンプル音用: かな→刺激(正解表が読めたときだけ埋まる)
 
@@ -238,9 +239,9 @@ function runTrial() {
   screen.innerHTML = `${progressHeader(inPractice, t)}
     <div id="stage">
       <div style="text-align:center;margin:30px 0 12px">
-        <button id="playBtn" class="playbtn">▶ 準備ができたら音をきく（またはスペースキー）</button>
+        <button id="playBtn" class="playbtn">${playBtnIntroduced ? "▶ 音をきく" : "▶ 準備ができたら音をきく（またはスペースキー）"}</button>
       </div>
-      <div class="muted" id="prompt" style="text-align:center">ボタンを押すと、ひらがな1文字の読み上げが流れます。聞こえた文字を下の表から選んでください。</div>
+      ${playBtnIntroduced ? "" : `<div class="muted" id="prompt" style="text-align:center">ボタンを押すと、ひらがな1文字の読み上げが流れます。聞こえた文字を下の表から選んでください。</div>`}
       <div id="answerArea"></div>
     </div>`;
   const stage = document.getElementById("stage");
@@ -304,7 +305,9 @@ function runTrial() {
       tStim = performance.now();
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
       playBtn.textContent = "▶ もう一度きく";
-      document.getElementById("prompt").textContent = "聞こえた文字を下の表から選んでください。何度でも聞き直せます。";
+      const pr = document.getElementById("prompt");
+      if (pr) pr.textContent = "聞こえた文字を下の表から選んでください。何度でも聞き直せます。";
+      playBtnIntroduced = true;
     } else {
       replays += 1;
     }
