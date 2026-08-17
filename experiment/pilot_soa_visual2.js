@@ -10,7 +10,7 @@
 // jsPsych・音声・サーバ不要。base/<かな>.png を流用。結果は画面表示＋JSONダウンロード。
 "use strict";
 
-const VERSION = "2.24";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "2.25";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 const P = new URLSearchParams(location.search);
 const SOA_LEVELS = (P.get("levels") || "50,83,133,200,300,450,700").split(",").map(Number);
 const PER_LEVEL = Number(P.get("perlevel") || 6);   // 各水準の組数(1組=2回答)
@@ -292,17 +292,23 @@ function askOne(t, pos, sel, done) {
 // DOMのグリッドは左から詰めるため、行の並びを逆順にして「右から左」の向きを作る。
 function buildKanaGrid(done) {
   const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
-  for (const rowsBlock of [GRID_KANA.slice(0, 11), GRID_KANA.slice(11)]) {
-    if (!rowsBlock.length) continue;
+  const blocks = [GRID_KANA.slice(0, 11), GRID_KANA.slice(11)].filter(b => b.length);
+  // 列幅を上下の表で揃える: 列数の少ない表は左側を空列で埋め、右(あ行側)に寄せる
+  const maxCols = Math.max(...blocks.map(b => b.length));
+  for (const rowsBlock of blocks) {
     const cols = [...rowsBlock].reverse();
+    const pad = maxCols - cols.length;
     const g = document.createElement("div");
-    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${cols.length},1fr)`;
+    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${maxCols},1fr)`;
     g.style.gap = "6px"; g.style.marginTop = "14px";
-    for (let dan = 0; dan < 5; dan++) for (const col of cols) {
-      const ch = col[dan] || "";
-      if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
-      const b = document.createElement("button"); b.className = "kana"; b.textContent = ch;
-      b.onclick = () => done(ch); g.appendChild(b);
+    for (let dan = 0; dan < 5; dan++) {
+      for (let k = 0; k < pad; k++) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); }
+      for (const col of cols) {
+        const ch = col[dan] || "";
+        if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
+        const b = document.createElement("button"); b.className = "kana"; b.textContent = ch;
+        b.onclick = () => done(ch); g.appendChild(b);
+      }
     }
     grid.appendChild(g);
   }

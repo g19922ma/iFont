@@ -6,7 +6,7 @@
 // 正解の対応づけに answer_key_merged.json が必要(現在はgit管理)。
 "use strict";
 
-const VERSION = "3.28";   // パイロットのバージョン(細かい改変ごとにインクリメント)
+const VERSION = "3.29";   // パイロットのバージョン(細かい改変ごとにインクリメント)
 // v2.3: 音声プールを再合成(VOICEVOX 0.25.2)。う・んの音量をvolumeScaleで底上げ、
 //   F0実測の狭域化でま・びのオクターブ誤り補正を解消、切り出し位置を敏感しきい値で作り直し。
 //   同名ファイルの中身が変わったので、キャッシュを避けるため取得URLに ?v= を付ける。
@@ -335,6 +335,7 @@ function respond(t, inPractice) {
   const confirmScreen = () => {
     const stage = document.getElementById("stage");
     stage.style.height = "auto";
+    stage.style.display = "block";
     document.getElementById("grid")?.remove();
     stage.innerHTML = `<div class="ask" style="font-size:18px">この回答で決定しますか？</div>
       <div style="font-size:20px;margin:12px 0">1つ目「<b>${kanaLabel(sel[1])}</b>」 ／ 2つ目「<b>${kanaLabel(sel[2])}</b>」</div>
@@ -352,6 +353,7 @@ function respond(t, inPractice) {
 function askOne(t, pos, sel, done) {
   const stage = document.getElementById("stage");
   stage.style.height = "auto";   // 聴取エリアの空欄を詰めて、かなの表をプロンプト直下に出す
+  stage.style.display = "block"; // 既定のflex(横並び)のままだと質問文とヒントが横に潰れる
   const label = pos===1 ? "1つ目（最初に聞こえた音）は？" : "2つ目（2番目に聞こえた音）は？";
   const picked = [1,2].filter(p => p!==pos && sel[p])
     .map(p => `${p}つ目「<b>${kanaLabel(sel[p])}</b>」`).join(" ／ ");
@@ -365,16 +367,24 @@ function askOne(t, pos, sel, done) {
 // DOMのグリッドは左から詰めるため、行の並びを逆順にして「右から左」の向きを作る。
 function buildKanaGrid(done) {
   const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
-  for (const rowsBlock of [GRID_AUDIO.slice(0, 10), GRID_AUDIO.slice(10)]) {
+  const blocks = [GRID_AUDIO.slice(0, 10), GRID_AUDIO.slice(10)];
+  // 列幅を上下の表で揃える: 列数の少ない表は左側を空列で埋め、右(あ行側)に寄せる
+  const maxCols = Math.max(...blocks.map(b => b.length));
+  for (const rowsBlock of blocks) {
     const cols = [...rowsBlock].reverse();
+    const pad = maxCols - cols.length;
     const g = document.createElement("div");
-    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${cols.length},1fr)`;
+    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${maxCols},1fr)`;
     g.style.gap = "6px"; g.style.marginTop = "14px";
-    for (let dan = 0; dan < 5; dan++) for (const col of cols) {
-      const ch = col[dan] || "";
-      if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
-      const b = document.createElement("button"); b.className = "kana"; b.textContent = kanaLabel(ch);
-      b.onclick = () => done(ch); g.appendChild(b);
+    for (let dan = 0; dan < 5; dan++) {
+      for (let k = 0; k < pad; k++) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); }
+      for (const col of cols) {
+        const ch = col[dan] || "";
+        if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
+        const b = document.createElement("button"); b.className = "kana"; b.textContent = kanaLabel(ch);
+        if (b.textContent.length > 1) b.style.fontSize = "12px";   // 「お／を」等のはみ出し防止
+        b.onclick = () => done(ch); g.appendChild(b);
+      }
     }
     grid.appendChild(g);
   }
