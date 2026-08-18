@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>配り方の聴き比べ: 現行本番(方式1) と 一様伸縮(方式2)</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif; margin:0;
+         background:#f6f4ef; color:#1b2030; }
+  #app { max-width: 1040px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e6e1d6; border-radius:14px; padding:22px;
+          box-shadow:0 1px 0 rgba(0,0,0,.03), 0 10px 28px rgba(46,125,143,.08); margin-bottom:18px; }
+  h1,h2,h3 { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; letter-spacing:.04em; color:#1E2A5E; }
+  h1 { font-size:21px; border-bottom:1px solid #e9e4d8; padding-bottom:10px; margin:0 0 14px; }
+  h2 { font-size:15px; margin:26px 0 10px; color:#8A5A00; letter-spacing:.08em; }
+  h3 { font-size:17px; margin:0; }
+  p { line-height:1.85; font-size:14px; }
+  .muted { color:#6b7280; font-size:13px; }
+  .row { display:grid; grid-template-columns:64px 1fr 1fr; gap:14px; align-items:start;
+         padding:16px 0; border-top:1px solid #efeade; }
+  .row:first-of-type { border-top:0; }
+  .kana { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-size:40px; line-height:1;
+          color:#1E2A5E; text-align:center; padding-top:6px; }
+  .kana small { display:block; font-family:system-ui,sans-serif; font-size:10px; color:#6b7280;
+                margin-top:8px; letter-spacing:.04em; line-height:1.5; }
+  .cell { min-width:0; }
+  .cell img { width:100%; display:block; border:1px solid #eae5d8; border-radius:8px; background:#fff; }
+  .head { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; flex-wrap:wrap; }
+  .tag { font-size:11px; letter-spacing:.06em; padding:2px 8px; border-radius:999px;
+         background:#eef4f5; color:#1B5C69; border:1px solid #d8e6e9; }
+  .tag.now { background:#fdf3e0; color:#8A5A00; border-color:#efdfc0; }
+  .nums { font-size:12px; color:#6b7280; }
+  .nums b { color:#1b2030; font-weight:600; }
+  button.play, button.pair { font-size:14px; padding:7px 18px; border-radius:999px; border:0;
+                background:#2E7D8F; color:#fff; cursor:pointer; letter-spacing:.02em;
+                transition:filter .15s; }
+  button.pair { background:#1E2A5E; font-size:13px; padding:6px 16px; margin-left:8px; }
+  button.play:hover, button.pair:hover { filter:brightness(1.12); }
+  button.play:disabled { background:#b9c2c9; cursor:default; }
+  .why { font-size:12px; color:#6b7280; margin:0 0 10px; grid-column:2 / 4; line-height:1.7; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:#6b7280; margin-top:6px; }
+  .sw { display:inline-block; width:22px; height:10px; border-radius:2px; vertical-align:-1px; margin-right:5px; }
+  table { border-collapse:collapse; font-size:13px; margin-top:8px; }
+  td,th { border:1px solid #e3e6ee; padding:5px 10px; text-align:left; }
+  th { background:#faf8f3; font-weight:600; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="card">
+<h1>1モーラ0.2秒の配り方: 現行本番（方式1）と一様伸縮（方式2）の聴き比べ</h1>
+<p><b>各行の左右を聴き比べ、どちらの音か分かるか・不自然でないかを判定してください。</b>左が現行の本番プール（方式1）、右が候補プール uniform200（方式2）です。話者・音高・音量のそろえ方・鳴らす区間の決め方はすべて同じで、<b>1モーラ0.2秒の中で子音と母音に時間をどう配るかだけ</b>が違います。方式1は子音の長さを合成器が返した値のまま残して母音で0.2秒に帳尻を合わせるので、子音の長い摩擦音では母音が痩せます。方式2は子音と母音を同じ倍率で伸縮するので、合成器が出した自然な比がそのまま保たれます。</p>
+<p class="muted">再生は実験本番とまったく同じ処理です（音響的な立ち上がりからモーラ末尾まで・音量をそろえる増幅つき・両端8ミリ秒のフェード）。「続けて鳴らす」を押すと方式1→0.7秒あけて→方式2の順に鳴ります。図の横軸は全図共通で0〜210ミリ秒、縦軸（振幅）も全図共通なので、図どうしの波の高さの差はそのまま聞こえの大きさの差にあたります。</p>
+<div class="legend"><span><span class="sw" style="background:#C98A16;opacity:.35"></span>子音の区間</span><span><span class="sw" style="background:#2E7D8F;opacity:.30"></span>母音の区間</span><span><span class="sw" style="background:#B03A2E"></span>再生の開始位置（音響的な立ち上がり）</span></div>
+<p class="muted" style="margin-top:14px">子音と母音の境目は、合成器に問い合わせた音素長を各方式で配り直し、合成器の格子（10.6667ミリ秒）に丸めた位置です。波形から目で拾った位置ではありません。モーラの合計が0.2秒ちょうどにならないのは、子音と母音が別々に丸められるためで、これは方式1でも同じです。</p>
+<p class="muted">なお、時間の配分が同じ音（つ・ぽ・あ など）でも、2つの波形は完全には一致しません。音量をそろえる倍率がプール全体の中央値を基準に決まり、プールの中身が変われば中央値もわずかに動くためです。配分の同じ38音で測った差は最大 0.13 デシベル（び）で、聞き分けられる大きさではありません。配分そのものが変わった音は、聞こえの大きさが実際に変わるので倍率も変わります。</p>
+</div>
+<h2>変化が大きい8音</h2>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">し<small>母音 +42.7<br>子音 -42.7<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>160.0</b> ミリ秒 ／ 母音 <b>42.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/し_m1.png" alt="し の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/8788712cecb05cac0ec9.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 60, &quot;avail_ms&quot;: 184.708, &quot;gain&quot;: 0.996}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 185 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>117.3</b> ミリ秒 ／ 母音 <b>85.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/し_m2.png" alt="し の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/9c4f86efa36f390f4b62.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 65, &quot;avail_ms&quot;: 179.708, &quot;gain&quot;: 0.981}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 180 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +42.7 ミリ秒、子音が -42.7 ミリ秒動く。方式1で母音が最短(42.7 ミリ秒)。方式2で母音が最短(85.3 ミリ秒)。同じ長さの音が他に 1 音ある(す)。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">せ<small>母音 +42.7<br>子音 -32.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>128.0</b> ミリ秒 ／ 母音 <b>64.0</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/せ_m1.png" alt="せ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/be98fe9629c62ce9e6b2.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 184.042, &quot;gain&quot;: 1.168}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 184 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>96.0</b> ミリ秒 ／ 母音 <b>106.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/せ_m2.png" alt="せ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/10dd570756b1cc8c7087.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.014}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +42.7 ミリ秒、子音が -32.0 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">さ<small>母音 +32.0<br>子音 -21.3<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>106.7</b> ミリ秒 ／ 母音 <b>85.3</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/さ_m1.png" alt="さ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/216b3538dda7297c7d83.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 184.042, &quot;gain&quot;: 0.91}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 184 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>85.3</b> ミリ秒 ／ 母音 <b>117.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/さ_m2.png" alt="さ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/099ec136879d1fb0c9f7.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 55, &quot;avail_ms&quot;: 189.708, &quot;gain&quot;: 1.017}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 190 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +32.0 ミリ秒、子音が -21.3 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">す<small>母音 +32.0<br>子音 -21.3<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>138.7</b> ミリ秒 ／ 母音 <b>53.3</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/す_m1.png" alt="す の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/584787751a00ca4d1bc4.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 45, &quot;avail_ms&quot;: 189.042, &quot;gain&quot;: 1.011}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 189 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>117.3</b> ミリ秒 ／ 母音 <b>85.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/す_m2.png" alt="す の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/76fe00428cc5f76127d7.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.027}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +32.0 ミリ秒、子音が -21.3 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">ひ<small>母音 +21.3<br>子音 -32.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>128.0</b> ミリ秒 ／ 母音 <b>74.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/ひ_m1.png" alt="ひ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/80e5a45a5173cdfc3564.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 75, &quot;avail_ms&quot;: 169.708, &quot;gain&quot;: 1.013}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 170 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>96.0</b> ミリ秒 ／ 母音 <b>96.0</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/ひ_m2.png" alt="ひ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/d0aa0191eacb6339fa51.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 70, &quot;avail_ms&quot;: 164.042, &quot;gain&quot;: 1.042}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 164 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +21.3 ミリ秒、子音が -32.0 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">へ<small>母音 +21.3<br>子音 -32.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>106.7</b> ミリ秒 ／ 母音 <b>96.0</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/へ_m1.png" alt="へ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/1e97c6e50e8dd7c42aa6.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 90, &quot;avail_ms&quot;: 154.708, &quot;gain&quot;: 1.017}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 155 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>74.7</b> ミリ秒 ／ 母音 <b>117.3</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/へ_m2.png" alt="へ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/e228f7e38e495867122b.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 75, &quot;avail_ms&quot;: 159.042, &quot;gain&quot;: 0.994}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 159 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +21.3 ミリ秒、子音が -32.0 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">ち<small>母音 +21.3<br>子音 -10.7<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>85.3</b> ミリ秒 ／ 母音 <b>106.7</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/ち_m1.png" alt="ち の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/7c1ab662488ecaf4e269.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 184.042, &quot;gain&quot;: 1.001}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 184 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>74.7</b> ミリ秒 ／ 母音 <b>128.0</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/ち_m2.png" alt="ち の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/e289d2f554c3cfa8f8a1.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 45, &quot;avail_ms&quot;: 199.708, &quot;gain&quot;: 0.972}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 200 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +21.3 ミリ秒、子音が -10.7 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">は<small>母音 +10.7<br>子音 -21.3<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>96.0</b> ミリ秒 ／ 母音 <b>106.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/は_m1.png" alt="は の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/9c15732dec50cceece52.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 85, &quot;avail_ms&quot;: 159.708, &quot;gain&quot;: 0.998}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 160 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>74.7</b> ミリ秒 ／ 母音 <b>117.3</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/は_m2.png" alt="は の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/9ae46aa1917665567498.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 65, &quot;avail_ms&quot;: 169.042, &quot;gain&quot;: 0.989}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 169 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">母音が +10.7 ミリ秒、子音が -21.3 ミリ秒動く。<button class="pair">続けて鳴らす</button></p>
+</div>
+<h2>変化のない音</h2>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">つ<small>母音 +0.0<br>子音 +0.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>85.3</b> ミリ秒 ／ 母音 <b>117.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/つ_m1.png" alt="つ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/5486ec1c3c0cc1e356d9.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 60, &quot;avail_ms&quot;: 184.708, &quot;gain&quot;: 1.032}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 185 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>85.3</b> ミリ秒 ／ 母音 <b>117.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/つ_m2.png" alt="つ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/05a3cbd3acadc8842efd.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 60, &quot;avail_ms&quot;: 184.708, &quot;gain&quot;: 1.035}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 185 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">素のモーラ長がほぼ 0.2 秒なので、どちらの方式でも配分が同じになる。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">ぽ<small>母音 +0.0<br>子音 +0.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>60.0</b> ミリ秒 ／ 母音 <b>140.0</b> ミリ秒 ／ モーラ 200.0 ミリ秒</div>
+<img src="pool_ab_assets/ぽ_m1.png" alt="ぽ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/c1a3ec894dba84cac3e6.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 85, &quot;avail_ms&quot;: 161.042, &quot;gain&quot;: 0.997}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 161 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>60.0</b> ミリ秒 ／ 母音 <b>140.0</b> ミリ秒 ／ モーラ 200.0 ミリ秒</div>
+<img src="pool_ab_assets/ぽ_m2.png" alt="ぽ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/9cb166def47a6874a9ac.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 85, &quot;avail_ms&quot;: 161.042, &quot;gain&quot;: 0.993}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 161 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">「オッポ」の文脈合成から切り出す処方で、配り方の規則をそもそも通らない。時間の配分は2つのプールでまったく同じ。<button class="pair">続けて鳴らす</button></p>
+</div>
+<h2>母音の両端</h2>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">あ<small>母音 +0.0<br>子音 +0.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>0.0</b> ミリ秒 ／ 母音 <b>202.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/あ_m1.png" alt="あ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/7dc5771f7c4b2095d9e7.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.03}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>0.0</b> ミリ秒 ／ 母音 <b>202.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/あ_m2.png" alt="あ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/6aac66c682d63b76888b.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.036}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">方式1で母音が最長(202.7 ミリ秒)。同じ長さの音が他に 5 音ある(い・う・え・お・ん)。方式2で母音が最長(202.7 ミリ秒)。同じ長さの音が他に 5 音ある(い・う・え・お・ん)。<button class="pair">続けて鳴らす</button></p>
+</div>
+<h2>参考: 母音が縮む音</h2>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">る<small>母音 -10.7<br>子音 +10.7<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>21.3</b> ミリ秒 ／ 母音 <b>181.3</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/る_m1.png" alt="る の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/1c658cf2c422718a583d.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.033}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>32.0</b> ミリ秒 ／ 母音 <b>170.7</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/る_m2.png" alt="る の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/10fdb16ea64a1aea9454.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 55, &quot;avail_ms&quot;: 189.708, &quot;gain&quot;: 0.925}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 190 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">素のモーラ長が 0.2 秒より短く、伸ばす側にあたる音。母音が -10.7 ミリ秒。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card rowwrap">
+<div class="row">
+<div class="kana">ろ<small>母音 -10.7<br>子音 +0.0<br>ミリ秒</small></div>
+<div class="cell">
+<div class="head">
+<h3>方式1 現行本番</h3><span class="tag now">いま本番で使っている音</span>
+</div>
+<div class="nums">子音 <b>10.7</b> ミリ秒 ／ 母音 <b>192.0</b> ミリ秒 ／ モーラ 202.7 ミリ秒</div>
+<img src="pool_ab_assets/ろ_m1.png" alt="ろ の波形（方式1 現行本番）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../audio1char_stimuli/04c4ae801278f21a2760.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 194.708, &quot;gain&quot;: 1.006}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 195 ミリ秒</span></p>
+</div>
+<div class="cell">
+<div class="head">
+<h3>方式2 一様伸縮</h3><span class="tag">候補 uniform200</span>
+</div>
+<div class="nums">子音 <b>10.7</b> ミリ秒 ／ 母音 <b>181.3</b> ミリ秒 ／ モーラ 192.0 ミリ秒</div>
+<img src="pool_ab_assets/ろ_m2.png" alt="ろ の波形（方式2 一様伸縮）">
+<p style="margin:8px 0 0"><button class="play" data-clip="{&quot;file&quot;: &quot;../candidate_pools/uniform200/audio1char_stimuli/8e448c4462b98843ac53.mp3&quot;, &quot;char_onset_s&quot;: 0.1, &quot;onset_ms&quot;: 50, &quot;avail_ms&quot;: 184.042, &quot;gain&quot;: 0.998}">▶ 鳴らす</button> <span class="muted">実際に鳴る長さ 184 ミリ秒</span></p>
+</div>
+</div>
+<p class="why" style="margin-top:2px">素のモーラ長が 0.2 秒より短く、伸ばす側にあたる音。母音が -10.7 ミリ秒。<button class="pair">続けて鳴らす</button></p>
+</div>
+<div class="card"><h2 style="margin-top:0">この表の見かた</h2>
+<table><tr><th>言葉</th><th>意味</th></tr><tr><td>モーラ</td><td>かな1文字ぶんの音。ここでは0.2秒に固定している</td></tr><tr><td>子音の区間</td><td>「し」なら [ɕ] の摩擦、「た」なら破裂までの部分</td></tr><tr><td>母音の区間</td><td>声帯が鳴っている部分。ここが痩せると音色が確かめにくくなる</td></tr><tr><td>再生の開始位置</td><td>実験では無音を飛ばし、レベルが一定値を超え続ける最初の点から鳴らす</td></tr><tr><td>実際に鳴る長さ</td><td>再生の開始位置からモーラ末尾まで。立ち上がりの遅い音ほど短くなる</td></tr></table>
+<p class="muted" style="margin-top:14px">68音すべての数値は <code>project/子音母音配分_方式比較.md</code>。68音を1音ずつ聴くなら <a href="../pilot_soa_audio.html?check=1">現行（方式1）の点検モード</a> と <a href="../pilot_soa_audio.html?pool=uniform200&amp;check=1">方式2の点検モード</a>。</p></div>
+</div>
+<script>
+let ctx = null;
+const bufs = {};
+function ensureCtx(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); return ctx; }
+// 実験と同じ鳴らし方: 音響的な立ち上がりからモーラ末尾までを切り出し、
+// 音量をそろえる増幅率を掛け、両端に 8 ミリ秒のフェードをかける。
+async function play(btn){
+  const d = JSON.parse(btn.dataset.clip);
+  btn.disabled = true;
+  try {
+    if(!bufs[d.file]){
+      const r = await fetch(d.file);
+      if(!r.ok) throw new Error("音声が読めない: " + d.file);
+      bufs[d.file] = await ensureCtx().decodeAudioData(await r.arrayBuffer());
+    }
+    const src = bufs[d.file], sr = src.sampleRate, c = ensureCtx();
+    await c.resume();
+    const start = Math.floor((d.char_onset_s + d.onset_ms/1000) * sr);
+    const n = Math.max(1, Math.floor(d.avail_ms/1000 * sr));
+    const out = c.createBuffer(1, n, sr);
+    const a = src.getChannelData(0), b = out.getChannelData(0);
+    for(let i=0;i<n;i++) b[i] = (a[start+i] || 0) * d.gain;
+    const nf = Math.min(Math.floor(0.008*sr), n>>1);
+    for(let i=0;i<nf;i++){ b[i]*=i/nf; b[n-1-i]*=i/nf; }
+    const s = c.createBufferSource(); s.buffer = out; s.connect(c.destination); s.start();
+    s.onended = () => { btn.disabled = false; };
+  } catch(e){
+    btn.disabled = false;
+    btn.textContent = "再生できない";
+    console.error(e);
+  }
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("button.play");
+  if(b) play(b);
+});
+// 行の左右を続けて鳴らす(方式1 -> 0.7秒あけて -> 方式2)
+document.addEventListener("click", e => {
+  const b = e.target.closest("button.pair");
+  if(!b) return;
+  const row = b.closest(".rowwrap");
+  const btns = row.querySelectorAll("button.play");
+  play(btns[0]);
+  setTimeout(() => play(btns[1]), 700);
+});
+</script>
+</body>
+</html>
