@@ -41,6 +41,7 @@ char_dur_s からの引き算をやめ、この値をそのまま窓の長さと
 実行(VOICEVOX 0.25.2 を 127.0.0.1:50021 で起動しておくこと):
   python3 experiment/tools/build_gate_windows.py --pool production
   python3 experiment/tools/build_gate_windows.py --pool slot133
+  python3 experiment/tools/build_gate_windows.py --pool uniform200
 """
 import argparse
 import io
@@ -91,13 +92,17 @@ def to_kata(s):
     return "".join(chr(ord(c) + 0x60) if 0x3041 <= ord(c) <= 0x3096 else c for c in s)
 
 
-def phoneme_frames(ch, speaker, cmul, mora_dur_s, _cache={}):
+def phoneme_frames(ch, speaker, cmul, mora_dur_s, slot_mode="vowel", _cache={}):
     """合成時と同じ手順でモーラの子音長・母音長を決め、格子に量子化したフレーム数を返す。
 
-    build_1char_pool.py の set_mora と同じ規則:
-      子音長は mora_dur-0.04 で頭打ち、母音長は残り。子音と母音は別々に丸められる。
+    slot_mode は 1 モーラの中で時間をどう配るかで、プールごとに違う。
+      "vowel"   (本番・slot133) build_2char_pool.set_mora と同じ規則。子音長は
+                mora_dur-0.04 で頭打ち、母音長は残り。
+      "uniform" (uniform200) 子音長と母音長を同じ倍率で伸縮して合計を mora_dur にする。
+                build_uniform200.py の set_mora_uniform と同じ規則。
+    どちらの場合も、子音と母音は VOICEVOX 側で別々に格子へ丸められる。
     """
-    key = (ch, speaker, cmul, mora_dur_s)
+    key = (ch, speaker, cmul, mora_dur_s, slot_mode)
     if key in _cache:
         return _cache[key]
     q = json.loads(post("/audio_query", {"text": to_kata(ch), "speaker": speaker}))
@@ -105,9 +110,19 @@ def phoneme_frames(ch, speaker, cmul, mora_dur_s, _cache={}):
     c = mora.get("consonant_length") or 0.0
     if cmul and cmul != 1.0 and c:
         c = c * cmul
-    if c > mora_dur_s - 0.04:
-        c = mora_dur_s - 0.04
-    v = mora_dur_s - c
+    if slot_mode == "uniform":
+        v0 = mora.get("vowel_length") or 0.0
+        tot = c + v0
+        if tot > 0:
+            k = mora_dur_s / tot
+            c = c * k
+            v = v0 * k
+        else:
+            c, v = 0.0, mora_dur_s
+    else:
+        if c > mora_dur_s - 0.04:
+            c = mora_dur_s - 0.04
+        v = mora_dur_s - c
     fc = int(round(c * SR / FRAME_SAMPLES)) if c else 0
     fv = int(round(v * SR / FRAME_SAMPLES))
     _cache[key] = (fc, fv)
@@ -180,9 +195,13 @@ def aw_rms(seg, fr):
 # 本体
 # --------------------------------------------------------------------------
 POOLS = {
-    "production": dict(pool_tag="cand108", base=EXP, mora_dur_s=0.2, speaker=108),
+    "production": dict(pool_tag="cand108", base=EXP, mora_dur_s=0.2, speaker=108,
+                       slot_mode="vowel"),
     "slot133": dict(pool_tag="slot133", base=os.path.join(EXP, "candidate_pools", "slot133"),
-                    mora_dur_s=13 / 93.75, speaker=108),
+                    mora_dur_s=13 / 93.75, speaker=108, slot_mode="vowel"),
+    "uniform200": dict(pool_tag="uniform200",
+                       base=os.path.join(EXP, "candidate_pools", "uniform200"),
+                       mora_dur_s=0.2, speaker=108, slot_mode="uniform"),
 }
 
 
@@ -228,7 +247,8 @@ def main():
             wav_n = pre_n + mora_n + int(0.1 * SR)
             fc = fv = None
         else:
-            fc, fv = phoneme_frames(ch, cfg["speaker"], cmul_of.get(ch), mora_dur_s)
+            fc, fv = phoneme_frames(ch, cfg["speaker"], cmul_of.get(ch), mora_dur_s,
+                                    cfg.get("slot_mode", "vowel"))
             pre_n = PRE_FRAMES * FRAME_SAMPLES
             mora_n = (fc + fv) * FRAME_SAMPLES
             cons_n = fc * FRAME_SAMPLES
