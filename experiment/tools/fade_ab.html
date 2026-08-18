@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>頭フェードのA/B（ぱ行の清濁）</title>
+<style>
+  body { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif; margin:0; background:#f6f4ef; color:#1b2030; }
+  #app { max-width: 860px; margin: 0 auto; padding: 24px 20px; }
+  .card { background:#fff; border:1px solid #e6e1d6; border-radius:14px; padding:22px; }
+  h1 { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-size:19px; color:#1E2A5E; border-bottom:1px solid #e9e4d8; padding-bottom:10px; }
+  .muted { color:#6b7280; font-size:13px; }
+  table { border-collapse:collapse; width:100%; margin-top:14px; }
+  th, td { border:1px solid #e3e6ee; padding:8px; text-align:center; font-size:14px; }
+  th { background:#eef4f6; }
+  .k { font-size:22px; font-weight:700; }
+  button { font-size:14px; padding:8px 14px; border-radius:999px; border:1px solid #2E7D8F; background:#fff; color:#2E7D8F; cursor:pointer; }
+  button.seq { background:#2E7D8F; color:#fff; border:0; }
+</style>
+</head>
+<body>
+<div id="app"><div class="card">
+<h1>再生の頭フェードが清濁の聞こえに効くかのA/B</h1>
+<p>実験の再生処理は「音響的な立ち上がり位置から再生を始め、<b>先頭8ミリ秒に線形フェードイン</b>」を掛けている。
+破裂音ではこのフェードがバースト（破裂の瞬間の音）をちょうど弱めている疑いがある。3条件で聴き比べる：</p>
+<ul style="font-size:14px;line-height:1.9">
+<li><b>① 現行</b>：立ち上がり位置から再生・先頭8msフェードあり（実験ページと同一）</li>
+<li><b>② 頭フェードなし</b>：立ち上がり位置から再生・先頭フェードを掛けない（末尾のみ）</li>
+<li><b>③ 手前から</b>：立ち上がりの8ms手前から再生し、フェードは無音部で消化（バースト無傷・クリック音も防止）</li>
+</ul>
+<p class="muted">音量をそろえる増幅・末尾フェードは3条件とも同じ。判定：「ぽ」が「ぽ」に聞こえるのはどれか。②や③で改善するなら、犯人は頭フェード。参照用に、ば行（本来濁っている音）も下に置いた。</p>
+<table id="tbl"></table>
+<p class="muted" style="margin-top:12px">「連続」は ①→②→③ を0.8秒間隔で鳴らす。</p>
+</div></div>
+<script>
+const CLIPS = {"ば": {"file": "../audio1char_stimuli/de304b931894754a8729.mp3", "char_onset_s": 0.1, "onset_ms": 50, "gain": 0.9, "avail_ms": 194.708}, "び": {"file": "../audio1char_stimuli/75e3c9c6e3e77462bfaf.mp3", "char_onset_s": 0.1, "onset_ms": 60, "gain": 1.0, "avail_ms": 184.708}, "ぶ": {"file": "../audio1char_stimuli/ceb10b11240be9e6cc9a.mp3", "char_onset_s": 0.1, "onset_ms": 40, "gain": 1.0, "avail_ms": 204.708}, "べ": {"file": "../audio1char_stimuli/24f22fedb3b2e079e682.mp3", "char_onset_s": 0.1, "onset_ms": 60, "gain": 1.0, "avail_ms": 184.708}, "ぼ": {"file": "../audio1char_stimuli/2f40eec076b4b2c4ba4e.mp3", "char_onset_s": 0.1, "onset_ms": 50, "gain": 1.0, "avail_ms": 194.708}, "ぱ": {"file": "../audio1char_stimuli/d507398a309e7986bd56.mp3", "char_onset_s": 0.1, "onset_ms": 50, "gain": 0.9, "avail_ms": 194.708}, "ぴ": {"file": "../audio1char_stimuli/7a65e9a9b9962505ed96.mp3", "char_onset_s": 0.1, "onset_ms": 40, "gain": 1.0, "avail_ms": 204.708}, "ぷ": {"file": "../audio1char_stimuli/d393bf4aca66369786ef.mp3", "char_onset_s": 0.1, "onset_ms": 50, "gain": 1.0, "avail_ms": 194.708}, "ぺ": {"file": "../audio1char_stimuli/24caffaafec499680d60.mp3", "char_onset_s": 0.1, "onset_ms": 50, "gain": 1.0, "avail_ms": 194.708}, "ぽ": {"file": "../audio1char_stimuli/c1a3ec894dba84cac3e6.mp3", "char_onset_s": 0.1, "onset_ms": 80, "gain": 1.0, "avail_ms": 166.042}};
+const ROWS = ["ぱ","ぴ","ぷ","ぺ","ぽ","ば","び","ぶ","べ","ぼ"];
+const FADE_MS = 8, PRE_MS = 8;
+let ctx = null; const bufs = {};
+function ensureCtx(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==="suspended") ctx.resume(); return ctx; }
+async function getBuf(ch){ if(bufs[ch]) return bufs[ch];
+  const r = await fetch(CLIPS[ch].file); bufs[ch] = await ensureCtx().decodeAudioData(await r.arrayBuffer()); return bufs[ch]; }
+function makeBuf(ch, mode){
+  const c = CLIPS[ch], src = bufs[ch], sr = src.sampleRate;
+  const pre = (mode===3) ? PRE_MS : 0;
+  const start = Math.max(0, Math.round((c.char_onset_s + (c.onset_ms - pre)/1000) * sr));
+  const len = Math.max(1, Math.round((c.avail_ms + pre)/1000 * sr));
+  const a = src.getChannelData(0);
+  const ab = ctx.createBuffer(1, len, sr); const out = ab.getChannelData(0);
+  for(let i=0;i<len;i++) out[i] = (a[start+i]||0) * c.gain;
+  const nf = Math.min(Math.round(sr*FADE_MS/1000), len>>1);
+  if(mode!==2){ for(let i=0;i<nf;i++) out[i] *= i/nf; }        // ①③は頭フェードあり(③は無音部で消化)
+  for(let i=0;i<nf;i++) out[len-1-i] *= i/nf;                   // 末尾は全条件同じ
+  return ab;
+}
+async function play(ch, mode, when){
+  await getBuf(ch);
+  const s = ctx.createBufferSource(); s.buffer = makeBuf(ch, mode);
+  s.connect(ctx.destination); s.start(when ?? ctx.currentTime + 0.05);
+}
+async function seq(ch){ await getBuf(ch); const t0 = ensureCtx().currentTime + 0.05;
+  for(let m=1;m<=3;m++) play(ch, m, t0 + (m-1)*0.8); }
+const tbl = document.getElementById("tbl");
+tbl.innerHTML = "<tr><th>音</th><th>① 現行(頭8msフェード)</th><th>② 頭フェードなし</th><th>③ 8ms手前から</th><th></th></tr>" +
+  ROWS.map(ch => `<tr><td class="k">${ch}</td>
+    <td><button onclick="play('${ch}',1)">▶</button></td>
+    <td><button onclick="play('${ch}',2)">▶</button></td>
+    <td><button onclick="play('${ch}',3)">▶</button></td>
+    <td><button class="seq" onclick="seq('${ch}')">連続</button></td></tr>`).join("");
+</script>
+</body>
+</html>
