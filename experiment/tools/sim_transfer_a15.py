@@ -27,7 +27,7 @@ def fit(counts, N, t):
     ll = counts @ Gflat.T + (N - counts) @ G1flat.T         # (reps,K,G)
     idx = ll.argmax(axis=2)
     mi, si, li = np.unravel_index(idx, GRID_SHAPE)
-    return MU_GRID[mi], S_GRID[si]
+    return MU_GRID[mi], S_GRID[si], L_GRID[li]
 
 def sample_responses(N, t, mu_char, s_char, lapse_char, reps, K):
     """参加者の閾値差(SD10ms)・傾き差(logN SD0.2)込みで回答を生成。"""
@@ -44,26 +44,32 @@ def run(N, T, K, mu_pop, s_pop, scenarios, reps=300, t_override=None):
     sA  = s_pop * np.exp(rng.normal(0, 0.2, size=(reps, K)))
     lam = rng.uniform(0.01, 0.08, size=(reps, K))
     cA = sample_responses(N, t, muA, sA, lam, reps, K)
-    muA_hat, sA_hat = fit(cA, N, t)                          # ← このターゲットで生成する
+    muA_hat, sA_hat, lA_hat = fit(cA, N, t)                  # ← このターゲットで生成する
     out = []
     for (name, dmu, tau, rho) in scenarios:
         # 視覚の真の曲線 = 群Aの推定値 + 系統ずれΔ + 文字ごとの転写誤差τ、傾きはρ倍
         muV = muA_hat + dmu + (rng.normal(0, tau, size=muA_hat.shape) if tau else 0.0)
         sV  = sA_hat / rho
         cB = sample_responses(N, t, muV, sV, lam, reps, K)   # lapseは同じ文字特性を仮定
-        muB_hat, sB_hat = fit(cB, N, t)
+        muB_hat, sB_hat, lB_hat = fit(cB, N, t)
         D = (muB_hat - muA_hat).mean(axis=1)
         R = np.exp(np.log(sA_hat / sB_hat).mean(axis=1))
         SDD = (muB_hat - muA_hat).std(axis=1)                # 文字ごとの差のばらつき(τの回復)
-        out.append((name, D.mean(), D.std(), R.mean(), R.std(), SDD.mean()))
+        # 曲線距離E: あてはめ曲線どうしの、時点上の平均絶対差(確率ポイント)
+        def curves(mu, sc, la):
+            return GAMMA + (1 - GAMMA - la[:, :, None]) / (1 + np.exp(-(t[None, None, :] - mu[:, :, None]) / sc[:, :, None]))
+        PA = curves(muA_hat, sA_hat, lA_hat)
+        PV = curves(muB_hat, sB_hat, lB_hat)
+        E = np.abs(PA - PV).mean(axis=(1, 2)) * 100          # (reps,) 単位: ポイント
+        out.append((name, D.mean(), D.std(), R.mean(), R.std(), SDD.mean(), E.mean(), E.std()))
     return out
 
 def report(title, rows):
     print(f"### {title}")
-    print("| シナリオ | 中点差の推定 (平均±SD) | 傾き比 (平均±SD) | 文字間差SDの推定 |")
-    print("|---|---|---|---|")
-    for (name, dm, ds, rm, rs, sdd) in rows:
-        print(f"| {name} | {dm:+.1f}±{ds:.1f} ms | {rm:.2f}±{rs:.2f} | {sdd:.1f} ms |")
+    print("| シナリオ | 中点差の推定 (平均±SD) | 傾き比 (平均±SD) | 文字間差SDの推定 | 曲線距離E(pt) |")
+    print("|---|---|---|---|---|")
+    for (name, dm, ds, rm, rs, sdd, em, es) in rows:
+        print(f"| {name} | {dm:+.1f}±{ds:.1f} ms | {rm:.2f}±{rs:.2f} | {sdd:.1f} ms | {em:.1f}±{es:.1f} |")
     print()
 
 def main():
