@@ -1,0 +1,353 @@
+{
+ "chars": [
+  "ぽ",
+  "ぱ",
+  "ぴ",
+  "か",
+  "ぼ",
+  "ば",
+  "び",
+  "が"
+ ],
+ "voiceless": [
+  "ぽ",
+  "ぱ",
+  "ぴ",
+  "か"
+ ],
+ "voiced": [
+  "ぼ",
+  "ば",
+  "び",
+  "が"
+ ],
+ "roma": {
+  "ぽ": "po",
+  "ぱ": "pa",
+  "ぴ": "pi",
+  "か": "ka",
+  "ぼ": "bo",
+  "ば": "ba",
+  "び": "bi",
+  "が": "ga"
+ },
+ "clips": {
+  "ぽ": {
+   "cur_mp3": {
+    "file": "po_cur.mp3",
+    "start_s": 0.185,
+    "avail_ms": 155,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "po_cur.wav",
+    "start_s": 0.14,
+    "avail_ms": 155,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "solo_wav": {
+    "file": "po_solo.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.012,
+    "sr": 24000
+   },
+   "solo_mp3": {
+    "file": "po_solo.mp3",
+    "start_s": 0.15,
+    "avail_ms": 205,
+    "gain": 1.018,
+    "sr": 24000
+   },
+   "soloraw_wav": {
+    "file": "po_soloraw.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.009,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "po_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.044,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "po_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.021,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "po_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.025,
+    "sr": 24000
+   }
+  },
+  "ぱ": {
+   "cur_mp3": {
+    "file": "pa_cur.mp3",
+    "start_s": 0.15,
+    "avail_ms": 200,
+    "gain": 0.9,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "pa_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 0.9,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "pa_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 0.62,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "pa_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 0.965,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "pa_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 0.948,
+    "sr": 24000
+   }
+  },
+  "ぴ": {
+   "cur_mp3": {
+    "file": "pi_cur.mp3",
+    "start_s": 0.145,
+    "avail_ms": 215,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "pi_cur.wav",
+    "start_s": 0.1,
+    "avail_ms": 215,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "pi_natf0.wav",
+    "start_s": 0.1,
+    "avail_ms": 200,
+    "gain": 1.059,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "pi_onsetf0.wav",
+    "start_s": 0.1,
+    "avail_ms": 215,
+    "gain": 1.01,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "pi_psola.wav",
+    "start_s": 0.1,
+    "avail_ms": 215,
+    "gain": 1.016,
+    "sr": 24000
+   }
+  },
+  "か": {
+   "cur_mp3": {
+    "file": "ka_cur.mp3",
+    "start_s": 0.15,
+    "avail_ms": 210,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "ka_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 210,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "ka_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 205,
+    "gain": 0.574,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "ka_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 210,
+    "gain": 1.016,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "ka_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 210,
+    "gain": 1.008,
+    "sr": 24000
+   }
+  },
+  "ぼ": {
+   "cur_mp3": {
+    "file": "bo_cur.mp3",
+    "start_s": 0.15,
+    "avail_ms": 200,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "bo_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "bo_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.094,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "bo_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.052,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "bo_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.056,
+    "sr": 24000
+   }
+  },
+  "ば": {
+   "cur_mp3": {
+    "file": "ba_cur.mp3",
+    "start_s": 0.15,
+    "avail_ms": 195,
+    "gain": 0.9,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "ba_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 190,
+    "gain": 0.9,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "ba_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 185,
+    "gain": 1.183,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "ba_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 190,
+    "gain": 0.922,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "ba_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 190,
+    "gain": 0.937,
+    "sr": 24000
+   }
+  },
+  "び": {
+   "cur_mp3": {
+    "file": "bi_cur.mp3",
+    "start_s": 0.155,
+    "avail_ms": 205,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "bi_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 210,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "bi_natf0.wav",
+    "start_s": 0.11,
+    "avail_ms": 195,
+    "gain": 1.07,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "bi_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 205,
+    "gain": 1.022,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "bi_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 205,
+    "gain": 1.037,
+    "sr": 24000
+   }
+  },
+  "が": {
+   "cur_mp3": {
+    "file": "ga_cur.mp3",
+    "start_s": 0.15,
+    "avail_ms": 200,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "cur_wav": {
+    "file": "ga_cur.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.0,
+    "sr": 24000
+   },
+   "natf0_wav": {
+    "file": "ga_natf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 195,
+    "gain": 0.873,
+    "sr": 24000
+   },
+   "onsetf0_wav": {
+    "file": "ga_onsetf0.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.092,
+    "sr": 24000
+   },
+   "psola_wav": {
+    "file": "ga_psola.wav",
+    "start_s": 0.105,
+    "avail_ms": 200,
+    "gain": 1.06,
+    "sr": 24000
+   }
+  }
+ }
+}

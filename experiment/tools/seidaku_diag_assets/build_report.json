@@ -1,0 +1,577 @@
+{
+ "speaker": 108,
+ "voicevox": "0.25.2",
+ "manifest_pool": [
+  "cand108",
+  "cand108",
+  "cand108",
+  "cand108",
+  "cand108",
+  "cand108",
+  "cand108",
+  "cand108"
+ ],
+ "chars": {
+  "ぽ": {
+   "pool_id": "c1a3ec894dba84cac3e6",
+   "pool_recipe": "oppo",
+   "vol_scale": 0.586,
+   "route": "oppo-splice",
+   "repro_rms_diff_db": -59.6,
+   "solo": {
+    "fixed": {
+     "cmul": 2.0,
+     "vol_scale": 0.962,
+     "pitch_ln": 5.50915,
+     "vot_ms": 33.0
+    },
+    "raw": {
+     "cmul": 1.0,
+     "vol_scale": 0.884,
+     "pitch_ln": 5.50915,
+     "vot_ms": 10.0
+    }
+   },
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 249.47,
+    "nat_median_hz": 227.62,
+    "voicing_onset_flat_s": 0.1398,
+    "voicing_onset_nat_s": 0.1173,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      1.255
+     ],
+     [
+      5.0,
+      1.809
+     ],
+     [
+      10.0,
+      0.954
+     ],
+     [
+      15.0,
+      0.508
+     ],
+     [
+      20.0,
+      0.605
+     ],
+     [
+      25.0,
+      0.152
+     ],
+     [
+      30.0,
+      0.073
+     ],
+     [
+      35.0,
+      0.029
+     ],
+     [
+      40.0,
+      -0.044
+     ],
+     [
+      45.0,
+      -0.021
+     ],
+     [
+      50.0,
+      -0.021
+     ],
+     [
+      55.0,
+      -0.003
+     ],
+     [
+      60.0,
+      -0.0
+     ]
+    ],
+    "onset_delta_max_semitone": 1.809,
+    "base": "単独合成（VOT自動修正あり）"
+   }
+  },
+  "ぱ": {
+   "pool_id": "d507398a309e7986bd56",
+   "pool_recipe": "prescribed",
+   "vol_scale": 1.007,
+   "route": "prescribed",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -44.0,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 246.52,
+    "nat_median_hz": 219.35,
+    "voicing_onset_flat_s": 0.1198,
+    "voicing_onset_nat_s": 0.1173,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      0.827
+     ],
+     [
+      5.0,
+      0.648
+     ],
+     [
+      10.0,
+      0.542
+     ],
+     [
+      35.0,
+      0.086
+     ],
+     [
+      40.0,
+      0.052
+     ],
+     [
+      45.0,
+      0.026
+     ],
+     [
+      50.0,
+      0.006
+     ],
+     [
+      55.0,
+      0.002
+     ]
+    ],
+    "onset_delta_max_semitone": 0.827,
+    "base": "本番と同じ音"
+   }
+  },
+  "ぴ": {
+   "pool_id": "7a65e9a9b9962505ed96",
+   "pool_recipe": "prescribed",
+   "vol_scale": 0.924,
+   "route": "prescribed",
+   "cmul": 2.5,
+   "repro_rms_diff_db": -32.5,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 248.1,
+    "nat_median_hz": 224.22,
+    "voicing_onset_flat_s": 0.1348,
+    "voicing_onset_nat_s": 0.1423,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      2.477
+     ],
+     [
+      5.0,
+      1.676
+     ],
+     [
+      10.0,
+      0.963
+     ],
+     [
+      15.0,
+      0.603
+     ],
+     [
+      20.0,
+      0.47
+     ],
+     [
+      25.0,
+      0.448
+     ],
+     [
+      30.0,
+      0.399
+     ],
+     [
+      35.0,
+      0.262
+     ],
+     [
+      40.0,
+      0.119
+     ],
+     [
+      45.0,
+      0.055
+     ],
+     [
+      50.0,
+      0.021
+     ],
+     [
+      55.0,
+      0.007
+     ],
+     [
+      60.0,
+      0.0
+     ]
+    ],
+    "onset_delta_max_semitone": 2.477,
+    "base": "本番と同じ音"
+   }
+  },
+  "か": {
+   "pool_id": "6a2339386b1bcf9c44dc",
+   "pool_recipe": "plain",
+   "vol_scale": 1.165,
+   "route": "plain",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -58.4,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 245.86,
+    "nat_median_hz": 216.51,
+    "voicing_onset_flat_s": 0.1598,
+    "voicing_onset_nat_s": 0.1473,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      0.468
+     ],
+     [
+      5.0,
+      0.473
+     ],
+     [
+      10.0,
+      0.505
+     ],
+     [
+      15.0,
+      0.747
+     ],
+     [
+      20.0,
+      0.366
+     ],
+     [
+      25.0,
+      0.242
+     ],
+     [
+      30.0,
+      0.197
+     ],
+     [
+      35.0,
+      0.186
+     ],
+     [
+      40.0,
+      0.191
+     ],
+     [
+      45.0,
+      0.118
+     ],
+     [
+      50.0,
+      0.074
+     ],
+     [
+      55.0,
+      0.021
+     ],
+     [
+      60.0,
+      0.0
+     ]
+    ],
+    "onset_delta_max_semitone": 0.747,
+    "base": "本番と同じ音"
+   }
+  },
+  "ぼ": {
+   "pool_id": "2f40eec076b4b2c4ba4e",
+   "pool_recipe": "plain",
+   "vol_scale": 0.81,
+   "route": "plain",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -43.4,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 246.15,
+    "nat_median_hz": 233.03,
+    "voicing_onset_flat_s": 0.1198,
+    "voicing_onset_nat_s": 0.1173,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      -0.583
+     ],
+     [
+      5.0,
+      -0.612
+     ],
+     [
+      10.0,
+      -0.409
+     ],
+     [
+      15.0,
+      0.054
+     ],
+     [
+      20.0,
+      -0.097
+     ],
+     [
+      25.0,
+      -0.118
+     ],
+     [
+      30.0,
+      -0.224
+     ],
+     [
+      35.0,
+      -0.107
+     ],
+     [
+      40.0,
+      -0.099
+     ],
+     [
+      45.0,
+      -0.043
+     ],
+     [
+      50.0,
+      -0.021
+     ],
+     [
+      55.0,
+      -0.003
+     ]
+    ],
+    "onset_delta_max_semitone": 0.612,
+    "base": "本番と同じ音"
+   }
+  },
+  "ば": {
+   "pool_id": "de304b931894754a8729",
+   "pool_recipe": "plain",
+   "vol_scale": 0.486,
+   "route": "plain",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -60.4,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 251.9,
+    "nat_median_hz": 237.72,
+    "voicing_onset_flat_s": 0.1198,
+    "voicing_onset_nat_s": 0.1173,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      -0.257
+     ],
+     [
+      5.0,
+      -1.644
+     ],
+     [
+      10.0,
+      -1.479
+     ],
+     [
+      15.0,
+      -0.583
+     ],
+     [
+      20.0,
+      -0.504
+     ],
+     [
+      25.0,
+      -0.425
+     ],
+     [
+      30.0,
+      -0.562
+     ],
+     [
+      35.0,
+      -0.459
+     ],
+     [
+      40.0,
+      -0.315
+     ],
+     [
+      45.0,
+      -0.183
+     ],
+     [
+      50.0,
+      -0.076
+     ],
+     [
+      55.0,
+      -0.014
+     ]
+    ],
+    "onset_delta_max_semitone": 1.644,
+    "base": "本番と同じ音"
+   }
+  },
+  "び": {
+   "pool_id": "75e3c9c6e3e77462bfaf",
+   "pool_recipe": "plain",
+   "vol_scale": 0.848,
+   "route": "plain",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -34.6,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 243.28,
+    "nat_median_hz": 227.59,
+    "voicing_onset_flat_s": 0.1148,
+    "voicing_onset_nat_s": 0.1223,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      0.146
+     ],
+     [
+      5.0,
+      -0.152
+     ],
+     [
+      10.0,
+      0.068
+     ],
+     [
+      15.0,
+      0.328
+     ],
+     [
+      20.0,
+      0.444
+     ],
+     [
+      25.0,
+      0.355
+     ],
+     [
+      30.0,
+      0.269
+     ],
+     [
+      35.0,
+      0.149
+     ],
+     [
+      40.0,
+      0.117
+     ],
+     [
+      45.0,
+      0.083
+     ],
+     [
+      50.0,
+      0.046
+     ],
+     [
+      55.0,
+      0.012
+     ]
+    ],
+    "onset_delta_max_semitone": 0.444,
+    "base": "本番と同じ音"
+   }
+  },
+  "が": {
+   "pool_id": "ca334e753b58984cadf4",
+   "pool_recipe": "plain",
+   "vol_scale": 0.717,
+   "route": "plain",
+   "cmul": 1.0,
+   "repro_rms_diff_db": -49.1,
+   "onset_f0": {
+    "ok": true,
+    "flat_median_hz": 243.61,
+    "nat_median_hz": 232.5,
+    "voicing_onset_flat_s": 0.1348,
+    "voicing_onset_nat_s": 0.1173,
+    "onset_delta_semitone_profile": [
+     [
+      0.0,
+      0.374
+     ],
+     [
+      5.0,
+      0.273
+     ],
+     [
+      10.0,
+      -1.242
+     ],
+     [
+      15.0,
+      -0.393
+     ],
+     [
+      20.0,
+      -0.245
+     ],
+     [
+      25.0,
+      -0.205
+     ],
+     [
+      30.0,
+      -0.425
+     ],
+     [
+      35.0,
+      -0.296
+     ],
+     [
+      40.0,
+      -0.19
+     ],
+     [
+      45.0,
+      -0.112
+     ],
+     [
+      50.0,
+      -0.06
+     ],
+     [
+      55.0,
+      -0.013
+     ],
+     [
+      60.0,
+      -0.0
+     ]
+    ],
+    "onset_delta_max_semitone": 1.242,
+    "base": "本番と同じ音"
+   }
+  }
+ },
+ "notes": {
+  "target_awrms": 0.034192,
+  "target_awrms_spread": [
+   0.03417,
+   0.034208
+  ],
+  "po_solo_vot_ladder": {
+   "cmul": 2.0,
+   "vot_ms": 33.0,
+   "target_ms": 25
+  }
+ }
+}

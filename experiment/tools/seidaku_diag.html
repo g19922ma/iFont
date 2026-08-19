@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>清濁の切り分け診断（ぱ行が濁って聞こえる件）</title>
+<style>
+  :root{
+    --paper:#f6f4ef; --card:#fff; --line:#e6e1d6; --grid:#e3e6ee;
+    --ink:#1b2030; --navy:#1E2A5E; --teal:#2E7D8F; --muted:#6b7280;
+    --sei:#2E7D8F; --daku:#B4553C; --warn:#fdf6e8; --warnline:#e8d9b0;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+       margin:0;background:var(--paper);color:var(--ink);line-height:1.7;
+       -webkit-text-size-adjust:100%}
+  #app{max-width:1000px;margin:0 auto;padding:24px 18px 80px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+        padding:20px 22px;margin-bottom:18px}
+  h1{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:21px;color:var(--navy);
+     margin:0 0 12px;border-bottom:1px solid #e9e4d8;padding-bottom:10px;letter-spacing:.02em}
+  h2{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:17px;color:var(--navy);
+     margin:0 0 4px}
+  h2 .num{font-size:12px;color:var(--teal);letter-spacing:.16em;display:block;
+          font-family:system-ui,sans-serif;margin-bottom:2px}
+  p{margin:.5em 0}
+  .lead{font-size:14.5px}
+  .muted{color:var(--muted);font-size:13px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+  th,td{border:1px solid var(--grid);padding:7px 8px;text-align:center;vertical-align:middle}
+  th{background:#eef4f6;font-weight:600;font-size:12.5px;line-height:1.45}
+  th.rowh,td.rowh{text-align:left;background:#fafaf7;font-size:13px}
+  td.k{font-size:22px;font-weight:700;font-family:"Hiragino Mincho ProN",serif;width:52px}
+  tr.voiced td.k{color:var(--daku)}
+  tr.voiced{background:#fcfaf8}
+  .play{font-size:14px;padding:4px 13px;border-radius:999px;border:1px solid var(--teal);
+        background:#fff;color:var(--teal);cursor:pointer;line-height:1.4}
+  .play:hover{background:var(--teal);color:#fff}
+  .play:active{transform:translateY(1px)}
+  .vote{margin-top:5px;display:flex;gap:3px;justify-content:center}
+  .vote button{font-size:11px;padding:2px 7px;border-radius:5px;border:1px solid #d7d2c6;
+               background:#fff;color:var(--muted);cursor:pointer;min-width:38px;font-variant-numeric:tabular-nums}
+  .vote button.s:hover,.vote button.s.on{border-color:var(--sei);color:var(--sei);background:#eaf3f5}
+  .vote button.d:hover,.vote button.d.on{border-color:var(--daku);color:var(--daku);background:#f8ede9}
+  .ctl{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:13.5px}
+  .ctl label{display:inline-flex;gap:5px;align-items:center;cursor:pointer}
+  .ghost{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid #d7d2c6;
+         background:#fff;color:var(--muted);cursor:pointer}
+  .ghost:hover{border-color:var(--daku);color:var(--daku)}
+  a{color:var(--teal)}
+  .note{background:var(--warn);border:1px solid var(--warnline);border-radius:10px;
+        padding:11px 14px;font-size:13px;margin-top:12px}
+  .bad{color:var(--daku);font-weight:600}
+  .ok{color:#2f7d4f}
+  ol.steps{margin:.4em 0;padding-left:1.3em;font-size:14.5px}
+  ol.steps li{margin:.15em 0}
+  code{background:#f1efe9;padding:1px 5px;border-radius:4px;font-size:.9em}
+  .legend{font-size:12.5px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="card">
+  <h1>清濁の切り分け診断 ── どの加工が「ぱ行を濁らせて」いるか</h1>
+  <ol class="steps">
+    <li><b>目的</b>：良い「ぽ」を作ることではなく、<b>合成から配信までのどの加工が清濁の聞こえを壊しているか</b>を1段ずつ戻して特定すること。</li>
+    <li><b>使い方</b>：各マスの「▶」で聴き、その下の<b>清</b>（ぽ・ぱ・ぴ・かに聞こえた）か<b>濁</b>（ぼ・ば・び・がに聞こえた）を押す。集計はこの端末の中だけに残り、どこにも送信されない。</li>
+    <li><b>読み方</b>：ある列だけ「濁」が減るなら、その列で戻した加工が犯人。参照として<span class="bad">もともと濁音の4字</span>を下段に並べてあるので、そちらが「濁」のままかも確かめる。</li>
+  </ol>
+  <div class="note">
+    再生処理は本番の実験ページと同一（音の立ち上がりから切り出し・音量そろえの増幅・前後8ミリ秒のフェード）。
+    版のあいだで音量が違うと「大きいほうが清く聞こえる」だけになるので、<b>全条件をその字の本番mp3と同じ聞こえの大きさにそろえてある</b>。
+  </div>
+</div>
+
+<div class="card">
+  <div class="ctl">
+    <b style="font-size:13.5px">再生の頭フェード：</b>
+    <label><input type="radio" name="fade" value="1" checked> ① 現行（先頭8msフェード）</label>
+    <label><input type="radio" name="fade" value="2"> ② 頭フェードなし</label>
+    <label><input type="radio" name="fade" value="3"> ③ 8ms手前から</label>
+    <button class="ghost" id="reset">集計をリセット</button>
+  </div>
+  <p class="muted" style="margin-top:8px">
+    破裂音では先頭フェードが破裂の瞬間をちょうど弱めている疑いがある。②③で改善するなら犯人は頭フェード。
+    この3条件だけを並べた専用ページもある → <a href="fade_ab.html">fade_ab.html</a>。
+    ここでの判定は<b>頭フェードの条件ごとに別々に集計される</b>。
+  </p>
+</div>
+
+<div class="card">
+  <h2><span class="num">比較軸 1・2・3</span>加工を1段ずつ戻す</h2>
+  <p class="lead">左から右へ、配信の最終形（本番mp3）→ mp3化前 → 音の高さの加工を戻した版、と1段ずつさかのぼる。</p>
+  <div class="scroll"><table id="tbl-main"></table></div>
+  <div class="legend" id="leg-main"></div>
+</div>
+
+<div class="card">
+  <h2><span class="num">比較軸 1（最優先）</span>「ぽ」：文脈からの切り出し vs 単独合成</h2>
+  <p class="lead">現行の「ぽ」だけは単独合成をあきらめ、「オッポ」という語を合成してその「ポ」を切り出して使っている。
+  ところが瞿(2022) は「<b>文脈から切り出した無声破裂音は有声に知覚される</b>」と報告している。
+  そこで、切り出しをやめて他のぱ行と同じ<b>単独合成＋VOT自動修正</b>（破裂から声までの間が足りなければ子音を伸ばして作り直す仕組み）で作った版を並べた。</p>
+  <div class="scroll"><table id="tbl-po"></table></div>
+</div>
+
+<div class="card">
+  <h2><span class="num">音響測定</span>本番音源の数値（参加者に届いている実物）</h2>
+  <p class="lead">聞こえの印象と数値が合うかを突き合わせるための表。詳細は
+  <code>project/清濁診断_音響測定.md</code>。</p>
+  <div class="scroll"><table id="tbl-meas"></table></div>
+  <div class="legend">
+    <b>VOT</b>＝破裂の瞬間から声帯振動が始まるまでの時間。自然な日本語で清音は約25〜45ms、濁音は0〜10ms程度、
+    知覚の境界はおよそ18〜26ms。<b>(低域)</b> は声帯振動の帯域(120〜400Hz)が母音水準の-15dBに達した時点で測ったもの、
+    <b>(追跡)</b> は音の高さを追って測ったもの（「声だ」と判定するのに約10ms要るので下限が10msに張り付く）。<br>
+    <b>バースト</b>＝破裂直後0〜20msの大きさを後続母音と比べた値（マイナスは破裂のほうが小さい）。
+    <b>重心</b>＝破裂直後のスペクトル重心。両唇音（ぱ・ぽ）は低め、軟口蓋音（か）は高めが自然。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="num">比較軸 3</span>WAV と mp3 の差（数値）</h2>
+  <p class="lead">同じ音の符号化前後で波形がどれだけ変わったか。差分波形の実効値を、元の信号に対するデシベルで示す。
+  <b>-40dB なら差は信号の1%、-20dB なら10%</b>。上の表で「現行mp3」と「現行WAV」を聴き比べた印象と突き合わせる。</p>
+  <div class="scroll"><table id="tbl-codec"></table></div>
+</div>
+
+<div class="card">
+  <h2><span class="num">比較軸 4</span>音の高さ：母音が始まる瞬間の上下</h2>
+  <p class="lead">日本語の清濁は、破裂から声までの間（VOT）だけでなく<b>子音直後の音の高さ</b>でも区別される
+  （清音の直後は高く、濁音の直後は低くなる）。本番は全音を B3=246.94Hz に平坦化しているので、この手がかりが消えている。
+  下は「平坦化していない自然な合成が、母音の始まりでどれだけ高さを動かしていたか」（半音単位、プラスは高い方向）。</p>
+  <div class="scroll"><table id="tbl-f0"></table></div>
+  <div class="legend">上の表の <b>onset-F0温存</b> 列は、平坦なまま母音開始後60msだけこの動きを戻した版。
+  その左の <b>PSOLA平坦</b> 列は、同じ再合成処理をかけて高さは完全に平坦のままにした対照
+  （再合成そのものの副作用を打ち消して比べるため）。</div>
+</div>
+
+<div class="card">
+  <h2><span class="num">集計</span>いまの判定（この端末のみ・送信なし）</h2>
+  <div class="scroll"><table id="tbl-sum"></table></div>
+  <p class="muted">数字は「清に聞こえた回数 / 判定した回数」。無声4字（ぽぱぴか）は高いほどよく、
+  参照の有声4字（ぼばびが）は低いままであるべき。</p>
+</div>
+
+</div>
+<script>
+const FADE_MS = 8, PRE_MS = 8;
+const STORE = "seidaku_diag_votes_v1";
+let CL = null, MEAS = null, REP = null;
+let ctx = null; const bufs = {};
+let votes = {};
+try { votes = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { votes = {}; }
+
+function fadeMode(){ return +document.querySelector('input[name=fade]:checked').value; }
+function ensureCtx(){
+  if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+  if(ctx.state === "suspended") ctx.resume();
+  return ctx;
+}
+async function getBuf(file){
+  if(bufs[file]) return bufs[file];
+  const r = await fetch("seidaku_diag_assets/" + file);
+  bufs[file] = await ensureCtx().decodeAudioData(await r.arrayBuffer());
+  return bufs[file];
+}
+// 本番 experiment/audio1char.js の gatedBuffer と同じ計算。
+// 違いは窓の起点だけ（本番は 文字先頭+実測onset、ここは版ごとに前置きが違うので絶対時刻）。
+function makeBuf(src, c, mode){
+  const sr = src.sampleRate;
+  const pre = (mode === 3) ? PRE_MS : 0;
+  const start = Math.max(0, Math.round((c.start_s - pre/1000) * sr));
+  const len = Math.max(1, Math.round((c.avail_ms + pre)/1000 * sr));
+  const a = src.getChannelData(0);
+  const ab = ctx.createBuffer(1, len, sr); const out = ab.getChannelData(0);
+  for(let i=0;i<len;i++) out[i] = (a[start+i] || 0) * c.gain;
+  const nf = Math.min(Math.round(sr*FADE_MS/1000), len>>1);
+  if(mode !== 2){ for(let i=0;i<nf;i++) out[i] *= i/nf; }   // ①③は頭フェードあり(③は無音部で消化)
+  for(let i=0;i<nf;i++) out[len-1-i] *= i/nf;               // 末尾は全条件そろえる
+  return ab;
+}
+async function play(ch, ver){
+  const c = CL.clips[ch][ver];
+  const src = await getBuf(c.file);
+  const s = ctx.createBufferSource();
+  s.buffer = makeBuf(src, c, fadeMode());
+  s.connect(ctx.destination);
+  s.start(ctx.currentTime + 0.03);
+}
+function vkey(ch, ver){ return ch + "|" + ver + "|f" + fadeMode(); }
+function vote(ch, ver, val){
+  const k = vkey(ch, ver);
+  const v = votes[k] || {sei:0, daku:0};
+  v[val] += 1; votes[k] = v;
+  localStorage.setItem(STORE, JSON.stringify(votes));
+  refresh();
+}
+function cellHtml(ch, ver){
+  if(!CL.clips[ch] || !CL.clips[ch][ver]) return '<td class="muted">—</td>';
+  return `<td>
+    <button class="play" data-p="${ch}|${ver}">▶</button>
+    <div class="vote">
+      <button class="s" data-v="${ch}|${ver}|sei">清 <span data-c="${ch}|${ver}|sei">0</span></button>
+      <button class="d" data-v="${ch}|${ver}|daku">濁 <span data-c="${ch}|${ver}|daku">0</span></button>
+    </div></td>`;
+}
+function num(v, u){ return (v === null || v === undefined) ? "—" : v + (u||""); }
+
+// ---- 表の組み立て --------------------------------------------------------
+const MAIN_COLS = [
+  ["cur_mp3",     "現行mp3<br><span class='muted'>本番と同一</span>"],
+  ["cur_wav",     "現行WAV<br><span class='muted'>mp3化する前</span>"],
+  ["psola_wav",   "PSOLA平坦<br><span class='muted'>再合成の対照</span>"],
+  ["onsetf0_wav", "onset-F0温存<br><span class='muted'>母音直後60msだけ復元</span>"],
+  ["natf0_wav",   "自然音高<br><span class='muted'>平坦化をやめた</span>"],
+];
+const PO_ROWS = [
+  ["cur_mp3",     "現行mp3（「オッポ」からの切り出し）"],
+  ["cur_wav",     "現行WAV（同上・mp3化する前）"],
+  ["solo_wav",    "単独合成WAV（VOT自動修正あり）"],
+  ["solo_mp3",    "単独合成mp3（同上をmp3化）"],
+  ["soloraw_wav", "単独合成WAV・VOT自動修正なし（修正の効き目の基準）"],
+];
+
+function buildMain(){
+  const th = MAIN_COLS.map(c => `<th>${c[1]}</th>`).join("");
+  let h = `<tr><th>音</th>${th}</tr>`;
+  for(const grp of [["voiceless","無声（清音）── ここが「濁」に倒れるのが問題"],
+                    ["voiced","有声（濁音）── 参照。ここは「濁」のままが正しい"]]){
+    h += `<tr><th class="rowh" colspan="${MAIN_COLS.length+1}">${grp[1]}</th></tr>`;
+    for(const ch of CL[grp[0]]){
+      h += `<tr class="${grp[0]==='voiced'?'voiced':''}"><td class="k">${ch}</td>` +
+           MAIN_COLS.map(c => cellHtml(ch, c[0])).join("") + `</tr>`;
+    }
+  }
+  document.getElementById("tbl-main").innerHTML = h;
+  document.getElementById("leg-main").innerHTML =
+    "「ぽ」の <b>onset-F0温存</b>・<b>PSOLA平坦</b>・<b>自然音高</b> は<b>単独合成版</b>を土台にしている" +
+    "（切り出し元の「オッポ」は語の途中で音の高さが下がる位置なので、自然な高さの比較対象に使えないため）。";
+}
+function buildPo(){
+  let h = `<tr><th class="rowh">版</th><th>聴く／判定</th><th>VOT(低域)</th><th>VOT(追跡)</th>
+           <th>バーストRMS<br>(母音比)</th><th>バースト重心</th></tr>`;
+  for(const [ver, label] of PO_ROWS){
+    if(!CL.clips["ぽ"][ver]) continue;
+    const m = MEAS["ぽ"][ver];
+    h += `<tr><td class="rowh">${label}</td>${cellHtml("ぽ", ver)}
+      <td>${num(m.vot_lowband_ms,"ms")}</td><td>${num(m.vot_ms,"ms")}</td>
+      <td>${num(m.burst_rms_re_vowel_db,"dB")}</td><td>${num(m.burst_centroid_hz,"Hz")}</td></tr>`;
+  }
+  const lad = (REP.notes||{}).po_solo_vot_ladder || {};
+  h += `<tr><td class="rowh muted" colspan="6">VOT自動修正の結果：子音長を <b>x${lad.cmul}</b> に伸ばして
+        VOT=${lad.vot_ms}ms（目標${lad.target_ms}ms）に到達。</td></tr>`;
+  document.getElementById("tbl-po").innerHTML = h;
+}
+function buildMeas(){
+  let h = `<tr><th>音</th><th>清濁</th><th>VOT(低域)</th><th>VOT(追跡)</th>
+           <th>バーストRMS<br>(母音比)</th><th>バーストpeak<br>(母音比)</th>
+           <th>破裂前の<br>周期性</th><th>バースト<br>重心</th></tr>`;
+  for(const ch of CL.voiceless.concat(CL.voiced)){
+    const m = MEAS[ch].cur_mp3, vl = CL.voiceless.includes(ch);
+    const lowVot = (m.vot_lowband_ms !== null && m.vot_lowband_ms < 18 && vl);
+    h += `<tr class="${vl?'':'voiced'}"><td class="k">${ch}</td><td>${vl?'清':'濁'}</td>
+      <td class="${lowVot?'bad':''}">${num(m.vot_lowband_ms,"ms")}</td>
+      <td class="${(vl && m.vot_ms<18)?'bad':''}">${num(m.vot_ms,"ms")}</td>
+      <td>${num(m.burst_rms_re_vowel_db,"dB")}</td><td>${num(m.burst_peak_re_vowel_db,"dB")}</td>
+      <td>${num(m.prevoicing.voiced_frac)}</td><td>${num(m.burst_centroid_hz,"Hz")}</td></tr>`;
+  }
+  document.getElementById("tbl-meas").innerHTML = h;
+}
+function buildCodec(){
+  let h = `<tr><th>音</th><th>比較</th><th>頭0〜20ms</th><th>頭30〜50ms</th><th>全体0〜150ms</th></tr>`;
+  for(const ch of CL.voiceless.concat(CL.voiced)){
+    const w = MEAS[ch]._wav_vs_mp3;
+    for(const k of Object.keys(w)){
+      h += `<tr class="${CL.voiceless.includes(ch)?'':'voiced'}"><td class="k">${ch}</td>
+        <td class="rowh">${k.replace("cur_wav/cur_mp3","現行 WAV vs mp3")
+                            .replace("solo_wav/solo_mp3","ぽ単独合成 WAV vs mp3")}</td>
+        <td>${num(w[k].head_0_20ms_db,"dB")}</td><td>${num(w[k].head_30_50ms_db,"dB")}</td>
+        <td>${num(w[k].whole_0_150ms_db,"dB")}</td></tr>`;
+    }
+  }
+  document.getElementById("tbl-codec").innerHTML = h;
+}
+function buildF0(){
+  let h = `<tr><th>音</th><th>清濁</th><th>ずれの最大<br>(符号つき)</th>
+           <th>0ms</th><th>10ms</th><th>20ms</th><th>40ms</th>
+           <th>平坦時の<br>高さ</th><th>自然時の<br>高さ</th></tr>`;
+  for(const ch of CL.voiceless.concat(CL.voiced)){
+    const o = REP.chars[ch].onset_f0, prof = {};
+    (o.onset_delta_semitone_profile || []).forEach(p => prof[p[0]] = p[1]);
+    const vals = Object.values(prof);
+    let mx = null;
+    for(const v of vals) if(mx === null || Math.abs(v) > Math.abs(mx)) mx = v;
+    const at = ms => (prof[ms] === undefined ? "—" : prof[ms]);
+    const vl = CL.voiceless.includes(ch);
+    h += `<tr class="${vl?'':'voiced'}"><td class="k">${ch}</td><td>${vl?'清':'濁'}</td>
+      <td class="${(mx!==null && ((vl&&mx>0)||(!vl&&mx<0)))?'ok':''}">${mx===null?"—":mx.toFixed(2)}半音</td>
+      <td>${at(0)}</td><td>${at(10)}</td><td>${at(20)}</td><td>${at(40)}</td>
+      <td>${num(o.flat_median_hz,"Hz")}</td><td>${num(o.nat_median_hz,"Hz")}</td></tr>`;
+  }
+  document.getElementById("tbl-f0").innerHTML = h;
+}
+function buildSum(){
+  const vers = ["cur_mp3","cur_wav","psola_wav","onsetf0_wav","natf0_wav","solo_wav","solo_mp3","soloraw_wav"];
+  const label = {cur_mp3:"現行mp3",cur_wav:"現行WAV",psola_wav:"PSOLA平坦",onsetf0_wav:"onset-F0温存",
+                 natf0_wav:"自然音高",solo_wav:"ぽ単独合成WAV",solo_mp3:"ぽ単独合成mp3",
+                 soloraw_wav:"ぽ単独VOT修正なし"};
+  let h = `<tr><th class="rowh">版</th><th>頭フェード</th><th>無声4字<br>「清」と答えた割合</th>
+           <th>有声4字<br>「清」と答えた割合</th></tr>`;
+  let any = false;
+  for(const ver of vers){
+    for(const mode of [1,2,3]){
+      const agg = g => {
+        let s = 0, n = 0;
+        for(const ch of CL[g]){
+          const v = votes[ch + "|" + ver + "|f" + mode];
+          if(v){ s += v.sei; n += v.sei + v.daku; }
+        }
+        return n ? `${s}/${n}（${Math.round(100*s/n)}%）` : "—";
+      };
+      const a = agg("voiceless"), b = agg("voiced");
+      if(a === "—" && b === "—") continue;
+      any = true;
+      h += `<tr><td class="rowh">${label[ver]}</td><td>${["","①現行","②なし","③手前から"][mode]}</td>
+            <td>${a}</td><td>${b}</td></tr>`;
+    }
+  }
+  if(!any) h += `<tr><td class="muted" colspan="4">まだ判定がありません。上の表の「清」「濁」を押すと集計されます。</td></tr>`;
+  document.getElementById("tbl-sum").innerHTML = h;
+}
+function refresh(){
+  document.querySelectorAll("[data-c]").forEach(el => {
+    const [ch, ver, val] = el.dataset.c.split("|");
+    const v = votes[vkey(ch, ver)] || {sei:0, daku:0};
+    el.textContent = v[val];
+    el.parentElement.classList.toggle("on", v[val] > 0);
+  });
+  buildSum();
+}
+document.addEventListener("click", e => {
+  const p = e.target.closest("[data-p]");
+  if(p){ play(...p.dataset.p.split("|")); return; }
+  const v = e.target.closest("[data-v]");
+  if(v){ const [ch, ver, val] = v.dataset.v.split("|"); vote(ch, ver, val); }
+});
+document.getElementById("reset").onclick = () => {
+  if(!confirm("この端末に保存した判定をすべて消します。よろしいですか？")) return;
+  votes = {}; localStorage.removeItem(STORE); refresh();
+};
+document.querySelectorAll('input[name=fade]').forEach(r => r.onchange = refresh);
+
+(async () => {
+  [CL, MEAS, REP] = await Promise.all([
+    fetch("seidaku_diag_assets/clips.json").then(r => r.json()),
+    fetch("seidaku_diag_assets/measurements.json").then(r => r.json()),
+    fetch("seidaku_diag_assets/build_report.json").then(r => r.json()),
+  ]);
+  buildMain(); buildPo(); buildMeas(); buildCodec(); buildF0(); refresh();
+})();
+</script>
+</body>
+</html>
