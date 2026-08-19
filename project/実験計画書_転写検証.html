@@ -1,0 +1,276 @@
+<title>転写検証 実験計画書</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --paper:#faf7f1; --ink:#26292e; --ink-soft:#595e66; --line:#ddd6c8;
+  --accent:#31597a; --accent-soft:#e8eef3; --decide:#8a4b2c; --decide-bg:#f6ede4;
+  --th-bg:#f1ece1; --code-bg:#efeae0; --qa-bg:#f4f1ea;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#20222a; --ink:#e6e2d8; --ink-soft:#a8a89e; --line:#3a3d47;
+    --accent:#8db4d4; --accent-soft:#2a3644; --decide:#d9a37e; --decide-bg:#332b25;
+    --th-bg:#2a2d36; --code-bg:#2c2f38; --qa-bg:#262932;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#20222a; --ink:#e6e2d8; --ink-soft:#a8a89e; --line:#3a3d47;
+  --accent:#8db4d4; --accent-soft:#2a3644; --decide:#d9a37e; --decide-bg:#332b25;
+  --th-bg:#2a2d36; --code-bg:#2c2f38; --qa-bg:#262932;
+}
+body{
+  background:var(--paper); color:var(--ink); margin:0;
+  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  font-size:15.5px; line-height:1.95; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:46rem; margin:0 auto; padding:2.5rem 1.4rem 6rem;}
+h1,h2,h3{font-family:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif; line-height:1.5; text-wrap:balance;}
+h1{font-size:1.55rem; font-weight:700; margin:0 0 .4rem; letter-spacing:.02em;}
+h2{font-size:1.22rem; font-weight:600; margin:3rem 0 1rem; padding-top:1.2rem; border-top:1px solid var(--line);}
+h2 .num,h3 .num{color:var(--accent); font-weight:700; margin-right:.5em;}
+h3{font-size:1.02rem; font-weight:600; margin:1.9rem 0 .7rem;}
+p{margin:.7rem 0;}
+.kicker{color:var(--ink-soft); font-size:.82rem; letter-spacing:.14em; margin-bottom:.2rem;}
+.meta{border:1px solid var(--line); border-radius:6px; padding:.9rem 1.1rem; margin:1.4rem 0; font-size:.88rem; color:var(--ink-soft);}
+.meta li{margin:.25rem 0;}
+.meta b{color:var(--ink);}
+ul,ol{padding-left:1.5em; margin:.7rem 0;}
+li{margin:.35rem 0;}
+strong{font-weight:700;}
+em{font-style:normal; background:linear-gradient(transparent 68%, var(--accent-soft) 68%);}
+table{border-collapse:collapse; width:100%; font-size:.88rem; line-height:1.7;}
+.tblwrap{overflow-x:auto; margin:1rem 0; border:1px solid var(--line); border-radius:6px;}
+th{background:var(--th-bg); text-align:left; font-weight:700; padding:.55rem .8rem; white-space:nowrap;}
+td{padding:.55rem .8rem; border-top:1px solid var(--line); vertical-align:top;}
+code,.formula{font-family:ui-monospace,Menlo,Consolas,monospace; background:var(--code-bg); border-radius:4px; padding:.1em .35em; font-size:.9em;}
+.formula{display:inline-block; padding:.35em .7em; margin:.3rem 0;}
+.decide{background:var(--decide-bg); border-left:3px solid var(--decide); border-radius:0 6px 6px 0; padding:.7rem 1rem; margin:1rem 0;}
+.decide .tag{color:var(--decide); font-weight:700; font-size:.85rem; letter-spacing:.06em;}
+a{color:var(--accent); text-decoration:none;}
+a:hover{text-decoration:underline;}
+a.q{font-size:.85em; border:1px solid var(--line); border-radius:99px; padding:.02em .55em; white-space:nowrap; background:var(--accent-soft);}
+nav.toc{border:1px solid var(--line); border-radius:6px; padding:1rem 1.3rem; margin:1.6rem 0; font-size:.88rem; columns:2; column-gap:2rem;}
+nav.toc a{display:block; padding:.14rem 0; break-inside:avoid; color:var(--ink);}
+nav.toc a:hover{color:var(--accent);}
+nav.toc .sec{color:var(--accent); font-weight:700; margin-right:.45em; font-family:"Shippori Mincho",serif;}
+.qa{background:var(--qa-bg); border:1px solid var(--line); border-radius:8px; padding:1rem 1.25rem; margin:1rem 0; scroll-margin-top:1rem;}
+.qa .q-label{font-weight:700; font-family:"Shippori Mincho",serif;}
+.qa .q-label .num{color:var(--accent); margin-right:.5em;}
+.qa p{font-size:.92rem; margin:.5rem 0 0; color:var(--ink);}
+.en{font-size:.85rem; color:var(--ink-soft); font-style:italic;}
+.footer{margin-top:4rem; padding-top:1rem; border-top:1px solid var(--line); font-size:.8rem; color:var(--ink-soft);}
+@media (max-width:640px){ nav.toc{columns:1;} .wrap{padding:1.6rem 1rem 4rem;} }
+@media (prefers-reduced-motion:no-preference){ html{scroll-behavior:smooth;} }
+</style>
+
+<div class="wrap">
+<p class="kicker">iFont 転写検証実験 — 実験計画書（第1稿）</p>
+<h1>音声の識別過程を文字アニメーションとして再構成する手法の検証</h1>
+
+<div class="meta"><ul style="list-style:none; padding:0; margin:0;">
+<li>作成: 2026-08-19 丸山（AI補助により起草）。<b>第1稿</b>（栗原先生のレビュー待ち）。原本: <code>project/実験計画書_転写検証.md</code></li>
+<li>位置づけ: 実験計画書「かな1文字の聴覚・視覚認識曲線の測定（実験1・N=220）」は温存し、<b>その前に行う小規模な検証実験</b>。経緯は <code>提案_方針転換</code>、設計詳細は <code>設計案_生成アルゴリズム</code>。</li>
+<li>対象システム: <code>experiment/audio1char.html</code>（v3.41）を測定器として流用（変更は9章）。データ収集直前のコミットで実装を固定し、ハッシュを論文に記載。</li>
+<li>用語は <code>perceptual_score_concept.md</code> の定義に従う（対応表は1.3）。呼称は「実験協力者」。修正時は「&gt;」「-」表記。</li>
+<li>設計判断の理由・よくある疑問は<b>付録A（Q&amp;A）</b>へ。本文は決定事項のみを書く。</li>
+<li><b>締切: WISS 2026 投稿 8/31（月）23:59。登壇論文6ページ。</b></li>
+</ul></div>
+
+<nav class="toc">
+<a href="#s1"><span class="sec">1</span>背景とリサーチクエスチョン</a>
+<a href="#s2"><span class="sec">2</span>検証したい仮説</a>
+<a href="#s3"><span class="sec">3</span>実験の構成</a>
+<a href="#s4"><span class="sec">4</span>何を測定して分析するか</a>
+<a href="#s5"><span class="sec">5</span>実験協力者への事前教示</a>
+<a href="#s6"><span class="sec">6</span>データの分析方法</a>
+<a href="#s7"><span class="sec">7</span>モデルケース</a>
+<a href="#s8"><span class="sec">8</span>予想される結果・結論</a>
+<a href="#s9"><span class="sec">9</span>実験のための実装（差分）</a>
+<a href="#s10"><span class="sec">10</span>未確定事項と決定の記録</a>
+<a href="#qa"><span class="sec">A</span>付録: 設計の理由（Q&amp;A）</a>
+</nav>
+
+<h2 id="s1"><span class="num">1</span>背景とリサーチクエスチョン</h2>
+
+<h3><span class="num">1.1</span>経緯（要約）</h3>
+<p>iFontの狙いは、音声を聞くのと<strong>「同じ時点に同じだけ分かる」文字表示を作る</strong>こと（かるたの決まり字体験を、聴覚に頼れない人にも字幕で届けたい）。当初は68かな全部の較正データを大規模実験で先に測る計画だったが、文献調査の結果、測定法自体は標準的（ゲーティング法、1961年〜）で、聴覚と視覚の曲線を測って<em>比べる</em>ことまで先行研究がある（Sánchez-García et al. 2018）と判明。一方、<strong>測った音声の曲線から視覚アニメーションを生成し、識別の時間経過が再現されるかを独立参加者で検証した研究は、調査の範囲では見当たらない</strong>。そこでまず8文字の小規模構成でそれを検証する（近傍研究との区別 <a class="q" href="#q11">Q11</a>）。</p>
+
+<h3><span class="num">1.2</span>リサーチクエスチョン</h3>
+<p><strong>音声で測定した「分かっていく過程」を、文字アニメーションの時間軸の変形（time-warp）で再現できるか。</strong></p>
+<p>例: 「た」の音声を先頭から少しずつ長く聞かせて「いつ何％の人が当てられるか」の曲線（target curve）を測る。文字「た」のフェードインの進み方をこの曲線に合わせて設計したとき、<strong>初見の別の人が、音声と同じ時間経過で「た」と分かるようになるか</strong>を確かめる。（「別の人」にする理由と「再現」の意味 <a class="q" href="#q1">Q1</a>）</p>
+
+<h3><span class="num">1.3</span>iFontの概念との対応</h3>
+<div class="tblwrap"><table>
+<tr><th>概念整理での言葉</th><th>本実験での姿</th></tr>
+<tr><td>Perceptual Score（識別過程の中間表現）</td><td>音声の識別曲線 A<sub>i</sub>(t)。1文字なので対象＝かなそのもの（<a class="q" href="#q2">Q2</a>）</td></tr>
+<tr><td>変換g（聴覚と視覚を同一の認識率で対応づける較正）</td><td>time-warp s<sub>i</sub>(t)=V<sub>i</sub><sup>−1</sup>(A<sub>i</sub>(t))。gを時間軸に沿って適用したもの</td></tr>
+<tr><td>frac課題（gの実測）</td><td>群A・群A′のゲーティング課題</td></tr>
+<tr><td>文字合成（スコアを動的な文字として実現する処理）</td><td>生成アルゴリズム（3.1）</td></tr>
+<tr><td>iFont（文字合成の出力）</td><td>生成されたアニメーション（群BのProposed条件）</td></tr>
+</table></div>
+<p>本実験＝<strong>文字合成が本当に成立するか</strong>（同一スコアの共有で「同じ時点に同じだけ分かる」が実現されるか）の最小構成での検証。</p>
+
+<h2 id="s2"><span class="num">2</span>検証したい仮説</h2>
+<p>群Bに、作り方の違う3種類のアニメーション（3.2）を見せ、それぞれの識別曲線が音声の曲線（target）にどれだけ近いかを競わせる。「近さ」の定義は6.2。実験後に支持/不支持を明記する。</p>
+<ul>
+<li><strong>仮説1（転写は効く）</strong>: iFont は、等速の普通のフェードイン（Baseline 1）より target に近い。</li>
+<li><strong>仮説2（速さ合わせでは足りない）</strong>: iFont は、速さだけ音声に合わせたフェードイン（Baseline 2）よりも target に近い。
+  <ul><li>不支持なら「速さを合わせるだけで十分」が結論。それも設計知見として報告する。</li></ul></li>
+</ul>
+<p>操作チェック: 確認A＝全長提示の確認問題の正答率が十分高い。確認B＝提示量とともに正答率が上がる曲線が得られている。</p>
+
+<h2 id="s3"><span class="num">3</span>実験の構成</h2>
+
+<h3><span class="num">3.1</span>全体の流れ（3つの独立群、「測る→作る→確かめる」）</h3>
+<div class="tblwrap"><table>
+<tr><th>段階</th><th>群</th><th>課題</th><th>得るもの</th></tr>
+<tr><td>較正1</td><td>群A</td><td>音声を先頭から t ms で打ち切り→かな表から回答</td><td>音声識別曲線 A<sub>i</sub>(t)（target）</td></tr>
+<tr><td>較正2</td><td>群A′</td><td>基準アニメ（線形フェード）を進行度 s% で打ち切り→回答</td><td>視覚識別曲線 V<sub>i</sub>(s)</td></tr>
+<tr><td>生成</td><td>—</td><td>s<sub>i</sub>(t)=V<sub>i</sub><sup>−1</sup>(A<sub>i</sub>(t)) で各文字のアニメを一発生成し<strong>フリーズ</strong></td><td>iFont（人手調整なし）</td></tr>
+<tr><td>検証</td><td>群B</td><td>3条件のアニメを t ms で打ち切り→回答</td><td>生成物の識別曲線</td></tr>
+</table></div>
+<ul>
+<li>3群は互いに独立（重複参加を排除。理由 <a class="q" href="#q1">Q1</a>）。</li>
+<li>フリーズ: 生成アルゴリズム・パラメータ・全8字の s<sub>i</sub>(t) を群B取得<strong>前に</strong>コミット固定し、ハッシュを記録。群Bの結果を見てからの再調整はしない（<a class="q" href="#q3">Q3</a>）。</li>
+<li>基準アニメの長さ・濃度カーブは群A′の前にパイロットで決める設計パラメータ（現行200msは旧製品要件由来。選定基準 <a class="q" href="#q4">Q4</a>）。</li>
+</ul>
+
+<h3><span class="num">3.2</span>群Bの3条件</h3>
+<div class="tblwrap"><table>
+<tr><th>条件</th><th>内容</th><th>何に答えるか</th></tr>
+<tr><td>Baseline 1</td><td>等速の線形フェード</td><td>何も工夫しない場合の基準</td></tr>
+<tr><td>Baseline 2</td><td>50%識別時刻だけtargetに合わせた線形フェード</td><td>「速く/遅くしただけでは？」への直接の答え（<a class="q" href="#q5">Q5</a>）</td></tr>
+<tr><td>Proposed</td><td>曲線全体からの time-warp（＝iFont）</td><td>「分かっていく形」まで再現できるか</td></tr>
+</table></div>
+
+<h3><span class="num">3.3</span>課題の詳細</h3>
+<ul>
+<li><strong>文字</strong>: 8字（暫定）。時間構造の多様性を代表——母音のみ／無声破裂／有声破裂／摩擦／鼻音／清濁ペアを含め、QC（3.4）通過字から選定。</li>
+<li><strong>提示水準</strong>: 文字ごと7時点（暫定）。聴覚は acoustic onset（音の実体の開始点）からの絶対ms、視覚は進行度%。<strong>早い側を密に</strong>配置し全長付近まで覆う（時間帯の根拠 <a class="q" href="#q6">Q6</a>）。配置はA2シミュレーションで確定。</li>
+<li><strong>回答</strong>: 全かな表からの強制選択（1問1答・選び直し確認つき・実験1と同じ画面）。当て推量の正答率が聴覚1/68・視覚1/72に定まり、曲線の床γとして使える（<a class="q" href="#q7">Q7</a>）。</li>
+<li><strong>問題数（暫定）</strong>: 群A・A′＝8字×7時点+確認4問≈60問（約6分）。群Bは3条件×56=168問が上限のため、実験協力者間で釣り合いよく分担する割付をA2で確定（1人約10分以内）。</li>
+<li><strong>募集</strong>: Yahoo!クラウドソーシング。日本語母語・18歳以上・各群1人1回・群間重複なし。再生機器自由（合図音→0.6秒→刺激で無線の頭欠けを吸収。実験1と同じ）。</li>
+<li><strong>人数（暫定）</strong>: 各群25人。A1.5シミュレーションで、この規模なら転写の20msの系統ずれを偶然ばらつき（SD≈4.8ms）の約4倍として検出できると確認済み。確定はA2。</li>
+</ul>
+
+<h3><span class="num">3.4</span>刺激（音源）</h3>
+<div class="decide"><span class="tag">決定（8/19・丸山）</span> <strong>自然音声</strong>。手順:</div>
+<ol>
+<li><strong>録音</strong>: 日本語母語話者1名（研究室の学生・知人等で可）が対象かなを1字ずつ単独で自然に発話。各3〜5テイク・WAV（手順書: <code>録音手順_自然音声12字.md</code>）</li>
+<li><strong>テイク選択（事前基準）</strong>: 読み間違い・雑音・クリッピングを除外→長さが中央値に最も近いテイクを機械的に採用（<a class="q" href="#q8">Q8</a>）</li>
+<li><strong>整音</strong>: token全体への一定ゲインのみ（<a class="q" href="#q8">Q8</a>）</li>
+<li><strong>時間基準</strong>: acoustic onset を測定しメタデータ化。<strong>実験上の時間0＝onset</strong>。長さは自然のまま、絶対msで曲線を取る（<a class="q" href="#q9">Q9</a>）</li>
+<li><strong>配信</strong>: WAVのまま（頭の立ち上がりを守るため圧縮しない）</li>
+<li><strong>QC</strong>: 全長試聴＋機械測定一覧（onset・VOT・全長・peak/RMS・クリッピング）＋少人数パイロットで全長識別率を確認</li>
+</ol>
+<ul>
+<li>論文上は「この話者の target trajectory」として扱う（日本語一般とは主張しない）。<span class="en">Methods想定文: "Stimuli were naturally produced in isolation by a native speaker of Japanese and were used without temporal or spectral manipulation except for level adjustment."</span></li>
+<li>旧刺激生成法（合成＋各種加工）は「ぽ」の清濁問題を起こしたため凍結し本実験では使わない（診断: <code>清濁診断_音響測定.md</code>）。標準DBは将来の追試用（<code>音源調査_標準DB.md</code>）。</li>
+</ul>
+
+<h2 id="s4"><span class="num">4</span>何を測定して分析するか</h2>
+<ul>
+<li>主要指標: <strong>正誤</strong>（1問ごと。採点方式は実験1と同じ）。</li>
+<li>副次指標: 反応時間・聞き直し回数・実測提示時間（視覚は描画フレーム実時刻）・所要時間・途中再開回数・セッション順・端末環境。</li>
+<li>判定はすべて正誤から行う。主観アンケートはシステム評価段階の実験で採用（実験1と同方針）。</li>
+</ul>
+
+<h2 id="s5"><span class="num">5</span>実験協力者への事前教示</h2>
+<p>実験1（v3.41）の実装済み画面をそのまま使う: 同意画面（6項目）・音量の確認・見え方の確認・図解つき説明と練習・「聞こえなくても（見えなくても）、もっとも近いと思う文字を選んでください。」</p>
+
+<h2 id="s6"><span class="num">6</span>データの分析方法</h2>
+
+<h3><span class="num">6.1</span>曲線の当てはめ</h3>
+<p>文字ごとに心理測定関数を最尤推定:</p>
+<p><span class="formula">P(t) = γ + (1−γ−λ)·logistic((t−μ)/s)</span></p>
+<p>γ＝当て推量の床（1/68・1/72に固定）、λ＝lapse（十分見えていても起きる押し間違い率・自由推定）、μ＝50%識別時刻（中点）、s＝急峻さ。文字はランダム効果とする階層的な扱いを基本とし、個別文字は探索的に図示。</p>
+
+<h3><span class="num">6.2</span>成功判定（「近さ」の定義）</h3>
+<ul>
+<li><strong>主判定: 中点差</strong>。各条件の中点と target の中点の差。Proposed の |中点差| が Baseline 1・2 より小さいか（同じ文字同士のペア比較で文字差を消す）。</li>
+<li><strong>副判定: 曲線距離E</strong>＝両曲線の評価時点上の平均絶対差（正答率pt）。中点が合っても「分かっていく形」が違う場合を検出（ノイズ床 E≈3.7pt、形の不一致は8〜10pt）。</li>
+<li><strong>報告</strong>: 差と信頼区間、「Baselineよりどれだけ近いか」。等価マージン（±何msなら実質同じ）は次の段階で扱う。</li>
+<li>探索的図示: 文字ごとの転写誤差・天井・混同行列・急峻さ（急峻さを判定に使わない理由 <a class="q" href="#q10">Q10</a>）。</li>
+</ul>
+
+<h3><span class="num">6.3</span>除外基準</h3>
+<p>実験1の6.3を踏襲（確認問題の誤答数・無応答・所要時間異常・重複参加）。閾値はA2と同時に固定。</p>
+
+<h2 id="s7"><span class="num">7</span>モデルケース（群Bの実験協力者）</h2>
+<ol>
+<li>Yahoo!クラウドソーシングで「文字の見え方の実験（約10分）」を開く。</li>
+<li>同意画面→見え方の確認→図解つき説明→練習1問以上。</li>
+<li>本番: 文字がさまざまな速さ・濃くなり方で現れては消える（3条件が混ざって出る。本人には区別を知らせない）。全かな表から選び、確認して決定。</li>
+<li>約60問で終了。完了コードをコピーして投稿、報酬受け取り。</li>
+</ol>
+<p>（群A・A′も同じ流れで課題が音声/フェードインに変わるのみ。画面は実験1で動作確認済み。）</p>
+
+<h2 id="s8"><span class="num">8</span>予想される結果・結論（希望的展望）</h2>
+<ul>
+<li>仮説1支持: 「音声の識別過程は較正済みtime-warpで文字アニメーションとして再構成できる」——WISSの中核主張。</li>
+<li>仮説2も支持: 「速さ合わせでは足りず、曲線全体を使う意味がある」。</li>
+<li>仮説2不支持: 「1文字の範囲では速度1パラメータで近似できる」という設計知見として報告。</li>
+<li>いずれも主張は「較正済みの文字の再構成」に限定（禁止リスト: 設計案§6）。</li>
+</ul>
+
+<h2 id="s9"><span class="num">9</span>実験のための実装（差分）</h2>
+<ol>
+<li>聴覚: frac%（21水準）→ acoustic onset起点の絶対ms・文字ごと7時点の設定化</li>
+<li>視覚（群A′）: 既存の線形フェード打ち切り課題そのもの（水準設定のみ）</li>
+<li>群B: s<sub>i</sub>(t)（60Hz数値列）で再生する warp モード追加＋3条件の割付・記録（condition列）</li>
+<li>刺激: 自然音声WAV＋onsetメタデータ（ms）</li>
+<li>記録: group・condition・時点・実測提示時間を1問1行（trial_single方式踏襲）</li>
+</ol>
+
+<h2 id="s10"><span class="num">10</span>未確定事項と決定の記録</h2>
+<p>A1/A1.5（実施済み）＝仮定曲線での設計感度確認。A2（これから）＝実刺激の予備測定曲線を反映し、人数・時点・割付・閾値を最終確定。</p>
+<div class="tblwrap"><table>
+<tr><th>事項</th><th>状態</th><th>決め方</th></tr>
+<tr><td>音源</td><td><strong>確定</strong>（8/19・丸山）: 自然音声</td><td>3.4</td></tr>
+<tr><td>録音話者</td><td>未確定</td><td>母語話者1名を研究室周辺から依頼</td></tr>
+<tr><td>8文字の選定</td><td>未確定</td><td>録音12字のQC後に選定（方針は先生に確認）</td></tr>
+<tr><td>基準アニメの長さ・濃度カーブ</td><td>未確定</td><td>パイロットでV(s)の広がりを確認して固定（<a class="q" href="#q4">Q4</a>）</td></tr>
+<tr><td>人数・時点・割付</td><td>暫定（25/群・7時点）</td><td>A2で固定</td></tr>
+<tr><td>報酬・予算</td><td>未確定</td><td>パイロットの実所要時間から時給1,000円目安で設定</td></tr>
+<tr><td>順序とWISS 8/31目標</td><td>先生の復帰待ち</td><td>提案メモ第4版とともにレビュー依頼</td></tr>
+</table></div>
+<p>決定した項目は「&gt; 決定（日付・決定者）: 内容」で追記していく。</p>
+
+<h2 id="qa"><span class="num">A</span>付録: 設計の理由（Q&amp;A）</h2>
+
+<div class="qa" id="q1"><p class="q-label"><span class="num">Q1</span>「別の人で確かめる」って、再現性（追試）の実験ということ？</p>
+<p>違う。較正した本人たちで確かめると「その人たちに合わせ込んだだけ」と区別がつかないため、生成に関わっていない初見の人（群B）で効果を確かめる。合わせ込み排除の手続きであって、同じ実験を繰り返す追試の意味ではない。</p></div>
+
+<div class="qa" id="q2"><p class="q-label"><span class="num">Q2</span>「対象＝かなそのもの」とは？（F=恒等）</p>
+<p>概念整理では、スコアは「対象（かるたなら歌）がいつ識別できるか」を記述し、それを「どの文字をいつ提示するか」へ翻訳する橋渡しF（決まり字の組合せ論）を挟む。本実験は識別する対象がかな1文字そのものなので、この翻訳は何もしない（入力をそのまま返す＝恒等写像）。概念の特殊ケースにそのまま収まる。</p></div>
+
+<div class="qa" id="q3"><p class="q-label"><span class="num">Q3</span>なぜフリーズするのか？</p>
+<p>time-warpは十分自由度のある変換なので、「群Bの結果を見て調整を繰り返せばいつかは合う」という批判が成り立ってしまう。群B取得前にコミットで固定し、一発生成であることを履歴で証明する。</p></div>
+
+<div class="qa" id="q4"><p class="q-label"><span class="num">Q4</span>基準アニメの200msをなぜ見直す？</p>
+<p>200msは旧製品要件（かるた0.2秒/モーラ）の名残で、知覚測定として選んだ値ではない。測定上重要なのは、V(s)が進行度の全域で緩やかに立ち上がること。フェードが速すぎると「薄くてもすぐ読める」ためV(s)が狭い範囲で床から天井へ跳び、逆引きV<sup>−1</sup>が不安定になって生成の質が落ちる。だからパイロットで長さ・濃度カーブを選んでから較正する。</p></div>
+
+<div class="qa" id="q5"><p class="q-label"><span class="num">Q5</span>Baseline 2はなぜ要る？</p>
+<p>ProposedがBaseline 1に勝っただけなら「表示を速く/遅くしただけ」で説明がつく。速度合わせを既にした対照（Baseline 2）に勝って初めて「曲線全体を使う意味がある」と言える。差がなければ「速度1パラメータで足りる」という明快な知見であり、どちらでも報告する。</p></div>
+
+<div class="qa" id="q6"><p class="q-label"><span class="num">Q6</span>打ち切りが40msとか、急すぎない？</p>
+<p>かな1音の識別情報は先頭の数十msに集中している。清濁を分ける主手がかりVOT（破裂から声帯振動開始までの時間）は日本語で25〜45ms——「た」か「だ」かは最初の40ms以内でほぼ決まる。Furui (1986)は識別率がスペクトル変化最大点前後の約10msで急峻に立ち上がることを示した。全長150〜300msのうち後半の母音定常部は「どの字か」の新情報をほぼ足さない。「もっと遅く分かるはず」という体感は反応時間（数百ms）が乗っているためで、ゲーティング法は回答時間を無制限にすることで情報の到達時刻と反応の速さを分離して測る。</p></div>
+
+<div class="qa" id="q7"><p class="q-label"><span class="num">Q7</span>8字しか出さないのに、なぜ回答は全かな表？</p>
+<p>選択肢数で当て推量の正答率（床γ）が決まる。全かな表なら1/68・1/72に固定でき、解析にそのまま使える。また出題範囲を悟らせず、実験1と課題の性質が揃う。</p></div>
+
+<div class="qa" id="q8"><p class="q-label"><span class="num">Q8</span>テイク選択と音量合わせの決め方はなぜ機械的？</p>
+<p>「都合の良いテイクを選んだ」「音を整えて結果を作った」という批判の余地を消すため、選択基準（雑音等を除外→長さが中央値に最も近いもの）を録音前に固定する。音量も、音の頭のノイズ強度自体が清濁の手がかりになり得るため、内部バランスを変えない一定ゲインのみとする。</p></div>
+
+<div class="qa" id="q9"><p class="q-label"><span class="num">Q9</span>なぜ時間0をacoustic onsetに固定する？</p>
+<p>ファイル先頭基準にすると、先頭の無音余白のぶん「40ms提示」が実際は音響情報35ms、といったずれが全文字の曲線に乗り、文字間比較も先行研究との比較も狂う。onset（音の実体の開始点）を測ってそこを0msと定義する。</p></div>
+
+<div class="qa" id="q10"><p class="q-label"><span class="num">Q10</span>なぜ急峻さ（傾き）を判定に使わない？</p>
+<p>二段階の推定（曲線を推定→逆引きに使用）では傾きが系統的に浅く出るバイアスがあることをシミュレーション（A1.5）で確認した。バイアスの乗る量を勝敗判定に使うと誤判定のもとになるため、判定は中点差と曲線距離Eで行い、急峻さは探索的な図示に回す。</p></div>
+
+<div class="qa" id="q11"><p class="q-label"><span class="num">Q11</span>「未検証」って本当？似た研究はないの？</p>
+<p>部品はすべて既存: ゲーティング測定（竹内1961・Furui 1986）、聴覚と視覚の曲線の測定・比較（Sánchez-García et al. 2018）、文字の段階提示（Petersen &amp; Andersen、上月らのdynamic text）、モダリティ間の知覚対応づけの発想（古典的なcross-modal matching）、音声のタイミングに合わせた文字表示の工学（カラオケのワイプ。ただし識別率への較正も検証もない）。見つかっていないのは「測った音声の識別曲線を入力に、較正済みの逆引きでアニメーションを生成し、独立参加者で再現を検証する」という<strong>組み合わせの全体</strong>（8/19時点の調査）。「ない」ことは証明できないため、論文では「私たちの知る限り」と限定し、上記の近傍研究を自分から関連研究に挙げて区別する。研究の価値は「世界初」でなく、Baseline 2 に勝つかという検証結果そのものに置く。</p></div>
+
+<p class="footer">原本: iFont リポジトリ <code>project/実験計画書_転写検証.md</code>（このページは表示用。内容の更新は原本→本ページの順に反映）</p>
+</div>
