@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>かな1音 音源比較: 自然録音 / 無加工の合成2話者 / 現行の加工版</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif; margin:0;
+         background:#f6f4ef; color:#1b2030; }
+  #app { max-width: 1120px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e6e1d6; border-radius:14px; padding:22px;
+          box-shadow:0 1px 0 rgba(0,0,0,.03), 0 10px 28px rgba(46,125,143,.08); margin-bottom:18px; }
+  h1,h2,h3 { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; letter-spacing:.04em; color:#1E2A5E; }
+  h1 { font-size:21px; border-bottom:1px solid #e9e4d8; padding-bottom:10px; margin:0 0 14px; }
+  h2 { font-size:15px; margin:26px 0 10px; color:#8A5A00; letter-spacing:.08em; }
+  p { line-height:1.85; font-size:14px; }
+  .muted { color:#6b7280; font-size:13px; line-height:1.75; }
+  .grid { display:grid; grid-template-columns:58px repeat(4, 1fr); gap:10px 12px; align-items:start; }
+  .hd { position:sticky; top:0; background:#fff; z-index:2; padding:10px 0 8px;
+        border-bottom:2px solid #e9e4d8; }
+  .hd b { display:block; font-size:13px; color:#1E2A5E; letter-spacing:.03em; }
+  .hd span { font-size:11px; color:#6b7280; }
+  .kana { font-family:"Hiragino Mincho ProN","Yu Mincho",serif; font-size:34px; line-height:1;
+          color:#1E2A5E; text-align:center; padding-top:14px; }
+  .cell { min-width:0; border-top:1px solid #efeade; padding-top:9px; }
+  .cell img { width:100%; display:block; border:1px solid #eae5d8; border-radius:6px; background:#fff; }
+  .cell.todo { display:flex; align-items:center; justify-content:center; min-height:74px;
+               color:#a8a396; font-size:13px; border:1px dashed #ddd6c6; border-radius:8px;
+               border-top:1px solid #efeade; background:#fbfaf6; }
+  .nums { font-size:11px; color:#6b7280; margin:5px 0 0; }
+  .nums b { color:#1b2030; font-weight:600; }
+  button.play { font-size:13px; padding:5px 14px; border-radius:999px; border:0;
+                background:#2E7D8F; color:#fff; cursor:pointer; letter-spacing:.02em;
+                transition:filter .15s; margin-bottom:6px; }
+  button.play:hover { filter:brightness(1.12); }
+  button.play:disabled { background:#b9c2c9; cursor:default; }
+  button.col { font-size:12px; padding:5px 10px; border-radius:8px; border:1px solid #cbd5da;
+               background:#eef4f5; color:#1B5C69; cursor:pointer; margin-top:6px; width:100%; }
+  button.col:hover { background:#e2eef0; }
+  button.col:disabled { color:#9aa3a8; background:#f3f4f5; cursor:default; }
+  table { border-collapse:collapse; font-size:13px; margin-top:8px; }
+  td,th { border:1px solid #e3e6ee; padding:5px 10px; text-align:left; }
+  th { background:#faf8f3; font-weight:600; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:#6b7280; margin-top:8px; }
+  .sw { display:inline-block; width:14px; height:2px; vertical-align:3px; margin-right:5px; }
+</style>
+</head>
+<body>
+<div id="app">
+<div class="card">
+<h1>かな1音の音源比較: 自然録音 / 無加工の合成2話者 / 現行の加工版</h1>
+<p><b>横に並んだ4つを聴き比べ、その字だと確実に聞き取れるか・不自然でないかを判定してください。</b>
+とくに <b>ぱ と ば</b>、<b>か と が</b>、<b>た と だ</b> の清音・濁音の聞き分けに注目してください。</p>
+<p class="muted">この比較は、これまで行ってきた独自の音声加工（声の高さの平坦化・1文字0.2秒への強制伸縮・
+VOT の自動修正・文脈語からの切り出し・字ごとのフィルタ）をやめて、<b>無加工のまま明瞭な音源</b>で
+実験できないかを確かめるためのものです。B1・B2 はいずれも合成器が出した音をそのまま使っており、
+音量をそろえる倍率を話者ごとに1つだけ掛けた以外は何もしていません。フェード（音の出入りを
+なめらかにする処理）も掛けていません。再生もファイルをそのまま鳴らすだけで、切り出しはしません。</p>
+
+<table><tr><th>列</th><th>中身</th><th>話者</th><th>形式</th></tr>
+<tr><td>A</td><td>人が実際に発音した自然録音</td><td>準備中</td><td>—</td></tr>
+<tr><td>B1</td><td>無加工の合成音</td><td>東北きりたん / ノーマル（speaker=108）</td><td>WAV 44.1kHz/16bit</td></tr>
+<tr><td>B2</td><td>無加工の合成音</td><td>玄野武宏 / ノーマル（speaker=11）</td><td>WAV 44.1kHz/16bit</td></tr>
+<tr><td>C</td><td>現行の加工版</td><td>東北きりたん / ノーマル（speaker=108）</td><td>mp3（本番のコピー）</td></tr>
+</table>
+<p class="muted" style="margin-top:12px"><b>B2 に玄野武宏を選んだ理由</b>: 声の高さが約104Hzの男声で、きりたん(約229Hz)とほぼ1オクターブ違う。無加工の下見で、が・ば・だ のいずれにも prevoicing（破裂より前から声帯が震える。濁音と聞き取るいちばん強い手がかり）がはっきり出て、か・ぱ・た は日本語の無声破裂音として自然な +23〜+42ミリ秒に収まった。清音と濁音の VOT の開きは最小でも84ミリ秒で、試した7話者の中で最大。</p>
+<div class="legend"><span><span class="sw" style="background:#B03A2E"></span>音の立ち上がり</span><span><span class="sw" style="background:#8A5A00"></span>破裂の瞬間（破裂音のみ）</span><span>図の横軸は全図共通で 0〜550 ミリ秒、縦軸（振幅）も全図共通</span></div>
+</div>
+<div class="card"><div class="grid">
+<div class="hd"></div>
+<div class="hd"><b>A 自然録音</b><span>準備中</span><button class="col" disabled>12字を続けて鳴らす</button></div>
+<div class="hd"><b>B1 無加工・きりたん</b><span>東北きりたん／WAV 44.1kHz/16bit</span><button class="col" data-col="B1">12字を続けて鳴らす</button></div>
+<div class="hd"><b>B2 無加工・玄野武宏</b><span>玄野武宏／WAV 44.1kHz/16bit</span><button class="col" data-col="B2">12字を続けて鳴らす</button></div>
+<div class="hd"><b>C 現行の加工版</b><span>東北きりたん／mp3</span><button class="col" data-col="C">12字を続けて鳴らす</button></div>
+<div class="kana">あ</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_あ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_あ.png" alt="あ の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>352</b> ms ／ 立ち上がり 105 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_あ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_あ.png" alt="あ の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>299</b> ms ／ 立ち上がり 95 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_あ.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_あ.png" alt="あ の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms</p></div>
+<div class="kana">い</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_い.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_い.png" alt="い の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>331</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_い.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_い.png" alt="い の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>299</b> ms ／ 立ち上がり 95 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_い.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_い.png" alt="い の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 145 ms</p></div>
+<div class="kana">か</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_か.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_か.png" alt="か の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>405</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+42</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_か.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_か.png" alt="か の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>384</b> ms ／ 立ち上がり 120 ms ／ VOT <b>+42</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_か.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_か.png" alt="か の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms ／ VOT <b>+50</b> ms</p></div>
+<div class="kana">が</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_が.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_が.png" alt="が の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>405</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+20</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_が.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_が.png" alt="が の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>363</b> ms ／ 立ち上がり 110 ms ／ VOT <b>-42</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_が.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_が.png" alt="が の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms ／ VOT <b>+36</b> ms</p></div>
+<div class="kana">ぱ</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_ぱ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_ぱ.png" alt="ぱ の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>405</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+11</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_ぱ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_ぱ.png" alt="ぱ の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>373</b> ms ／ 立ち上がり 125 ms ／ VOT <b>+24</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_ぱ.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_ぱ.png" alt="ぱ の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms ／ VOT <b>+49</b> ms</p></div>
+<div class="kana">ば</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_ば.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_ば.png" alt="ば の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>395</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+7</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_ば.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_ば.png" alt="ば の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>373</b> ms ／ 立ち上がり 110 ms ／ VOT <b>-62</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_ば.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_ば.png" alt="ば の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms ／ VOT <b>+11</b> ms</p></div>
+<div class="kana">た</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_た.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_た.png" alt="た の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>395</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+8</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_た.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_た.png" alt="た の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>363</b> ms ／ 立ち上がり 125 ms ／ VOT <b>+22</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_た.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_た.png" alt="た の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 155 ms ／ VOT <b>+46</b> ms</p></div>
+<div class="kana">だ</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_だ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_だ.png" alt="だ の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>384</b> ms ／ 立ち上がり 105 ms ／ VOT <b>+10</b> ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_だ.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_だ.png" alt="だ の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>352</b> ms ／ 立ち上がり 105 ms ／ VOT <b>-62</b> ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_だ.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_だ.png" alt="だ の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms ／ VOT <b>+9</b> ms</p></div>
+<div class="kana">し</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_し.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_し.png" alt="し の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>523</b> ms ／ 立ち上がり 125 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_し.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_し.png" alt="し の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>405</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_し.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_し.png" alt="し の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 160 ms</p></div>
+<div class="kana">す</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_す.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_す.png" alt="す の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>427</b> ms ／ 立ち上がり 120 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_す.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_す.png" alt="す の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>395</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_す.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_す.png" alt="す の波形（C 現行の加工版）"><p class="nums">全長 <b>432</b> ms ／ 立ち上がり 145 ms</p></div>
+<div class="kana">ま</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_ま.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_ま.png" alt="ま の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>416</b> ms ／ 立ち上がり 105 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_ま.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_ま.png" alt="ま の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>373</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_ま.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_ま.png" alt="ま の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 150 ms</p></div>
+<div class="kana">な</div>
+<div class="cell todo">準備中</div>
+<div class="cell"><button class="play" data-col="B1" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B1_な.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B1_な.png" alt="な の波形（B1 無加工・きりたん）"><p class="nums">全長 <b>405</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="B2" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/B2_な.wav&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/B2_な.png" alt="な の波形（B2 無加工・玄野武宏）"><p class="nums">全長 <b>363</b> ms ／ 立ち上がり 100 ms</p></div>
+<div class="cell"><button class="play" data-col="C" data-clip="{&quot;file&quot;: &quot;../candidate_pools/raw_compare_v1/C_な.mp3&quot;}">▶ 鳴らす</button><img src="../candidate_pools/raw_compare_v1/waveforms/C_な.png" alt="な の波形（C 現行の加工版）"><p class="nums">全長 <b>456</b> ms ／ 立ち上がり 145 ms</p></div>
+</div></div>
+<div class="card"><h2 style="margin-top:0">この表の見かた</h2>
+<table>
+<tr><th>言葉</th><th>意味</th></tr>
+<tr><td>全長</td><td>ファイル全体の長さ。前後の無音を含む。B1・B2 は合成器の既定で前後それぞれ約100ミリ秒の無音が入る</td></tr>
+<tr><td>立ち上がり</td><td>ファイルの先頭から数えて音が鳴りはじめる時刻</td></tr>
+<tr><td>VOT</td><td>破裂の瞬間から声帯が震えはじめるまでの時間。<b>マイナスは破裂より前から声が出ていた</b>という意味で、濁音だと聞き取るいちばん強い手がかり。日本語では清音がおよそ +25〜+45 ミリ秒、濁音が 0 前後かマイナスになるのが自然</td></tr>
+<tr><td>C の全長がどれも同じ</td><td>現行の加工版は1文字を0.2秒に強制的に伸縮しているため、全長が456ミリ秒前後にそろう。無加工の B1・B2 は字ごとに長さが違う。この違いそのものが「加工したか・しないか」の差</td></tr>
+<tr><td>し・す が小さく聞こえる</td><td>話者ごとに倍率をひとつしか掛けていないので、字と字のあいだの音量差は合成器が出したまま。息の音が主体の字は母音を含む字より自然に小さい</td></tr>
+</table>
+<p class="muted" style="margin-top:14px">数値の一覧は <code>project/音源比較_QC表.md</code>。
+音源は <code>experiment/candidate_pools/raw_compare_v1/</code>。
+生成は <code>experiment/tools/build_raw_compare.py</code>、測定と本ページの生成は
+<code>experiment/tools/measure_raw_compare.py</code>。</p></div>
+</div>
+<script>
+let ctx = null;
+const bufs = {};
+function ensureCtx(){ if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)(); return ctx; }
+async function load(file){
+  if(!bufs[file]){
+    const r = await fetch(file);
+    if(!r.ok) throw new Error("音声が読めない: " + file);
+    bufs[file] = await ensureCtx().decodeAudioData(await r.arrayBuffer());
+  }
+  return bufs[file];
+}
+// ファイルをそのまま鳴らす。切り出しもフェームも音量調整もしない
+// （音量をそろえる倍率はファイルを作る時点で焼き込んである）。
+async function play(file){
+  const c = ensureCtx();
+  await c.resume();
+  const buf = await load(file);
+  const s = c.createBufferSource();
+  s.buffer = buf; s.connect(c.destination); s.start();
+  return new Promise(res => { s.onended = res; });
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("button.play");
+  if(!b) return;
+  b.disabled = true;
+  try { await play(JSON.parse(b.dataset.clip).file); }
+  catch(err){ b.textContent = "再生できない"; console.error(err); }
+  b.disabled = false;
+});
+// 列ごとに12字を続けて鳴らす（1字ごとに 0.45 秒あける）
+document.addEventListener("click", async e => {
+  const b = e.target.closest("button.col");
+  if(!b) return;
+  const col = b.dataset.col;
+  const all = [...document.querySelectorAll(`button.play[data-col="${col}"]`)];
+  const cols = [...document.querySelectorAll("button.col")];
+  cols.forEach(x => x.disabled = true);
+  const label = b.textContent;
+  try {
+    for(let i=0;i<all.length;i++){
+      b.textContent = `再生中 ${i+1}/${all.length}`;
+      await play(JSON.parse(all[i].dataset.clip).file);
+      await new Promise(r => setTimeout(r, 450));
+    }
+  } catch(err){ console.error(err); }
+  b.textContent = label;
+  // A列（自然録音）は音源が無いので、押せないままに戻す
+  cols.forEach(x => x.disabled = !x.dataset.col);
+});
+</script>
+</body>
+</html>

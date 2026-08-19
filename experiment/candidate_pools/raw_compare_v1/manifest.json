@@ -1,0 +1,602 @@
+{
+  "set": "raw_compare_v1",
+  "engine": "VOICEVOX 0.25.2",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "channels": 1,
+  "chars": [
+    "あ",
+    "い",
+    "か",
+    "が",
+    "ぱ",
+    "ば",
+    "た",
+    "だ",
+    "し",
+    "す",
+    "ま",
+    "な"
+  ],
+  "processing_note": "B1/B2 は audio_query の内容を outputSamplingRate 以外いっさい変えずに合成した無加工音。声の高さの平坦化・長さの強制・VOT修正・フィルタ・切り出し・フェードはすべて行っていない。音量そろえは話者ごとに単一の倍率を全12字へ一律に掛けただけ。",
+  "level_reference_dbfs": -25.75,
+  "target_peak_dbfs": -1.0,
+  "speakers": {
+    "B1": {
+      "id": 108,
+      "name": "東北きりたん",
+      "style": "ノーマル",
+      "why": "現行の本番プールと同じ話者。比較の基準",
+      "gain": 0.704289,
+      "gain_db": -3.04,
+      "gain_capped_by_peak": false
+    },
+    "B2": {
+      "id": 11,
+      "name": "玄野武宏",
+      "style": "ノーマル",
+      "why": "声の高さが約104Hzの男声で、きりたん(約229Hz)とほぼ1オクターブ違う。無加工の下見で、が・ば・だ のいずれにも prevoicing（破裂より前から声帯が震える。濁音と聞き取るいちばん強い手がかり）がはっきり出て、か・ぱ・た は日本語の無声破裂音として自然な +23〜+42ミリ秒に収まった。清音と濁音の VOT の開きは最小でも84ミリ秒で、試した7話者の中で最大",
+      "gain": 1.041183,
+      "gain_db": 0.35,
+      "gain_capped_by_peak": false
+    },
+    "C": {
+      "id": 108,
+      "name": "東北きりたん",
+      "style": "ノーマル",
+      "why": "現行の本番プール（加工あり）。声の高さB3平坦化・1モーラ0.2秒・VOT修正などを含む",
+      "gain": 1.0,
+      "gain_db": 0.0,
+      "gain_capped_by_peak": false
+    },
+    "A": {
+      "id": null,
+      "name": "自然録音",
+      "style": "準備中",
+      "why": "人が実際に発音した録音。後日追加する枠",
+      "gain": null
+    }
+  },
+  "files": {
+    "あ": {
+      "B1": {
+        "file": "B1_あ.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -23.03,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_あ.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -26.93,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_あ.mp3",
+        "src": "experiment/audio1char_stimuli/7dc5771f7c4b2095d9e7.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "7dc5771f7c4b2095d9e7",
+          "file": "7dc5771f7c4b2095d9e7.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "い": {
+      "B1": {
+        "file": "B1_い.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.1,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_い.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -37.12,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_い.mp3",
+        "src": "experiment/audio1char_stimuli/e2c8599b7390b40c1172.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "e2c8599b7390b40c1172",
+          "file": "e2c8599b7390b40c1172.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 40,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 204.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "か": {
+      "B1": {
+        "file": "B1_か.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -24.31,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_か.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -23.61,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_か.mp3",
+        "src": "experiment/audio1char_stimuli/6a2339386b1bcf9c44dc.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "6a2339386b1bcf9c44dc",
+          "file": "6a2339386b1bcf9c44dc.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "が": {
+      "B1": {
+        "file": "B1_が.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.37,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_が.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -25.64,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_が.mp3",
+        "src": "experiment/audio1char_stimuli/ca334e753b58984cadf4.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "ca334e753b58984cadf4",
+          "file": "ca334e753b58984cadf4.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "ぱ": {
+      "B1": {
+        "file": "B1_ぱ.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.6,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_ぱ.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -22.95,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_ぱ.mp3",
+        "src": "experiment/audio1char_stimuli/d507398a309e7986bd56.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "d507398a309e7986bd56",
+          "file": "d507398a309e7986bd56.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 0.9,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "ば": {
+      "B1": {
+        "file": "B1_ば.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -21.24,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_ば.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -24.7,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_ば.mp3",
+        "src": "experiment/audio1char_stimuli/de304b931894754a8729.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "de304b931894754a8729",
+          "file": "de304b931894754a8729.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 0.9,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "た": {
+      "B1": {
+        "file": "B1_た.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.78,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_た.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -25.56,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_た.mp3",
+        "src": "experiment/audio1char_stimuli/8ad2a3c09bfc19b186aa.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "8ad2a3c09bfc19b186aa",
+          "file": "8ad2a3c09bfc19b186aa.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 60,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 184.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "だ": {
+      "B1": {
+        "file": "B1_だ.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.63,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_だ.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -25.64,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_だ.mp3",
+        "src": "experiment/audio1char_stimuli/90ac872922672dc96edf.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "90ac872922672dc96edf",
+          "file": "90ac872922672dc96edf.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "し": {
+      "B1": {
+        "file": "B1_し.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -23.84,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_し.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -37.26,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_し.mp3",
+        "src": "experiment/audio1char_stimuli/8788712cecb05cac0ec9.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "8788712cecb05cac0ec9",
+          "file": "8788712cecb05cac0ec9.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 60,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 184.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "す": {
+      "B1": {
+        "file": "B1_す.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -30.37,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_す.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -37.51,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_す.mp3",
+        "src": "experiment/audio1char_stimuli/584787751a00ca4d1bc4.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "584787751a00ca4d1bc4",
+          "file": "584787751a00ca4d1bc4.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 40,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.042,
+          "mora_len_ms": 192.0
+        }
+      }
+    },
+    "ま": {
+      "B1": {
+        "file": "B1_ま.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -22.56,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_ま.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -26.61,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_ま.mp3",
+        "src": "experiment/audio1char_stimuli/36ab655f79c55fa6625d.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "36ab655f79c55fa6625d",
+          "file": "36ab655f79c55fa6625d.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 50,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 194.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    },
+    "な": {
+      "B1": {
+        "file": "B1_な.wav",
+        "speaker": 108,
+        "gain": 0.704289,
+        "pre_gain_rms_dbfs": -24.8,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "B2": {
+        "file": "B2_な.wav",
+        "speaker": 11,
+        "gain": 1.041183,
+        "pre_gain_rms_dbfs": -26.57,
+        "pre_phoneme_s": 0.1,
+        "post_phoneme_s": 0.1,
+        "speed": 1.0,
+        "pitch": 0.0,
+        "intonation": 1.0,
+        "volume": 1.0
+      },
+      "C": {
+        "file": "C_な.mp3",
+        "src": "experiment/audio1char_stimuli/5e68bc22c8d968cf0794.mp3",
+        "gain": 1.0,
+        "note": "現行本番プールのファイルをそのままコピー（再加工なし）",
+        "prod_stim": {
+          "id": "5e68bc22c8d968cf0794",
+          "file": "5e68bc22c8d968cf0794.mp3",
+          "char_onset_s": 0.1,
+          "char_dur_s": 0.2,
+          "sr": 24000,
+          "q_set": "all",
+          "modality": "audio1char",
+          "gate_onset_ms": 40,
+          "gate_gain": 1.0,
+          "gate_avail_ms": 204.708,
+          "mora_len_ms": 202.667
+        }
+      }
+    }
+  }
+}
