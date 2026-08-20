@@ -884,7 +884,7 @@ function runAudioTrial(t) {
   screenEl.innerHTML = `${progressHeader(t)}
     <div id="stage">
       <div style="text-align:center;margin:36px 0 12px" id="cue" class="muted">♪</div>
-      ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">まもなく、ひらがな1文字の読み上げが流れます。</div>`}
+      ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">まもなく始まります。</div>`}
       <div id="answerArea"></div>
     </div>`;
   const answerArea = document.getElementById("answerArea");
@@ -944,7 +944,7 @@ function runVisualTrial(t) {
   screenEl.innerHTML = `${progressHeader(t)}
     <div id="stage">
       <div id="vbox" class="vbox"></div>
-      ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。まもなく、ひらがな1文字が短く現れます。</div>`}
+      ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。</div>`}
       <div id="answerArea"></div>
     </div>`;
   const answerArea = document.getElementById("answerArea");
@@ -1213,10 +1213,12 @@ function audioGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">聞こえた文字を表から選ぶ</text>
     </svg>
-    <p class="muted">「ピッ」1回のあとに自動で読み上げが流れ、終わると「ピッピッ」と2回鳴ります。
-    <b>読み上げは1問につき1回だけです（聞き直しはできません）</b>。答える時間に制限はありません。</p>
-    <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    聞こえなくても、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
+    <ul style="font-size:14px;line-height:1.9;color:#333">
+      <li>「ピッ」1回のあとに自動で始まります（終わると「ピッピッ」と2回鳴ります）。</li>
+      <li><b>読み上げは1問につき1回だけです（聞き直しはできません）。</b></li>
+      <li>答える時間に制限はありません。</li>
+      <li>聞こえなくても、<b>もっとも近いと思う文字を選んでください。</b></li>
+    </ul>`;
 }
 function visualGuideHTML() {
   return `
@@ -1239,10 +1241,12 @@ function visualGuideHTML() {
       <text x="335" y="66" font-size="12" text-anchor="middle" fill="#fff">選</text>
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
-    <p class="muted">中央の ＋ のあとに自動で始まります。
-    <b>表示は1問につき1回だけです（見直しはできません）</b>。答える時間に制限はありません。</p>
-    <p style="background:#fff8ec;border:1px solid #eadfc8;border-radius:8px;padding:10px 12px">
-    見えなくても、<b>もっとも近いと思う文字を選んでください</b>。</p>`;
+    <ul style="font-size:14px;line-height:1.9;color:#333">
+      <li>中央の ＋ のあとに自動で始まります。</li>
+      <li><b>表示は1問につき1回だけです（見直しはできません）。</b></li>
+      <li>答える時間に制限はありません。</li>
+      <li>見えなくても、<b>もっとも近いと思う文字を選んでください。</b></li>
+    </ul>`;
 }
 
 function showTryGate() {
@@ -1279,12 +1283,8 @@ function intro() {
   screenEl.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
     <p>ひらがな1文字の${G.mode === "audio" ? "読み上げを聞いて" : "表示を見て"}、
-    どの文字かを<b>かなの表から選ぶ</b>課題を、${approx}問ほど続けて行います。</p>
-    <ul style="font-size:14px;line-height:1.9;color:#333">
-      <li>${G.mode === "audio" ? "読み上げ" : "表示"}は<b>1問につき1回だけ</b>です。</li>
-      <li>答える時間に制限はありません。分からなくても、もっとも近い文字を選んでください。</li>
-      <li>途中で休みたくなったらブラウザを閉じてかまいません（同じブラウザで開き直すと続きから再開できます）。</li>
-    </ul>
+    どの文字かを<b>かなの表から選ぶ</b>課題です。</p>
+    <p style="font-size:15px">問題数：約${approx}問</p>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音量の確認" : "見え方の確認"}</button></p>
     ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>`}
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "津田塾大学 栗原研究室" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
@@ -1350,6 +1350,26 @@ function visionCheck() {
   document.getElementById("go3").onclick = start;
 }
 
+// 同意画面の文言を、この実験の方針(同じことは1か所だけ・お願い口調の環境注意は書かない)に
+// そろえる。**prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
+// ページの中だけで直す。直すのは次の2つ。
+//   1. 見出し「研究へのご協力のお願い」を消す(本文から始める)
+//   2. 「途中再開」の項目を「記録するもの」の項目にたたむ
+//      (再開した回数と中断していた時間は"記録するもの"なので、そこに書くのが素直)
+function tidyConsentScreen() {
+  const h1 = screenEl.querySelector("h1");
+  if (h1 && h1.textContent.indexOf("ご協力") >= 0) h1.remove();
+  const items = [...screenEl.querySelectorAll("li")];
+  const rec = items.find(li => li.textContent.indexOf("記録するもの") >= 0);
+  const resume = items.find(li => li.textContent.indexOf("途中再開") >= 0);
+  if (rec && resume) {
+    rec.insertAdjacentHTML("beforeend",
+      "中断して開き直した場合は、再開した回数と中断していた時間も記録します" +
+      "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
+    resume.remove();
+  }
+}
+
 // =========================================================================
 // 起動
 // =========================================================================
@@ -1395,7 +1415,7 @@ function blockedScreen(reason) {
       }
     }
     screenEl.innerHTML = `<div style="min-height:40vh;display:flex;justify-content:center;align-items:center">
-      <h1 style="border:none">準備しています…</h1></div>`;
+      <h1 style="border:none">読み込み中…</h1></div>`;
     const a = await resolveAssignment();
     if (a.blocked) return blockedScreen(a.reason);
     GROUP = a.group; G = GROUPS[GROUP]; ASSIGN = a.assign_index; ASSIGN_SOURCE = a.source;
@@ -1408,10 +1428,11 @@ function blockedScreen(reason) {
     //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
     const isAudio = (G.mode === "audio");
     PROD.consentScreen(screenEl, G.task_label, 12, intro, isAudio,
-      { noEnvNote: isAudio, allowWireless: true,
+      { noEnvNote: true, allowWireless: true,
         desc: isAudio
           ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
           : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
+    tidyConsentScreen();
     // 同意画面で申告された再生機器を控える(prod_common.js は自分の送信にしか使わず、
     // 外に見せていないため)。無線のイヤホンは音の頭が欠けるので、解析で要る列。
     screenEl.querySelectorAll('input[name="dev"]').forEach(r =>

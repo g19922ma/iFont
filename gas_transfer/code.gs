@@ -106,11 +106,18 @@
 // 掲載前チェックリスト G-1)。
 const SPREADSHEET_ID = "1gsJ6_Rucv5uoKsgrs_m-Y41sxh5B0qcPKWyHkxveKMs";
 
-// 疎通確認で作った行の目印。参加者IDがこの文字で始まる行は「試し打ち」とみなし、
-// is_test 列に true を立て、action=transfer_purge_test でまとめて消せるようにする。
-// クラウドソーシングの作業者IDがこの形になることはない。
-const TEST_PID_PREFIX = "curltest-";
-function isTestPid(pid) { return String(pid || "").indexOf(TEST_PID_PREFIX) === 0; }
+// 疎通確認・画面確認で作った行の目印。参加者IDがこのどれかで始まる行は「試し打ち」と
+// みなし、is_test 列に true を立て、action=transfer_purge_test でまとめて消せるようにする。
+// 決め打ちの文字列だけを見るので、本物の参加者のデータに手が届くことはない
+// (クラウドソーシングの作業者IDがこの形になることはない)。
+const TEST_PID_PREFIXES = ["curltest-", "uitest-"];
+function isTestPid(pid) {
+  const v = String(pid || "");
+  for (let i = 0; i < TEST_PID_PREFIXES.length; i++) {
+    if (v.indexOf(TEST_PID_PREFIXES[i]) === 0) return true;
+  }
+  return false;
+}
 
 const SHEET_TRIALS = "trials";
 
