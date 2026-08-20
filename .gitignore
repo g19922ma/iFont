@@ -18,3 +18,4 @@ experiment/answer_key_1char.json
 # 旧Phase-1の加算型マスク(未使用・巨大ファイル数)。生成器 generate.py で再生成可
 stroke_mask_images/
 stroke_mask_images_*/
+recordings_raw/
