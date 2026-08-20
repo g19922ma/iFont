@@ -154,6 +154,50 @@ const ENV = {
 })();
 if (window.PROD) PROD.setEnv(ENV);
 
+// ---- 記録の封筒 -----------------------------------------------------------
+// prod_common.js の SUBMIT_URL は実験1(乙課題・frac課題)と共用なので、**空のまま
+// 触らない**。そこを埋めると既存の実験の保存先まで動いてしまうため。
+// 転写検証だけの保存先は設定ファイル(logging.submit_url)に持たせてある。
+// 封筒の形は prod_common.js の post() が組むものと同じにそろえる(GAS 側の列が
+// そのまま埋まるようにするため)。prod_common.js が外に見せていない3つの値
+// (再生機器の申告・再開回数・中断していた合計秒)は、下の2か所で同じ規則で作り直す。
+let audioDeviceAnswer = "";                 // 同意画面での再生機器の申告(聴覚の集団のみ)
+let resumeMeta = { count: 0, gapS: 0 };     // 途中再開の回数と、中断していた合計秒
+
+function serverBody(body) {
+  return Object.assign({
+    participant_id: (window.PROD && PROD.participantId) || "",
+    worker_id: (window.PROD && PROD.workerId) || "",
+    completion_code: (window.PROD && PROD.completionCode) || "",
+    ts: Date.now(),
+    audio_device: audioDeviceAnswer,
+    resume_count: resumeMeta.count,
+    resume_gap_s: resumeMeta.gapS,
+    ua: ENV.ua, dpr: ENV.dpr, screen: ENV.screen, touch: !!ENV.touch,
+    refresh_hz: (ENV.refreshHz != null) ? ENV.refreshHz : "",
+  }, body);
+}
+
+// 封筒を GAS ウェブアプリへ渡す。応答は読まない(no-cors)。
+// GAS は許可の事前確認(preflight)が要らない text/plain で受ける。
+function postRecord(url, envelope) {
+  try {
+    fetch(url, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(envelope),
+    });
+  } catch (e) { console.warn("[transfer] 記録を渡せませんでした:", e); }
+}
+
+// 1レコードを設定ファイルの保存先へ渡す。研究者モード(?prod なし)では渡さない。
+function sendRecord(body) {
+  if (!(window.PROD && PROD.enabled)) return;
+  const url = (CFG.logging && CFG.logging.submit_url) || "";
+  if (!url) { console.warn("[transfer] logging.submit_url が空なので記録が残りません"); return; }
+  postRecord(url, serverBody(body));
+}
+
 // ---- 回答のかな表 ---------------------------------------------------------
 const GRID = CFG.answer_grid;
 const ALL_KANA = GRID.flat().filter(c => c !== "");
@@ -779,7 +823,10 @@ function makeRecord(t, picked, extra) {
 function finalizeCommon(t, rec, picked) {
   if (!t.practice) {
     results.push(rec);
+    // saveFracTrial は Firestore への控えだけ(prod_common.js の SUBMIT_URL は空)。
+    // GAS への保存は sendRecord がこの実験専用の窓口へ行う。
     if (window.PROD) PROD.saveFracTrial(rec);
+    sendRecord(rec);
     ti++; saveProgress(); runTrial(); return;
   }
   results.push(Object.assign({ practice: true }, rec));
@@ -1061,7 +1108,7 @@ function wellbeingChoice() {
     const sel = screenEl.querySelector('input[name="wbc"]:checked');
     wellbeingAnswers.choice = sel ? sel.value : "";
     // 見え心地の回答はまとめて1レコードで保存する。
-    if (window.PROD) PROD.saveFracTrial({
+    const wbRec = {
       kind: "transfer_wellbeing",
       stimulus_id: "wellbeing|" + GROUP,
       target_char: "-", response_char: "-",
@@ -1070,7 +1117,9 @@ function wellbeingChoice() {
       wellbeing_json: JSON.stringify(wellbeingAnswers),
       choice: wellbeingAnswers.choice,
       version: VERSION, config_version: CFG.config_version,
-    });
+    };
+    if (window.PROD) PROD.saveFracTrial(wbRec);
+    sendRecord(wbRec);
     showResults();
   };
 }
@@ -1297,6 +1346,14 @@ function blockedScreen(reason) {
     // 集団の問い合わせより先に読む(同じ人が同じ集団に戻るようにするため)。
     if (window.PROD && PROD.enabled) {
       resumeState = PROD.loadState("transfer_" + PHASE);
+      // 再開の回数と中断秒は prod_common.js が内側に持っていて外から読めないので、
+      // 同じ規則(前回の値 + 1 / 前回の値 + 今回あいた秒数)でここでも作る。
+      // 途中状態をこのあと捨てる場合(版ちがい・別の集団)でも、開き直した事実は残す。
+      if (resumeState && resumeState.saved_at) {
+        resumeMeta = { count: (resumeState.resume_count || 0) + 1,
+                       gapS: (resumeState.resume_gap_s || 0)
+                             + Math.round((Date.now() - resumeState.saved_at) / 1000) };
+      }
       if (resumeState && !resumeState.completed && resumeState.session_v !== SESSION_V) resumeState = null;
       if (resumeState && resumeState.completed) {
         screenEl.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
@@ -1321,6 +1378,10 @@ function blockedScreen(reason) {
         desc: isAudio
           ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
           : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
+    // 同意画面で申告された再生機器を控える(prod_common.js は自分の送信にしか使わず、
+    // 外に見せていないため)。無線のイヤホンは音の頭が欠けるので、解析で要る列。
+    screenEl.querySelectorAll('input[name="dev"]').forEach(r =>
+      r.addEventListener("change", () => { audioDeviceAnswer = r.value; }));
   } catch (e) {
     screenEl.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}</p>`;
   }

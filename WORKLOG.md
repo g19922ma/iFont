@@ -785,3 +785,37 @@ node experiment/tools/check_transfer_stimuli.js     # → 「合格」で終わ�
 clasp は「コードを置く」「デプロイを作る」までは自動化できるが、**Google アカウントの
 利用許可（OAuth の同意）だけは持ち主が画面で押すしかない**。自動化の設計をするときは、
 この1点が必ず人手として残ることを前提に手順書を書く。
+
+## 2026-08-20 追記: 回答の保存をつなぎ、疎通確認を全部通した
+
+### したこと
+- `experiment/transfer.js` に保存の処理を足した（`serverBody` / `postRecord` / `sendRecord`）。
+  1問ごとの回答と見え心地の回答を、設定ファイルの `logging.submit_url` へ渡す。
+  `prod_common.js` は無変更（実験1と共用のため）。
+- `prod_common.js` が外に見せていない3つの値を、同じ規則で作り直して封筒に載せた。
+  - 再生機器の申告 … 同意画面のラジオ（`input[name="dev"]`）に自前で聞き手を付けて控える
+  - 再開回数・中断していた合計秒 … `PROD.loadState()` の戻り値（`resume_count` /
+    `resume_gap_s` / `saved_at`）から、prod_common.js と同じ式で作る
+- 本人がウェブアプリの利用許可を与えたので、疎通確認を全部流した。
+
+### 疎通確認の結果（全部合格）
+| 確認 | 結果 |
+|---|---|
+| C-1 生きているか | `{"status":"ok","message":"iFont experiment endpoint"}` |
+| C-2 振り分けが交互か | 1人目 `acal` / 2人目 `aprime`（音声と視覚が半々になる） |
+| C-3 同じ人が戻ったら | `acal` + `returning:true`（前と同じ集団） |
+| C-4 前半に出た人の後半 | `blocked:true, reason:"already_in_calib"` |
+| C-5 正答のPOST | `{"status":"ok","correct":true}` |
+| C-5 誤答のPOST | `{"status":"ok","correct":false}`（採点が効いている） |
+| C-5 見え心地のPOST | `{"status":"ok"}` |
+| C-5 行数の確認 | `transfer_trials:4, transfer_wellbeing:2, transfer_roster:2`（**入ったことを確認**） |
+| C-7 後始末 | `removed:{4,2,2}` → 行数はすべて 0 に戻った |
+
+### ハマった点（チェックリストにも書いた）
+`curl` で GAS に POST するとき **`--post301 --post302 --post303` を付けてはいけない**。
+GAS は POST を受けたあと、応答の中身を別ドメイン（`script.googleusercontent.com`）へ 302 で
+取りに行かせる作りで、その2本目は GET でなければならない。`--post30x` を付けると2本目まで
+POST になり「ページが見つかりません」の HTML が返る。
+**このときシートへの書き込みは成功している**ので、失敗と思ってやり直すと行が二重に入る。
+実際に最初の試行で 2行ぶん余計に入れてしまった（後始末で消えた）。
+応答が HTML だったら、やり直す前に必ず `transfer_health` で行数を見ること。
