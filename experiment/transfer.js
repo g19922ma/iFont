@@ -233,7 +233,9 @@ function loadStim(ch, gateMs) {
       if (audioManifest) {
         const item = audioManifest.items[key];
         if (!item) throw new Error("刺激が見つかりません: " + key);
-        return await fetchBuffer(CFG.audio.stimuli_dir + "/" + item.file);
+        // ファイル名にかなが入る(あ_g0020.wav)。base/<かな>.png と同じく明示的に
+        // パーセント符号化する(自動符号化に任せると環境差が出るため)。
+        return await fetchBuffer(CFG.audio.stimuli_dir + "/" + encodeURIComponent(item.file));
       }
       // 代用モード: 元ファイルを1度だけ読み、必要な長さに切って使い回す。
       const rawKey = ch + "|raw";

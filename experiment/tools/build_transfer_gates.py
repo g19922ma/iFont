@@ -24,11 +24,26 @@
   ・音源の全長が t に足りないときは、その字の最大長で打ち切り、manifest に
     truncated=true と実際の長さを書く(短すぎる時点は A2 で外す判断材料にする)。
 
+頭の切り揃え(--lead-ms、既定 50 ミリ秒)
+--------------------------------------
+  出力WAVは onset ちょうどではなく **onset の lead ミリ秒手前**から始める。
+  ねらいは2つ。
+    1. 全字で「音が鳴り出す前の静けさ」の長さを揃える。録音の切り出しは前後に
+       50 ミリ秒の余白を付けてあるが、「に」のように頭に息継ぎを巻き込んだ字は
+       余白が 316 ミリ秒もある(project/録音QC_20260820.md §10-2)。ここで切り揃えると
+       その余分が落ちる。
+    2. 波形の途中(振幅がゼロでない点)から鳴らすと「プツッ」という不要な音が出る。
+       手前に静かな区間を置けばそれが起きない。
+  lead ぶんは onset より前なので **刺激の中身(t ミリ秒)には数えない**。
+  つまりファイルの全長は lead + t ミリ秒になる。manifest には両方書く
+  (lead_ms / gate_ms / dur_ms)。lead は全字・全時点で同じなので、時点どうしの
+  比較にも聴覚と視覚の比較にも影響しない。
+
 使い方
 ------
-  # 本番(録音した自然音声の WAV と、目視確認済みの onset 表を使う)
+  # 本番(録音の採用テイクと、話者本人が全数確認した onset 表を使う)
   python3 experiment/tools/build_transfer_gates.py \
-      --src recordings/take_selected --onsets recordings/onsets.json
+      --src recordings_raw/adopted --onsets recordings_raw/adopted_onsets.json
 
   # 動作確認(既存の合成音プールで通す。onset はこのスクリプトが自動検出する)
   python3 experiment/tools/build_transfer_gates.py \
@@ -37,9 +52,14 @@
 
 入力
 ----
-  --src      <かな>.wav が並んだディレクトリ(16bit PCM。ステレオは平均してモノラルにする)
-  --onsets   かな → onset(ミリ秒) の JSON。次のどちらの形でもよい。
-               {"あ": 50, ...}   /   {"あ": {"acoustic_onset_ms": 50}, ...}
+  --src      音源のディレクトリ(16bit PCM の WAV。ステレオは平均してモノラルにする)。
+             ファイル名は <かな>.wav。onset 表が採用テイク形式(下記)なら、その表に
+             書かれたファイル名(例 adopted/00_あ.wav)を使うので通し番号付きでもよい。
+  --onsets   かな → onset(ミリ秒) の表。次のどれでもよい。
+             (a) 採用テイク形式 … {"meta": {...}, "adopted": [{"kana","file","onset_ms"}, ...]}
+                 recordings_raw/adopted_onsets.json がこれ。音源のファイル名も一緒に持つ。
+             (b) {"あ": 50, ...}
+             (c) {"あ": {"acoustic_onset_ms": 50}, ...}
              "auto" を渡すと自動検出する(検出結果は --onsets-out に書き出すので、
              計画書 Q9 のとおり波形とスペクトログラムで全数を目視確認してから本番に使う)。
   --config   打ち切り時刻の表(字ごと)を読む設定ファイル。既定は experiment/transfer_config.js。
@@ -64,6 +84,7 @@ EXP = os.path.dirname(HERE)
 REPO = os.path.dirname(EXP)
 
 FADE_OUT_MS_DEFAULT = 5.0
+LEAD_MS_DEFAULT = 50.0      # onset の手前に残す静かな区間(--lead-ms の説明を参照)
 # 自動検出のしきい値(experiment/tools/build_onsets.py と同じ考え方)。
 DETECT_FRAME_MS = 5.0
 DETECT_DBFS = -58.0
@@ -88,6 +109,42 @@ def gates_for(table, ch):
     if ch in table:
         return list(table[ch])
     return list(table.get("_default", []))
+
+
+# ---- onset 表の読み出し ----------------------------------------------------
+def _resolve_src(rel, ch, src_dir, base_dir):
+    """onset 表に書かれた音源のパスを、実際に開ける場所へ解決する。"""
+    for cand in ([os.path.join(src_dir, rel),
+                  os.path.join(base_dir, rel),
+                  os.path.join(src_dir, os.path.basename(rel))] if rel else []) + \
+                [os.path.join(src_dir, ch + ".wav")]:
+        if os.path.exists(cand):
+            return cand
+    return os.path.join(src_dir, ch + ".wav")     # 無いことは呼び出し側が弾く
+
+
+def load_onsets(path, src_dir):
+    """onset の表を読む。戻り値 (かな→onset ms, かな→音源パス, 表の meta)。
+
+    採用テイク形式(recordings_raw/adopted_onsets.json)は音源のファイル名も持っているので、
+    通し番号付きのファイル名(00_あ.wav)でもそのまま使える。
+    """
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    base_dir = os.path.dirname(os.path.abspath(path))
+    if isinstance(raw, dict) and isinstance(raw.get("adopted"), list):
+        onsets, files = {}, {}
+        for it in raw["adopted"]:
+            ch = it["kana"]
+            onsets[ch] = float(it["onset_ms"])
+            files[ch] = _resolve_src(it.get("file", ""), ch, src_dir, base_dir)
+        return onsets, files, dict(raw.get("meta", {}))
+    onsets = {}
+    for k, v in raw.items():
+        if k.startswith("_"):
+            continue              # "_note" のような覚え書きの鍵は読み飛ばす
+        onsets[k] = float(v) if isinstance(v, (int, float)) else float(v.get("acoustic_onset_ms", 0.0))
+    return onsets, {}, {}
 
 
 # ---- WAV の読み書き --------------------------------------------------------
@@ -142,26 +199,31 @@ def detect_onset_ms(x, sr):
 
 
 # ---- 打ち切り --------------------------------------------------------------
-def gate(x, sr, onset_ms, gate_ms, fade_ms):
-    """onset から gate_ms ぶんを切り出し、終端 fade_ms を余弦で 1→0 に落とす。
+def gate(x, sr, onset_ms, gate_ms, fade_ms, lead_ms=0.0):
+    """onset の lead_ms 手前から onset+gate_ms までを切り出す。
 
-    gate_ms=None は「打ち切りなし」(onset から音源の終わりまで)。
-    戻り値: (波形, 実際の長さms, 足りなかったか)
+    終端 fade_ms は余弦で 1→0 に落とす。フェードのランプ区間は onset を 0ms として
+    [gate_ms-fade_ms, gate_ms]。gate_ms=None は「打ち切りなし」(onset から音源の終わりまで)。
+    lead_ms ぶんの前置きは onset より前なので刺激の長さには数えない。
+    音源の余白が lead_ms に足りなければ、あるだけ付ける(実際の値を返す)。
+
+    戻り値: (波形, ファイル全長ms, onsetから後ろの長さms, 実際の前置きms, 足りなかったか)
     """
-    start = max(0, int(round(onset_ms / 1000.0 * sr)))
-    avail = len(x) - start
+    onset = max(0, int(round(onset_ms / 1000.0 * sr)))
+    lead = min(max(0, int(round(lead_ms / 1000.0 * sr))), onset)
+    avail = len(x) - onset
     if avail <= 0:
-        return np.zeros(1), 0.0, True
+        return np.zeros(1), 0.0, 0.0, 0.0, True
     want = avail if gate_ms is None else int(round(gate_ms / 1000.0 * sr))
     n = min(want, avail)
     truncated = (gate_ms is not None) and (want > avail)
-    y = x[start:start + n].copy()
+    y = x[onset - lead:onset + n].copy()
     f = min(int(round(sr * fade_ms / 1000.0)), n)
     if f > 0:
-        # 区間の先頭で 1、終端で 0 になる余弦の窓(ランプ区間は [t-fade, t])。
+        # 区間の先頭で 1、終端で 0 になる余弦の窓。
         i = np.arange(1, f + 1)
-        y[n - f:] *= 0.5 * (1.0 + np.cos(math.pi * i / f))
-    return y, n / sr * 1000.0, truncated
+        y[len(y) - f:] *= 0.5 * (1.0 + np.cos(math.pi * i / f))
+    return y, len(y) / sr * 1000.0, n / sr * 1000.0, lead / sr * 1000.0, truncated
 
 
 def out_name(ch, gate_ms, salt):
@@ -174,7 +236,8 @@ def out_name(ch, gate_ms, salt):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", required=True, help="<かな>.wav が並んだディレクトリ")
+    ap.add_argument("--src", required=True,
+                    help="音源のディレクトリ(<かな>.wav。onset 表が採用テイク形式ならそこに書かれたファイル名を使う)")
     ap.add_argument("--onsets", default="auto",
                     help='かな→onset(ms) の JSON。"auto" で自動検出')
     ap.add_argument("--onsets-out", default=os.path.join(EXP, "transfer_onsets.json"),
@@ -186,6 +249,8 @@ def main():
     ap.add_argument("--manifest", default=os.path.join(EXP, "transfer_audio_manifest.json"))
     ap.add_argument("--fade-ms", type=float, default=None,
                     help=f"終端フェードの長さms(既定は config の audio.fade_out_ms / {FADE_OUT_MS_DEFAULT})")
+    ap.add_argument("--lead-ms", type=float, default=LEAD_MS_DEFAULT,
+                    help=f"onset の手前に残す静かな区間ms(既定 {LEAD_MS_DEFAULT}。0 で onset ちょうどから)")
     ap.add_argument("--chars", default=None, help="対象のかなをカンマなしで並べた文字列(既定: 設定の全かな)")
     ap.add_argument("--limit", type=int, default=0, help="先頭 N 字だけ処理する(動作確認用)")
     ap.add_argument("--salt", default="", help="ファイル名を伏せるときの合言葉")
@@ -208,34 +273,34 @@ def main():
             # 設定のかな表にある字すべて(ターゲット8字＋まぎれ字)。
             chars = [c for row in cfg["answer_grid"] for c in row if c]
 
+    # onset の表(音源のファイル名も一緒に持つ形式がある)。
+    detected = {}
+    onsets, src_files, onset_meta = {}, {}, {}
+    if args.onsets != "auto":
+        onsets, src_files, onset_meta = load_onsets(args.onsets, args.src)
+
+    def src_path(ch):
+        return src_files.get(ch) or os.path.join(args.src, ch + ".wav")
+
     # 音源のある字だけに絞る。
-    chars = [c for c in chars if os.path.exists(os.path.join(args.src, c + ".wav"))]
+    missing = [c for c in chars if not os.path.exists(src_path(c))]
+    chars = [c for c in chars if os.path.exists(src_path(c))]
     if args.limit:
         chars = chars[:args.limit]
     if not chars:
-        raise SystemExit(f"{args.src} に処理できる <かな>.wav がありません")
-
-    # onset の表。
-    detected = {}
-    if args.onsets == "auto":
-        onsets = {}
-    else:
-        with open(args.onsets, encoding="utf-8") as f:
-            raw = json.load(f)
-        onsets = {}
-        for k, v in raw.items():
-            if k.startswith("_"):
-                continue          # "_note" のような覚え書きの鍵は読み飛ばす
-            onsets[k] = float(v) if isinstance(v, (int, float)) else float(v.get("acoustic_onset_ms", 0.0))
+        raise SystemExit(f"{args.src} に処理できる音源がありません")
+    if missing:
+        print(f"! 音源が無いので飛ばす {len(missing)} 字: " + " ".join(missing))
 
     if not args.dry_run:
         os.makedirs(args.out_dir, exist_ok=True)
 
     items = {}
+    leads = []
     n_files = 0
-    print(f"音源: {args.src}  対象 {len(chars)} 字  終端フェード {fade_ms} ms")
+    print(f"音源: {args.src}  対象 {len(chars)} 字  終端フェード {fade_ms} ms  前置き {args.lead_ms} ms")
     for ch in chars:
-        x, sr = read_wav(os.path.join(args.src, ch + ".wav"))
+        x, sr = read_wav(src_path(ch))
         if ch in onsets:
             onset_ms, how = onsets[ch], "given"
         else:
@@ -244,8 +309,10 @@ def main():
         avail_ms = len(x) / sr * 1000.0 - onset_ms
         gates = gates_for(gate_table, ch) + [None]      # None = 打ち切りなし(全長)
         line = []
+        lead_used = args.lead_ms
         for g in gates:
-            y, dur_ms, trunc = gate(x, sr, onset_ms, g, fade_ms)
+            y, dur_ms, after_ms, lead_got, trunc = gate(x, sr, onset_ms, g, fade_ms, args.lead_ms)
+            lead_used = lead_got
             name = out_name(ch, g, args.salt)
             if not args.dry_run:
                 write_wav(os.path.join(args.out_dir, name), y, sr)
@@ -253,18 +320,31 @@ def main():
             items[key] = {
                 "file": name, "char": ch,
                 "gate_ms": None if g is None else int(round(g)),
-                "dur_ms": round(dur_ms, 2), "onset_ms": round(onset_ms, 1),
+                "after_onset_ms": round(after_ms, 2),   # onset から後ろの実際の長さ
+                "lead_ms": round(lead_got, 2),          # onset より前に付けた静かな区間
+                "dur_ms": round(dur_ms, 2),             # ファイル全長 = lead + after
+                "onset_ms": round(onset_ms, 1),         # 元の音源の中での onset の位置
                 "onset_source": how, "sr": sr, "truncated": bool(trunc),
             }
             n_files += 1
             line.append(("full" if g is None else str(int(g))) + ("!" if trunc else ""))
-        print(f"  {ch}  onset={onset_ms:6.1f}ms({how})  有効長={avail_ms:6.1f}ms  時点: " + " ".join(line))
+        # 録音の余白が --lead-ms に足りない字は、あるだけ付ける(その値を表示する)。
+        note = "" if lead_used + 0.05 >= args.lead_ms else f"  前置き={lead_used:.0f}ms(余白がこれだけしかない)"
+        leads.append(lead_used)
+        print(f"  {ch}  onset={onset_ms:6.1f}ms({how})  有効長={avail_ms:6.1f}ms  時点: "
+              + " ".join(line) + note)
 
     manifest = {
         "modality": "transfer_audio",
         "source_dir": os.path.relpath(args.src, REPO),
+        "onsets_from": ("auto" if args.onsets == "auto" else os.path.relpath(args.onsets, REPO)),
+        "onsets_meta": onset_meta,
         "fade_out_ms": fade_ms,
-        "onset_zero": "acoustic onset を 0ms とする(計画書 3.4-4)",
+        "lead_ms": args.lead_ms,
+        "lead_ms_actual_range": [round(min(leads), 2), round(max(leads), 2)] if leads else [],
+        "onset_zero": "acoustic onset を 0ms とする(計画書 3.4-4)。"
+                      "各ファイルは onset の lead_ms 手前から始まるので、"
+                      "刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
         "config_version": (cfg or {}).get("config_version", ""),
         "salted": bool(args.salt),
         "count": n_files,
