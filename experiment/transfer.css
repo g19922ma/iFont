@@ -6,8 +6,10 @@
 :root { color-scheme: light; }
 body { font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, sans-serif; margin: 0;
        background: #f6f4ef; color: #1b2030; }
-#app { max-width: 720px; margin: 0 auto; padding: 24px 20px; }
-.card { background: #fff; border: 1px solid #e6e1d6; border-radius: 14px; padding: 22px;
+/* 画面が低いときは外側の余白から先に詰める(かな表に高さを回すため)。 */
+#app { max-width: 720px; margin: 0 auto; padding: clamp(8px, 1.8vh, 24px) clamp(10px, 2.5vw, 20px); }
+.card { background: #fff; border: 1px solid #e6e1d6; border-radius: 14px;
+        padding: clamp(12px, 2.2vh, 22px) clamp(12px, 2.5vw, 22px);
         box-shadow: 0 1px 0 rgba(0,0,0,.03), 0 10px 28px rgba(46,125,143,.08); }
 h1, h2 { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; letter-spacing: .04em; color: #1E2A5E; }
 h1 { font-size: 19px; border-bottom: 1px solid #e9e4d8; padding-bottom: 10px; }
@@ -17,13 +19,27 @@ button.primary { font-size: 18px; padding: 15px 44px; border-radius: 999px; bord
                  transition: filter .15s; }
 button.primary:hover { filter: brightness(1.1); }
 #stage { margin-top: 8px; }
-/* かな表のボタン。.spacer は五十音表の並びを保つための見えない穴。 */
-.kana { font-family: system-ui, sans-serif; font-size: 19px; padding: 10px 0; border: 1px solid #cdd3e6;
-        border-radius: 8px; background: #fbfcff; cursor: pointer; }
+/* ---- 回答のかな表 --------------------------------------------------------
+   紙の五十音表と同じ並び(右から あ行→…、下の段に濁音・半濁音)を保ったまま、
+   **画面をスクロールせずに全部見える**ようにする。1マスの高さ・文字の大きさ・
+   すき間は、視口の残りの高さから transfer.js の fitKanaGrid() が決めて、
+   下の4つの変数に入れる(既定値は広い画面のときの値)。
+   .spacer は五十音表の並びを保つための見えない穴。 */
+#grid { --kana-cell-h: 40px; --kana-font: 19px; --kana-gap: 6px; --kana-block-gap: 14px; }
+#grid .kblock { display: grid; gap: var(--kana-gap); margin-top: var(--kana-block-gap); }
+.kana { font-family: system-ui, sans-serif; font-size: var(--kana-font, 19px);
+        height: var(--kana-cell-h, 40px); padding: 0; line-height: 1;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid #cdd3e6; border-radius: 8px; background: #fbfcff; cursor: pointer; }
+/* 同じ音を併記するボタン(お／を など)。狭い画面では折り返して1マスに収める。 */
+.kana.multi { font-size: calc(var(--kana-font, 19px) * 0.58); letter-spacing: -0.03em;
+              white-space: normal; word-break: break-all; line-height: 1.05; }
 .kana:hover { background: #eefaff; }
 .kana:active { background: #d8f0f6; }
 .kana:disabled { opacity: .45; cursor: default; }
 .spacer { visibility: hidden; }
+/* 刺激を出す枠のまわりの余白も、画面が低いときは詰める。 */
+.vbox { text-align: center; margin: clamp(4px, 1vh, 10px) 0 clamp(2px, 0.6vh, 6px); }
 .muted { color: #6b7280; font-size: 13px; }
 .ask { font-weight: 700; color: #2E7D8F; }
 .playbtn { font-size: 18px; padding: 16px 36px; border-radius: 999px; border: 0;

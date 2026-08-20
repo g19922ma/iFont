@@ -24,6 +24,10 @@
 //   既存の統合セッション experiment/audio1char.js (v3.41) を土台にしている。
 //   同意画面・音量の確認・見え方の確認・かな表の回答・選び直しの確認・進捗・
 //   完了コード・途中再開は prod_common.js の部品をそのまま使う。
+//   ただし土台は1人が聴覚と視覚の両方をやる統合セッションだったのに対し、この実験は
+//   1人が片方だけをやる。そのため**準備の画面は集団ごとに出し分ける**。
+//     聴覚(acal / atest): 同意(再生機器の申告あり) → 音量の確認 → 聴覚の説明と練習
+//     視覚(aprime / b)  : 同意(明るさの案内あり)   → 見え方の確認 → 視覚の説明と練習
 //   計画書9章の差分として変えたのは次の4点。
 //     1. 聴覚の打ち切りが「割合(frac%)」から「音の実体の開始からの絶対ms」になった。
 //        刺激は事前に打ち切って作った WAV を配信する(生成: tools/build_transfer_gates.py)。
@@ -685,8 +689,8 @@ function buildKanaGrid(done) {
     const cols = [...rowsBlock].reverse();
     const pad = maxCols - cols.length;
     const g = document.createElement("div");
-    g.style.display = "grid"; g.style.gridTemplateColumns = `repeat(${maxCols},1fr)`;
-    g.style.gap = "6px"; g.style.marginTop = "14px";
+    g.className = "kblock";
+    g.style.gridTemplateColumns = `repeat(${maxCols},1fr)`;
     for (let dan = 0; dan < 5; dan++) {
       for (let k = 0; k < pad; k++) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); }
       for (const col of cols) {
@@ -694,14 +698,45 @@ function buildKanaGrid(done) {
         if (!ch) { const s = document.createElement("div"); s.className = "kana spacer"; g.appendChild(s); continue; }
         const b = document.createElement("button"); b.className = "kana";
         b.textContent = kanaLabel(ch);
-        if (b.textContent.length > 1) b.style.fontSize = "12px";
+        if (b.textContent.length > 1) b.classList.add("multi");   // 「お／を」などの併記
         b.onclick = () => done(ch); g.appendChild(b);
       }
     }
     grid.appendChild(g);
   }
+  // 画面に置いたあとで、視口の残りの高さから1マスの大きさを決める。
+  requestAnimationFrame(() => fitKanaGrid(grid));
   return grid;
 }
+
+// かな表を画面内に収める(スクロールさせない)。
+// 表の上端から画面の下までの残りを段の数で割って1マスの高さにし、文字とすき間も
+// それに合わせる。**並び(紙の五十音表と同じ配置)は変えない**。
+// 段の数 = 5段 × ブロック数(上=清音、下=濁音・半濁音)。
+const KANA_ROWS_PER_BLOCK = 5;
+const KANA_CELL_MIN = 18, KANA_CELL_MAX = 40;   // 1マスの高さの下限・上限(px)
+function fitKanaGrid(grid) {
+  if (!grid || !grid.parentNode) return;
+  const blocks = grid.querySelectorAll(".kblock").length;
+  if (!blocks) return;
+  const rows = blocks * KANA_ROWS_PER_BLOCK;
+  const rowGaps = blocks * (KANA_ROWS_PER_BLOCK - 1);
+  const avail = window.innerHeight - grid.getBoundingClientRect().top - 8;  // 8px=下端に残す余白
+  const solve = (gap, blockGap) => Math.floor((avail - blocks * blockGap - rowGaps * gap) / rows);
+  // すき間もマスの大きさに応じて詰める(狭い画面ほど小さく)。
+  const rough = solve(6, 14);
+  const gap = rough >= 30 ? 6 : rough >= 24 ? 4 : 3;
+  const blockGap = rough >= 30 ? 14 : rough >= 24 ? 10 : 6;
+  const cell = Math.max(KANA_CELL_MIN, Math.min(KANA_CELL_MAX, solve(gap, blockGap)));
+  grid.style.setProperty("--kana-cell-h", cell + "px");
+  grid.style.setProperty("--kana-font", Math.max(11, Math.min(19, Math.round(cell * 0.55))) + "px");
+  grid.style.setProperty("--kana-gap", gap + "px");
+  grid.style.setProperty("--kana-block-gap", blockGap + "px");
+}
+// 画面の大きさ・向きが変わったら測り直す(窓の変更・スマートフォンの回転)。
+window.addEventListener("resize", () => fitKanaGrid(document.getElementById("grid")));
+window.addEventListener("orientationchange",
+  () => setTimeout(() => fitKanaGrid(document.getElementById("grid")), 250));
 
 function saveProgress() {
   if (window.PROD && PROD.enabled) PROD.saveState("transfer_" + PHASE,
@@ -827,7 +862,7 @@ function runVisualTrial(t) {
 
   screenEl.innerHTML = `${progressHeader(t)}
     <div id="stage">
-      <div id="vbox" style="text-align:center;margin:10px 0 6px"></div>
+      <div id="vbox" class="vbox"></div>
       ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。まもなく、ひらがな1文字が短く現れます。</div>`}
       <div id="answerArea"></div>
     </div>`;
@@ -956,7 +991,7 @@ function wellbeingClip() {
   const prog = progressFn(t);
   const renderer = RENDERERS[clip.family] || RENDERERS.fade;
   screenEl.innerHTML = `<div class="muted">見え心地の質問（${wbIdx + 1} / ${wbClips.length}）</div>
-    <div id="vbox" style="text-align:center;margin:10px 0 6px"></div>
+    <div id="vbox" class="vbox"></div>
     <div style="text-align:center;margin:6px 0 10px">
       ${CFG.wellbeing.allow_replay ? `<button id="again" style="font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #1E2A5E;background:#fff;color:#1E2A5E;cursor:pointer">▶ もう一度みる</button>` : ""}
     </div>
@@ -1190,7 +1225,9 @@ async function playSample() {
     _nodes.push(s);
   });
 }
+// 音量の確認。**聴覚の集団(acal / atest)だけ**が通る画面。
 function volumeCheck() {
+  const resuming = !!(resumeState && resumeState.trials);
   const mobileNote = ENV.touch
     ? `スマートフォンの場合は、静かな場所で、音量をやや大きめにすると聞き取りやすくなります。` : ``;
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
@@ -1199,7 +1236,7 @@ function volumeCheck() {
     <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
       <button id="sample" style="font-size:16px;padding:12px 26px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
       <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
-    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">次へ：見え方の確認</button></p>
+    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>
     <p class="muted" id="volHint"></p>`;
   let played = false;
   const go2 = document.getElementById("go2");
@@ -1208,8 +1245,10 @@ function volumeCheck() {
     document.getElementById("volHint").textContent = "小さすぎ・大きすぎと感じたら、端末の音量を変えてもう一度鳴らして確認してください。";
     go2.disabled = false; go2.style.opacity = "1";
   };
-  go2.onclick = () => { if (played) visionCheck(); };
+  // 聴覚の集団は「見え方の確認」を通らない(見る刺激が無いため)。ここから本番へ。
+  go2.onclick = () => { if (played) start(); };
 }
+// 見え方の確認。**視覚の集団(aprime / b)だけ**が通る画面。
 function visionCheck() {
   const resuming = !!(resumeState && resumeState.trials);
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">見え方の確認</h2>
@@ -1221,11 +1260,8 @@ function visionCheck() {
   document.getElementById("vcheck").appendChild(canvas);
   const ctx = canvas.getContext("2d");
   drawBlank(ctx);
+  // この画面に来るのは視覚の集団だけなので、本番と同じ画像をそのまま出す。
   if (imgs["あ"]) ctx.drawImage(imgs["あ"], 0, 0, SIZE, SIZE);
-  else {   // 聴覚集団は画像を読んでいないので、その場で描く(表の字が読めるかの確認)。
-    ctx.fillStyle = "#111"; ctx.font = "200px 'Hiragino Kaku Gothic ProN','Yu Gothic',system-ui,sans-serif";
-    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("あ", SIZE / 2, SIZE / 2);
-  }
   document.getElementById("go3").onclick = start;
 }
 
@@ -1274,9 +1310,13 @@ function blockedScreen(reason) {
     if (resumeState && resumeState.group && resumeState.group !== GROUP) resumeState = null;
     await preload();
     // 研究者モード(?prod なし)でも本番と同じ流れ。送信と途中保存だけが無効。
-    PROD.consentScreen(screenEl, G.task_label, 12, intro, G.mode === "audio",
-      { noEnvNote: true, allowWireless: true,
-        desc: G.mode === "audio"
+    // 説明文・機器の申告・環境の案内は、割り当てられた集団に合うものだけを出す。
+    //   聴覚(acal/atest): 再生機器の申告あり → このあと「音量の確認」だけ
+    //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
+    const isAudio = (G.mode === "audio");
+    PROD.consentScreen(screenEl, G.task_label, 12, intro, isAudio,
+      { noEnvNote: isAudio, allowWireless: true,
+        desc: isAudio
           ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
           : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
   } catch (e) {
