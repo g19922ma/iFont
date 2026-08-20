@@ -23,7 +23,9 @@
 //   9. warp（転写の進み方 s(t)）   … 生成工程の出力。transfer_warp.json に置き、
 //                                     凍結時のコミット番号を warp.frozen_commit に書く
 //  10. wellbeing.chars             … 見え心地評価に使う代表字
-//   (デプロイのときに入れるもの: roster.status_url = GAS ウェブアプリの /exec URL)
+//   (デプロイのときに入れるもの: roster.status_url と logging.submit_url =
+//    GAS ウェブアプリの /exec URL。下見用は 2026-08-20 に入れ済み。本番は別の
+//    スプレッドシートで作り直して差し替える)
 // =========================================================================
 window.TRANSFER_CONFIG = {
   // 設定の版。全レコードに config_version として保存される(どの数値で取ったデータか分かる)。
@@ -46,15 +48,20 @@ window.TRANSFER_CONFIG = {
   },
 
   // 参加者名簿(サーバ)。集団の割り当てと、フェーズをまたいだ重複参加の照合に使う。
-  // status_url は GAS ウェブアプリの /exec URL(prod_common.js の SUBMIT_URL と同じもの)。
-  // 空のままだと、参加者IDのハッシュから決める代用の割り当てになる(重複の照合はできない)。
-  // 仕様と GAS 側の差分は gas/transfer_patch.md。
+  // status_url は GAS ウェブアプリの /exec URL。
+  // 空にすると、参加者IDのハッシュから決める代用の割り当てになる(重複の照合はできない)。
+  // サーバ側のコードは gas_transfer/(gas/code.gs に gas/transfer_patch.md を当てたもの)。
   roster: {
-    status_url: "",
+    // 2026-08-20 にデプロイした**下見用**の窓口。本番は別のスプレッドシートで
+    // 作り直して差し替える(掲載前チェックリスト G-1)。
+    status_url: "https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec",
     timeout_ms: 8000,
     // true にすると、名簿サーバに繋がらないときは課題を始めさせない(お断り画面)。
     // false なら、割り当てだけ手元で決めて続行し、重複はあとからデータで除外する。
-    require_server: false,
+    // 2026-08-20 に true へ。false のままだと、サーバが落ちているあいだに来た人が
+    // 参加者IDのハッシュで勝手に集団を決めて進んでしまい、音声と視覚の人数の釣り合いが
+    // 崩れるうえ、フェーズをまたいだ重複参加も止められないため。
+    require_server: true,
   },
 
   // ---- ターゲット字とまぎれ字 --------------------------------------------
@@ -252,6 +259,12 @@ window.TRANSFER_CONFIG = {
 
   // ---- 記録 ---------------------------------------------------------------
   logging: {
+    // 回答の送信先(GAS ウェブアプリの /exec URL)。
+    // **prod_common.js の SUBMIT_URL はわざと空のままにしてある**。あちらは実験1
+    // (乙課題・frac課題)と共用で、そこを埋めると既存の実験の保存先まで動いてしまう。
+    // そこで転写検証だけの送信先をここに持ち、transfer.js が自分で送る。
+    // 通常は roster.status_url と同じURL(同じデプロイ)。
+    submit_url: "https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec",
     // 保存レコードの modality 列。GAS 側の採点分岐に合わせる
     // (client 申告の target_char で採点する系統。gas/transfer_patch.md 参照)。
     modality_audio: "transfer_audio",

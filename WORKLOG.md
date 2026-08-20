@@ -731,3 +731,57 @@ node experiment/tools/check_transfer_stimuli.js     # → 「合格」で終わ�
 **ページが実際に要求する見出しの集合**（練習・確認問題・音量確認のサンプルまで含む）は
 コードを追わないと分からない。`check_transfer_stimuli.js` はそこを出題の組み立てから
 逆算して照合しているので、時点や字を変えたら必ずこれを通すこと。
+
+## 2026-08-20 転写検証実験: サーバ(GAS)を clasp で立て、下見用の窓口をデプロイした
+
+### 概要
+下見の記録先スプレッドシートに紐づく Apps Script プロジェクトを作り、リポジトリの
+`gas_transfer/` として恒久化してデプロイした。ページ側は集団の振り分け先と回答の送信先を
+設定ファイルに持たせた。**まだ2つ残っている**（下の「残タスク」を必ず読むこと）。
+
+### 追加・変更ファイル
+| パス | 中身 |
+|---|---|
+| `gas_transfer/code.gs` | サーバ本体。`gas/code.gs` に `gas/transfer_patch.md` の3差分を当てたもの。差分は `diff gas/code.gs gas_transfer/code.gs` で見える |
+| `gas_transfer/appsscript.json` | タイムゾーン Asia/Tokyo、ウェブアプリは匿名を含む全員がアクセス可・実行者はデプロイした本人 |
+| `gas_transfer/.clasp.json` | 繋ぎ先（scriptId / parentId）。秘密の値ではないのでコミットする |
+| `gas_transfer/README.md` | 入れ直し方・利用許可・疎通確認の窓口 |
+| `experiment/transfer_config.js` | `roster.status_url` と `logging.submit_url` に /exec URL、`roster.require_server` を true |
+| `project/掲載前チェックリスト.md` | B節を「自動化済み」に書き換え、C節を curl だけで保存まで検証できる形に。G-1 に本番用シートの作り直し手順 |
+
+### 繋ぎ先（下見用。本番は別シートで作り直す）
+- スプレッドシート `1gsJ6_Rucv5uoKsgrs_m-Y41sxh5B0qcPKWyHkxveKMs`
+- デプロイID `AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP`
+- `/exec` = `https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec`
+
+### 設計判断
+- **`SPREADSHEET_ID` を定数に直書きした**。スクリプトプロパティは clasp から入れられない
+  （入れるには画面を開くか `clasp run` の設定が要る）。このスクリプトは転写検証専用の
+  シートに紐づくコンテナバインド型なので、シートIDは1つに決まる。秘密の値でもない。
+- **`prod_common.js` は触らない**。あれは実験1（乙課題・frac課題）と共用で、`SUBMIT_URL` を
+  埋めると既存の実験の保存先まで動く。転写検証の送信先は `transfer_config.js` の
+  `logging.submit_url` に分けた。
+- **試し打ちの行に印を付ける仕組みを足した**。参加者IDの頭が `curltest-` の行は `is_test` 列に
+  true が立ち、`?action=transfer_purge_test` でまとめて消せる。消せるのはこの接頭辞の行だけ
+  なので、本物のデータには手が届かない。これで疎通確認から後始末まで curl だけで完結する。
+- **`?action=transfer_health` を足した**。3枚のシートの行数を返す。POST した行が本当に
+  シートに入ったかを、スプレッドシートを開かずに確かめられる。
+- **`roster.require_server` を true にした**。false だとサーバが落ちているあいだの参加者が
+  参加者IDのハッシュで勝手に集団を決めて進み、音声と視覚の人数の釣り合いが崩れる。
+
+### 残タスク（**掲載の前に必ず**）
+- [ ] **ウェブアプリの利用許可を1回与える（アカウントの持ち主しかできない）**。
+      いま `/exec` は HTTP 403 で `Authorization needed` を返す。clasp で作った
+      スクリプトは持ち主が一度も許可を与えていないため、シートを読み書きできない。
+      ブラウザで `/exec` を開き「REVIEW PERMISSIONS」→ アカウント選択 →（未確認アプリの
+      警告が出たら「詳細」→「移動」）→「許可」。これを済ませるまで疎通確認は全部失敗する。
+      → 掲載前チェックリスト B-8
+- [ ] **`transfer.js` に「回答を `logging.submit_url` へ送る」処理を入れる**。
+      いまページは集団の振り分けだけサーバを使っていて、**1問ごとの回答はどこにも
+      送っていない**。封筒の形は `prod_common.js` の `post()` に合わせること。
+      → 掲載前チェックリスト B-9
+
+### 学び
+clasp は「コードを置く」「デプロイを作る」までは自動化できるが、**Google アカウントの
+利用許可（OAuth の同意）だけは持ち主が画面で押すしかない**。自動化の設計をするときは、
+この1点が必ず人手として残ることを前提に手順書を書く。

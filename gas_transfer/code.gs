@@ -1,0 +1,495 @@
+/**
+ * Google Apps Script backend for the iFont visual-Kikiwake experiment.
+ *
+ * Setup (one-time):
+ *   1. Create a Google Sheet. Note its ID (from the URL).
+ *   2. Tools → Script editor → paste this file.
+ *   3. Project Settings → Script Properties:
+ *        SPREADSHEET_ID = <your sheet id>
+ *        ANSWER_KEY     = (paste the entire contents of answer_key.json)
+ *   4. Deploy → New deployment → Web app:
+ *        Execute as: Me
+ *        Who has access: Anyone
+ *      → copy the /exec URL into experiment.js → SUBMIT_URL.
+ *   5. The first request you make will trigger an authorization prompt.
+ *
+ * Schema appended to the "trials" sheet (frac課題):
+ *   ts, participant_id, worker_id, completion_code, stimulus_id,
+ *   response_char, correct_char, correct, modality, q_set,
+ *   k_index, k, r, frac_index, frac, n_choices, font_voice, mode,
+ *   replays, rt_ms, is_catch, c1, algo, pitch_scheme, bigram_freq,
+ *   actual_ms, actual_frames, ua, dpr, screen, touch, refresh_hz,
+ *   char_ms, overlap, tau_ms
+ *   - char_ms は視覚1文字課題の提示速度の要因。1文字にかける時間 (ミリ秒) で、
+ *     200 (毎秒5.0モーラ・N5聴解相当) と 133 (毎秒7.5モーラ・アナウンサー相当) の2水準。
+ *     実際の露光時間は frac × char_ms になる。他の課題では空欄。
+ *   - overlap / tau_ms は視覚2文字課題の「先行文字の残存」の要因。
+ *     overlap は "none" (統制: C1 が消えてから C2 が出る) か
+ *     "decay" (C2 の提示中も C1 が alpha=exp(-t/tau) で薄くなりながら重なって残る)。
+ *     tau_ms は減衰の時定数で、統制条件では空欄。C2 の可視時間は条件によらず同一なので、
+ *     この要因で増えるのは C1 の可視時間だけである。他の課題では空欄。
+ *   - actual_ms / actual_frames は視覚課題の実測。名目の提示時間
+ *     (char_ms*frac/100) は画面のリフレッシュ周期に量子化されるため、
+ *     ターゲット文字を最初に描画したフレームから消去したフレームまでの
+ *     実時間とフレーム数をクライアントが測って送る。聴覚課題では空欄。
+ *   - ua / dpr / screen / touch / refresh_hz は端末環境。prod_common.js の
+ *     PROD.setEnv() で各ページが登録し、送信本文に自動で載る。
+ *   - rt_ms は「刺激の提示が始まってから回答するまで」。frac課題はクリック開始
+ *     (自己ペース)にしたため、開始ボタンを押すまでの待ち時間は含まない。
+ *
+ * Schema appended to the "soa_trials" sheet (乙課題・1試行1行):
+ *   ts, participant_id, worker_id, completion_code, task, trial_index,
+ *   version, speaker, pitch, S, c1, c2, c3, resp1, resp2, correct1, correct2,
+ *   actual_soa1, actual_soa2, actual_dur3, ua, dpr, screen, touch, refresh_hz,
+ *   audio_device, resume_count
+ *   - actual_* は requestAnimationFrame の実時刻から測った間隔(視覚乙課題)。
+ *   - resume_count はその試行までの途中再開の回数(0=中断なし)。
+ *
+ * Schema appended to the "soa_sessions" sheet (乙課題・セッション完了1行):
+ *   ts, participant_id, worker_id, completion_code, task, version, speaker,
+ *   speaker_name, pitch, n_trials, duration_s, summary_json,
+ *   ua, dpr, screen, touch, refresh_hz, audio_device, resume_count, resume_gap_s
+ *
+ * 注意: シートのヘッダ行はシートを新規作成するときだけ書き込む。既存のシートに
+ *       列を足したときは、ヘッダ行を手で追記するか、シートを作り直すこと。
+ *
+ * One shared ANSWER_KEY serves the pre-rendered pools. Visual entries carry
+ * {font, mode:"f1", k_index, k, r}; audio (truncation) entries carry
+ * {modality:"audio", voice, mode:"f1_audio_trunc", frac_index, frac}.
+ * The handler logs whichever level fields are present (k* for visual,
+ * frac* for audio) and leaves the other blank.
+ *
+ * 2文字課題 / 1文字課題 (2026-07-02 設計改訂):
+ *   - audio2char: answer_key_2char.json のエントリは "audio2char|<id>" を鍵に
+ *     {c1, c2, target, f0_c1_hz, f0_c2_hz, corrected, bigram_freq} を持つ。
+ *     正解は entry.target。client は pitch_scheme ("B3-E4") と frac を送る。
+ *   - audio1char: answer_key_1char.json のエントリは "audio1char|<id>" を鍵に
+ *     {char, target, f0_hz, corrected} を持つ。正解は entry.target。
+ *     client は pitch_scheme ("B3") と frac を送る。C1=∅ (発話先頭) の特殊ケース。
+ *   - visual2char / visual1char: 刺激はブラウザ側で合成するため answer_key が無い。
+ *     client が target_char (正解) を申告し、サーバはそれで採点・記録する。
+ *     申告ベースであることは全課題共通のチート耐性方針 (catch 試行 + RT フィルタ)
+ *     の範囲内。algo (提示アルゴリズム) と font も記録する。
+ *   複数の answer_key ファイル (answer_key.json / _2char / _1char) は、本番デプロイ時に
+ *   マージして GAS の ANSWER_KEY プロパティに貼る (鍵の接頭辞で衝突しない)。
+ *
+ * Notes:
+ *   - Client posts with mode: "no-cors", so the response body is not read
+ *     by the client; we still return text/plain for diagnostic via curl.
+ *   - One row per trial. Aggregate (catch accuracy, exclusions) in the sheet
+ *     or downstream analysis.
+ *   - ANSWER_KEY is held as a Script Property and parsed on each request.
+ *     ~100KB JSON parses in <50ms; cache via CacheService if traffic grows.
+ */
+
+// =========================================================================
+// 転写検証実験(iFont transfer)の版
+// -------------------------------------------------------------------------
+// gas/code.gs をそのまま土台にして、gas/transfer_patch.md の3つの差分を当てた。
+// 何を足したかは `diff gas/code.gs gas_transfer/code.gs` で一目で分かる。
+//
+// このファイルは**転写検証専用のスプレッドシートに紐づいた**スクリプト
+// (コンテナバインド型)。したがって:
+//   ・保存先のシートIDは、スクリプトプロパティではなく下の定数に直書きしてある
+//     (clasp から一発で入れ直せるようにするため。秘密の値ではない)。
+//   ・ANSWER_KEY は使わない(転写検証の採点は client が申告する target_char で行う)。
+//     既存の課題(乙課題・frac課題)の処理も残してあるが、この配信先URLは転写検証の
+//     ページからしか呼ばれない(prod_common.js の SUBMIT_URL は空のままにしてある)。
+//
+// 入れ直し方: リポジトリの gas_transfer/ で
+//   clasp push -f  →  clasp deploy -i <デプロイID> -d "説明"
+// デプロイIDを変えなければ /exec URL は変わらない。
+// =========================================================================
+
+// 転写検証の記録先スプレッドシート。**いまは下見用**。
+// 本番は新しいシートを作ってここを差し替える(下見の記録と混ぜないため。
+// 掲載前チェックリスト G-1)。
+const SPREADSHEET_ID = "1gsJ6_Rucv5uoKsgrs_m-Y41sxh5B0qcPKWyHkxveKMs";
+
+// 疎通確認で作った行の目印。参加者IDがこの文字で始まる行は「試し打ち」とみなし、
+// is_test 列に true を立て、action=transfer_purge_test でまとめて消せるようにする。
+// クラウドソーシングの作業者IDがこの形になることはない。
+const TEST_PID_PREFIX = "curltest-";
+function isTestPid(pid) { return String(pid || "").indexOf(TEST_PID_PREFIX) === 0; }
+
+const SHEET_TRIALS = "trials";
+
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const props = PropertiesService.getScriptProperties();
+    const sheetId = SPREADSHEET_ID;
+    if (!sheetId) throw new Error("SPREADSHEET_ID not set");
+
+    // 乙課題(較正: pilot_soa_audio / pilot_soa_visual2)は、1試行=2回答のセッション形式。
+    // answer_key を使わず client が正誤も計算して送るので、専用シートに1試行1行で記録する。
+    if (body.kind === "soa_trial" || body.kind === "soa_done") {
+      return handleSoa(sheetId, body);
+    }
+
+    // ---- 追加1・2: 転写検証実験(transfer_calib / transfer_test)------------
+    // 既存の trials シートとは別のシートに書く(列構成が違うため。既存シートの
+    // ヘッダを触らずに済む)。
+    if (body.kind === "transfer_wellbeing" || body.modality === "transfer_wellbeing") {
+      return handleTransferWellbeing(sheetId, body);
+    }
+    if (typeof body.modality === "string" && body.modality.indexOf("transfer_") === 0) {
+      return handleTransferTrial(sheetId, body);
+    }
+
+    const answerKeyJson = props.getProperty("ANSWER_KEY");
+    if (!answerKeyJson) throw new Error("ANSWER_KEY property not set");
+    const answerKey = JSON.parse(answerKeyJson);
+
+    // 素の id → 見つからなければ modality 接頭辞つきの鍵 (2文字課題の answer_key)。
+    let stim = answerKey[body.stimulus_id];
+    if (!stim && body.modality) {
+      stim = answerKey[body.modality + "|" + body.stimulus_id];
+    }
+    let correctChar;
+    if (stim) {
+      // 事前レンダリング系: 正解は answer_key 側。旧形式は answer、2文字課題は target。
+      correctChar = (stim.answer !== undefined) ? stim.answer : stim.target;
+    } else if (body.modality === "visual2char" || body.modality === "visual1char") {
+      // ブラウザ側合成のため answer_key が無い。client 申告の正解で採点する。
+      if (!body.target_char) {
+        return out({status: "error", reason: body.modality + " requires target_char"});
+      }
+      stim = {};
+      correctChar = body.target_char;
+    } else {
+      return out({status: "error", reason: "unknown stimulus_id"});
+    }
+    const correct = body.response_char === correctChar;
+    const modality = body.modality || stim.modality || "visual";
+    // visual entries store the font under "font"; audio entries the voice.
+    // visual2char は client が font を送る。
+    const fontVoice = stim.font || stim.voice || body.font || "";
+    // Level fields: visual uses k* (k=null means ∞/catch); audio uses frac*.
+    // Log whichever the entry has; leave the other column blank.
+    // 2文字課題の frac は client が試行ごとに決めるため body 側から取る。
+    const hasK = (stim.k_index !== undefined);
+    const kIdx = hasK ? stim.k_index : "";
+    const kVal = !hasK ? "" : (stim.k === null ? "Inf" : stim.k);
+    const rVal = hasK ? stim.r : "";
+    const hasFrac = (stim.frac_index !== undefined) || (body.frac !== undefined);
+    const fracIdx = (stim.frac_index !== undefined) ? stim.frac_index : "";
+    const fracVal = (stim.frac !== undefined) ? stim.frac
+                  : (body.frac !== undefined ? body.frac : "");
+    // 2文字課題の追加列。c1 は answer_key (audio2char) か client 申告 (visual2char)。
+    const c1Char = stim.c1 || body.c1 || "";
+    const algo = body.algo || "";
+    const pitchScheme = body.pitch_scheme || "";
+    const bigramFreq = (stim.bigram_freq !== undefined) ? stim.bigram_freq : "";
+
+    const sheet = SpreadsheetApp.openById(sheetId);
+    let trials = sheet.getSheetByName(SHEET_TRIALS);
+    if (!trials) {
+      trials = sheet.insertSheet(SHEET_TRIALS);
+      trials.appendRow([
+        "ts", "participant_id", "worker_id", "completion_code",
+        "stimulus_id", "response_char", "correct_char", "correct",
+        "modality", "q_set", "k_index", "k", "r", "frac_index", "frac",
+        "n_choices", "font_voice", "mode", "replays", "rt_ms", "is_catch",
+        "c1", "algo", "pitch_scheme", "bigram_freq",
+        "actual_ms", "actual_frames", "ua", "dpr", "screen", "touch", "refresh_hz",
+        // 2026-08 に追加した実験要因の列。既存シートに足すときは末尾に追記すること。
+        "char_ms", "overlap", "tau_ms",
+        // 再生機器の申告(聴覚課題のみ。スピーカー/有線。無線は参加不可)
+        "audio_device",
+        // 1文字統合セッション(v3)のブロック釣り合い(AVAV等)と何ブロック目か
+        "block_order", "block_pos",
+      ]);
+    }
+    trials.appendRow([
+      new Date(body.ts || Date.now()),
+      body.participant_id || "",
+      body.worker_id || "",
+      body.completion_code || "",
+      body.stimulus_id,
+      body.response_char,
+      correctChar,
+      correct,
+      modality,
+      (stim.q_set !== undefined ? stim.q_set : (body.q_set || "")),
+      kIdx,
+      kVal,
+      rVal,
+      fracIdx,
+      fracVal,
+      body.n_choices,
+      fontVoice,
+      stim.mode || "",
+      (body.replays === undefined ? "" : body.replays),
+      body.rt_ms,
+      !!body.is_catch,
+      c1Char,
+      algo,
+      pitchScheme,
+      bigramFreq,
+      // 視覚課題の実測タイミング(聴覚課題では送られてこないので空欄)と端末環境。
+      blank(body.actual_ms),
+      blank(body.actual_frames),
+      blank(body.ua),
+      blank(body.dpr),
+      blank(body.screen),
+      (body.touch === undefined ? "" : !!body.touch),
+      blank(body.refresh_hz),
+      // 2026-08 に追加した実験要因。視覚1文字課題は char_ms、視覚2文字課題は overlap/tau_ms を送る。
+      blank(body.char_ms),
+      blank(body.overlap),
+      blank(body.tau_ms),
+      body.audio_device || "",
+      blank(body.block_order),
+      blank(body.block_pos),
+    ]);
+
+    return out({status: "ok", correct: correct});
+  } catch (err) {
+    return out({status: "error", reason: String(err)});
+  }
+}
+
+// 値が無いときにセルを空欄にする(0 や false を落とさないための小さな補助)。
+function blank(v) {
+  return (v === undefined || v === null) ? "" : v;
+}
+
+// 乙課題(較正)のセッション記録。soa_trials シートに1試行1行、soa_sessions に完了1行。
+// クライアント(prod_common.js)は端末環境 ua/dpr/screen/touch/refresh_hz を毎回付けて送る。
+function handleSoa(sheetId, body) {
+  const ss = SpreadsheetApp.openById(sheetId);
+  if (body.kind === "soa_done") {
+    let s = ss.getSheetByName("soa_sessions");
+    if (!s) {
+      s = ss.insertSheet("soa_sessions");
+      s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task",
+        "version", "speaker", "speaker_name", "pitch", "n_trials", "duration_s", "summary_json",
+        "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device",
+        "resume_count", "resume_gap_s"]);
+    }
+    s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
+      body.completion_code || "", body.task || "", body.version || "", body.speaker || "",
+      body.speaker_name || "", body.pitch || "", body.n_trials || "", body.duration_s || "",
+      JSON.stringify(body.byLevel || ""),
+      blank(body.ua), blank(body.dpr), blank(body.screen),
+      (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
+      body.audio_device || "",
+      // 途中再開(同一ブラウザ)の統計。0なら中断なしで完走。
+      blank(body.resume_count), blank(body.resume_gap_s)]);
+    return out({status: "ok"});
+  }
+  let s = ss.getSheetByName("soa_trials");
+  if (!s) {
+    s = ss.insertSheet("soa_trials");
+    s.appendRow(["ts", "participant_id", "worker_id", "completion_code", "task", "trial_index",
+      "version", "speaker", "pitch", "S", "c1", "c2", "c3", "resp1", "resp2",
+      "correct1", "correct2",
+      "actual_soa1", "actual_soa2", "actual_dur3",
+      "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device", "resume_count"]);
+  }
+  s.appendRow([new Date(body.ts || Date.now()), body.participant_id || "", body.worker_id || "",
+    body.completion_code || "", body.task || "", (body.trial_index === undefined ? "" : body.trial_index),
+    body.version || "", body.speaker || "", body.pitch || "", body.S,
+    body.c1, body.c2, body.c3, body.resp1, body.resp2, !!body.correct1, !!body.correct2,
+    // 実測の間隔(視覚乙課題のみ。聴覚乙課題では送られてこないので空欄)。
+    blank(body.actual_soa1), blank(body.actual_soa2), blank(body.actual_dur3),
+    blank(body.ua), blank(body.dpr), blank(body.screen),
+    (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
+    body.audio_device || "",
+    // その試行までの再開回数(0=中断なし)。中断直後の回答を解析で区別できる。
+    blank(body.resume_count)]);
+  return out({status: "ok", correct1: !!body.correct1, correct2: !!body.correct2});
+}
+
+// ---- 追加3: 集団の自動振り分けと重複参加の照合 -----------------------------
+// クラウドソーシングでは「掲載Aに参加した人は掲載Bに参加できない」を強制できない。
+// そこで同時期に走る2集団を1つの入口URLにまとめ、サーバ側で人数が釣り合うように
+// 振り分ける。フェーズをまたいだ重複(較正に参加した人が検証に来る)は名簿と照合して断る。
+const TRANSFER_PHASE_GROUPS = { calib: ["acal", "aprime"], test: ["atest", "b"] };
+const TRANSFER_SHEETS = ["transfer_trials", "transfer_wellbeing", "transfer_roster"];
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.action === "transfer_status") return transferStatus(p);
+  if (p.action === "transfer_health") return transferHealth();
+  if (p.action === "transfer_purge_test") return transferPurgeTest();
+  // Health check.
+  return out({status: "ok", message: "iFont experiment endpoint"});
+}
+
+// 各シートの行数(ヘッダを除く)と、そのうち試し打ちの行数を返す。
+// POSTした行が本当にシートに入ったかを curl だけで確かめるために使う。
+function transferHealth() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const counts = {}, tests = {};
+  TRANSFER_SHEETS.forEach(function (name) {
+    const s = ss.getSheetByName(name);
+    if (!s) { counts[name] = 0; tests[name] = 0; return; }
+    const last = s.getLastRow();
+    counts[name] = Math.max(0, last - 1);
+    tests[name] = 0;
+    if (last < 2) return;
+    // 参加者IDの列は3シートとも決まっている(roster は3列目、他は2列目)。
+    const col = (name === "transfer_roster") ? 3 : 2;
+    const vals = s.getRange(2, col, last - 1, 1).getValues();
+    for (let i = 0; i < vals.length; i++) if (isTestPid(vals[i][0])) tests[name]++;
+  });
+  return out({status: "ok", spreadsheet_id: SPREADSHEET_ID, rows: counts, test_rows: tests});
+}
+
+// 試し打ちの行(参加者IDが curltest- で始まる行)だけを消す。
+// 消せるのはこの接頭辞の行だけなので、本物の参加者のデータには手が届かない。
+function transferPurgeTest() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const removed = {};
+    TRANSFER_SHEETS.forEach(function (name) {
+      removed[name] = 0;
+      const s = ss.getSheetByName(name);
+      if (!s) return;
+      const last = s.getLastRow();
+      if (last < 2) return;
+      const col = (name === "transfer_roster") ? 3 : 2;
+      const vals = s.getRange(2, col, last - 1, 1).getValues();
+      // 下から消す(消すたびに行番号がずれるのを避ける)。
+      for (let i = vals.length - 1; i >= 0; i--) {
+        if (isTestPid(vals[i][0])) { s.deleteRow(i + 2); removed[name]++; }
+      }
+    });
+    return out({status: "ok", removed: removed});
+  } catch (err) {
+    return out({status: "error", reason: String(err)});
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+//   GET <exec>?action=transfer_status&phase=calib&participant_id=xxx&worker_id=yyy
+//   → {"status":"ok","group":"acal","assign_index":12}
+//   → 既に前のフェーズに参加している人には {"status":"ok","blocked":true,"reason":"already_in_calib"}
+function transferStatus(p) {
+  const phase = String(p.phase || "");
+  const pid = String(p.participant_id || "");
+  const groups = TRANSFER_PHASE_GROUPS[phase];
+  if (!groups || !pid) return out({status: "error", reason: "phase/participant_id required"});
+
+  const lock = LockService.getScriptLock();
+  // 同時アクセスで同じ番号を2人に配らないように、名簿の読み書きは排他にする。
+  lock.waitLock(20000);
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let s = ss.getSheetByName("transfer_roster");
+    if (!s) {
+      s = ss.insertSheet("transfer_roster");
+      s.appendRow(["ts", "phase", "participant_id", "worker_id", "group", "assign_index", "is_test"]);
+    }
+    const rows = s.getDataRange().getValues();   // [0] はヘッダ
+    let inPhase = 0, inGroup = {};
+    groups.forEach(function (g) { inGroup[g] = 0; });
+    for (let i = 1; i < rows.length; i++) {
+      const rPhase = String(rows[i][1]), rPid = String(rows[i][2]), rGroup = String(rows[i][4]);
+      // 同じフェーズに同じ人が戻ってきた: 前と同じ割り当てを返す(途中再開と整合)。
+      if (rPhase === phase && rPid === pid) {
+        return out({status: "ok", group: rGroup, assign_index: Number(rows[i][5]) || 0, returning: true});
+      }
+      // 検証フェーズに、較正フェーズの参加者が来た: 断る(4集団は互いに独立)。
+      if (phase === "test" && rPhase === "calib" && rPid === pid) {
+        return out({status: "ok", blocked: true, reason: "already_in_calib"});
+      }
+      if (rPhase === phase) {
+        inPhase++;
+        if (inGroup[rGroup] !== undefined) inGroup[rGroup]++;
+      }
+    }
+    // 交互に配るので、2集団の人数は最大1人しか違わない。
+    const group = groups[inPhase % groups.length];
+    const assignIndex = inGroup[group] || 0;
+    s.appendRow([new Date(), phase, pid, String(p.worker_id || ""), group, assignIndex, isTestPid(pid)]);
+    return out({status: "ok", group: group, assign_index: assignIndex});
+  } catch (err) {
+    return out({status: "error", reason: String(err)});
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// 転写検証実験の1問1行。採点は client 申告の target_char で行う
+// (視覚1文字課題と同じ契約。刺激をブラウザ側で合成する課題では answer_key を持てないため)。
+function handleTransferTrial(sheetId, body) {
+  if (!body.target_char) return out({status: "error", reason: "transfer requires target_char"});
+  const ss = SpreadsheetApp.openById(sheetId);
+  let s = ss.getSheetByName("transfer_trials");
+  if (!s) {
+    s = ss.insertSheet("transfer_trials");
+    s.appendRow([
+      "ts", "participant_id", "worker_id", "completion_code",
+      // どの集団の・何問目か
+      "phase", "group", "assign_index", "assign_source", "trial_index",
+      // 刺激
+      "stimulus_id", "target_char", "response_char", "correct",
+      "modality", "family", "condition", "gate_ms", "progress_pct",
+      "is_filler", "check_kind", "is_catch", "n_choices",
+      // 実測
+      "rt_ms", "actual_ms", "actual_frames", "actual_s", "progress_source", "base_anim_ms",
+      // 端末・再開・版
+      "ua", "dpr", "screen", "touch", "refresh_hz", "audio_device",
+      "resume_count", "resume_gap_s", "version", "config_version",
+      // 疎通確認で作った行の目印(分析からは必ず外す)
+      "is_test",
+    ]);
+  }
+  const correct = body.response_char === body.target_char;
+  s.appendRow([
+    new Date(body.ts || Date.now()),
+    body.participant_id || "", body.worker_id || "", body.completion_code || "",
+    body.phase || "", body.group || "", blank(body.assign_index), body.assign_source || "",
+    blank(body.trial_index),
+    body.stimulus_id || "", body.target_char, body.response_char, correct,
+    body.modality || "", body.family || "", body.condition || "",
+    blank(body.gate_ms), blank(body.progress_pct),
+    (body.is_filler === undefined ? "" : !!body.is_filler),
+    body.check_kind || "", (body.is_catch === undefined ? "" : !!body.is_catch),
+    blank(body.n_choices),
+    blank(body.rt_ms), blank(body.actual_ms), blank(body.actual_frames), blank(body.actual_s),
+    body.progress_source || "", blank(body.base_anim_ms),
+    blank(body.ua), blank(body.dpr), blank(body.screen),
+    (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
+    body.audio_device || "",
+    blank(body.resume_count), blank(body.resume_gap_s),
+    body.version || "", body.config_version || "",
+    isTestPid(body.participant_id),
+  ]);
+  return out({status: "ok", correct: correct});
+}
+
+// 見え心地の評価(群Bの最後)。1参加者1行。clip ごとの7件法は JSON のまま入れる
+// (方式×代表字の本数が設定で変わるため、列を固定しない)。
+function handleTransferWellbeing(sheetId, body) {
+  const ss = SpreadsheetApp.openById(sheetId);
+  let s = ss.getSheetByName("transfer_wellbeing");
+  if (!s) {
+    s = ss.insertSheet("transfer_wellbeing");
+    s.appendRow(["ts", "participant_id", "worker_id", "completion_code",
+      "phase", "group", "assign_index", "choice", "wellbeing_json",
+      "ua", "dpr", "screen", "touch", "refresh_hz", "version", "config_version",
+      "is_test"]);
+  }
+  s.appendRow([new Date(body.ts || Date.now()),
+    body.participant_id || "", body.worker_id || "", body.completion_code || "",
+    body.phase || "", body.group || "", blank(body.assign_index),
+    body.choice || "", body.wellbeing_json || "",
+    blank(body.ua), blank(body.dpr), blank(body.screen),
+    (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
+    body.version || "", body.config_version || "",
+    isTestPid(body.participant_id)]);
+  return out({status: "ok"});
+}
+
+function out(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
