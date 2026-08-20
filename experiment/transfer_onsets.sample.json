@@ -1,0 +1,8 @@
+{
+ "_note": "音の実体が始まる点(acoustic onset)の表の見本。build_transfer_gates.py --onsets に渡す。本番は録音した音声を測り、全数を目視確認した値に置き換える(計画書 3.4-4 と Q9)。",
+ "_format": "かな → ミリ秒。数値でも {\"acoustic_onset_ms\": 数値} でもよい。_ で始まる鍵(この行のような覚え書き)は読み飛ばされる。",
+ "あ": { "acoustic_onset_ms": 50.0, "criterion": "周期的な波形の開始", "checked_by": "" },
+ "か": { "acoustic_onset_ms": 42.0, "criterion": "破裂の開始", "checked_by": "" },
+ "し": { "acoustic_onset_ms": 38.0, "criterion": "摩擦音の開始", "checked_by": "" },
+ "ま": { "acoustic_onset_ms": 45.0, "criterion": "鼻音の周期的な波形の開始", "checked_by": "" }
+}

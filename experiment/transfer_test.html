@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>かなの課題（後半の実験）</title>
+<link rel="stylesheet" href="transfer.css?v=3.0">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  転写検証実験・検証フェーズの入口。
+  このページを開いた人は、サイトの中で自動的に次のどちらかの集団に割り当てられる。
+    atest … 音声を途中まで聞いて答える課題(聴覚の再測定・acal と同じ課題)
+    b     … 生成したアニメーションを途中まで見て答える課題 ＋ 最後に見え心地の質問
+  前半(transfer_calib.html)に参加した人は、サーバの名簿と照合してお断りする
+  (4つの集団は互いに独立でなければならないため)。
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "test" };</script>
+<script src="prod_common.js?v=3.0"></script>
+<script src="transfer_config.js?v=3.0"></script>
+<script src="transfer.js?v=3.0"></script>
+</body>
+</html>

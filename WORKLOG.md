@@ -3,6 +3,144 @@
 > セッションをまたぐ作業状態の記録。プロジェクトの全履歴は `project/project_log_260723.md`、
 > セットアップと全体像は `project/handover_260723.md` を参照。
 
+## 2026-08-20 転写検証実験の実験環境 v3.0（新規実装・既存ページは無変更）
+
+### 概要
+`project/実験計画書_転写検証.md`（第2稿・3章と9章）の実験環境を新規に作った。既存の統合セッション
+`experiment/audio1char.*`（v3.41）を**土台として写し**、聴覚の打ち切りを「割合」から
+「音の実体の開始からの絶対ミリ秒」に変え、視覚に4方式（フェード・部分表示・ぼかし解除・ワイプ）の
+描画器を入れ、生成した進み方 s(t) をなぞる再生と、群Bの最後の見え心地評価を足した。
+**既存ファイルは1つも変更していない**（`audio1char.*`・`pilot_*`・`prod_common.js`・
+既存の style・本番プールは無変更。`prod_common.js` は読み込んで使うだけ）。
+
+### 入口は2ページ（集団はサイト内で自動振り分け）
+発注者の指示で 4集団＝4URL をやめ、**同時期に走る集団を1つの入口にまとめる**構成にした。
+クラウドソーシングでは別々の掲載どうしで「片方にしか参加できない」を強制できないため。
+
+| 入口 | フェーズ | 振り分け先の集団 |
+|---|---|---|
+| `experiment/transfer_calib.html` | calib（較正） | acal（音声を測る）／ aprime（4方式の見え方を測る） |
+| `experiment/transfer_test.html` | test（検証） | atest（音声の再測定）／ b（生成アニメ＋見え心地） |
+
+振り分けはサーバ（GAS）の参加者名簿が決める。同じ参加者IDが開き直したときは同じ集団に戻る
+（途中再開と整合）。検証フェーズでは較正フェーズの名簿と照合し、参加済みの人には
+お断り画面を出す（完了コードは出さない。「以前ご参加いただいた分の報酬には影響しません」と明記）。
+名簿サーバが未設定・不通のときは、参加者IDのハッシュから割り当てて課題は続行する
+（`roster.require_server: true` にすると、そのときは始めさせない）。
+
+### 追加ファイル一覧（すべて新規）
+| パス | 中身 |
+|---|---|
+| `experiment/transfer_calib.html` | 較正フェーズの入口。`window.TRANSFER_PAGE = {phase:"calib"}` を埋めるだけの薄いページ |
+| `experiment/transfer_test.html` | 検証フェーズの入口（同上・phase は "test"） |
+| `experiment/transfer.js` | 本体（v3.0。土台の audio1char.js とは別実験なので採番し直した） |
+| `experiment/transfer_config.js` | 実験パラメータを全部集めた設定ファイル。**数値はここだけ触ればよい** |
+| `experiment/transfer.css` | 見た目（既存 style 系に触らないため独立させた） |
+| `experiment/tools/build_transfer_gates.py` | 打ち切り済みWAVと索引を作る（聴覚刺激の生成） |
+| `experiment/tools/build_transfer_warp.py` | 較正の曲線から進み方 s(t) を作る（生成工程の骨組み・凍結対象） |
+| `experiment/transfer_stimuli/README.md` | 音声刺激の置き場所の説明（本番音源は未収録なので中身は空） |
+| `experiment/transfer_onsets.sample.json` | 音の実体の開始（acoustic onset）の表の見本 |
+| `gas/transfer_patch.md` | GAS の差分（記録用シート2枚＋名簿API）。**貼り付け用の文書で、デプロイはしていない** |
+
+### 4方式の描画のしかた（共通の形にそろえた）
+どの方式も「進み具合 s∈[0,1] を渡すと1フレーム描く」1つの関数にした（`RENDERERS`）。
+
+- **フェード**: 不透明度 = s（既存の実装と同じ）
+- **部分表示**: `base/<かな>.png` を読んで輝度128以下を「ストローク画素」とし、
+  字ごとに固定した種（`"stroke-mask:<かな>"` のハッシュ）の乱数で並べ替え、先頭から
+  `画素数 × s` 個を黒く塗る。**101段階の画像には依存せず任意の s を描ける**。
+  1試行の中では s が単調に増えるので、増えたぶんの画素だけ塗り足して putImageData する
+  （毎フレーム全画素を描き直さない）。乱数の並びは Python の `random.Random` とは別物になるが、
+  字ごとに固定であれば実験の要件は満たす（同じ字はいつも同じ順で現れる）
+- **ぼかし解除**: 別キャンバスに描いた字を、`ctx.filter = blur(半径px)` で重ねる。
+  半径 = `max_radius_px × (1 − s)`（既定24px）。s=1 で鮮明
+- **ワイプ**: `clip()` で見せる領域を単調に広げる。向きは設定（既定は左→右）
+
+再生は2通り。**較正モード**は等速（s = 経過ms / `base_anim_ms`）で進めて指定の s% で打ち切り、
+**転写モード**は 60Hz の数値列 s(t) を線形補間してなぞり、指定の t ms で打ち切る。
+打ち切り判定は描画の前に行うので、**実際に見えた最大の進み具合は狙いよりフレーム1枚ぶん手前**に
+なる。分析では実測値 `actual_s` を使うこと（名目値も別列に残してある）。
+
+### 設定ファイルで差し替える項目（A2の結果が出たら、ここだけ触る）
+`targets`（ターゲット8字）／`audio.gates_ms`（聴覚の打ち切り時刻）／
+`visual.progress_pct_levels`（視覚較正の水準）／`visual.gates_ms`（群Bの打ち切り時刻）／
+`visual.base_anim_ms`（基準アニメの長さ・Q4）／`visual.families.*`（ぼかし半径上限・ワイプの向き）／
+`design.*`（まぎれ字の比率・問題数・確認問題の割合）／`assignment.*`（割付の回し方）／
+`conditions`（8条件）／`wellbeing.chars`（見え心地の代表字）／
+`roster.status_url`（デプロイ時に GAS の /exec を入れる）。
+
+**現在の暫定値**: 8字＝あ・か・が・た・だ・し・ま・な、7時点＝20/40/60/80/110/150/220ms、
+視覚の水準＝6/13/22/34/50/70/100%、まぎれ字はターゲット2問につき1問、
+確認問題は全部見せ6%＋最小時点6%。1人あたり94問（ターゲット56＋まぎれ字28＋確認10）。
+**どれも計画書の「暫定」であり、A2（10章）で確定する**。
+
+### 割付（1人が何を見るか）
+1人の参加者は「1つの字を1つの方式（群Bでは1つの条件）でだけ」見る。どの字にどれを当てるかは
+名簿から返る連番で回す。群A′は `方式 = families[(字の番号 + 連番) % 4]`、
+群Bは `条件 = conditions[(字の番号 × 3 + 連番) % 8]`（8字で8条件を一巡するので、1人が3条件を経験する）。
+釣り合いは集団全体で取る。**この回し方も設定ファイルにあり、A2で見直せる**。
+
+### 記録（1問1行）
+既存の `PROD.saveFracTrial` に流す。足した列は
+`phase, group, assign_index, assign_source, family, condition, gate_ms, progress_pct,
+actual_ms, actual_frames, actual_s, progress_source, trial_index, is_filler, check_kind, config_version`。
+GAS 側は既存の `trials` シートを触らず、`transfer_trials`・`transfer_wellbeing`・`transfer_roster` の
+3枚を新設する差分にした（`gas/transfer_patch.md`。既存シートのヘッダを手で直す事故を避けるため）。
+採点は client が申告する `target_char` で行う（視覚1文字課題と同じ契約）。
+
+### 打ち切りWAVの作り方
+```bash
+# 本番（録音した自然音声と、目視確認した onset の表）
+python3 experiment/tools/build_transfer_gates.py --src <採用テイクのdir> --onsets <onset表.json>
+# 動作確認（既存の合成音で通す。onset は自動検出して experiment/transfer_onsets.json に書く）
+python3 experiment/tools/build_transfer_gates.py --src audio_base_Kyoko --onsets auto \
+    --out-dir /tmp/transfer_stimuli_test --manifest /tmp/transfer_audio_manifest_test.json
+```
+打ち切り時刻の表は `transfer_config.js` を node 経由で読む（表を2か所に持たないため）。
+出力は `transfer_stimuli/<かな>_g0060.wav` 形式と索引 `transfer_audio_manifest.json`。
+終端は t で終わる5msの余弦フェード。音源が t に足りないときは索引に `truncated: true` を書く。
+`--salt` を付けるとファイル名がハッシュになる。
+
+### 進み方 s(t) の生成（凍結の対象）
+```bash
+python3 experiment/tools/build_transfer_warp.py --curves <較正の曲線.json>   # 本番
+python3 experiment/tools/build_transfer_warp.py --demo --out /tmp/transfer_warp.json  # 動作確認
+```
+提案条件は `s_i(t) = qV^{-1}(qA(t))`（単調にならした数値列の逆引き＋線形補間、範囲外は端に丸めて
+`clipped` に記録）、対照2は較正データだけから距離が最小になる1次変換 `s = a·t + b`（2段階の格子探索）、
+対照1は等速。出力 `experiment/transfer_warp.json` を**検証データを取る前にコミットし、
+そのコミット番号を `transfer_config.js` の `visual.warp.frozen_commit` に書く**（計画書 Q3）。
+
+### 動作確認したこと（ブラウザ実機は未確認）
+- `node --check` で構文、HTMLの `<script src>` とファイル名の一致
+- node 上に最小のDOMを立てて、4集団ぶんの出題の組み立て・記録の列・進み方の計算・
+  集団の振り分け（サーバ無し／サーバがお断り／サーバが割り当て）を実行
+- 仮想時計で提示ループを回し、打ち切りが狙いどおりのフレーム数で止まることを確認
+  （60Hz・打ち切り80ms→5フレーム、220ms→14フレーム、打ち切りなし→最後まで＋完成形を350ms保持）
+- 生成スクリプト2本を実行（WAV 48本＋索引の書き出しと長さの検算、仮の曲線からの s(t) 生成）
+- **未確認**: 実ブラウザでの描画（部分表示の putImageData・ぼかしの `ctx.filter`）と、
+  端末上の実測フレーム時刻。ここは実機で見ること
+
+### 保留（意図的に作っていないもの）
+- 本番の音声刺激（自然音声の録音が未実施）。索引が無い間は既存の合成音を同じ規則で切る
+  **代用モード**で動く（画面下に「音声は代用モード」と出る。データ取得には使わない）
+- `experiment/transfer_warp.json`（進み方の表）は**コミットしない**。較正の実データが出てから
+  生成して凍結する。表が無い間は等速で代用し、記録の `progress_source` に "linear" が残る
+- GAS のデプロイ（差分は `gas/transfer_patch.md` に書いてあるだけ）
+
+### 次にやること
+- [ ] A2（計画書10章）の結果で `transfer_config.js` の暫定値を差し替える
+- [ ] 自然音声の録音 → `build_transfer_gates.py` で刺激を作り、onset を全数目視確認
+- [ ] 較正データ → `build_transfer_warp.py` で s(t) を生成 → コミットして凍結し、番号を設定に書く
+- [ ] `gas/transfer_patch.md` を `gas/code.gs` に反映してデプロイし、`roster.status_url` と
+      `prod_common.js` の `SUBMIT_URL` を入れる
+- [ ] ブラウザ実機で4集団ぶんの見え方（特に部分表示とぼかし）とフレーム実測を確認
+
+### 学び
+入口URLの数は「実験の集団の数」ではなく「**同時に募集できる排他の単位**」で決まる。
+集団ごとにURLを分けると、同じ人が別々の掲載から複数の集団に入れてしまい、
+計画書3.1が要求する「4集団は互いに独立」が壊れる。
+
 ## 2026-08-19 音源比較セット raw_compare_v1（無加工の音源に切り替えられるかの判定材料）
 
 ### 概要
