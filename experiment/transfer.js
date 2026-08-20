@@ -509,7 +509,7 @@ function seriesAt(series, frameMs, tMs) {
 
 // 1試行ぶんの「経過時間ms → 進み具合 s」を作る。
 // 返り値: {fn, source} source は記録用("table" / "linear" / "affine")。
-// その試行の基準アニメの長さ。下見の速さ2水準では試行ごとに違うので、
+// その試行の基準アニメの長さ。RQ4 の速さ2水準では試行ごとに違うので、
 // 設定の既定値ではなく試行に書かれた値を使う(書かれていなければ既定値)。
 function baseAnimMs(t) {
   return (t && typeof t.base_anim_ms === "number") ? t.base_anim_ms : CFG.visual.base_anim_ms;
@@ -637,12 +637,15 @@ function comboForChar(charIndex) {
   return conds[(charIndex * step + ASSIGN) % conds.length];
 }
 
-// 下見だけの追加測定(transfer_config.js の visual.pilot_speed_probe)。
+// RQ4 の測定(transfer_config.js の visual.calib_speed_probe)。
 // 群A′の決められた方式(既定はフェード)にかぎり、基準アニメの速さを2通り出して
-// 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を見る。
+// 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を測る。
+// 較正フェーズのあいだはずっと入れておく(下見は予備・本番の群A′が本答え)。
+// 生成(warp)に使う視覚の曲線は generation_level_ms の水準だけと事前に決めてあり、
+// もう一方の水準は RQ4 に答えるためだけに使う(計画書 2章 RQ4・6.1)。
 // 設定を切ると speedsFor は必ず1要素(既定の速さ)を返すので、挙動は元どおりになる。
 function speedProbe() {
-  const p = CFG.visual.pilot_speed_probe;
+  const p = CFG.visual.calib_speed_probe;
   return (p && p.enabled && p.base_anim_ms_levels && p.base_anim_ms_levels.length > 1) ? p : null;
 }
 function speedsFor(family) {
@@ -657,7 +660,7 @@ function buildVisualTrials() {
     TARGETS.forEach((ch, i) => {
       const c = comboForChar(i);
       if (GROUP === "aprime") {
-        // 速さの水準ぶんだけ繰り返す(下見の設定が切ってあれば1通りだけ)。
+        // 速さの水準ぶんだけ繰り返す(RQ4 の測定を切ってあれば1通りだけ)。
         speedsFor(c.family).forEach(baseMs => {
           CFG.visual.progress_pct_levels.forEach(pct => {
             cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
@@ -955,7 +958,8 @@ function runVisualTrial(t) {
     finalizeCommon(t, makeRecord(t, picked, {
       rt_ms: pickedRt, actual_ms: actualMs, actual_frames: actualFrames,
       actual_s: actualS === null ? "" : Math.round(actualS * 1000) / 1000,
-      // 下見の速さ2水準では試行ごとに違う。分析はこの列で2群に分ける。
+      // RQ4 の速さ2水準では試行ごとに違う。分析はこの列で2群に分ける
+      // (生成に使うのは calib_speed_probe.generation_level_ms の側だけ)。
       progress_source: prog.source, base_anim_ms: baseAnimMs(t),
       refresh_hz: ENV.refreshHz,
     }), picked);
