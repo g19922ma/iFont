@@ -509,9 +509,15 @@ function seriesAt(series, frameMs, tMs) {
 
 // 1試行ぶんの「経過時間ms → 進み具合 s」を作る。
 // 返り値: {fn, source} source は記録用("table" / "linear" / "affine")。
+// その試行の基準アニメの長さ。下見の速さ2水準では試行ごとに違うので、
+// 設定の既定値ではなく試行に書かれた値を使う(書かれていなければ既定値)。
+function baseAnimMs(t) {
+  return (t && typeof t.base_anim_ms === "number") ? t.base_anim_ms : CFG.visual.base_anim_ms;
+}
+
 function progressFn(t) {
   if (t.play === "calib" || t.condition === "calib") {
-    const base = CFG.visual.base_anim_ms;
+    const base = baseAnimMs(t);
     return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
   }
   const series = warpSeries(t.family, t.char, t.condition);
@@ -524,7 +530,7 @@ function progressFn(t) {
     const a = CFG.visual.warp.fallback_affine.a, b = CFG.visual.warp.fallback_affine.b;
     return { fn: (ms) => Math.max(0, Math.min(1, a * ms + b)), source: "affine" };
   }
-  const base = CFG.visual.base_anim_ms;
+  const base = baseAnimMs(t);
   return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
 }
 
@@ -631,15 +637,33 @@ function comboForChar(charIndex) {
   return conds[(charIndex * step + ASSIGN) % conds.length];
 }
 
+// 下見だけの追加測定(transfer_config.js の visual.pilot_speed_probe)。
+// 群A′の決められた方式(既定はフェード)にかぎり、基準アニメの速さを2通り出して
+// 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を見る。
+// 設定を切ると speedsFor は必ず1要素(既定の速さ)を返すので、挙動は元どおりになる。
+function speedProbe() {
+  const p = CFG.visual.pilot_speed_probe;
+  return (p && p.enabled && p.base_anim_ms_levels && p.base_anim_ms_levels.length > 1) ? p : null;
+}
+function speedsFor(family) {
+  const p = speedProbe();
+  if (!p || GROUP !== "aprime" || family !== p.family) return [CFG.visual.base_anim_ms];
+  return p.base_anim_ms_levels.slice();
+}
+
 function buildVisualTrials() {
   let cells = [];
   for (let rep = 0; rep < CFG.design.reps; rep++) {
     TARGETS.forEach((ch, i) => {
       const c = comboForChar(i);
       if (GROUP === "aprime") {
-        CFG.visual.progress_pct_levels.forEach(pct => {
-          cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
-                       progress_pct: pct, gate_ms: null, is_filler: false, check_kind: "" });
+        // 速さの水準ぶんだけ繰り返す(下見の設定が切ってあれば1通りだけ)。
+        speedsFor(c.family).forEach(baseMs => {
+          CFG.visual.progress_pct_levels.forEach(pct => {
+            cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
+                         progress_pct: pct, gate_ms: null, is_filler: false, check_kind: "",
+                         base_anim_ms: baseMs });
+          });
         });
       } else {
         gatesFor(CFG.visual.gates_ms, ch).forEach(g => {
@@ -661,8 +685,11 @@ function buildVisualTrials() {
     const c = pick(combos);
     const ch = pick(FILLERS.filter(x => imgs[x]));
     if (GROUP === "aprime") {
+      // まぎれ字の速さも本命と同じ集合から選ぶ(まぎれ字だけいつも同じ速さだと、
+      // 速さの違いが「本命かどうか」の手がかりになってしまうため)。
       cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
-                   progress_pct: pick(CFG.visual.progress_pct_levels), gate_ms: null, is_filler: true, check_kind: "" });
+                   progress_pct: pick(CFG.visual.progress_pct_levels), gate_ms: null, is_filler: true, check_kind: "",
+                   base_anim_ms: pick(speedsFor(c.family)) });
     } else {
       cells.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
                    progress_pct: null, gate_ms: pick(gateList), is_filler: true, check_kind: "" });
@@ -677,8 +704,10 @@ function buildVisualTrials() {
     const base = { mod: "visual", char: TARGETS[i], family: c.family, condition: c.condition,
                    is_filler: false, check_kind: kind };
     if (GROUP === "aprime") {
+      // 確認問題は「いつもの速さ」に固定する(操作チェックの基準を1つに保つため)。
       return Object.assign(base, { play: "calib", condition: "calib", gate_ms: null,
-                                   progress_pct: kind === "full" ? 100 : minPct });
+                                   progress_pct: kind === "full" ? 100 : minPct,
+                                   base_anim_ms: CFG.visual.base_anim_ms });
     }
     return Object.assign(base, { play: "warp", progress_pct: null,
                                  gate_ms: kind === "full" ? null : minGate });
@@ -926,7 +955,8 @@ function runVisualTrial(t) {
     finalizeCommon(t, makeRecord(t, picked, {
       rt_ms: pickedRt, actual_ms: actualMs, actual_frames: actualFrames,
       actual_s: actualS === null ? "" : Math.round(actualS * 1000) / 1000,
-      progress_source: prog.source, base_anim_ms: CFG.visual.base_anim_ms,
+      // 下見の速さ2水準では試行ごとに違う。分析はこの列で2群に分ける。
+      progress_source: prog.source, base_anim_ms: baseAnimMs(t),
       refresh_hz: ENV.refreshHz,
     }), picked);
   };
