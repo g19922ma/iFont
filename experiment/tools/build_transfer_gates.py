@@ -2,7 +2,7 @@
 """
 転写検証実験の「打ち切り済み音声」を作る
 =======================================
-計画書: project/実験計画書_転写検証.md の 3.4(刺激)・9章1(実装の差分)
+計画書: project/実験計画書_転写検証.md の 4.4(刺激)・10章1(実装の差分)
 
 この実験の聴覚課題は、音声を「音の実体が始まる点(acoustic onset)から t ミリ秒」で
 打ち切って聞かせる。打ち切りはブラウザではなく**事前に作った WAV** で行う。
@@ -15,7 +15,7 @@
   experiment/transfer_stimuli/<ファイル名>.wav   … かな × 打ち切り時刻 の刺激
   experiment/transfer_audio_manifest.json        … 索引(実験ページが読む)
 
-打ち切りの規則(計画書 3.4-5)
+打ち切りの規則(計画書 4.4-5)
 ---------------------------
   ・0ms = acoustic onset。t ms の刺激は onset から t ms ぶんの波形。
   ・終端は**t で終わる 5 ミリ秒の余弦フェードアウト**（ランプ区間 [t-5ms, t]）。
@@ -342,7 +342,7 @@ def main():
         "fade_out_ms": fade_ms,
         "lead_ms": args.lead_ms,
         "lead_ms_actual_range": [round(min(leads), 2), round(max(leads), 2)] if leads else [],
-        "onset_zero": "acoustic onset を 0ms とする(計画書 3.4-4)。"
+        "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。"
                       "各ファイルは onset の lead_ms 手前から始まるので、"
                       "刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
         "config_version": (cfg or {}).get("config_version", ""),
