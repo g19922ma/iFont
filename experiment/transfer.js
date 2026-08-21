@@ -1456,6 +1456,11 @@ async function showResults() {
   // 1問1行の記録はここまでに全部投げてあるので、失敗の件数もここで確定している。
   // **これが送れなくても完了コードは出す。** 1問1行の記録に同じ完了コードが
   // 入っているので、照合の手がかりが完全に消えるわけではないためである。
+  // 通信が悪いと作り直しで数秒かかる。最後の問題の画面のままだと固まったように
+  // 見えるので、送っているあいだは一言出しておく。
+  screenEl.innerHTML = `<div style="min-height:40vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
+    <h1 style="border:none">回答を送っています…</h1>
+    <p class="muted">この画面のままお待ちください。閉じないでください。</p></div>`;
   await sendRecord(sessionRecord(durS, mainDone()));
   screenEl.innerHTML = finishHTML(durS);
 }
