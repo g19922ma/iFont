@@ -57,7 +57,10 @@ window.TRANSFER_CONFIG = {
     // 2026-08-20 にデプロイした**下見用**の窓口。本番は別のスプレッドシートで
     // 作り直して差し替える(掲載前チェックリスト G-1)。
     status_url: "https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec",
-    timeout_ms: 8000,
+    // 1回あたりの待ち上限ms。**GAS の応答は実測でおよそ6秒かかる**
+    // (2026-08-21 に本番URLから計測)。8秒だと少しの揺らぎで間に合わず、
+    // サーバが生きているのに「時間切れ」として失敗にしていた。余裕を持たせる。
+    timeout_ms: 15000,
     // 問い合わせの作り直し。GAS はときどき、一過性の理由で JSON ではなく
     // HTML のエラーページを返したり、応答しなかったりする。1回で諦めると、
     // サーバ自体は動いているのに参加者をお断りしてしまう(2026-08-21 に実機で発生)。

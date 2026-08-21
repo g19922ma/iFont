@@ -42,7 +42,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.1";
+const VERSION = "3.2";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -139,6 +139,9 @@ async function rosterQueryOnce(pid) {
 // 直近の問い合わせの様子。研究者向けの表示と、記録の assign_source に使う。
 let rosterTries = 0;
 let rosterLastWhy = "";
+// 作り直しているあいだ、画面に一言出すための差し込み口。
+// 何十秒も「読み込み中…」のままだと、参加者は固まったと思って閉じてしまう。
+let onRosterRetry = null;
 
 async function resolveAssignment() {
   const pid = (window.PROD && PROD.participantId) || "anon";
@@ -166,6 +169,7 @@ async function resolveAssignment() {
     for (let i = 0; i < attempts; i++) {
       if (i > 0) await sleep(backoffMs(rc, i - 1));
       rosterTries = i + 1;
+      if (i > 0 && typeof onRosterRetry === "function") onRosterRetry(rosterTries, attempts);
       const res = await rosterQueryOnce(pid);
       if (res.kind === "ok") {
         const a = { group: res.j.group, assign_index: Number(res.j.assign_index) || 0 };
@@ -1523,9 +1527,17 @@ function blockedScreen(reason, info) {
 // 名簿に問い合わせて集団を決め、同意画面までを組み立てる。
 // お断り画面の「もう一度試す」からも呼ばれるので、**何度呼んでも安全**に書いてある。
 async function startSession() {
-  screenEl.innerHTML = `<div style="min-height:40vh;display:flex;justify-content:center;align-items:center">
-    <h1 style="border:none">読み込み中…</h1></div>`;
+  screenEl.innerHTML = `<div style="min-height:40vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
+    <h1 style="border:none">読み込み中…</h1>
+    <p class="muted" id="loadNote" style="margin-top:10px"></p></div>`;
+  // 混んでいて作り直しているときは、その旨を出して待ってもらう。
+  // 何十秒も「読み込み中…」のままだと、参加者は固まったと思って閉じてしまう。
+  onRosterRetry = (i, n) => {
+    const el = document.getElementById("loadNote");
+    if (el) el.textContent = `混み合っています。接続をやり直しています（${i}/${n}）…`;
+  };
   const a = await resolveAssignment();
+  onRosterRetry = null;
   if (a.blocked) { blockedScreen(a.reason, a); return false; }
   GROUP = a.group; G = GROUPS[GROUP]; ASSIGN = a.assign_index; ASSIGN_SOURCE = a.source;
   // 途中再開のデータが別の集団のものなら捨てる(割り当てが変わった場合の保険)。
