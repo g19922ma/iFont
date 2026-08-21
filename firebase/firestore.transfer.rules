@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// =========================================================================
+// 転写検証実験（iFont transfer）の Firestore ルール
+// -------------------------------------------------------------------------
+// 参加者のブラウザは**ログインしない**。だから「誰でも書ける」状態から出発して、
+// **書ける形をルールで絞り込む**。方針は3つ。
+//   1. 読み出しは全面的に禁止する（他人の回答を覗けない）
+//   2. 作れるのは新規のドキュメントだけ。書き換えと削除は禁止する
+//   3. 採番カウンタだけは例外的に更新を許すが、**+1 ずつしか動かせない**ようにする
+//
+// 置き方: Firebase コンソール → Firestore Database → ルール に貼るか、
+//   firebase deploy --only firestore:rules  （firebase.json の firestore.rules に指定）
+// =========================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- 回答（1問1ドキュメント） ------------------------------------------
+    // 参加者は作るだけ。あとから書き換えたり消したりはできない。
+    match /transfer_trials/{doc} {
+      allow create: if isTrial(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // ---- 見え心地の評価（1参加者1ドキュメント） -----------------------------
+    match /transfer_wellbeing/{doc} {
+      allow create: if request.resource.data.participant_id is string;
+      allow read, update, delete: if false;
+    }
+
+    // ---- 名簿（参加者1人1ドキュメント。ドキュメントIDは "<フェーズ>_<参加者ID>"）----
+    // **重複参加の判定はここで行う。**
+    // 「作れたら初参加、既にあって作れなければ再訪」——読み出しを許さずに判定できる。
+    // Firestore は既にあるドキュメントへの create を必ず失敗させるため。
+    match /transfer_roster/{doc} {
+      allow create: if isRoster(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // ---- 採番カウンタ（フェーズごとに1つ） ----------------------------------
+    // ここだけ更新を許す。ただし **n が 1 だけ増える更新に限る**ので、
+    // 誰かが番号を飛ばしたり巻き戻したりはできない。
+    // 参加者は増やした結果の値を「書き込みの応答」から受け取るので、
+    // 読み出しを許さなくても自分の番号が分かる。
+    match /transfer_counters/{phase} {
+      allow create: if request.resource.data.n == 0;
+      allow update: if request.resource.data.n == resource.data.n + 1
+                    && request.resource.data.keys().hasOnly(['n']);
+      allow read, delete: if false;
+    }
+
+    // ---- 上記以外はすべて禁止 ----------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+
+  // 1問ぶんの記録に、最低限これだけは入っていること。
+  // 形の決まっていない書き込みでコレクションが荒らされるのを防ぐ。
+  function isTrial(d) {
+    return d.participant_id is string
+        && d.target_char is string
+        && d.response_char is string
+        && d.modality is string
+        && d.phase is string
+        && d.group is string;
+  }
+
+  function isRoster(d) {
+    return d.participant_id is string
+        && d.phase is string
+        && d.group is string
+        && d.assign_index is int;
+  }
+}

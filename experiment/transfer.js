@@ -93,6 +93,53 @@ function writeAssignCache(pid, obj) {
   try { localStorage.setItem(assignCacheKey(pid), JSON.stringify(obj)); } catch (e) {}
 }
 
+// 待つ。再挑戦の間隔に散らし(ジッタ)を足して、皆が同時に押し寄せるのを避ける。
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function backoffMs(cfg, i) {
+  const d = (cfg && cfg.delays_ms) || [800, 2000, 4000];
+  const base = d[Math.min(i, d.length - 1)] || 800;
+  return base + Math.random() * ((cfg && cfg.jitter_ms) || 0);
+}
+
+// 名簿サーバへの問い合わせ1回ぶん。
+// 戻り値は3通り。 {kind:"ok", j} / {kind:"blocked", reason} / {kind:"fail", why}
+//
+// **応答が JSON でないときも「失敗」に数える**のが要点である。GAS は一過性の理由で
+// HTML のエラーページを 200 で返すことがあり、そのまま JSON として読もうとすると
+// 例外になる。ここでいったん本文を文字列で受け取り、読めたときだけ中身を見る。
+async function rosterQueryOnce(pid) {
+  const base = ROSTER.status_url;
+  const url = base + (base.indexOf("?") >= 0 ? "&" : "?") +
+    "action=transfer_status&phase=" + encodeURIComponent(PHASE) +
+    "&participant_id=" + encodeURIComponent(pid) +
+    "&worker_id=" + encodeURIComponent((window.PROD && PROD.workerId) || "");
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ROSTER.timeout_ms || 8000);
+  let r;
+  try {
+    r = await fetch(url, { signal: ctl.signal, cache: "no-store" });
+  } catch (e) {
+    return { kind: "fail", why: "通信できない: " + (e && e.message) };
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!r.ok) return { kind: "fail", why: "HTTP " + r.status };
+  let text;
+  try { text = await r.text(); } catch (e) { return { kind: "fail", why: "本文を読めない" }; }
+  let j;
+  try { j = JSON.parse(text); } catch (e) {
+    // ここに来るのが「HTMLのエラーページが返った」場合。一過性なので作り直す。
+    return { kind: "fail", why: "JSONでない応答(" + text.slice(0, 40).replace(/\s+/g, " ") + "…)" };
+  }
+  if (j && j.blocked) return { kind: "blocked", reason: j.reason || "already_participated" };
+  if (j && PHASE_GROUPS.indexOf(j.group) >= 0) return { kind: "ok", j: j };
+  return { kind: "fail", why: "集団が読み取れない応答" };
+}
+
+// 直近の問い合わせの様子。研究者向けの表示と、記録の assign_source に使う。
+let rosterTries = 0;
+let rosterLastWhy = "";
+
 async function resolveAssignment() {
   const pid = (window.PROD && PROD.participantId) || "anon";
   const researcher = !(window.PROD && PROD.enabled);
@@ -112,28 +159,33 @@ async function resolveAssignment() {
     return { group: cached.group, assign_index: cached.assign_index, source: "cache" };
   }
   if (ROSTER.status_url) {
-    try {
-      const url = ROSTER.status_url + (ROSTER.status_url.indexOf("?") >= 0 ? "&" : "?") +
-        "action=transfer_status&phase=" + encodeURIComponent(PHASE) +
-        "&participant_id=" + encodeURIComponent(pid) +
-        "&worker_id=" + encodeURIComponent((window.PROD && PROD.workerId) || "");
-      const ctl = new AbortController();
-      const timer = setTimeout(() => ctl.abort(), ROSTER.timeout_ms || 8000);
-      const r = await fetch(url, { signal: ctl.signal, cache: "no-store" });
-      clearTimeout(timer);
-      if (r.ok) {
-        const j = await r.json();
-        if (j && j.blocked) return { blocked: true, reason: j.reason || "already_participated" };
-        if (j && PHASE_GROUPS.indexOf(j.group) >= 0) {
-          const a = { group: j.group, assign_index: Number(j.assign_index) || 0 };
-          writeAssignCache(pid, a);
-          return Object.assign(a, { source: "server" });
+    const rc = ROSTER.retry || {};
+    const attempts = Math.max(1, Number(rc.attempts) || 1);
+    rosterTries = 0;
+    rosterLastWhy = "";
+    for (let i = 0; i < attempts; i++) {
+      if (i > 0) await sleep(backoffMs(rc, i - 1));
+      rosterTries = i + 1;
+      const res = await rosterQueryOnce(pid);
+      if (res.kind === "ok") {
+        const a = { group: res.j.group, assign_index: Number(res.j.assign_index) || 0 };
+        writeAssignCache(pid, a);
+        if (rosterTries > 1) {
+          console.warn(`[transfer] 名簿サーバへの問い合わせは ${rosterTries} 回目で成功しました`);
         }
+        // 何回目で通ったかを記録に残す(列を増やさずに済むよう assign_source に書く)。
+        return Object.assign(a, { source: rosterTries > 1 ? "server:retry" + rosterTries : "server" });
       }
-    } catch (e) { console.warn("[transfer] 名簿サーバに問い合わせできませんでした:", e.message); }
+      if (res.kind === "blocked") return { blocked: true, reason: res.reason };
+      rosterLastWhy = res.why;
+      console.warn(`[transfer] 名簿サーバへの問い合わせ ${rosterTries}/${attempts} 回目が失敗: ${res.why}`);
+    }
+    console.warn(`[transfer] 名簿サーバへ ${attempts} 回問い合わせて、すべて失敗しました`);
     // サーバが答えないとき: 名簿の照合はできないが、課題は続けられるようにする。
     // (重複参加の除外は、あとから回答データの参加者IDを突き合わせて行う。)
-    if (ROSTER.require_server) return { blocked: true, reason: "server_unavailable" };
+    if (ROSTER.require_server) {
+      return { blocked: true, reason: "server_unavailable", why: rosterLastWhy, tries: attempts };
+    }
   }
   const h = hashIndexFrom(pid);
   const a = { group: PHASE_GROUPS[h % PHASE_GROUPS.length], assign_index: Math.floor(h / PHASE_GROUPS.length) };
@@ -180,14 +232,36 @@ function serverBody(body) {
 
 // 封筒を GAS ウェブアプリへ渡す。応答は読まない(no-cors)。
 // GAS は許可の事前確認(preflight)が要らない text/plain で受ける。
-function postRecord(url, envelope) {
-  try {
-    fetch(url, {
-      method: "POST", mode: "no-cors",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(envelope),
-    });
-  } catch (e) { console.warn("[transfer] 記録を渡せませんでした:", e); }
+//
+// 名簿の問い合わせと同じ一過性の失敗に備えて、**間を空けて作り直す**。
+// no-cors では応答を読めないので、判断できるのは「送信そのものが失敗したか」だけ
+// (通信が切れている・宛先に届かない)。サーバ側で落ちた場合はここでは分からない。
+let sendFailures = 0;      // 最後まで送れなかった件数(研究者向けの表示に使う)
+let sendRetries = 0;       // 作り直して送れた件数
+async function postRecord(url, envelope) {
+  const rc = (CFG.logging && CFG.logging.retry) || {};
+  const attempts = Math.max(1, Number(rc.attempts) || 1);
+  const body = JSON.stringify(envelope);
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await sleep(backoffMs(rc, i - 1));
+    try {
+      await fetch(url, {
+        method: "POST", mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: body,
+      });
+      if (i > 0) {
+        sendRetries++;
+        console.warn(`[transfer] 記録の送信は ${i + 1} 回目で通りました`);
+      }
+      return true;
+    } catch (e) {
+      console.warn(`[transfer] 記録の送信 ${i + 1}/${attempts} 回目が失敗:`, e && e.message);
+    }
+  }
+  sendFailures++;
+  console.error(`[transfer] 記録を ${attempts} 回試して送れませんでした(この1問は失われます)`);
+  return false;
 }
 
 // 1レコードを設定ファイルの保存先へ渡す。研究者モード(?prod なし)では渡さない。
@@ -1408,19 +1482,71 @@ function tidyConsentScreen() {
 // 起動
 // =========================================================================
 // すでに前のフェーズに参加した人へのお断り。報酬の説明を丁寧に添える。
-function blockedScreen(reason) {
+function blockedScreen(reason, info) {
   const already = (reason === "already_participated" || reason === "already_in_calib");
-  screenEl.innerHTML = `<h1>この実験にはご参加いただけません</h1>
+  // 接続できなかっただけの場合は、その場でもう一度試せるようにする。
+  // 一過性の失敗で参加者を取りこぼさないため(2026-08-21 に実機で発生)。
+  const canRetry = !already;
+  screenEl.innerHTML = `<h1>${already ? "この実験にはご参加いただけません" : "接続できませんでした"}</h1>
     ${already ? `
     <p>ありがとうございます。ただ、この実験は<b>以前の関連実験に参加していない方のみ</b>を対象としています。
     記録を確認したところ、あなたはすでに関連する実験にご参加いただいているため、
     今回はご協力いただけません。</p>
     <p>この作業は<b>お受け取りいただかず（辞退して）ページを閉じてください</b>。
     <b>以前ご参加いただいた分の報酬には影響しません</b>。重ねてお礼申し上げます。</p>`
-    : `<p>ただいま参加者の受付ができない状態です（サーバに接続できませんでした）。
-    お手数ですが、この作業は辞退してページを閉じてください。しばらく経ってから、
-    改めて掲載をご確認いただけますと幸いです。</p>`}
+    : `<p>ただいまサーバに接続できませんでした。通信の一時的な不調のことが多いので、
+    <b>下のボタンでもう一度お試しください</b>。</p>
+    <p>何度試しても同じ場合は、お手数ですがこの作業は辞退してページを閉じてください。
+    しばらく経ってから、改めて掲載をご確認いただけますと幸いです。</p>
+    <p style="text-align:center;margin-top:18px">
+      <button class="primary" id="retryBtn">もう一度試す</button></p>
+    <p class="muted" id="retryNote" style="text-align:center"></p>`}
     <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
+  if (!canRetry) return;
+  const btn = document.getElementById("retryBtn");
+  const note = document.getElementById("retryNote");
+  if (!(window.PROD && PROD.enabled) && info && info.why) {
+    note.textContent = `研究者向け: ${info.tries || "?"}回試して失敗（${info.why}）`;
+  }
+  btn.onclick = async () => {
+    btn.disabled = true; btn.style.opacity = ".5";
+    note.textContent = "接続しています…";
+    try {
+      await startSession();
+    } catch (e) {
+      btn.disabled = false; btn.style.opacity = "1";
+      note.textContent = "まだ接続できません。少し待ってからもう一度お試しください。";
+    }
+  };
+}
+
+// 名簿に問い合わせて集団を決め、同意画面までを組み立てる。
+// お断り画面の「もう一度試す」からも呼ばれるので、**何度呼んでも安全**に書いてある。
+async function startSession() {
+  screenEl.innerHTML = `<div style="min-height:40vh;display:flex;justify-content:center;align-items:center">
+    <h1 style="border:none">読み込み中…</h1></div>`;
+  const a = await resolveAssignment();
+  if (a.blocked) { blockedScreen(a.reason, a); return false; }
+  GROUP = a.group; G = GROUPS[GROUP]; ASSIGN = a.assign_index; ASSIGN_SOURCE = a.source;
+  // 途中再開のデータが別の集団のものなら捨てる(割り当てが変わった場合の保険)。
+  if (resumeState && resumeState.group && resumeState.group !== GROUP) resumeState = null;
+  await preload();
+  // 研究者モード(?prod なし)でも本番と同じ流れ。送信と途中保存だけが無効。
+  // 説明文・機器の申告・環境の案内は、割り当てられた集団に合うものだけを出す。
+  //   聴覚(acal/atest): 再生機器の申告あり → このあと「音量の確認」だけ
+  //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
+  const isAudio = (G.mode === "audio");
+  PROD.consentScreen(screenEl, G.task_label, 12, intro, isAudio,
+    { noEnvNote: true, allowWireless: true,
+      desc: isAudio
+        ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
+        : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
+  tidyConsentScreen();
+  // 同意画面で申告された再生機器を控える(prod_common.js は自分の送信にしか使わず、
+  // 外に見せていないため)。無線のイヤホンは音の頭が欠けるので、解析で要る列。
+  screenEl.querySelectorAll('input[name="dev"]').forEach(r =>
+    r.addEventListener("change", () => { audioDeviceAnswer = r.value; }));
+  return true;
 }
 
 (async function () {
@@ -1448,29 +1574,7 @@ function blockedScreen(reason) {
         return;
       }
     }
-    screenEl.innerHTML = `<div style="min-height:40vh;display:flex;justify-content:center;align-items:center">
-      <h1 style="border:none">読み込み中…</h1></div>`;
-    const a = await resolveAssignment();
-    if (a.blocked) return blockedScreen(a.reason);
-    GROUP = a.group; G = GROUPS[GROUP]; ASSIGN = a.assign_index; ASSIGN_SOURCE = a.source;
-    // 途中再開のデータが別の集団のものなら捨てる(割り当てが変わった場合の保険)。
-    if (resumeState && resumeState.group && resumeState.group !== GROUP) resumeState = null;
-    await preload();
-    // 研究者モード(?prod なし)でも本番と同じ流れ。送信と途中保存だけが無効。
-    // 説明文・機器の申告・環境の案内は、割り当てられた集団に合うものだけを出す。
-    //   聴覚(acal/atest): 再生機器の申告あり → このあと「音量の確認」だけ
-    //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
-    const isAudio = (G.mode === "audio");
-    PROD.consentScreen(screenEl, G.task_label, 12, intro, isAudio,
-      { noEnvNote: true, allowWireless: true,
-        desc: isAudio
-          ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
-          : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
-    tidyConsentScreen();
-    // 同意画面で申告された再生機器を控える(prod_common.js は自分の送信にしか使わず、
-    // 外に見せていないため)。無線のイヤホンは音の頭が欠けるので、解析で要る列。
-    screenEl.querySelectorAll('input[name="dev"]').forEach(r =>
-      r.addEventListener("change", () => { audioDeviceAnswer = r.value; }));
+    await startSession();
   } catch (e) {
     screenEl.innerHTML = `<h1>読み込みエラー</h1><p class="muted">${e.message}</p>`;
   }
