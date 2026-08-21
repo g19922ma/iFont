@@ -42,7 +42,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.2";
+const VERSION = "3.3";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -50,12 +50,17 @@ const P = new URLSearchParams(location.search);
 // mode      : "audio" = 聴覚課題 / "visual" = 視覚課題
 // play      : 視覚の再生の仕方。"calib" = 等速で s% まで進めて打ち切る /
 //             "warp" = 数値列 s(t) をなぞって t ms で打ち切る
-// wellbeing : 識別課題のあとに見え心地の評価をするか
+// wellbeing : 識別課題のあとに見え心地の評価をするか。
+//             **2026-08-21 に既定で切った**。見え心地(RQ3)は群Bの末尾から切り離し、
+//             独立の実験(群C・experiment/transfer_comfort.html)にしたため。
+//             切り離した理由は transfer_comfort_config.js の冒頭にある。
+//             群Bの末尾で聞く形に戻したいときは transfer_config.js の
+//             wellbeing.in_group_b を true にする(この行は触らない)。
 const GROUPS = {
   acal:   { mode: "audio",  label: "聴覚",   task_label: "かなの聞き取り" },
   atest:  { mode: "audio",  label: "聴覚",   task_label: "かなの聞き取り" },
   aprime: { mode: "visual", label: "視覚", play: "calib", task_label: "かなの見分け" },
-  b:      { mode: "visual", label: "視覚", play: "warp",  task_label: "かなの見分け", wellbeing: true },
+  b:      { mode: "visual", label: "視覚", play: "warp",  task_label: "かなの見分け", wellbeing: CFG.wellbeing.in_group_b === true },
 };
 // このページがどのフェーズの入口か。各HTMLが読み込みの前に埋め込む。
 //   <script>window.TRANSFER_PAGE = { phase: "calib" };</script>
@@ -697,6 +702,12 @@ function buildAudioTrials() {
       audioGates(ch).forEach(g => {
         cells.push({ mod: "audio", char: ch, gate_ms: g, is_filler: false, check_kind: "" });
       });
+      // 「打ち切りなし(全長)」をその字の1点として足す(transfer_config.js の
+      // audio.include_full_gate)。時点を字ごとに置くようにしたので、曲線の天井が
+      // 取れているかも字ごとに確かめられるようにしておく。
+      if (CFG.audio.include_full_gate) {
+        cells.push({ mod: "audio", char: ch, gate_ms: null, is_filler: false, check_kind: "" });
+      }
     });
   }
   cells = shuffle(cells);
@@ -706,10 +717,14 @@ function buildAudioTrials() {
   for (let i = 0; i < nFiller; i++) {
     cells.push({ mod: "audio", char: pick(FILLERS), gate_ms: pick(fillerGates), is_filler: true, check_kind: "" });
   }
-  const minGate = Math.min(...fillerGates);
   addChecks(cells,
     () => ({ mod: "audio", char: pick(TARGETS), gate_ms: null, is_filler: false, check_kind: "full" }),
-    () => ({ mod: "audio", char: pick(TARGETS), gate_ms: minGate, is_filler: false, check_kind: "floor" }));
+    // 確認問題C(ほとんど情報のない問題)は、**その字にとっていちばん早い時点**を使う。
+    // 時点を字ごとに置くようにしたので、全字共通の最小値(20ms)を当てると、
+    // その字の表に無い刺激を要求してしまう(例: し は 30ms から始まる)。
+    () => { const ch = pick(TARGETS);
+            return { mod: "audio", char: ch, gate_ms: Math.min(...audioGates(ch)),
+                     is_filler: false, check_kind: "floor" }; });
   return shuffle(cells);
 }
 

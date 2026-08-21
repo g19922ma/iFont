@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文字の見え心地についてのアンケート</title>
+<link rel="stylesheet" href="transfer.css?v=c1.0">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  転写検証実験・見え心地の評価(群C)の入口。
+  この1本だけを掲載する。集団は1つ(c)しかないので、サイトの中での振り分けは無い。
+
+  この実験だけは**かなを当てる課題を通らない**。流れは次の5つ。
+    同意 → 見え方の確認 → 説明 → 4方式×代表字のアニメを見て7件法で評価 → 完了コード
+  アニメは打ち切らず、評価しているあいだ繰り返し流れる(字幕の実態に近づけるため)。
+
+  較正フェーズ(transfer_calib.html)・検証フェーズ(transfer_test.html)の
+  どちらに参加した人も、サーバの名簿と照合してお断りする(集団は互いに独立)。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+  **transfer_config.js を変えたときも、このページの ?v= を上げること**
+  (このページは共用の設定ファイルを自分の版番号で読んでいるため)。
+-->
+<script src="prod_common.js?v=c1.0"></script>
+<script src="transfer_config.js?v=c1.0"></script>
+<script src="transfer_comfort_config.js?v=c1.0"></script>
+<script src="transfer_comfort.js?v=c1.0"></script>
+</body>
+</html>

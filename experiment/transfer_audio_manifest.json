@@ -28,18 +28,16 @@
   ]
  },
  "fade_out_ms": 5,
- "pilot_extra_gates_ms": [
-  10
- ],
+ "pilot_extra_gates_ms": [],
  "lead_ms": 50.0,
  "lead_ms_actual_range": [
   43.0,
   50.0
  ],
  "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。各ファイルは onset の lead_ms 手前から始まるので、刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
- "config_version": "prov-2026-08-20b",
+ "config_version": "prov-2026-08-21",
  "salted": false,
- "count": 612,
+ "count": 544,
  "items": {
   "あ|10": {
    "file": "あ_g0010.wav",
@@ -65,6 +63,18 @@
    "sr": 48000,
    "truncated": false
   },
+  "あ|30": {
+   "file": "あ_g0030.wav",
+   "char": "あ",
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
+   "lead_ms": 49.0,
+   "dur_ms": 79.0,
+   "onset_ms": 49.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
   "あ|40": {
    "file": "あ_g0040.wav",
    "char": "あ",
@@ -77,61 +87,37 @@
    "sr": 48000,
    "truncated": false
   },
-  "あ|60": {
-   "file": "あ_g0060.wav",
+  "あ|55": {
+   "file": "あ_g0055.wav",
    "char": "あ",
-   "gate_ms": 60,
-   "after_onset_ms": 60.0,
+   "gate_ms": 55,
+   "after_onset_ms": 55.0,
    "lead_ms": 49.0,
-   "dur_ms": 109.0,
+   "dur_ms": 104.0,
    "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "あ|80": {
-   "file": "あ_g0080.wav",
+  "あ|70": {
+   "file": "あ_g0070.wav",
    "char": "あ",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 70,
+   "after_onset_ms": 70.0,
    "lead_ms": 49.0,
-   "dur_ms": 129.0,
+   "dur_ms": 119.0,
    "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "あ|110": {
-   "file": "あ_g0110.wav",
+  "あ|100": {
+   "file": "あ_g0100.wav",
    "char": "あ",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 100,
+   "after_onset_ms": 100.0,
    "lead_ms": 49.0,
-   "dur_ms": 159.0,
-   "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "あ|150": {
-   "file": "あ_g0150.wav",
-   "char": "あ",
-   "gate_ms": 150,
-   "after_onset_ms": 150.0,
-   "lead_ms": 49.0,
-   "dur_ms": 199.0,
-   "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "あ|220": {
-   "file": "あ_g0220.wav",
-   "char": "あ",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
-   "lead_ms": 49.0,
-   "dur_ms": 269.0,
+   "dur_ms": 149.0,
    "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
@@ -145,18 +131,6 @@
    "lead_ms": 49.0,
    "dur_ms": 380.0,
    "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "い|10": {
-   "file": "い_g0010.wav",
-   "char": "い",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -257,18 +231,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "う|10": {
-   "file": "う_g0010.wav",
-   "char": "う",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
-   "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "う|20": {
    "file": "う_g0020.wav",
    "char": "う",
@@ -360,18 +322,6 @@
    "after_onset_ms": 341.0,
    "lead_ms": 49.0,
    "dur_ms": 390.0,
-   "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "え|10": {
-   "file": "え_g0010.wav",
-   "char": "え",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
    "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
@@ -469,18 +419,6 @@
    "lead_ms": 49.0,
    "dur_ms": 350.0,
    "onset_ms": 49.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "お|10": {
-   "file": "お_g0010.wav",
-   "char": "お",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -605,6 +543,18 @@
    "sr": 48000,
    "truncated": false
   },
+  "か|30": {
+   "file": "か_g0030.wav",
+   "char": "か",
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
+   "lead_ms": 50.0,
+   "dur_ms": 80.0,
+   "onset_ms": 50.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
   "か|40": {
    "file": "か_g0040.wav",
    "char": "か",
@@ -617,61 +567,37 @@
    "sr": 48000,
    "truncated": false
   },
-  "か|60": {
-   "file": "か_g0060.wav",
+  "か|55": {
+   "file": "か_g0055.wav",
    "char": "か",
-   "gate_ms": 60,
-   "after_onset_ms": 60.0,
+   "gate_ms": 55,
+   "after_onset_ms": 55.0,
    "lead_ms": 50.0,
-   "dur_ms": 110.0,
+   "dur_ms": 105.0,
    "onset_ms": 50.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "か|80": {
-   "file": "か_g0080.wav",
+  "か|70": {
+   "file": "か_g0070.wav",
    "char": "か",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 70,
+   "after_onset_ms": 70.0,
    "lead_ms": 50.0,
-   "dur_ms": 130.0,
+   "dur_ms": 120.0,
    "onset_ms": 50.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "か|110": {
-   "file": "か_g0110.wav",
+  "か|100": {
+   "file": "か_g0100.wav",
    "char": "か",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 100,
+   "after_onset_ms": 100.0,
    "lead_ms": 50.0,
-   "dur_ms": 160.0,
-   "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "か|150": {
-   "file": "か_g0150.wav",
-   "char": "か",
-   "gate_ms": 150,
-   "after_onset_ms": 150.0,
-   "lead_ms": 50.0,
-   "dur_ms": 200.0,
-   "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "か|220": {
-   "file": "か_g0220.wav",
-   "char": "か",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
-   "lead_ms": 50.0,
-   "dur_ms": 270.0,
+   "dur_ms": 150.0,
    "onset_ms": 50.0,
    "onset_source": "given",
    "sr": 48000,
@@ -685,18 +611,6 @@
    "lead_ms": 50.0,
    "dur_ms": 400.0,
    "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "き|10": {
-   "file": "き_g0010.wav",
-   "char": "き",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 46.0,
-   "dur_ms": 56.0,
-   "onset_ms": 46.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -797,18 +711,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "く|10": {
-   "file": "く_g0010.wav",
-   "char": "く",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "く|20": {
    "file": "く_g0020.wav",
    "char": "く",
@@ -901,18 +803,6 @@
    "lead_ms": 47.0,
    "dur_ms": 380.0,
    "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "け|10": {
-   "file": "け_g0010.wav",
-   "char": "け",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
-   "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -1013,18 +903,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "こ|10": {
-   "file": "こ_g0010.wav",
-   "char": "こ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "こ|20": {
    "file": "こ_g0020.wav",
    "char": "こ",
@@ -1116,18 +994,6 @@
    "after_onset_ms": 283.0,
    "lead_ms": 47.0,
    "dur_ms": 330.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "さ|10": {
-   "file": "さ_g0010.wav",
-   "char": "さ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
    "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
@@ -1229,37 +1095,13 @@
    "sr": 48000,
    "truncated": false
   },
-  "し|10": {
-   "file": "し_g0010.wav",
+  "し|30": {
+   "file": "し_g0030.wav",
    "char": "し",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
    "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "し|20": {
-   "file": "し_g0020.wav",
-   "char": "し",
-   "gate_ms": 20,
-   "after_onset_ms": 20.0,
-   "lead_ms": 50.0,
-   "dur_ms": 70.0,
-   "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "し|40": {
-   "file": "し_g0040.wav",
-   "char": "し",
-   "gate_ms": 40,
-   "after_onset_ms": 40.0,
-   "lead_ms": 50.0,
-   "dur_ms": 90.0,
+   "dur_ms": 80.0,
    "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
@@ -1277,25 +1119,25 @@
    "sr": 48000,
    "truncated": false
   },
-  "し|80": {
-   "file": "し_g0080.wav",
+  "し|90": {
+   "file": "し_g0090.wav",
    "char": "し",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 90,
+   "after_onset_ms": 90.0,
    "lead_ms": 50.0,
-   "dur_ms": 130.0,
+   "dur_ms": 140.0,
    "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "し|110": {
-   "file": "し_g0110.wav",
+  "し|120": {
+   "file": "し_g0120.wav",
    "char": "し",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 120,
+   "after_onset_ms": 120.0,
    "lead_ms": 50.0,
-   "dur_ms": 160.0,
+   "dur_ms": 170.0,
    "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
@@ -1313,13 +1155,25 @@
    "sr": 48000,
    "truncated": false
   },
-  "し|220": {
-   "file": "し_g0220.wav",
+  "し|190": {
+   "file": "し_g0190.wav",
    "char": "し",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
+   "gate_ms": 190,
+   "after_onset_ms": 190.0,
    "lead_ms": 50.0,
-   "dur_ms": 270.0,
+   "dur_ms": 240.0,
+   "onset_ms": 51.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
+  "し|240": {
+   "file": "し_g0240.wav",
+   "char": "し",
+   "gate_ms": 240,
+   "after_onset_ms": 240.0,
+   "lead_ms": 50.0,
+   "dur_ms": 290.0,
    "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
@@ -1333,18 +1187,6 @@
    "lead_ms": 50.0,
    "dur_ms": 469.0,
    "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "す|10": {
-   "file": "す_g0010.wav",
-   "char": "す",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 43.0,
-   "dur_ms": 53.0,
-   "onset_ms": 43.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -1445,18 +1287,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "せ|10": {
-   "file": "せ_g0010.wav",
-   "char": "せ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 92.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "せ|20": {
    "file": "せ_g0020.wav",
    "char": "せ",
@@ -1549,18 +1379,6 @@
    "lead_ms": 50.0,
    "dur_ms": 468.0,
    "onset_ms": 92.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "そ|10": {
-   "file": "そ_g0010.wav",
-   "char": "そ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -1661,18 +1479,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "た|10": {
-   "file": "た_g0010.wav",
-   "char": "た",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "た|20": {
    "file": "た_g0020.wav",
    "char": "た",
@@ -1765,18 +1571,6 @@
    "lead_ms": 50.0,
    "dur_ms": 386.0,
    "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ち|10": {
-   "file": "ち_g0010.wav",
-   "char": "ち",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 48.0,
-   "dur_ms": 58.0,
-   "onset_ms": 48.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -1877,18 +1671,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "つ|10": {
-   "file": "つ_g0010.wav",
-   "char": "つ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "つ|20": {
    "file": "つ_g0020.wav",
    "char": "つ",
@@ -1961,13 +1743,13 @@
    "sr": 48000,
    "truncated": false
   },
-  "つ|220": {
-   "file": "つ_g0220.wav",
+  "つ|200": {
+   "file": "つ_g0200.wav",
    "char": "つ",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
+   "gate_ms": 200,
+   "after_onset_ms": 200.0,
    "lead_ms": 50.0,
-   "dur_ms": 270.0,
+   "dur_ms": 250.0,
    "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
@@ -1981,18 +1763,6 @@
    "lead_ms": 50.0,
    "dur_ms": 395.0,
    "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "て|10": {
-   "file": "て_g0010.wav",
-   "char": "て",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -2093,18 +1863,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "と|10": {
-   "file": "と_g0010.wav",
-   "char": "と",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "と|20": {
    "file": "と_g0020.wav",
    "char": "と",
@@ -2197,18 +1955,6 @@
    "lead_ms": 50.0,
    "dur_ms": 320.0,
    "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "な|10": {
-   "file": "な_g0010.wav",
-   "char": "な",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -2309,18 +2055,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "に|10": {
-   "file": "に_g0010.wav",
-   "char": "に",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 366.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "に|20": {
    "file": "に_g0020.wav",
    "char": "に",
@@ -2413,18 +2147,6 @@
    "lead_ms": 50.0,
    "dur_ms": 394.0,
    "onset_ms": 366.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぬ|10": {
-   "file": "ぬ_g0010.wav",
-   "char": "ぬ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 48.0,
-   "dur_ms": 58.0,
-   "onset_ms": 48.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -2525,18 +2247,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ね|10": {
-   "file": "ね_g0010.wav",
-   "char": "ね",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ね|20": {
    "file": "ね_g0020.wav",
    "char": "ね",
@@ -2629,18 +2339,6 @@
    "lead_ms": 50.0,
    "dur_ms": 409.0,
    "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "の|10": {
-   "file": "の_g0010.wav",
-   "char": "の",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 48.0,
-   "dur_ms": 58.0,
-   "onset_ms": 48.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -2741,18 +2439,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "は|10": {
-   "file": "は_g0010.wav",
-   "char": "は",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "は|20": {
    "file": "は_g0020.wav",
    "char": "は",
@@ -2845,18 +2531,6 @@
    "lead_ms": 45.0,
    "dur_ms": 420.0,
    "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ひ|10": {
-   "file": "ひ_g0010.wav",
-   "char": "ひ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
-   "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -2957,18 +2631,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ふ|10": {
-   "file": "ふ_g0010.wav",
-   "char": "ふ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 60.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ふ|20": {
    "file": "ふ_g0020.wav",
    "char": "ふ",
@@ -3065,18 +2727,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "へ|10": {
-   "file": "へ_g0010.wav",
-   "char": "へ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 56.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "へ|20": {
    "file": "へ_g0020.wav",
    "char": "へ",
@@ -3169,18 +2819,6 @@
    "lead_ms": 50.0,
    "dur_ms": 374.0,
    "onset_ms": 56.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ほ|10": {
-   "file": "ほ_g0010.wav",
-   "char": "ほ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -3305,6 +2943,18 @@
    "sr": 48000,
    "truncated": false
   },
+  "ま|30": {
+   "file": "ま_g0030.wav",
+   "char": "ま",
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
+   "lead_ms": 47.0,
+   "dur_ms": 77.0,
+   "onset_ms": 47.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
   "ま|40": {
    "file": "ま_g0040.wav",
    "char": "ま",
@@ -3317,61 +2967,37 @@
    "sr": 48000,
    "truncated": false
   },
-  "ま|60": {
-   "file": "ま_g0060.wav",
+  "ま|55": {
+   "file": "ま_g0055.wav",
    "char": "ま",
-   "gate_ms": 60,
-   "after_onset_ms": 60.0,
+   "gate_ms": 55,
+   "after_onset_ms": 55.0,
    "lead_ms": 47.0,
-   "dur_ms": 107.0,
+   "dur_ms": 102.0,
    "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "ま|80": {
-   "file": "ま_g0080.wav",
+  "ま|70": {
+   "file": "ま_g0070.wav",
    "char": "ま",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 70,
+   "after_onset_ms": 70.0,
    "lead_ms": 47.0,
-   "dur_ms": 127.0,
+   "dur_ms": 117.0,
    "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "ま|110": {
-   "file": "ま_g0110.wav",
+  "ま|100": {
+   "file": "ま_g0100.wav",
    "char": "ま",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 100,
+   "after_onset_ms": 100.0,
    "lead_ms": 47.0,
-   "dur_ms": 157.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ま|150": {
-   "file": "ま_g0150.wav",
-   "char": "ま",
-   "gate_ms": 150,
-   "after_onset_ms": 150.0,
-   "lead_ms": 47.0,
-   "dur_ms": 197.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ま|220": {
-   "file": "ま_g0220.wav",
-   "char": "ま",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
-   "lead_ms": 47.0,
-   "dur_ms": 267.0,
+   "dur_ms": 147.0,
    "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
@@ -3385,18 +3011,6 @@
    "lead_ms": 47.0,
    "dur_ms": 350.0,
    "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "み|10": {
-   "file": "み_g0010.wav",
-   "char": "み",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -3497,18 +3111,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "む|10": {
-   "file": "む_g0010.wav",
-   "char": "む",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "む|20": {
    "file": "む_g0020.wav",
    "char": "む",
@@ -3601,18 +3203,6 @@
    "lead_ms": 50.0,
    "dur_ms": 410.0,
    "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "め|10": {
-   "file": "め_g0010.wav",
-   "char": "め",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 46.0,
-   "dur_ms": 56.0,
-   "onset_ms": 46.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -3713,18 +3303,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "も|10": {
-   "file": "も_g0010.wav",
-   "char": "も",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "も|20": {
    "file": "も_g0020.wav",
    "char": "も",
@@ -3817,18 +3395,6 @@
    "lead_ms": 45.0,
    "dur_ms": 320.0,
    "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "や|10": {
-   "file": "や_g0010.wav",
-   "char": "や",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 46.0,
-   "dur_ms": 56.0,
-   "onset_ms": 46.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -3929,18 +3495,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ゆ|10": {
-   "file": "ゆ_g0010.wav",
-   "char": "ゆ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ゆ|20": {
    "file": "ゆ_g0020.wav",
    "char": "ゆ",
@@ -4033,18 +3587,6 @@
    "lead_ms": 50.0,
    "dur_ms": 416.0,
    "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "よ|10": {
-   "file": "よ_g0010.wav",
-   "char": "よ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -4145,18 +3687,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ら|10": {
-   "file": "ら_g0010.wav",
-   "char": "ら",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ら|20": {
    "file": "ら_g0020.wav",
    "char": "ら",
@@ -4229,13 +3759,13 @@
    "sr": 48000,
    "truncated": false
   },
-  "ら|220": {
-   "file": "ら_g0220.wav",
+  "ら|200": {
+   "file": "ら_g0200.wav",
    "char": "ら",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
+   "gate_ms": 200,
+   "after_onset_ms": 200.0,
    "lead_ms": 47.0,
-   "dur_ms": 267.0,
+   "dur_ms": 247.0,
    "onset_ms": 47.0,
    "onset_source": "given",
    "sr": 48000,
@@ -4249,18 +3779,6 @@
    "lead_ms": 47.0,
    "dur_ms": 370.0,
    "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "り|10": {
-   "file": "り_g0010.wav",
-   "char": "り",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -4361,18 +3879,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "る|10": {
-   "file": "る_g0010.wav",
-   "char": "る",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "る|20": {
    "file": "る_g0020.wav",
    "char": "る",
@@ -4465,18 +3971,6 @@
    "lead_ms": 47.0,
    "dur_ms": 440.0,
    "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "れ|10": {
-   "file": "れ_g0010.wav",
-   "char": "れ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -4577,18 +4071,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ろ|10": {
-   "file": "ろ_g0010.wav",
-   "char": "ろ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 50.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ろ|20": {
    "file": "ろ_g0020.wav",
    "char": "ろ",
@@ -4685,18 +4167,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "わ|10": {
-   "file": "わ_g0010.wav",
-   "char": "わ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 44.0,
-   "dur_ms": 54.0,
-   "onset_ms": 44.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "わ|20": {
    "file": "わ_g0020.wav",
    "char": "わ",
@@ -4789,18 +4259,6 @@
    "lead_ms": 44.0,
    "dur_ms": 370.0,
    "onset_ms": 44.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ん|10": {
-   "file": "ん_g0010.wav",
-   "char": "ん",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -4925,6 +4383,18 @@
    "sr": 48000,
    "truncated": false
   },
+  "が|30": {
+   "file": "が_g0030.wav",
+   "char": "が",
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
+   "lead_ms": 50.0,
+   "dur_ms": 80.0,
+   "onset_ms": 60.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
   "が|40": {
    "file": "が_g0040.wav",
    "char": "が",
@@ -4937,61 +4407,37 @@
    "sr": 48000,
    "truncated": false
   },
-  "が|60": {
-   "file": "が_g0060.wav",
+  "が|55": {
+   "file": "が_g0055.wav",
    "char": "が",
-   "gate_ms": 60,
-   "after_onset_ms": 60.0,
+   "gate_ms": 55,
+   "after_onset_ms": 55.0,
    "lead_ms": 50.0,
-   "dur_ms": 110.0,
+   "dur_ms": 105.0,
    "onset_ms": 60.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "が|80": {
-   "file": "が_g0080.wav",
+  "が|70": {
+   "file": "が_g0070.wav",
    "char": "が",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 70,
+   "after_onset_ms": 70.0,
    "lead_ms": 50.0,
-   "dur_ms": 130.0,
+   "dur_ms": 120.0,
    "onset_ms": 60.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "が|110": {
-   "file": "が_g0110.wav",
+  "が|100": {
+   "file": "が_g0100.wav",
    "char": "が",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 100,
+   "after_onset_ms": 100.0,
    "lead_ms": 50.0,
-   "dur_ms": 160.0,
-   "onset_ms": 60.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "が|150": {
-   "file": "が_g0150.wav",
-   "char": "が",
-   "gate_ms": 150,
-   "after_onset_ms": 150.0,
-   "lead_ms": 50.0,
-   "dur_ms": 200.0,
-   "onset_ms": 60.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "が|220": {
-   "file": "が_g0220.wav",
-   "char": "が",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
-   "lead_ms": 50.0,
-   "dur_ms": 270.0,
+   "dur_ms": 150.0,
    "onset_ms": 60.0,
    "onset_source": "given",
    "sr": 48000,
@@ -5005,18 +4451,6 @@
    "lead_ms": 50.0,
    "dur_ms": 420.0,
    "onset_ms": 60.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぎ|10": {
-   "file": "ぎ_g0010.wav",
-   "char": "ぎ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 53.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -5117,18 +4551,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ぐ|10": {
-   "file": "ぐ_g0010.wav",
-   "char": "ぐ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 98.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ぐ|20": {
    "file": "ぐ_g0020.wav",
    "char": "ぐ",
@@ -5221,18 +4643,6 @@
    "lead_ms": 50.0,
    "dur_ms": 362.0,
    "onset_ms": 98.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "げ|10": {
-   "file": "げ_g0010.wav",
-   "char": "げ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -5333,18 +4743,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ご|10": {
-   "file": "ご_g0010.wav",
-   "char": "ご",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 110.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ご|20": {
    "file": "ご_g0020.wav",
    "char": "ご",
@@ -5437,18 +4835,6 @@
    "lead_ms": 50.0,
    "dur_ms": 300.0,
    "onset_ms": 110.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ざ|10": {
-   "file": "ざ_g0010.wav",
-   "char": "ざ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 54.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -5549,18 +4935,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "じ|10": {
-   "file": "じ_g0010.wav",
-   "char": "じ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "じ|20": {
    "file": "じ_g0020.wav",
    "char": "じ",
@@ -5653,18 +5027,6 @@
    "lead_ms": 45.0,
    "dur_ms": 470.0,
    "onset_ms": 45.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ず|10": {
-   "file": "ず_g0010.wav",
-   "char": "ず",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
-   "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -5765,18 +5127,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ぜ|10": {
-   "file": "ぜ_g0010.wav",
-   "char": "ぜ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 44.0,
-   "dur_ms": 54.0,
-   "onset_ms": 44.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ぜ|20": {
    "file": "ぜ_g0020.wav",
    "char": "ぜ",
@@ -5869,18 +5219,6 @@
    "lead_ms": 44.0,
    "dur_ms": 450.0,
    "onset_ms": 44.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぞ|10": {
-   "file": "ぞ_g0010.wav",
-   "char": "ぞ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 48.0,
-   "dur_ms": 58.0,
-   "onset_ms": 48.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -5981,18 +5319,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "だ|10": {
-   "file": "だ_g0010.wav",
-   "char": "だ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "だ|20": {
    "file": "だ_g0020.wav",
    "char": "だ",
@@ -6085,18 +5411,6 @@
    "lead_ms": 50.0,
    "dur_ms": 369.0,
    "onset_ms": 51.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "で|10": {
-   "file": "で_g0010.wav",
-   "char": "で",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 46.0,
-   "dur_ms": 56.0,
-   "onset_ms": 46.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -6197,18 +5511,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ど|10": {
-   "file": "ど_g0010.wav",
-   "char": "ど",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ど|20": {
    "file": "ど_g0020.wav",
    "char": "ど",
@@ -6301,18 +5603,6 @@
    "lead_ms": 50.0,
    "dur_ms": 326.0,
    "onset_ms": 54.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ば|10": {
-   "file": "ば_g0010.wav",
-   "char": "ば",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 45.0,
-   "dur_ms": 55.0,
-   "onset_ms": 45.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -6413,18 +5703,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "び|10": {
-   "file": "び_g0010.wav",
-   "char": "び",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 47.0,
-   "dur_ms": 57.0,
-   "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "び|20": {
    "file": "び_g0020.wav",
    "char": "び",
@@ -6517,18 +5795,6 @@
    "lead_ms": 47.0,
    "dur_ms": 400.0,
    "onset_ms": 47.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぶ|10": {
-   "file": "ぶ_g0010.wav",
-   "char": "ぶ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 54.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -6629,18 +5895,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "べ|10": {
-   "file": "べ_g0010.wav",
-   "char": "べ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 48.0,
-   "dur_ms": 58.0,
-   "onset_ms": 48.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "べ|20": {
    "file": "べ_g0020.wav",
    "char": "べ",
@@ -6733,18 +5987,6 @@
    "lead_ms": 48.0,
    "dur_ms": 360.0,
    "onset_ms": 48.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぼ|10": {
-   "file": "ぼ_g0010.wav",
-   "char": "ぼ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 52.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -6869,6 +6111,18 @@
    "sr": 48000,
    "truncated": false
   },
+  "ぱ|30": {
+   "file": "ぱ_g0030.wav",
+   "char": "ぱ",
+   "gate_ms": 30,
+   "after_onset_ms": 30.0,
+   "lead_ms": 50.0,
+   "dur_ms": 80.0,
+   "onset_ms": 55.0,
+   "onset_source": "given",
+   "sr": 48000,
+   "truncated": false
+  },
   "ぱ|40": {
    "file": "ぱ_g0040.wav",
    "char": "ぱ",
@@ -6881,61 +6135,37 @@
    "sr": 48000,
    "truncated": false
   },
-  "ぱ|60": {
-   "file": "ぱ_g0060.wav",
+  "ぱ|55": {
+   "file": "ぱ_g0055.wav",
    "char": "ぱ",
-   "gate_ms": 60,
-   "after_onset_ms": 60.0,
+   "gate_ms": 55,
+   "after_onset_ms": 55.0,
    "lead_ms": 50.0,
-   "dur_ms": 110.0,
+   "dur_ms": 105.0,
    "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "ぱ|80": {
-   "file": "ぱ_g0080.wav",
+  "ぱ|70": {
+   "file": "ぱ_g0070.wav",
    "char": "ぱ",
-   "gate_ms": 80,
-   "after_onset_ms": 80.0,
+   "gate_ms": 70,
+   "after_onset_ms": 70.0,
    "lead_ms": 50.0,
-   "dur_ms": 130.0,
+   "dur_ms": 120.0,
    "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
   },
-  "ぱ|110": {
-   "file": "ぱ_g0110.wav",
+  "ぱ|100": {
+   "file": "ぱ_g0100.wav",
    "char": "ぱ",
-   "gate_ms": 110,
-   "after_onset_ms": 110.0,
+   "gate_ms": 100,
+   "after_onset_ms": 100.0,
    "lead_ms": 50.0,
-   "dur_ms": 160.0,
-   "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぱ|150": {
-   "file": "ぱ_g0150.wav",
-   "char": "ぱ",
-   "gate_ms": 150,
-   "after_onset_ms": 150.0,
-   "lead_ms": 50.0,
-   "dur_ms": 200.0,
-   "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぱ|220": {
-   "file": "ぱ_g0220.wav",
-   "char": "ぱ",
-   "gate_ms": 220,
-   "after_onset_ms": 220.0,
-   "lead_ms": 50.0,
-   "dur_ms": 270.0,
+   "dur_ms": 150.0,
    "onset_ms": 55.0,
    "onset_source": "given",
    "sr": 48000,
@@ -6949,18 +6179,6 @@
    "lead_ms": 50.0,
    "dur_ms": 385.0,
    "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぴ|10": {
-   "file": "ぴ_g0010.wav",
-   "char": "ぴ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 50.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false
@@ -7061,18 +6279,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ぷ|10": {
-   "file": "ぷ_g0010.wav",
-   "char": "ぷ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 44.0,
-   "dur_ms": 54.0,
-   "onset_ms": 44.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ぷ|20": {
    "file": "ぷ_g0020.wav",
    "char": "ぷ",
@@ -7169,18 +6375,6 @@
    "sr": 48000,
    "truncated": false
   },
-  "ぺ|10": {
-   "file": "ぺ_g0010.wav",
-   "char": "ぺ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 50.0,
-   "dur_ms": 60.0,
-   "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
   "ぺ|20": {
    "file": "ぺ_g0020.wav",
    "char": "ぺ",
@@ -7273,18 +6467,6 @@
    "lead_ms": 50.0,
    "dur_ms": 335.0,
    "onset_ms": 55.0,
-   "onset_source": "given",
-   "sr": 48000,
-   "truncated": false
-  },
-  "ぽ|10": {
-   "file": "ぽ_g0010.wav",
-   "char": "ぽ",
-   "gate_ms": 10,
-   "after_onset_ms": 10.0,
-   "lead_ms": 49.0,
-   "dur_ms": 59.0,
-   "onset_ms": 49.0,
    "onset_source": "given",
    "sr": 48000,
    "truncated": false

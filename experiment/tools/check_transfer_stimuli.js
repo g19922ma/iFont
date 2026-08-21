@@ -105,14 +105,17 @@ ok(`見え心地の代表字 ${CFG.wellbeing.chars.join("・")}（ターゲッ�
 
 // ---- 2+3. 実験ページが引きうる見出しが全部あるか --------------------------
 // buildAudioTrials(): ターゲット×その字の時点 ／ まぎれ字×_defaultの時点 ／
-//   確認問題A=ターゲットの全長 ／ 確認問題C=_defaultの最小の時点 ／ 練習=ターゲットの全長。
+//   確認問題A=ターゲットの全長 ／ 確認問題C=**その字の最小の時点** ／ 練習=ターゲットの全長。
 // playSample(): 音量確認で あ・い・う・え・お を全長で鳴らす。
+// 2026-08-21 から時点は**字ごと**に置く(transfer_config.js の audio.gates_ms)。
+// 字によって時点の数が違うので、件数の勘定も字ごとに足し上げる。
 const defGates = audioGates("_default");
 const want = new Set();
 TARGETS.forEach(ch => {
-  audioGates(ch).forEach(g => want.add(key(ch, g)));
-  want.add(key(ch, null));                       // 確認問題A・練習
-  want.add(key(ch, Math.min(...defGates)));      // 確認問題C
+  const g = audioGates(ch);
+  g.forEach(v => want.add(key(ch, v)));
+  want.add(key(ch, null));                       // 全長の水準・確認問題A・練習
+  want.add(key(ch, Math.min(...g)));             // 確認問題C(その字の最小の時点)
 });
 FILLERS.forEach(ch => defGates.forEach(g => want.add(key(ch, g))));
 ["あ", "い", "う", "え", "お"].filter(c => ALL_KANA.indexOf(c) >= 0)
@@ -122,12 +125,34 @@ const missing = [...want].filter(k => !items[k]);
 if (missing.length) bad(`索引に無い刺激 ${missing.length} 件: ${missing.slice(0, 12).join(", ")}…`);
 else ok(`実験ページが引きうる ${want.size} 件の刺激がすべて索引にある`);
 
-// 逆に、全かな×全時点+全長が入っているか(まぎれ字の全長も playSample で要る)。
-const expected = ALL_KANA.length * (defGates.length + 1);
+// 逆に、全かな × その字の時点 + 全長 が入っているか(まぎれ字の全長も playSample で要る)。
+const expected = ALL_KANA.reduce((n, ch) => n + audioGates(ch).length + 1, 0);
 if (Object.keys(items).length !== expected) {
-  bad(`索引の件数 ${Object.keys(items).length} が、全 ${ALL_KANA.length} かな × (時点${defGates.length}+全長) = ${expected} と違う`);
+  bad(`索引の件数 ${Object.keys(items).length} が、全 ${ALL_KANA.length} かな分の`
+      + `「その字の時点 + 全長」の合計 ${expected} と違う`);
 } else {
-  ok(`索引の件数 ${expected} 件 = ${ALL_KANA.length}かな × (時点${defGates.length} + 全長)`);
+  const per = TARGETS.map(ch => `${ch}:${audioGates(ch).length}`).join(" ");
+  ok(`索引の件数 ${expected} 件（まぎれ字は時点${defGates.length}＋全長／ターゲットは ${per}（各＋全長））`);
+}
+
+// 字ごとの配置が本当に字ごとに違うか（全字が同じ並びのままなら、変更が効いていない）。
+{
+  const sigs = new Set(TARGETS.map(ch => audioGates(ch).join(",")));
+  if (sigs.size <= 1) {
+    bad("ターゲット8字の時点がすべて同じ並び。字ごとの配置(2026-08-21の決定)が効いていない");
+  } else {
+    ok(`ターゲットの時点は ${sigs.size} 通りの配置に分かれている（字の音の種類ごと）`);
+  }
+}
+
+// 1人あたりの聴覚の問題数（掲載文の分数の根拠。transfer.js の buildAudioTrials と同じ勘定）。
+{
+  const nTarget = TARGETS.reduce((n, ch) => n + audioGates(ch).length + (CFG.audio.include_full_gate ? 1 : 0), 0)
+                  * (CFG.design.reps || 1);
+  const nFiller = Math.round(nTarget * CFG.design.filler_ratio);
+  const base = nTarget + nFiller;
+  const nCheck = Math.round(base * CFG.design.check_full_rate) + Math.round(base * CFG.design.check_floor_rate);
+  ok(`聴覚は1人あたり ${base + nCheck} 問（ターゲット${nTarget}＋まぎれ字${nFiller}＋確認問題${nCheck}）`);
 }
 
 // ---- 4. 実物のWAV ---------------------------------------------------------
