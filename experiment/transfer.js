@@ -469,11 +469,21 @@ function wipeDraw(ctx, ch, s) {
   ctx.restore();
 }
 
-// フェード(fade): 不透明度 = s。既存の1文字課題と同じ。
+// フェード(fade): 不透明度 = s^gamma。
+// gamma は「進み具合を画面の濃さにどう配るか」のつまみ(transfer_config.js の
+// visual.families.fade.gamma)。**既定の 1.0 では濃さ = s** となり、
+// 既存の1文字課題と同じ挙動になる。1.0 より大きくすると序盤を薄めに通せる。
+function fadeAlpha(s) {
+  const g = (CFG.visual.families.fade && CFG.visual.families.fade.gamma);
+  const t = Math.max(0, Math.min(1, s));
+  // gamma が無い/1.0 のときは、余計な計算を挟まず s をそのまま使う。
+  if (!(typeof g === "number") || g === 1) return t;
+  return Math.pow(t, g);
+}
 function fadeDraw(ctx, ch, s) {
   drawBlank(ctx);
   if (!imgs[ch]) return;
-  ctx.globalAlpha = Math.max(0, Math.min(1, s));
+  ctx.globalAlpha = fadeAlpha(s);
   ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
   ctx.globalAlpha = 1;
 }
@@ -644,6 +654,17 @@ function comboForChar(charIndex) {
 // 生成(warp)に使う視覚の曲線は generation_level_ms の水準だけと事前に決めてあり、
 // もう一方の水準は RQ4 に答えるためだけに使う(計画書 3章 RQ4・6.1)。
 // 設定を切ると speedsFor は必ず1要素(既定の速さ)を返すので、挙動は元どおりになる。
+// 視覚較正で使う打ち切り水準%。下見のあいだだけ、設定で足した薄い水準を混ぜる
+// (transfer_config.js の visual.pilot_extra_levels)。切ってあれば本体の並びのまま。
+function progressLevels() {
+  const base = CFG.visual.progress_pct_levels.slice();
+  const ex = CFG.visual.pilot_extra_levels;
+  if (!(ex && ex.enabled && ex.progress_pct && ex.progress_pct.length)) return base;
+  const set = new Set(base);
+  ex.progress_pct.forEach(v => set.add(v));
+  return [...set].sort((a, b) => a - b);
+}
+
 function speedProbe() {
   const p = CFG.visual.calib_speed_probe;
   return (p && p.enabled && p.base_anim_ms_levels && p.base_anim_ms_levels.length > 1) ? p : null;
@@ -662,7 +683,7 @@ function buildVisualTrials() {
       if (GROUP === "aprime") {
         // 速さの水準ぶんだけ繰り返す(RQ4 の測定を切ってあれば1通りだけ)。
         speedsFor(c.family).forEach(baseMs => {
-          CFG.visual.progress_pct_levels.forEach(pct => {
+          progressLevels().forEach(pct => {
             cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
                          progress_pct: pct, gate_ms: null, is_filler: false, check_kind: "",
                          base_anim_ms: baseMs });
@@ -691,7 +712,7 @@ function buildVisualTrials() {
       // まぎれ字の速さも本命と同じ集合から選ぶ(まぎれ字だけいつも同じ速さだと、
       // 速さの違いが「本命かどうか」の手がかりになってしまうため)。
       cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
-                   progress_pct: pick(CFG.visual.progress_pct_levels), gate_ms: null, is_filler: true, check_kind: "",
+                   progress_pct: pick(progressLevels()), gate_ms: null, is_filler: true, check_kind: "",
                    base_anim_ms: pick(speedsFor(c.family)) });
     } else {
       cells.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
@@ -700,7 +721,7 @@ function buildVisualTrials() {
   }
   // 確認問題。full は打ち切りなし(進み具合が1に届くまで見せる)。floor は最小の時点。
   const minGate = Math.min(...gateList);
-  const minPct = Math.min(...CFG.visual.progress_pct_levels);
+  const minPct = Math.min(...progressLevels());
   const mk = (kind) => {
     const i = Math.floor(Math.random() * TARGETS.length);
     const c = comboForChar(i);
