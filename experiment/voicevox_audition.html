@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>合成音の聴き比べ（話者選び）</title>
+<style>
+:root{--bg:#fbfbfa;--fg:#22252b;--muted:#61666f;--line:#e2e3e6;--card:#fff;
+      --accent:#2E7D8F;--accent2:#1E2A5E;--chip:#eef2f4;--warn:#fff6e8;--warnl:#e6c98f;
+      --warnf:#6b4a10;--hit:#dff0e6;}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#15171b;--fg:#e6e8ec;--muted:#a2a8b3;--line:#2c3037;--card:#1c1f25;
+  --accent:#63b6c7;--accent2:#9fb0e8;--chip:#252a31;--warn:#2c2413;--warnl:#6b5622;
+  --warnf:#f0d9a8;--hit:#1e3527;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+  font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif;
+  font-size:15px;line-height:1.8}
+.wrap{max-width:900px;margin:0 auto;padding:34px 18px 90px}
+h1{font-size:23px;margin:0 0 6px}
+h2{font-size:17px;margin:38px 0 10px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+p{margin:0 0 12px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 3px}
+.warn{background:var(--warn);border:1px solid var(--warnl);color:var(--warnf);
+  border-radius:10px;padding:15px 18px;margin:20px 0}
+.warn b{color:inherit}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);margin:12px 0}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 9px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+thead th{background:var(--chip);font-size:13px;position:sticky;top:0}
+th.k,td.k{text-align:left;font-size:17px;font-weight:700;position:sticky;left:0;
+  background:var(--card);border-right:1px solid var(--line);min-width:74px}
+thead th.k{background:var(--chip);z-index:2}
+tbody tr:last-child td{border-bottom:0}
+button.p{font-size:14px;padding:5px 13px;border-radius:999px;border:1px solid var(--accent);
+  background:transparent;color:var(--accent);cursor:pointer;min-width:56px}
+button.p:hover{background:var(--chip)}
+button.p.on{background:var(--accent);color:#fff}
+button.p.done{background:var(--hit)}
+.lag{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.rowbtn{font-size:12.5px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);cursor:pointer}
+.note{background:var(--card);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+  padding:11px 15px;margin:14px 0;font-size:14.5px}
+.credit{font-size:13px;color:var(--muted);border-top:1px solid var(--line);
+  margin-top:34px;padding-top:14px}
+code{background:var(--chip);padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>合成音の聴き比べ（話者選び）</h1>
+<p class="sub">転写検証実験の刺激を、自然音声から VOICEVOX の合成音に切り替えるための確認ページ</p>
+<p class="sub">全68かな × 4話者。すべて<b>無加工</b>（既定のまま合成し、音量だけそろえた）</p>
+
+<div class="warn">
+<p style="margin:0 0 8px"><b>ここで見てほしいこと</b></p>
+<p style="margin:0">それぞれの字が<b>意図した字に聞こえるか</b>。とくに次の2点です。</p>
+<ul style="margin:8px 0 0">
+<li><b>清濁が区別できるか</b>（ぱ／ば・か／が・た／だ・さ／ざ）。上下に並べてあるので、続けて聞き比べてください。</li>
+<li><b>ぽ・ぴ・ぷ が濁って聞こえないか</b>。以前の刺激づくりで「ぽ」が濁って聞こえる不具合が出た字です。</li>
+</ul>
+<p style="margin:8px 0 0">1話者を選んでいただければ、その声で全68字の本刺激を作ります。</p>
+</div>
+
+<div class="note">
+<p style="margin:0">各ボタンの下の数字は<b>「音が始まってから声が出るまで」</b>の自動測定値です。
+無声の破裂（か・ぱ・た）は息が先に出るので大きめ、有声（が・だ・ば）は0に近いのが理屈ですが、
+<b>この測定は粗いので目安にとどめてください</b>。判断は耳が主で、数字は補助です。</p>
+</div>
+
+<h2>清濁の対と、要注意の字</h2>
+<div class="scroll"><table><thead><tr><th class="k">かな</th><th>東北きりたん<br><span class="lag">ノーマル・ID108</span></th><th>青山龍星<br><span class="lag">ノーマル・ID13</span></th><th>No.7<br><span class="lag">ノーマル・ID29</span></th><th>春日部つむぎ<br><span class="lag">ノーマル・ID8</span></th></tr></thead><tbody>
+<tr><th class="k">ぱ<br><button class="rowbtn" data-row="ぱ">続けて</button></th><td><button class="p" data-s="108" data-k="ぱ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="ぱ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="29" data-k="ぱ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぱ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ば<br><button class="rowbtn" data-row="ば">続けて</button></th><td><button class="p" data-s="108" data-k="ば">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ば">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="29" data-k="ば">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="8" data-k="ば">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">か<br><button class="rowbtn" data-row="か">続けて</button></th><td><button class="p" data-s="108" data-k="か">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="か">▶</button><span class="lag">255ms</span></td><td><button class="p" data-s="29" data-k="か">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="か">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">が<br><button class="rowbtn" data-row="が">続けて</button></th><td><button class="p" data-s="108" data-k="が">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="が">▶</button><span class="lag">315ms</span></td><td><button class="p" data-s="29" data-k="が">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="が">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">た<br><button class="rowbtn" data-row="た">続けて</button></th><td><button class="p" data-s="108" data-k="た">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="た">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="た">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="た">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">だ<br><button class="rowbtn" data-row="だ">続けて</button></th><td><button class="p" data-s="108" data-k="だ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="だ">▶</button><span class="lag">35ms</span></td><td><button class="p" data-s="29" data-k="だ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="だ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">さ<br><button class="rowbtn" data-row="さ">続けて</button></th><td><button class="p" data-s="108" data-k="さ">▶</button><span class="lag">110ms</span></td><td><button class="p" data-s="13" data-k="さ">▶</button><span class="lag">320ms</span></td><td><button class="p" data-s="29" data-k="さ">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="8" data-k="さ">▶</button><span class="lag">85ms</span></td></tr>
+<tr><th class="k">ざ<br><button class="rowbtn" data-row="ざ">続けて</button></th><td><button class="p" data-s="108" data-k="ざ">▶</button><span class="lag">55ms</span></td><td><button class="p" data-s="13" data-k="ざ">▶</button><span class="lag">165ms</span></td><td><button class="p" data-s="29" data-k="ざ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ざ">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">は<br><button class="rowbtn" data-row="は">続けて</button></th><td><button class="p" data-s="108" data-k="は">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="は">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="29" data-k="は">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="は">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ば<br><button class="rowbtn" data-row="ば">続けて</button></th><td><button class="p" data-s="108" data-k="ば">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ば">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="29" data-k="ば">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="8" data-k="ば">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">ぽ（要注意）<br><button class="rowbtn" data-row="ぽ">続けて</button></th><td><button class="p" data-s="108" data-k="ぽ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ぽ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="29" data-k="ぽ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぽ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ぴ（要注意）<br><button class="rowbtn" data-row="ぴ">続けて</button></th><td><button class="p" data-s="108" data-k="ぴ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ぴ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="29" data-k="ぴ">▶</button><span class="lag">25ms</span></td><td><button class="p" data-s="8" data-k="ぴ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">ぷ（要注意）<br><button class="rowbtn" data-row="ぷ">続けて</button></th><td><button class="p" data-s="108" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぷ">▶</button><span class="lag">20ms</span></td></tr>
+</tbody></table></div>
+
+<h2>全68字</h2>
+<div class="scroll"><table><thead><tr><th class="k">かな</th><th>東北きりたん<br><span class="lag">ノーマル・ID108</span></th><th>青山龍星<br><span class="lag">ノーマル・ID13</span></th><th>No.7<br><span class="lag">ノーマル・ID29</span></th><th>春日部つむぎ<br><span class="lag">ノーマル・ID8</span></th></tr></thead><tbody>
+<tr><th class="k">あ<br><button class="rowbtn" data-row="あ">続けて</button></th><td><button class="p" data-s="108" data-k="あ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="あ">▶</button><span class="lag">105ms</span></td><td><button class="p" data-s="29" data-k="あ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="8" data-k="あ">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">い<br><button class="rowbtn" data-row="い">続けて</button></th><td><button class="p" data-s="108" data-k="い">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="い">▶</button><span class="lag">55ms</span></td><td><button class="p" data-s="29" data-k="い">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="い">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">う<br><button class="rowbtn" data-row="う">続けて</button></th><td><button class="p" data-s="108" data-k="う">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="う">▶</button><span class="lag">25ms</span></td><td><button class="p" data-s="29" data-k="う">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="う">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">え<br><button class="rowbtn" data-row="え">続けて</button></th><td><button class="p" data-s="108" data-k="え">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="え">▶</button><span class="lag">205ms</span></td><td><button class="p" data-s="29" data-k="え">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="え">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">お<br><button class="rowbtn" data-row="お">続けて</button></th><td><button class="p" data-s="108" data-k="お">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="お">▶</button><span class="lag">40ms</span></td><td><button class="p" data-s="29" data-k="お">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="お">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">か<br><button class="rowbtn" data-row="か">続けて</button></th><td><button class="p" data-s="108" data-k="か">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="か">▶</button><span class="lag">255ms</span></td><td><button class="p" data-s="29" data-k="か">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="か">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">き<br><button class="rowbtn" data-row="き">続けて</button></th><td><button class="p" data-s="108" data-k="き">▶</button><span class="lag">40ms</span></td><td><button class="p" data-s="13" data-k="き">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="き">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="き">▶</button><span class="lag">50ms</span></td></tr>
+<tr><th class="k">く<br><button class="rowbtn" data-row="く">続けて</button></th><td><button class="p" data-s="108" data-k="く">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="く">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="く">▶</button><span class="lag">35ms</span></td><td><button class="p" data-s="8" data-k="く">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">け<br><button class="rowbtn" data-row="け">続けて</button></th><td><button class="p" data-s="108" data-k="け">▶</button><span class="lag">30ms</span></td><td><button class="p" data-s="13" data-k="け">▶</button><span class="lag">90ms</span></td><td><button class="p" data-s="29" data-k="け">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="け">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">こ<br><button class="rowbtn" data-row="こ">続けて</button></th><td><button class="p" data-s="108" data-k="こ">▶</button><span class="lag">40ms</span></td><td><button class="p" data-s="13" data-k="こ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="29" data-k="こ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="こ">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">さ<br><button class="rowbtn" data-row="さ">続けて</button></th><td><button class="p" data-s="108" data-k="さ">▶</button><span class="lag">110ms</span></td><td><button class="p" data-s="13" data-k="さ">▶</button><span class="lag">320ms</span></td><td><button class="p" data-s="29" data-k="さ">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="8" data-k="さ">▶</button><span class="lag">85ms</span></td></tr>
+<tr><th class="k">し<br><button class="rowbtn" data-row="し">続けて</button></th><td><button class="p" data-s="108" data-k="し">▶</button><span class="lag">160ms</span></td><td><button class="p" data-s="13" data-k="し">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="29" data-k="し">▶</button><span class="lag">130ms</span></td><td><button class="p" data-s="8" data-k="し">▶</button><span class="lag">135ms</span></td></tr>
+<tr><th class="k">す<br><button class="rowbtn" data-row="す">続けて</button></th><td><button class="p" data-s="108" data-k="す">▶</button><span class="lag">135ms</span></td><td><button class="p" data-s="13" data-k="す">▶</button><span class="lag">145ms</span></td><td><button class="p" data-s="29" data-k="す">▶</button><span class="lag">130ms</span></td><td><button class="p" data-s="8" data-k="す">▶</button><span class="lag">120ms</span></td></tr>
+<tr><th class="k">せ<br><button class="rowbtn" data-row="せ">続けて</button></th><td><button class="p" data-s="108" data-k="せ">▶</button><span class="lag">120ms</span></td><td><button class="p" data-s="13" data-k="せ">▶</button><span class="lag">240ms</span></td><td><button class="p" data-s="29" data-k="せ">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="8" data-k="せ">▶</button><span class="lag">115ms</span></td></tr>
+<tr><th class="k">そ<br><button class="rowbtn" data-row="そ">続けて</button></th><td><button class="p" data-s="108" data-k="そ">▶</button><span class="lag">105ms</span></td><td><button class="p" data-s="13" data-k="そ">▶</button><span class="lag">130ms</span></td><td><button class="p" data-s="29" data-k="そ">▶</button><span class="lag">90ms</span></td><td><button class="p" data-s="8" data-k="そ">▶</button><span class="lag">95ms</span></td></tr>
+<tr><th class="k">た<br><button class="rowbtn" data-row="た">続けて</button></th><td><button class="p" data-s="108" data-k="た">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="た">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="た">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="た">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ち<br><button class="rowbtn" data-row="ち">続けて</button></th><td><button class="p" data-s="108" data-k="ち">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="13" data-k="ち">▶</button></td><td><button class="p" data-s="29" data-k="ち">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ち">▶</button><span class="lag">90ms</span></td></tr>
+<tr><th class="k">つ<br><button class="rowbtn" data-row="つ">続けて</button></th><td><button class="p" data-s="108" data-k="つ">▶</button><span class="lag">70ms</span></td><td><button class="p" data-s="13" data-k="つ">▶</button><span class="lag">135ms</span></td><td><button class="p" data-s="29" data-k="つ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="つ">▶</button><span class="lag">80ms</span></td></tr>
+<tr><th class="k">て<br><button class="rowbtn" data-row="て">続けて</button></th><td><button class="p" data-s="108" data-k="て">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="て">▶</button><span class="lag">60ms</span></td><td><button class="p" data-s="29" data-k="て">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="て">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">と<br><button class="rowbtn" data-row="と">続けて</button></th><td><button class="p" data-s="108" data-k="と">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="と">▶</button><span class="lag">35ms</span></td><td><button class="p" data-s="29" data-k="と">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="と">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">な<br><button class="rowbtn" data-row="な">続けて</button></th><td><button class="p" data-s="108" data-k="な">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="な">▶</button><span class="lag">225ms</span></td><td><button class="p" data-s="29" data-k="な">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="な">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">に<br><button class="rowbtn" data-row="に">続けて</button></th><td><button class="p" data-s="108" data-k="に">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="に">▶</button><span class="lag">225ms</span></td><td><button class="p" data-s="29" data-k="に">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="に">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">ぬ<br><button class="rowbtn" data-row="ぬ">続けて</button></th><td><button class="p" data-s="108" data-k="ぬ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="ぬ">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="29" data-k="ぬ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぬ">▶</button><span class="lag">0ms</span></td></tr>
+<tr><th class="k">ね<br><button class="rowbtn" data-row="ね">続けて</button></th><td><button class="p" data-s="108" data-k="ね">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="ね">▶</button><span class="lag">215ms</span></td><td><button class="p" data-s="29" data-k="ね">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ね">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">の<br><button class="rowbtn" data-row="の">続けて</button></th><td><button class="p" data-s="108" data-k="の">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="の">▶</button><span class="lag">280ms</span></td><td><button class="p" data-s="29" data-k="の">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="の">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">は<br><button class="rowbtn" data-row="は">続けて</button></th><td><button class="p" data-s="108" data-k="は">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="は">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="29" data-k="は">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="は">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ひ<br><button class="rowbtn" data-row="ひ">続けて</button></th><td><button class="p" data-s="108" data-k="ひ">▶</button><span class="lag">85ms</span></td><td><button class="p" data-s="13" data-k="ひ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="29" data-k="ひ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ひ">▶</button><span class="lag">80ms</span></td></tr>
+<tr><th class="k">ふ<br><button class="rowbtn" data-row="ふ">続けて</button></th><td><button class="p" data-s="108" data-k="ふ">▶</button><span class="lag">60ms</span></td><td><button class="p" data-s="13" data-k="ふ">▶</button><span class="lag">45ms</span></td><td><button class="p" data-s="29" data-k="ふ">▶</button><span class="lag">55ms</span></td><td><button class="p" data-s="8" data-k="ふ">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">へ<br><button class="rowbtn" data-row="へ">続けて</button></th><td><button class="p" data-s="108" data-k="へ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="へ">▶</button><span class="lag">205ms</span></td><td><button class="p" data-s="29" data-k="へ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="へ">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ほ<br><button class="rowbtn" data-row="ほ">続けて</button></th><td><button class="p" data-s="108" data-k="ほ">▶</button><span class="lag">60ms</span></td><td><button class="p" data-s="13" data-k="ほ">▶</button><span class="lag">125ms</span></td><td><button class="p" data-s="29" data-k="ほ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="8" data-k="ほ">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">ま<br><button class="rowbtn" data-row="ま">続けて</button></th><td><button class="p" data-s="108" data-k="ま">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="ま">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="ま">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ま">▶</button><span class="lag">0ms</span></td></tr>
+<tr><th class="k">み<br><button class="rowbtn" data-row="み">続けて</button></th><td><button class="p" data-s="108" data-k="み">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="み">▶</button><span class="lag">225ms</span></td><td><button class="p" data-s="29" data-k="み">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="8" data-k="み">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">む<br><button class="rowbtn" data-row="む">続けて</button></th><td><button class="p" data-s="108" data-k="む">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="む">▶</button></td><td><button class="p" data-s="29" data-k="む">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="8" data-k="む">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">め<br><button class="rowbtn" data-row="め">続けて</button></th><td><button class="p" data-s="108" data-k="め">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="め">▶</button><span class="lag">230ms</span></td><td><button class="p" data-s="29" data-k="め">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="め">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">も<br><button class="rowbtn" data-row="も">続けて</button></th><td><button class="p" data-s="108" data-k="も">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="も">▶</button><span class="lag">260ms</span></td><td><button class="p" data-s="29" data-k="も">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="も">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">や<br><button class="rowbtn" data-row="や">続けて</button></th><td><button class="p" data-s="108" data-k="や">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="や">▶</button><span class="lag">115ms</span></td><td><button class="p" data-s="29" data-k="や">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="や">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ゆ<br><button class="rowbtn" data-row="ゆ">続けて</button></th><td><button class="p" data-s="108" data-k="ゆ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ゆ">▶</button><span class="lag">220ms</span></td><td><button class="p" data-s="29" data-k="ゆ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ゆ">▶</button><span class="lag">0ms</span></td></tr>
+<tr><th class="k">よ<br><button class="rowbtn" data-row="よ">続けて</button></th><td><button class="p" data-s="108" data-k="よ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="よ">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="29" data-k="よ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="よ">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">ら<br><button class="rowbtn" data-row="ら">続けて</button></th><td><button class="p" data-s="108" data-k="ら">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="ら">▶</button><span class="lag">105ms</span></td><td><button class="p" data-s="29" data-k="ら">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="8" data-k="ら">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">り<br><button class="rowbtn" data-row="り">続けて</button></th><td><button class="p" data-s="108" data-k="り">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="り">▶</button><span class="lag">235ms</span></td><td><button class="p" data-s="29" data-k="り">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="り">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">る<br><button class="rowbtn" data-row="る">続けて</button></th><td><button class="p" data-s="108" data-k="る">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="る">▶</button></td><td><button class="p" data-s="29" data-k="る">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="る">▶</button><span class="lag">25ms</span></td></tr>
+<tr><th class="k">れ<br><button class="rowbtn" data-row="れ">続けて</button></th><td><button class="p" data-s="108" data-k="れ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="れ">▶</button><span class="lag">195ms</span></td><td><button class="p" data-s="29" data-k="れ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="れ">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">ろ<br><button class="rowbtn" data-row="ろ">続けて</button></th><td><button class="p" data-s="108" data-k="ろ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ろ">▶</button></td><td><button class="p" data-s="29" data-k="ろ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="8" data-k="ろ">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">わ<br><button class="rowbtn" data-row="わ">続けて</button></th><td><button class="p" data-s="108" data-k="わ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="わ">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="29" data-k="わ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="わ">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ん<br><button class="rowbtn" data-row="ん">続けて</button></th><td><button class="p" data-s="108" data-k="ん">▶</button><span class="lag">5ms</span></td><td><button class="p" data-s="13" data-k="ん">▶</button><span class="lag">280ms</span></td><td><button class="p" data-s="29" data-k="ん">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ん">▶</button><span class="lag">0ms</span></td></tr>
+<tr><th class="k">が<br><button class="rowbtn" data-row="が">続けて</button></th><td><button class="p" data-s="108" data-k="が">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="が">▶</button><span class="lag">315ms</span></td><td><button class="p" data-s="29" data-k="が">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="が">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ぎ<br><button class="rowbtn" data-row="ぎ">続けて</button></th><td><button class="p" data-s="108" data-k="ぎ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ぎ">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="ぎ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぎ">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ぐ<br><button class="rowbtn" data-row="ぐ">続けて</button></th><td><button class="p" data-s="108" data-k="ぐ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="ぐ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="ぐ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぐ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">げ<br><button class="rowbtn" data-row="げ">続けて</button></th><td><button class="p" data-s="108" data-k="げ">▶</button><span class="lag">25ms</span></td><td><button class="p" data-s="13" data-k="げ">▶</button><span class="lag">90ms</span></td><td><button class="p" data-s="29" data-k="げ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="げ">▶</button><span class="lag">5ms</span></td></tr>
+<tr><th class="k">ご<br><button class="rowbtn" data-row="ご">続けて</button></th><td><button class="p" data-s="108" data-k="ご">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="ご">▶</button><span class="lag">110ms</span></td><td><button class="p" data-s="29" data-k="ご">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ご">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">ざ<br><button class="rowbtn" data-row="ざ">続けて</button></th><td><button class="p" data-s="108" data-k="ざ">▶</button><span class="lag">55ms</span></td><td><button class="p" data-s="13" data-k="ざ">▶</button><span class="lag">165ms</span></td><td><button class="p" data-s="29" data-k="ざ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ざ">▶</button><span class="lag">30ms</span></td></tr>
+<tr><th class="k">じ<br><button class="rowbtn" data-row="じ">続けて</button></th><td><button class="p" data-s="108" data-k="じ">▶</button><span class="lag">70ms</span></td><td><button class="p" data-s="13" data-k="じ">▶</button></td><td><button class="p" data-s="29" data-k="じ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="じ">▶</button><span class="lag">75ms</span></td></tr>
+<tr><th class="k">ず<br><button class="rowbtn" data-row="ず">続けて</button></th><td><button class="p" data-s="108" data-k="ず">▶</button><span class="lag">60ms</span></td><td><button class="p" data-s="13" data-k="ず">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="ず">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ず">▶</button><span class="lag">40ms</span></td></tr>
+<tr><th class="k">ぜ<br><button class="rowbtn" data-row="ぜ">続けて</button></th><td><button class="p" data-s="108" data-k="ぜ">▶</button><span class="lag">60ms</span></td><td><button class="p" data-s="13" data-k="ぜ">▶</button><span class="lag">220ms</span></td><td><button class="p" data-s="29" data-k="ぜ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぜ">▶</button><span class="lag">35ms</span></td></tr>
+<tr><th class="k">ぞ<br><button class="rowbtn" data-row="ぞ">続けて</button></th><td><button class="p" data-s="108" data-k="ぞ">▶</button><span class="lag">45ms</span></td><td><button class="p" data-s="13" data-k="ぞ">▶</button><span class="lag">100ms</span></td><td><button class="p" data-s="29" data-k="ぞ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぞ">▶</button><span class="lag">25ms</span></td></tr>
+<tr><th class="k">だ<br><button class="rowbtn" data-row="だ">続けて</button></th><td><button class="p" data-s="108" data-k="だ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="だ">▶</button><span class="lag">35ms</span></td><td><button class="p" data-s="29" data-k="だ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="だ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">で<br><button class="rowbtn" data-row="で">続けて</button></th><td><button class="p" data-s="108" data-k="で">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="で">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="29" data-k="で">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="で">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ど<br><button class="rowbtn" data-row="ど">続けて</button></th><td><button class="p" data-s="108" data-k="ど">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ど">▶</button><span class="lag">30ms</span></td><td><button class="p" data-s="29" data-k="ど">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ど">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ば<br><button class="rowbtn" data-row="ば">続けて</button></th><td><button class="p" data-s="108" data-k="ば">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ば">▶</button><span class="lag">95ms</span></td><td><button class="p" data-s="29" data-k="ば">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="8" data-k="ば">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">び<br><button class="rowbtn" data-row="び">続けて</button></th><td><button class="p" data-s="108" data-k="び">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="び">▶</button><span class="lag">80ms</span></td><td><button class="p" data-s="29" data-k="び">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="8" data-k="び">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ぶ<br><button class="rowbtn" data-row="ぶ">続けて</button></th><td><button class="p" data-s="108" data-k="ぶ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ぶ">▶</button><span class="lag">70ms</span></td><td><button class="p" data-s="29" data-k="ぶ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぶ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">べ<br><button class="rowbtn" data-row="べ">続けて</button></th><td><button class="p" data-s="108" data-k="べ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="べ">▶</button><span class="lag">90ms</span></td><td><button class="p" data-s="29" data-k="べ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="べ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ぼ<br><button class="rowbtn" data-row="ぼ">続けて</button></th><td><button class="p" data-s="108" data-k="ぼ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="ぼ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="ぼ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぼ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ぱ<br><button class="rowbtn" data-row="ぱ">続けて</button></th><td><button class="p" data-s="108" data-k="ぱ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="13" data-k="ぱ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="29" data-k="ぱ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぱ">▶</button><span class="lag">15ms</span></td></tr>
+<tr><th class="k">ぴ<br><button class="rowbtn" data-row="ぴ">続けて</button></th><td><button class="p" data-s="108" data-k="ぴ">▶</button><span class="lag">10ms</span></td><td><button class="p" data-s="13" data-k="ぴ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="29" data-k="ぴ">▶</button><span class="lag">25ms</span></td><td><button class="p" data-s="8" data-k="ぴ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">ぷ<br><button class="rowbtn" data-row="ぷ">続けて</button></th><td><button class="p" data-s="108" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="13" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="29" data-k="ぷ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぷ">▶</button><span class="lag">20ms</span></td></tr>
+<tr><th class="k">ぺ<br><button class="rowbtn" data-row="ぺ">続けて</button></th><td><button class="p" data-s="108" data-k="ぺ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ぺ">▶</button><span class="lag">35ms</span></td><td><button class="p" data-s="29" data-k="ぺ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぺ">▶</button><span class="lag">10ms</span></td></tr>
+<tr><th class="k">ぽ<br><button class="rowbtn" data-row="ぽ">続けて</button></th><td><button class="p" data-s="108" data-k="ぽ">▶</button><span class="lag">15ms</span></td><td><button class="p" data-s="13" data-k="ぽ">▶</button><span class="lag">20ms</span></td><td><button class="p" data-s="29" data-k="ぽ">▶</button><span class="lag">0ms</span></td><td><button class="p" data-s="8" data-k="ぽ">▶</button><span class="lag">15ms</span></td></tr>
+</tbody></table></div>
+
+<div class="credit">
+<p><b>ライセンス表記</b>（採用した話者のものを実験ページと論文に入れます）</p>
+<ul>
+<li><b>東北きりたん</b>（ノーマル）… クレジット表記: <code>VOICEVOX:東北きりたん</code></li>
+<li><b>青山龍星</b>（ノーマル）… クレジット表記: <code>VOICEVOX:青山龍星</code></li>
+<li><b>No.7</b>（ノーマル）… クレジット表記: <code>VOICEVOX:No.7</code></li>
+<li><b>春日部つむぎ</b>（ノーマル）… クレジット表記: <code>VOICEVOX:春日部つむぎ</code></li>
+</ul>
+<p>音声合成に <b>VOICEVOX</b>（<code>https://voicevox.hiroshiba.jp/</code>）を使用。
+各キャラクターの利用規約に従い、上記のクレジットを表示します。</p>
+<p>生成: <code>experiment/tools/build_voicevox_stimuli.py</code> →
+<code>experiment/tools/build_voicevox_audition_page.py</code></p>
+</div>
+
+</div>
+<script>
+const A = new Audio();
+let cur = null;
+function play(btn) {
+  const s = btn.dataset.s, k = btn.dataset.k;
+  if (cur) cur.classList.remove("on");
+  btn.classList.add("on"); cur = btn;
+  A.src = "voicevox_audition/" + s + "/" + encodeURIComponent(k) + ".wav";
+  A.play();
+  A.onended = () => { btn.classList.remove("on"); btn.classList.add("done"); };
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button.p");
+  if (b) { play(b); return; }
+  const r = e.target.closest("button.rowbtn");
+  if (!r) return;
+  // その行を左から順に鳴らす（話者ごとの違いを続けて聞くため）
+  const cells = [...r.closest("tr").querySelectorAll("button.p")];
+  let i = 0;
+  const next = () => {
+    if (i >= cells.length) return;
+    const b2 = cells[i++];
+    b2.classList.add("on");
+    A.src = "voicevox_audition/" + b2.dataset.s + "/" + encodeURIComponent(b2.dataset.k) + ".wav";
+    A.play();
+    A.onended = () => { b2.classList.remove("on"); b2.classList.add("done"); setTimeout(next, 260); };
+  };
+  next();
+});
+</script>
+</body>
+</html>

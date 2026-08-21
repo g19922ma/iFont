@@ -1,0 +1,693 @@
+{
+ "meta": {
+  "speaker_id": 108,
+  "speaker": "東北きりたん",
+  "style": "ノーマル",
+  "engine": "VOICEVOX",
+  "processing": "無加工(audio_queryは既定のまま)／音量そろえのみ(1音1倍率・増幅なし)",
+  "target_rms_dbfs": -33.34,
+  "frame_ms": 5.0
+ },
+ "kana": {
+  "あ": {
+   "onset_ms": 85.0,
+   "voice_ms": 105.0,
+   "dur_ms": 352.0,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4455,
+   "gain_db": -7.02,
+   "rms_dbfs_before": -26.32,
+   "sr": 24000
+  },
+  "い": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 330.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.4141,
+   "gain_db": -7.66,
+   "rms_dbfs_before": -25.69,
+   "sr": 24000
+  },
+  "う": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 352.0,
+   "voice_lag_ms": 10.0,
+   "gain": 0.6476,
+   "gain_db": -3.77,
+   "rms_dbfs_before": -29.57,
+   "sr": 24000
+  },
+  "え": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3908,
+   "gain_db": -8.16,
+   "rms_dbfs_before": -25.18,
+   "sr": 24000
+  },
+  "お": {
+   "onset_ms": 90.0,
+   "voice_ms": 95.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 5.0,
+   "gain": 0.5272,
+   "gain_db": -5.56,
+   "rms_dbfs_before": -27.78,
+   "sr": 24000
+  },
+  "か": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 10.0,
+   "gain": 0.4851,
+   "gain_db": -6.28,
+   "rms_dbfs_before": -27.06,
+   "sr": 24000
+  },
+  "き": {
+   "onset_ms": 90.0,
+   "voice_ms": 130.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 40.0,
+   "gain": 0.4155,
+   "gain_db": -7.63,
+   "rms_dbfs_before": -25.71,
+   "sr": 24000
+  },
+  "く": {
+   "onset_ms": 80.0,
+   "voice_ms": 85.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 5.0,
+   "gain": 0.6238,
+   "gain_db": -4.1,
+   "rms_dbfs_before": -29.24,
+   "sr": 24000
+  },
+  "け": {
+   "onset_ms": 85.0,
+   "voice_ms": 115.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 30.0,
+   "gain": 0.3656,
+   "gain_db": -8.74,
+   "rms_dbfs_before": -24.6,
+   "sr": 24000
+  },
+  "こ": {
+   "onset_ms": 85.0,
+   "voice_ms": 125.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 40.0,
+   "gain": 0.5035,
+   "gain_db": -5.96,
+   "rms_dbfs_before": -27.38,
+   "sr": 24000
+  },
+  "さ": {
+   "onset_ms": 90.0,
+   "voice_ms": 200.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 110.0,
+   "gain": 0.6358,
+   "gain_db": -3.93,
+   "rms_dbfs_before": -29.41,
+   "sr": 24000
+  },
+  "し": {
+   "onset_ms": 105.0,
+   "voice_ms": 265.0,
+   "dur_ms": 522.7,
+   "voice_lag_ms": 160.0,
+   "gain": 0.4315,
+   "gain_db": -7.3,
+   "rms_dbfs_before": -26.04,
+   "sr": 24000
+  },
+  "す": {
+   "onset_ms": 95.0,
+   "voice_ms": 230.0,
+   "dur_ms": 426.7,
+   "voice_lag_ms": 135.0,
+   "gain": 1.0,
+   "gain_db": 0.0,
+   "rms_dbfs_before": -33.34,
+   "sr": 24000
+  },
+  "せ": {
+   "onset_ms": 90.0,
+   "voice_ms": 210.0,
+   "dur_ms": 469.3,
+   "voice_lag_ms": 120.0,
+   "gain": 0.4959,
+   "gain_db": -6.09,
+   "rms_dbfs_before": -27.25,
+   "sr": 24000
+  },
+  "そ": {
+   "onset_ms": 90.0,
+   "voice_ms": 195.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 105.0,
+   "gain": 0.6863,
+   "gain_db": -3.27,
+   "rms_dbfs_before": -30.07,
+   "sr": 24000
+  },
+  "た": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.4165,
+   "gain_db": -7.61,
+   "rms_dbfs_before": -25.73,
+   "sr": 24000
+  },
+  "ち": {
+   "onset_ms": 90.0,
+   "voice_ms": 170.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 80.0,
+   "gain": 0.4428,
+   "gain_db": -7.08,
+   "rms_dbfs_before": -26.27,
+   "sr": 24000
+  },
+  "つ": {
+   "onset_ms": 100.0,
+   "voice_ms": 170.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 70.0,
+   "gain": 0.8917,
+   "gain_db": -1.0,
+   "rms_dbfs_before": -32.35,
+   "sr": 24000
+  },
+  "て": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.3498,
+   "gain_db": -9.12,
+   "rms_dbfs_before": -24.22,
+   "sr": 24000
+  },
+  "と": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 15.0,
+   "gain": 0.4616,
+   "gain_db": -6.71,
+   "rms_dbfs_before": -26.63,
+   "sr": 24000
+  },
+  "な": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 0.0,
+   "gain": 0.5136,
+   "gain_db": -5.79,
+   "rms_dbfs_before": -27.56,
+   "sr": 24000
+  },
+  "に": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 0.0,
+   "gain": 0.3617,
+   "gain_db": -8.83,
+   "rms_dbfs_before": -24.51,
+   "sr": 24000
+  },
+  "ぬ": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 0.0,
+   "gain": 0.505,
+   "gain_db": -5.93,
+   "rms_dbfs_before": -27.41,
+   "sr": 24000
+  },
+  "ね": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 437.3,
+   "voice_lag_ms": 0.0,
+   "gain": 0.3222,
+   "gain_db": -9.84,
+   "rms_dbfs_before": -23.51,
+   "sr": 24000
+  },
+  "の": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 0.0,
+   "gain": 0.5263,
+   "gain_db": -5.58,
+   "rms_dbfs_before": -27.77,
+   "sr": 24000
+  },
+  "は": {
+   "onset_ms": 90.0,
+   "voice_ms": 100.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 10.0,
+   "gain": 0.4525,
+   "gain_db": -6.89,
+   "rms_dbfs_before": -26.46,
+   "sr": 24000
+  },
+  "ひ": {
+   "onset_ms": 120.0,
+   "voice_ms": 205.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 85.0,
+   "gain": 0.5431,
+   "gain_db": -5.3,
+   "rms_dbfs_before": -28.04,
+   "sr": 24000
+  },
+  "ふ": {
+   "onset_ms": 120.0,
+   "voice_ms": 180.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 60.0,
+   "gain": 0.9989,
+   "gain_db": -0.01,
+   "rms_dbfs_before": -33.33,
+   "sr": 24000
+  },
+  "へ": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3908,
+   "gain_db": -8.16,
+   "rms_dbfs_before": -25.18,
+   "sr": 24000
+  },
+  "ほ": {
+   "onset_ms": 110.0,
+   "voice_ms": 170.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 60.0,
+   "gain": 0.5424,
+   "gain_db": -5.31,
+   "rms_dbfs_before": -28.03,
+   "sr": 24000
+  },
+  "ま": {
+   "onset_ms": 90.0,
+   "voice_ms": 90.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 0.0,
+   "gain": 0.3973,
+   "gain_db": -8.02,
+   "rms_dbfs_before": -25.33,
+   "sr": 24000
+  },
+  "み": {
+   "onset_ms": 95.0,
+   "voice_ms": 100.0,
+   "dur_ms": 426.7,
+   "voice_lag_ms": 5.0,
+   "gain": 0.3519,
+   "gain_db": -9.07,
+   "rms_dbfs_before": -24.27,
+   "sr": 24000
+  },
+  "む": {
+   "onset_ms": 90.0,
+   "voice_ms": 90.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 0.0,
+   "gain": 0.4772,
+   "gain_db": -6.43,
+   "rms_dbfs_before": -26.92,
+   "sr": 24000
+  },
+  "め": {
+   "onset_ms": 90.0,
+   "voice_ms": 90.0,
+   "dur_ms": 437.3,
+   "voice_lag_ms": 0.0,
+   "gain": 0.3059,
+   "gain_db": -10.29,
+   "rms_dbfs_before": -23.05,
+   "sr": 24000
+  },
+  "も": {
+   "onset_ms": 90.0,
+   "voice_ms": 90.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 0.0,
+   "gain": 0.4304,
+   "gain_db": -7.32,
+   "rms_dbfs_before": -26.02,
+   "sr": 24000
+  },
+  "や": {
+   "onset_ms": 90.0,
+   "voice_ms": 105.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3975,
+   "gain_db": -8.01,
+   "rms_dbfs_before": -25.33,
+   "sr": 24000
+  },
+  "ゆ": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 10.0,
+   "gain": 0.426,
+   "gain_db": -7.41,
+   "rms_dbfs_before": -25.93,
+   "sr": 24000
+  },
+  "よ": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 426.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.4279,
+   "gain_db": -7.37,
+   "rms_dbfs_before": -25.97,
+   "sr": 24000
+  },
+  "ら": {
+   "onset_ms": 90.0,
+   "voice_ms": 95.0,
+   "dur_ms": 352.0,
+   "voice_lag_ms": 5.0,
+   "gain": 0.4951,
+   "gain_db": -6.11,
+   "rms_dbfs_before": -27.24,
+   "sr": 24000
+  },
+  "り": {
+   "onset_ms": 90.0,
+   "voice_ms": 95.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 5.0,
+   "gain": 0.4091,
+   "gain_db": -7.76,
+   "rms_dbfs_before": -25.58,
+   "sr": 24000
+  },
+  "る": {
+   "onset_ms": 90.0,
+   "voice_ms": 100.0,
+   "dur_ms": 341.3,
+   "voice_lag_ms": 10.0,
+   "gain": 0.689,
+   "gain_db": -3.24,
+   "rms_dbfs_before": -30.11,
+   "sr": 24000
+  },
+  "れ": {
+   "onset_ms": 85.0,
+   "voice_ms": 85.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 0.0,
+   "gain": 0.4079,
+   "gain_db": -7.79,
+   "rms_dbfs_before": -25.55,
+   "sr": 24000
+  },
+  "ろ": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 330.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.6142,
+   "gain_db": -4.23,
+   "rms_dbfs_before": -29.11,
+   "sr": 24000
+  },
+  "わ": {
+   "onset_ms": 90.0,
+   "voice_ms": 100.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 10.0,
+   "gain": 0.4525,
+   "gain_db": -6.89,
+   "rms_dbfs_before": -26.46,
+   "sr": 24000
+  },
+  "ん": {
+   "onset_ms": 90.0,
+   "voice_ms": 95.0,
+   "dur_ms": 309.3,
+   "voice_lag_ms": 5.0,
+   "gain": 0.9591,
+   "gain_db": -0.36,
+   "rms_dbfs_before": -32.98,
+   "sr": 24000
+  },
+  "が": {
+   "onset_ms": 85.0,
+   "voice_ms": 105.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 20.0,
+   "gain": 0.3882,
+   "gain_db": -8.22,
+   "rms_dbfs_before": -25.12,
+   "sr": 24000
+  },
+  "ぎ": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3233,
+   "gain_db": -9.81,
+   "rms_dbfs_before": -23.54,
+   "sr": 24000
+  },
+  "ぐ": {
+   "onset_ms": 80.0,
+   "voice_ms": 100.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4911,
+   "gain_db": -6.18,
+   "rms_dbfs_before": -27.17,
+   "sr": 24000
+  },
+  "げ": {
+   "onset_ms": 90.0,
+   "voice_ms": 115.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 25.0,
+   "gain": 0.295,
+   "gain_db": -10.6,
+   "rms_dbfs_before": -22.74,
+   "sr": 24000
+  },
+  "ご": {
+   "onset_ms": 80.0,
+   "voice_ms": 100.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4734,
+   "gain_db": -6.49,
+   "rms_dbfs_before": -26.85,
+   "sr": 24000
+  },
+  "ざ": {
+   "onset_ms": 85.0,
+   "voice_ms": 140.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 55.0,
+   "gain": 0.5125,
+   "gain_db": -5.81,
+   "rms_dbfs_before": -27.54,
+   "sr": 24000
+  },
+  "じ": {
+   "onset_ms": 90.0,
+   "voice_ms": 160.0,
+   "dur_ms": 448.0,
+   "voice_lag_ms": 70.0,
+   "gain": 0.3774,
+   "gain_db": -8.46,
+   "rms_dbfs_before": -24.88,
+   "sr": 24000
+  },
+  "ず": {
+   "onset_ms": 90.0,
+   "voice_ms": 150.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 60.0,
+   "gain": 0.8367,
+   "gain_db": -1.55,
+   "rms_dbfs_before": -31.79,
+   "sr": 24000
+  },
+  "ぜ": {
+   "onset_ms": 90.0,
+   "voice_ms": 150.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 60.0,
+   "gain": 0.4227,
+   "gain_db": -7.48,
+   "rms_dbfs_before": -25.86,
+   "sr": 24000
+  },
+  "ぞ": {
+   "onset_ms": 85.0,
+   "voice_ms": 130.0,
+   "dur_ms": 373.3,
+   "voice_lag_ms": 45.0,
+   "gain": 0.5572,
+   "gain_db": -5.08,
+   "rms_dbfs_before": -28.26,
+   "sr": 24000
+  },
+  "だ": {
+   "onset_ms": 85.0,
+   "voice_ms": 105.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4142,
+   "gain_db": -7.66,
+   "rms_dbfs_before": -25.69,
+   "sr": 24000
+  },
+  "で": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3424,
+   "gain_db": -9.31,
+   "rms_dbfs_before": -24.03,
+   "sr": 24000
+  },
+  "ど": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.45,
+   "gain_db": -6.94,
+   "rms_dbfs_before": -26.41,
+   "sr": 24000
+  },
+  "ば": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.3489,
+   "gain_db": -9.15,
+   "rms_dbfs_before": -24.2,
+   "sr": 24000
+  },
+  "び": {
+   "onset_ms": 90.0,
+   "voice_ms": 100.0,
+   "dur_ms": 394.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.3187,
+   "gain_db": -9.93,
+   "rms_dbfs_before": -23.41,
+   "sr": 24000
+  },
+  "ぶ": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 15.0,
+   "gain": 0.5327,
+   "gain_db": -5.47,
+   "rms_dbfs_before": -27.87,
+   "sr": 24000
+  },
+  "べ": {
+   "onset_ms": 95.0,
+   "voice_ms": 105.0,
+   "dur_ms": 426.7,
+   "voice_lag_ms": 10.0,
+   "gain": 0.3266,
+   "gain_db": -9.72,
+   "rms_dbfs_before": -23.62,
+   "sr": 24000
+  },
+  "ぼ": {
+   "onset_ms": 85.0,
+   "voice_ms": 105.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4483,
+   "gain_db": -6.97,
+   "rms_dbfs_before": -26.37,
+   "sr": 24000
+  },
+  "ぱ": {
+   "onset_ms": 85.0,
+   "voice_ms": 105.0,
+   "dur_ms": 405.3,
+   "voice_lag_ms": 20.0,
+   "gain": 0.4033,
+   "gain_db": -7.89,
+   "rms_dbfs_before": -25.46,
+   "sr": 24000
+  },
+  "ぴ": {
+   "onset_ms": 85.0,
+   "voice_ms": 95.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 10.0,
+   "gain": 0.3396,
+   "gain_db": -9.38,
+   "rms_dbfs_before": -23.96,
+   "sr": 24000
+  },
+  "ぷ": {
+   "onset_ms": 80.0,
+   "voice_ms": 80.0,
+   "dur_ms": 362.7,
+   "voice_lag_ms": 0.0,
+   "gain": 0.594,
+   "gain_db": -4.52,
+   "rms_dbfs_before": -28.82,
+   "sr": 24000
+  },
+  "ぺ": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 416.0,
+   "voice_lag_ms": 15.0,
+   "gain": 0.3269,
+   "gain_db": -9.71,
+   "rms_dbfs_before": -23.63,
+   "sr": 24000
+  },
+  "ぽ": {
+   "onset_ms": 85.0,
+   "voice_ms": 100.0,
+   "dur_ms": 384.0,
+   "voice_lag_ms": 15.0,
+   "gain": 0.461,
+   "gain_db": -6.73,
+   "rms_dbfs_before": -26.62,
+   "sr": 24000
+  }
+ }
+}
