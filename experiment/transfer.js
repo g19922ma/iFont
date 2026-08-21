@@ -42,7 +42,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.0";
+const VERSION = "3.1";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
