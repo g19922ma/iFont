@@ -14,6 +14,11 @@
  *   4. 実物のWAV             … 索引の各ファイルが実在し、WAVヘッダから読んだ
  *                                長さが索引の dur_ms と合っているか
  *                                (dur_ms = 前置き lead_ms + 打ち切り gate_ms)
+ *   5. 1人あたりの問題数     … transfer.js を実際に読み込んで出題を組み立てさせ、
+ *                                その配列の長さを集団ごとに数える。掲載文に書く
+ *                                分数と報酬の根拠になる数字なので、推定式では数えない
+ *                                (2026-08-21 まで画面が推定式で「約91問」と出していて、
+ *                                 実際の108/134/94問と最大43問ずれていた)
  *
  * 使い方:  node experiment/tools/check_transfer_stimuli.js
  * 終了コード: 0=すべて合格 / 1=不合格(掲載してはいけない)
@@ -145,14 +150,107 @@ if (Object.keys(items).length !== expected) {
   }
 }
 
-// 1人あたりの聴覚の問題数（掲載文の分数の根拠。transfer.js の buildAudioTrials と同じ勘定）。
+// ---- 5. 1人あたりの問題数 --------------------------------------------------
+// 掲載文の分数と報酬の根拠になる数字なので、**推定式で数えない**。
+// transfer.js を実際に読み込んで出題を組み立てさせ、その配列の長さを数える。
+//
+// なぜそこまでするか: 2026-08-21 まで、transfer.js の「課題の進め方」画面は
+// 推定式で「約91問」と出していた。実際は聴覚108問・群A′134問・群B94問で、
+// 最大43問ずれていた（式が①聴覚の全長の1点を数えていない ②群A′の水準を
+// 取り違えている ③確認問題の割合をターゲットだけに掛けている の3点で古かった）。
+// 式は必ずまた実装から遅れるので、**実物を走らせて数える**ことにした。
+function countTrialsByRunningPage() {
+  const vmMod = require("vm");
+  function stubEl() {
+    const el = {
+      innerHTML: "", textContent: "", value: "", disabled: false, checked: false,
+      style: {}, dataset: {}, parentElement: null,
+      querySelector: () => null, querySelectorAll: () => [],
+      addEventListener() {}, removeEventListener() {},
+      appendChild() {}, remove() {}, insertAdjacentHTML() {},
+      getContext: () => null, focus() {},
+    };
+    return el;
+  }
+  const sandbox = {
+    console: { log() {}, warn() {}, error() {} },
+    setTimeout, clearTimeout, setInterval, clearInterval,
+    URLSearchParams, AbortController, performance,
+    // 名簿にも刺激にも触らせない。fetch は必ず失敗させる
+    // （失敗すれば require_server が効いて「お断り画面」で止まり、出題には進まない）。
+    fetch: () => Promise.reject(new Error("harness: 通信しない")),
+    requestAnimationFrame: () => 0,
+    location: { search: "" },
+    navigator: { userAgent: "node-harness", maxTouchPoints: 0 },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    document: {
+      title: "",
+      getElementById: () => stubEl(),
+      createElement: () => stubEl(),
+      querySelector: () => null,
+      querySelectorAll: () => [],
+    },
+    devicePixelRatio: 1,
+    screen: { width: 1280, height: 800 },
+    addEventListener() {}, removeEventListener() {},
+  };
+  const out = {};
+  // transfer.js は `const VERSION = …` のような宣言を持つので、**集団ごとに
+  // まっさらな入れ物（context）で読み直す**（同じ入れ物に2回読むと二重宣言になる）。
+  for (const [group, phase] of [["acal", "calib"], ["aprime", "calib"], ["b", "test"]]) {
+    sandbox.window = sandbox;
+    sandbox.globalThis = sandbox;
+    sandbox.TRANSFER_PAGE = { phase };
+    const ctx = vmMod.createContext(Object.assign({}, sandbox));
+    ctx.window = ctx; ctx.globalThis = ctx;
+    for (const f of ["transfer_config.js", "transfer_firestore.js"]) {
+      vmMod.runInContext(fs.readFileSync(path.join(EXP, f), "utf8"), ctx, { filename: f });
+    }
+    const src = fs.readFileSync(path.join(EXP, "transfer.js"), "utf8")
+      // 実験ページと同じコードのまま、集団だけ差し込んで組み立てさせる小窓を足す。
+      + `\n;globalThis.__count = function (g) {
+             GROUP = g; G = GROUPS[g]; ASSIGN = 0; ASSIGN_SOURCE = "harness";
+             const t = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
+             return { total: t.length,
+                      target: t.filter(x => !x.is_filler && !x.check_kind).length,
+                      filler: t.filter(x => x.is_filler).length,
+                      check:  t.filter(x => x.check_kind).length }; };`;
+    vmMod.runInContext(src, ctx, { filename: "transfer.js" });
+    out[group] = ctx.__count(group);
+  }
+  return out;
+}
+
 {
-  const nTarget = TARGETS.reduce((n, ch) => n + audioGates(ch).length + (CFG.audio.include_full_gate ? 1 : 0), 0)
-                  * (CFG.design.reps || 1);
-  const nFiller = Math.round(nTarget * CFG.design.filler_ratio);
-  const base = nTarget + nFiller;
-  const nCheck = Math.round(base * CFG.design.check_full_rate) + Math.round(base * CFG.design.check_floor_rate);
-  ok(`聴覚は1人あたり ${base + nCheck} 問（ターゲット${nTarget}＋まぎれ字${nFiller}＋確認問題${nCheck}）`);
+  let counts = null;
+  try { counts = countTrialsByRunningPage(); }
+  catch (e) { bad(`transfer.js を読み込んで出題を数えられなかった: ${e.message}`); }
+  if (counts) {
+    const label = { acal: "聴覚(acal/atest)", aprime: "視覚較正(aprime)", b: "視覚検証(b)" };
+    for (const g of ["acal", "aprime", "b"]) {
+      const c = counts[g];
+      ok(`${label[g]} は1人あたり ${c.total} 問`
+         + `（ターゲット${c.target}＋まぎれ字${c.filler}＋確認問題${c.check}）`);
+    }
+    // 「課題の進め方」画面がこの数を出すこと。推定式に戻していないかを見る。
+    const jsHasFormula = /問題数：約\$\{/.test(jsText);
+    if (jsHasFormula) {
+      bad("transfer.js の「進め方」画面が問題数を推定式で出している"
+          + "（実際に組み立てた出題の長さを出すこと）");
+    } else {
+      ok("「課題の進め方」画面の問題数は、実際に組み立てた出題を数えて出している");
+    }
+    // 掲載は「フェーズごとに1本」なので、幅もフェーズごとに出す
+    //   較正フェーズの掲載 = acal と aprime のどちらかに割り当たる
+    //   検証フェーズの掲載 = atest（＝acal と同じ課題）と b のどちらか
+    const span = (gs) => {
+      const v = gs.map(g => counts[g].total);
+      return `${Math.min(...v)}〜${Math.max(...v)}問`;
+    };
+    ok(`掲載文に書く問題数の幅: 較正フェーズ 約${span(["acal", "aprime"])} ／ `
+       + `検証フェーズ 約${span(["acal", "b"])}`
+       + "（集団によって違うので、掲載文は1本に幅で書く）");
+  }
 }
 
 // ---- 4. 実物のWAV ---------------------------------------------------------

@@ -39,15 +39,20 @@ window.TRANSFER_COMFORT_CONFIG = {
   // 独立集団にする。判定はサーバの参加者名簿でしかできないので、既定では
   // サーバに繋がらないときは課題を始めさせない。
   //
-  // ⚠ **サーバ側（gas_transfer/code.gs）はまだ phase="comfort" を知らない。**
-  //   知らないフェーズを聞かれると {"status":"error"} を返すので、この設定のままだと
-  //   全員がお断り画面になる。掲載の前に次の2か所を足すこと（掲載前チェックリスト H-1）。
-  //     (1) TRANSFER_PHASE_GROUPS に comfort: ["c"] を足す
-  //     (2) transferStatus() の重複判定に次の2本を足す
-  //         ・phase==="comfort" のとき、同じ人が calib か test の行にいれば断る
-  //         ・phase==="test"    のとき、同じ人が comfort の行にいれば断る
-  //           （群Cと検証フェーズは同時期に走るので、どちら向きにも塞ぐ必要がある）
-  //   Firestore へ移したあとも、この2つの規則をそのまま移植する。
+  // ✓ **いまの保存基盤（Firestore）は phase="comfort" を知っている**
+  //   （2026-08-21 に対応済み。transfer_config.js の phases.comfort = ["c"] と
+  //   phase_blocks に入っていて、4方向すべての重複拒否が疎通確認で通っている。
+  //   掲載前チェックリスト H-1／C-0）。**掲載前にサーバ側でやることは無い。**
+  //
+  //   重複拒否の向きは4本ある（群Cと検証フェーズは同時期に走るので、どちら向きにも塞ぐ）。
+  //     ・comfort に来た人が calib にいれば断る ／ test にいれば断る
+  //     ・test    に来た人が comfort にいれば断る
+  //     ・calib は一番先に走るので断る相手がいない
+  //
+  // ⚠ GAS へ切り戻すときだけ注意。gas_transfer/code.gs にも同じ規則を書いてあるが、
+  //   **まだデプロイしていない**。デプロイしないまま GAS を主にすると、
+  //   require_server が true なので群Cの参加者が全員お断り画面になる
+  //   （掲載前チェックリスト H-1b）。
   roster: {
     phase: "comfort",
     group: "c",
@@ -194,10 +199,17 @@ window.TRANSFER_COMFORT_CONFIG = {
 
   // ---- 記録 -----------------------------------------------------------------
   logging: {
-    // 保存先URLと再送の設定は transfer_config.js の logging をそのまま使う
-    // （同じスプレッドシート・同じデプロイ）。ここでは行き先のシートだけ決める。
-    // "transfer_wellbeing" は群Bの見え心地用に作ってあるシートで、列はそのまま使える
-    // （phase 列に "comfort"、group 列に "c" が入る）。**GAS 側の変更は要らない。**
+    // 保存先と再送の設定は transfer_config.js の backend / firestore / logging を
+    // そのまま使う（**既定は Firestore**。GAS は切り戻し用の受け皿として残してある）。
+    // ここで決めるのは行き先の入れ物だけ。
+    // "transfer_wellbeing" は群Bの見え心地用に作ってあるコレクションで、
+    // 列はそのまま使える（phase 列に "comfort"、group 列に "c" が入る）。
+    //
+    // 同じ入れ物に3種類の行が入るので、**record_kind 列で見分ける**
+    // （transfer_comfort.js が付ける）。
+    //   "clip"    … 1本ぶんの中間レコード（12行／人・保険。分析には使わない）
+    //   "final"   … 1参加者1行の本記録（**分析はこれを読む**）
+    //   "session" … 完走レコード（承認の照合はこの1行で済む）
     modality: "transfer_wellbeing",
   },
 };

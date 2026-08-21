@@ -70,9 +70,20 @@ COLUMNS = {
         "resume_count", "resume_gap_s", "version", "config_version",
         "is_test",
     ],
+    # transfer_wellbeing には3種類の行が混ざる。**record_kind で見分けること。**
+    #   ""/"final" … 見え心地の回答（1参加者1行）。**分析はこれを読む**
+    #   "clip"     … 群Cの1本ぶんの中間レコード（12行／人）。最後の1行が落ちたときの
+    #                 保険なので、分析では使わない
+    #   "session"  … 完走レコード（1セッション1行）。較正・検証・群Cのどの集団も送る。
+    #                 **承認の判定はこの行だけで済む**（completion_code・n_trials・
+    #                 duration_s・send_failures が入っている）
+    # 承認作業のときは、まず record_kind == "session" の行から completion_code を引く。
     "transfer_wellbeing": [
         "ts", "participant_id", "worker_id", "completion_code",
-        "phase", "group", "assign_index", "choice", "wellbeing_json",
+        "record_kind", "modality",
+        "phase", "group", "assign_index", "assign_source",
+        "choice", "wellbeing_json",
+        "n_trials", "duration_s", "send_failures", "send_retries",
         "ua", "dpr", "screen", "touch", "refresh_hz", "version", "config_version",
         "is_test",
     ],
@@ -84,7 +95,7 @@ COLUMNS = {
 # 並べ替えの鍵。GAS のシートは追記順（＝おおむね時刻順）なので、それにそろえる。
 SORT_KEYS = {
     "transfer_trials": ("participant_id", "trial_index", "ts"),
-    "transfer_wellbeing": ("participant_id", "ts"),
+    "transfer_wellbeing": ("participant_id", "record_kind", "ts"),
     "transfer_roster": ("phase", "assign_index", "ts"),
 }
 

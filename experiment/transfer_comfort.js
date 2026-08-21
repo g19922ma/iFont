@@ -37,10 +37,14 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.2";
+const VERSION = "c1.3";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
+
+// 研究者モード(?prod なし)のときだけ、タブの名前に内部の呼び名を足す。
+// 参加者が見るタブ名は入口HTMLの <title> のまま（内容だけを表す名前にしてある）。
+if (!(window.PROD && PROD.enabled)) document.title += "［研究者確認：群C］";
 
 const PHASE = (C.roster && C.roster.phase) || "comfort";
 const GROUP = (C.roster && C.roster.group) || "c";
@@ -270,10 +274,14 @@ function sendOnce(backend, envelope) {
     .catch(e => ({ ok: false, why: (e && e.message) || "送信できない" }));
 }
 
+let sendFailures = 0;      // 最後まで送れなかった件数
+let sendRetries = 0;       // 作り直して送れた件数
+
 async function deliverRecord(envelope) {
   const plan = backendPlan("logging", b => (b === "firestore") ? firestoreReady() : gasLoggingReady());
   if (!plan.length) {
     console.warn("[comfort] 記録の送信先が1つも設定されていないので記録が残りません");
+    sendFailures++;
     return false;
   }
   const rc = (CFG.logging && CFG.logging.retry) || {};
@@ -285,7 +293,7 @@ async function deliverRecord(envelope) {
       tries++;
       const r = await sendOnce(step.backend, envelope);
       if (r.ok) {
-        if (tries > 1) console.warn(`[comfort] 記録の送信は ${tries} 回目(${step.backend})で通りました`);
+        if (tries > 1) { sendRetries++; console.warn(`[comfort] 記録の送信は ${tries} 回目(${step.backend})で通りました`); }
         if (BACKEND.dual_write_logging) {
           const other = (step.backend === "firestore") ? "gas" : "firestore";
           const ready = (other === "firestore") ? firestoreReady() : gasLoggingReady();
@@ -296,13 +304,60 @@ async function deliverRecord(envelope) {
       console.warn(`[comfort] 記録の送信(${step.backend}) ${i + 1}/${attempts} 回目が失敗: ${r.why}`);
     }
   }
+  sendFailures++;
   console.error(`[comfort] 記録を ${tries} 回試して送れませんでした`);
   return false;
 }
 
+// 1レコードを送る。**戻り値は「入ったか」の Promise<boolean>**。
+// 群Cは1参加者あたりの本記録が1件しかないので、**この1件が落ちると完了コードが
+// サーバのどこにも残らず、承認の照合ができなくなる**。だから submitAndFinish() は
+// 必ずこの戻り値を待って、成否を見てから完了コードを出す。
 function sendRecord(body) {
-  if (!(window.PROD && PROD.enabled)) return;
-  deliverRecord(serverBody(body));
+  if (!(window.PROD && PROD.enabled)) return Promise.resolve(true);
+  return deliverRecord(serverBody(body));
+}
+
+// ---- 途中の保険（1本ごとの中間レコード） ------------------------------------
+// 7件法に答えるたびに、その1本ぶんだけを1行として送っておく。
+// 群Cは最後の1件にすべてが入る作りなので、そこが落ちると全損になる。
+// 中間レコードがあれば、少なくとも「誰がどこまで答えたか」と完了コードは残る。
+// **分析には使わない**（final の1行が正）。record_kind 列で見分ける。
+//   record_kind = "clip"    … 1本ぶんの中間レコード（12行／人）
+//   record_kind = "final"   … 従来どおりの1参加者1行（これが分析用）
+//   record_kind = "session" … 完走レコード（承認の判定用）
+function sendClipRecord(clip) {
+  const rec = {
+    kind: "transfer_wellbeing",
+    record_kind: "clip",
+    stimulus_id: "comfort|" + GROUP + "|" + clip.family + "|" + clip.presentation,
+    target_char: "-", response_char: "-",
+    modality: (C.logging && C.logging.modality) || "transfer_wellbeing",
+    q_set: "transfer", phase: PHASE, group: GROUP,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE,
+    n_choices: C.families.length,
+    wellbeing_json: JSON.stringify(clip),
+    choice: clip.family + "|" + clip.presentation,
+    version: VERSION, config_version: C.config_version,
+  };
+  // 待たない。画面を止めてまで確かめる価値は無い（本命は最後の1行）。
+  sendRecord(rec).catch(() => {});
+}
+
+// ---- 完走レコード（1セッション1行・承認の判定用） ---------------------------
+function sessionRecord(durS) {
+  return {
+    kind: "transfer_wellbeing",
+    record_kind: "session",
+    modality: "transfer_session",
+    phase: PHASE, group: GROUP,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE,
+    n_trials: (answers && answers.clips) ? answers.clips.length : 0,
+    duration_s: durS,
+    send_failures: sendFailures,
+    send_retries: sendRetries,
+    version: VERSION, config_version: C.config_version,
+  };
 }
 
 // =========================================================================
@@ -778,7 +833,7 @@ function showClip() {
     });
     const cycles = player.cycles();
     stopAnim();
-    answers.clips.push({
+    const one = {
       order: clip.order, family: clip.family, presentation: clip.presentation,
       chars: stage.chars.join(""), condition: C.condition,
       progress_source: player.info.progress_source,
@@ -786,7 +841,9 @@ function showClip() {
       char_px: stage.px, gap_px: stage.gap,
       ratings, cycles, replays,
       view_ms: Date.now() - shownAt,
-    });
+    };
+    answers.clips.push(one);
+    sendClipRecord(one);        // 保険。最後の1件が落ちても全損にしないため
     idx++; saveProgress(); showClip();
   };
 }
@@ -924,14 +981,25 @@ function showChoicePresentation() {
 }
 
 // ---- 送信して終わる -------------------------------------------------------
-// 1参加者1行にまとめて送る（transfer_wellbeing シート。列は群Bのときのまま使える）。
+// 1参加者1行にまとめて送る（transfer_wellbeing。列は群Bのときのまま使える）。
 // 1本ごとの数値は wellbeing_json の中に入る。**分析はこの JSON を開いて読むこと。**
-function submitAndFinish() {
+//
+// ⚠ **この1件は「落ちてもいい記録」ではない。** 群Cは1参加者1レコードなので、
+//   これが入らないと completion_code がサーバのどこにも残らず、参加者が貼った
+//   完了コードを照合できない（＝最後までやった人を非承認にしてしまう）。
+//   そこで次の3段構えにしてある。
+//     1. 送信を**待って**、成功するまで作り直す（logging.retry の3回）
+//     2. それでも駄目なら**完了コードを出す前に警告画面**を出し、手で再送させる
+//     3. 手の再送も駄目なら、コードは出したうえで「控えて問い合わせて」と案内する
+//        （参加者を手ぶらで帰らせない。照合は問い合わせで人が行う）
+//   さらに保険として、1本ごとの中間レコードを sendClipRecord() で送ってある。
+async function submitAndFinish() {
   const durS = Math.round(elapsedPrior + (Date.now() - T0) / 1000);
   answers.duration_s = durS;
   answers.n_clips = clips.length;
   const rec = {
     kind: "transfer_wellbeing",
+    record_kind: "final",
     stimulus_id: "comfort|" + GROUP,
     target_char: "-", response_char: "-",
     modality: (C.logging && C.logging.modality) || "transfer_wellbeing",
@@ -945,9 +1013,90 @@ function submitAndFinish() {
     version: VERSION, config_version: C.config_version,
   };
   if (window.PROD) PROD.saveFracTrial(rec);
-  sendRecord(rec);
-  if (window.PROD && PROD.enabled) PROD.saveState("transfer_" + PHASE, { completed: true, duration_s: durS });
-  screenEl.innerHTML = PROD.completionHTML(durS);
+  // 途中状態は「完了・ただし未送信」にしておく。ここでブラウザを閉じられても、
+  // 開き直したときに**同じ記録をもう一度送れる**ようにするためである
+  // （完了扱いにしないと、最後の2問からやり直させることになる）。
+  saveDoneState(durS, rec);
+
+  showSending();
+  const ok = await sendRecord(rec);
+  if (!ok) { showSendFailure(rec, durS, 0); return; }
+  await finishUp(durS);
+}
+
+// 「終わった」ことと「未送信の記録が残っているか」を端末に控える。
+// pending が null なら送信済み。
+function saveDoneState(durS, pending) {
+  if (window.PROD && PROD.enabled) {
+    PROD.saveState("transfer_" + PHASE,
+      { completed: true, duration_s: durS, pending_rec: pending || null });
+  }
+}
+
+// 本記録が入ったあとの締め。完走レコードを1行送ってから完了コードを出す。
+// 完走レコードが落ちても完了コードは出す（本記録に同じコードが入っているため）。
+async function finishUp(durS) {
+  saveDoneState(durS, null);
+  await sendRecord(sessionRecord(durS)).catch(() => false);
+  screenEl.innerHTML = finishHTML(durS);
+}
+
+function showSending() {
+  screenEl.innerHTML = `<div style="min-height:40vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
+    <h1 style="border:none">回答を送っています…</h1>
+    <p class="muted">この画面のままお待ちください。閉じないでください。</p></div>`;
+}
+
+// 送れなかったときの画面。tries は「再送ボタンを押して失敗した回数」。
+function showSendFailure(rec, durS, tries) {
+  const c = CFG.contact || {};
+  const viaCs = c.via_crowdsourcing ? "、または応募元の募集サイトのメッセージ機能" : "";
+  // 1回も手で再送していないうちは、コードを出さずに再送だけを勧める。
+  // 手の再送も失敗したら、参加者を手ぶらで帰らせないためにコードを出す。
+  const giveUp = tries >= 1;
+  screenEl.innerHTML = `<h1>回答の送信に失敗しました</h1>
+    <p>通信の一時的な不調のことが多いので、<b>下のボタンでもう一度送ってください</b>。
+    このページを閉じると、回答が記録に残りません。</p>
+    <p style="text-align:center;margin-top:16px">
+      <button class="primary" id="resend">回答を送りなおす</button></p>
+    <p class="muted" id="resendNote" style="text-align:center"></p>
+    ${giveUp ? `
+    <div style="margin-top:18px;background:#fff7ed;border:1px solid #f0c98a;border-radius:8px;padding:14px 14px">
+      <p style="margin-top:0">何度試しても送れないため、<b>完了コード</b>をここに出します。
+      <b>このコードと、いまの日付・時刻をお手元に控えて</b>、募集の回答欄に貼って提出してください。</p>
+      <p style="font-size:26px;font-weight:800;letter-spacing:3px;color:#1E2A5E;text-align:center;
+                background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:12px 8px;margin:12px auto;max-width:340px">
+        ${(window.PROD && PROD.completionCode) || ""}</p>
+      <p style="margin-bottom:0">記録側にこのコードが残っていない可能性があります。
+      承認されない場合は、<b>控えたコードと日時</b>を添えて
+      ${c.email || "【要確認：問い合わせ用メールアドレス】"}${viaCs}までご連絡ください。
+      確認のうえ対応します（${c.pi || "【要確認：研究責任者】"}／${c.institution || "津田塾大学 栗原研究室"}）。</p>
+    </div>` : ""}
+    <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
+  const btn = document.getElementById("resend");
+  const note = document.getElementById("resendNote");
+  btn.onclick = async () => {
+    btn.disabled = true; btn.style.opacity = ".5";
+    note.textContent = "送っています…";
+    const ok = await sendRecord(rec);
+    if (ok) { await finishUp(durS); return; }
+    showSendFailure(rec, durS, tries + 1);
+  };
+}
+
+// 最後の画面。**研究者モードでは完了コードを出さない**。
+// 研究者モードの完了コードは、送信もされず照合もできない使い捨ての12桁で、
+// 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
+function finishHTML(durS) {
+  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS);
+  return `<div style="text-align:center;padding:24px 10px">
+    <h1>動作確認が終わりました</h1>
+    <p class="muted">研究者向け動作確認モード（URL に <code>?prod=1</code> が無い）です。</p>
+    <p><b>完了コードは出ません。</b>このモードでは記録を送らないので、
+    コードを出しても記録側に残らず、照合できないためです。</p>
+    <p class="muted">v${VERSION} ／ ${PHASE}フェーズ 集団 ${GROUP} ／
+    答えた本数 ${(answers && answers.clips) ? answers.clips.length : 0} 本 ／ 所要 ${durS} 秒 ／
+    送信できなかった記録 ${sendFailures} 件・作り直して送れた記録 ${sendRetries} 件</p></div>`;
 }
 
 // ---- 見え方の確認 ---------------------------------------------------------
@@ -970,6 +1119,26 @@ function visionCheck() {
   document.getElementById("go3").onclick = () => { resuming ? showClip() : intro(); };
 }
 
+// 同意画面に足す3項目（データの保管期間・同意の撤回・問い合わせ先）。
+// **transfer.js の同名の関数と同じ中身にしておくこと**（片方だけ直さない）。
+// 値は transfer_config.js の contact にあり、掲載前にユーザーが【要確認】を埋める。
+function consentExtraHTML() {
+  const c = CFG.contact || {};
+  const viaCs = c.via_crowdsourcing
+    ? "、または応募元の募集サイトのメッセージ機能" : "";
+  return `
+    <li><b>データの保管</b>：${c.retention || "【要確認：保管期間】"}
+        保管するのは回答と技術情報だけで、個人を特定できる情報は含みません。</li>
+    <li><b>同意の撤回</b>：この調査は<b>無記名</b>で行うため、回答とあなたご本人を
+        結びつける情報を研究者は持っていません。参加をやめたい場合は、
+        完了コードが表示される前ならブラウザを閉じるだけで結構です（記録は分析に使いません）。
+        提出後に削除をご希望のときは、<b>お手元の完了コード</b>を添えて下記へご連絡ください。
+        そのコードで記録を特定できた場合にかぎり削除します。</li>
+    <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
+        （${c.institution || "津田塾大学 栗原研究室"}）／
+        ${c.email || "【要確認：メールアドレス】"}${viaCs}へご連絡ください。</li>`;
+}
+
 // 同意画面の文言を、この実験の方針にそろえる（transfer.js と同じ手当て）。
 // prod_common.js は実験1と共用なので触らず、描かれたあとにこのページの中だけで直す。
 function tidyConsentScreen() {
@@ -984,6 +1153,8 @@ function tidyConsentScreen() {
       "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
     resume.remove();
   }
+  const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
+  if (ul) ul.insertAdjacentHTML("beforeend", consentExtraHTML());
 }
 
 // =========================================================================
@@ -1043,7 +1214,9 @@ async function startSession() {
   if (!clips.length) clips = buildClips();
   if (!answers) answers = { clips: [], choice_family: "", choice_presentation: "",
                             choice_family_order: [], choice_pres_order: [] };
-  PROD.consentScreen(screenEl, "文字の見え心地", 4, visionCheck, false,
+  // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、
+  // 出すようになったときに嘘にならないよう、実測見込みの7分を渡しておく）。
+  PROD.consentScreen(screenEl, "文字の見え心地", 7, visionCheck, false,
     { noEnvNote: true,
       desc: "日本語のかな1文字が現れる様子について、続けて見ていられるかを調べる研究です" });
   tidyConsentScreen();
@@ -1060,7 +1233,17 @@ async function startSession() {
                        gapS: (st.resume_gap_s || 0) + Math.round((Date.now() - st.saved_at) / 1000) };
       }
       if (st && st.completed) {
-        screenEl.innerHTML = PROD.completionHTML(st.duration_s || 0);
+        const durS = st.duration_s || 0;
+        // 前回、記録を送れないまま閉じられていたら、開き直しのついでに送り直す。
+        // 送れていれば pending_rec は null なので、そのまま完了画面を出す。
+        if (st.pending_rec) {
+          showSending();
+          const ok = await sendRecord(st.pending_rec);
+          if (!ok) { showSendFailure(st.pending_rec, durS, 1); return; }
+          await finishUp(durS);
+          return;
+        }
+        screenEl.innerHTML = finishHTML(durS);
         return;
       }
       if (st && st.session_v === SESSION_V && Array.isArray(st.clips) && st.clips.length) {

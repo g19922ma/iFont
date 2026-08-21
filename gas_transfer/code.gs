@@ -514,22 +514,38 @@ function handleTransferTrial(sheetId, body) {
   return out({status: "ok", correct: correct});
 }
 
-// 見え心地の評価(群Bの最後)。1参加者1行。clip ごとの7件法は JSON のまま入れる
+// 見え心地の評価と、完走レコード。どちらも1行ずつ。clip ごとの7件法は JSON のまま入れる
 // (方式×代表字の本数が設定で変わるため、列を固定しない)。
+//
+// このシートには3種類の行が入る。**record_kind 列で見分ける。**
+//   ""/"final" … 見え心地の回答(1参加者1行)。**分析はこれを読む**
+//   "clip"     … 群Cの1本ぶんの中間レコード(12行/人)。最後の1行が落ちたときの保険
+//   "session"  … 完走レコード(1セッション1行)。**承認の判定はこの行だけで済む**
+//                (completion_code・n_trials・duration_s・send_failures が入っている)
+//
+// ⚠ すでに古い列で作られたシートには、新しい列(record_kind 以降)の見出しが無い。
+//   GAS へ切り戻すときは、シートを作り直すか、見出し行に手で足すこと。
 function handleTransferWellbeing(sheetId, body) {
   const ss = SpreadsheetApp.openById(sheetId);
   let s = ss.getSheetByName("transfer_wellbeing");
   if (!s) {
     s = ss.insertSheet("transfer_wellbeing");
     s.appendRow(["ts", "participant_id", "worker_id", "completion_code",
-      "phase", "group", "assign_index", "choice", "wellbeing_json",
+      "record_kind", "modality",
+      "phase", "group", "assign_index", "assign_source",
+      "choice", "wellbeing_json",
+      "n_trials", "duration_s", "send_failures", "send_retries",
       "ua", "dpr", "screen", "touch", "refresh_hz", "version", "config_version",
       "is_test"]);
   }
   s.appendRow([new Date(body.ts || Date.now()),
     body.participant_id || "", body.worker_id || "", body.completion_code || "",
+    body.record_kind || "", body.modality || "",
     body.phase || "", body.group || "", blank(body.assign_index),
+    body.assign_source || "",
     body.choice || "", body.wellbeing_json || "",
+    blank(body.n_trials), blank(body.duration_s),
+    blank(body.send_failures), blank(body.send_retries),
     blank(body.ua), blank(body.dpr), blank(body.screen),
     (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
     body.version || "", body.config_version || "",

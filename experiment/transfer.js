@@ -2,12 +2,15 @@
 // 転写検証実験 v3.0 (共通スクリプト。入口は transfer_calib.html / transfer_test.html)
 //   計画書: project/実験計画書_転写検証.md (第2稿。特に4章「実験の構成」と10章「実装(差分)」)
 //
-//   参加者の集団は4つある。
+//   参加者の集団は5つある。**このファイルが受け持つのは、そのうち4つ**である。
 //     acal   … 較正(聴覚)。音声を打ち切って聞かせ、かな表から回答してもらう
 //     aprime … 較正(視覚)。4方式の基準アニメを、進み具合 s% で打ち切る
 //     atest  … 検証(聴覚)。acal と全く同じ課題を、別の人にもう一度
 //     b      … 検証(視覚)。生成した進み方 s(t) のアニメを t ms で打ち切る
-//              ＋ 識別課題が全部終わったあとに見え心地の評価
+//              (**識別課題だけで終わる**。見え心地の評価は 2026-08-21 に切り離した)
+//     c      … 見え心地(独立の実験)。**このファイルではなく**
+//              experiment/transfer_comfort.html / transfer_comfort.js が受け持つ。
+//              群Bの末尾で聞く旧方式に戻したいときだけ、下の wellbeing を true にする
 //
 //   ただし**入口のURLは2つだけ**にしてある(同時期に走る集団を1つの掲載にまとめ、
 //   サイトの中で自動的に振り分ける)。クラウドソーシングでは別々の掲載どうしで
@@ -42,9 +45,17 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.4";
+const VERSION = "3.5";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
+
+// 研究者モード(?prod なし)のときだけ、タブの名前に内部の呼び名を足す。
+// 参加者が見るタブ名は、入口HTMLの <title> のまま「内容だけを表す名前」にしてある
+// （較正フェーズと検証フェーズは、参加者から見れば同じ課題である。
+//   「前半／後半」と書くと、片方しか参加しない人に両方あるかのように読まれる）。
+if (!(window.PROD && PROD.enabled)) {
+  document.title += "［研究者確認：" + ((window.TRANSFER_PAGE || {}).phase || "?") + "フェーズ］";
+}
 
 // ---- 集団(group) ----------------------------------------------------------
 // mode      : "audio" = 聴覚課題 / "visual" = 視覚課題
@@ -386,9 +397,41 @@ async function deliverRecord(envelope) {
 }
 
 // 1レコードを設定ファイルの保存先へ渡す。研究者モード(?prod なし)では渡さない。
+// **戻り値は「入ったか」の Promise<boolean>**。1問1行の記録は待たずに投げてよいが、
+// 完走レコード(sendSessionRecord)のように「入ったことを確かめてから次へ進みたい」
+// 呼び出しがあるので、必ず Promise を返す形にしてある。
 function sendRecord(body) {
-  if (!(window.PROD && PROD.enabled)) return;
-  deliverRecord(serverBody(body));
+  if (!(window.PROD && PROD.enabled)) return Promise.resolve(true);
+  return deliverRecord(serverBody(body));
+}
+
+// ---- 完走レコード（1セッション1行） ----------------------------------------
+// **承認の判定をこの1行だけで済ませるためのもの。** 参加者が最後の画面
+// （完了コードが出る画面）に到達したときに1行だけ送る。
+//   ・completion_code … 参加者が募集サイトの回答欄に貼る12桁。これで照合する
+//   ・n_trials        … その人が答えた問題数（練習を除く）
+//   ・duration_s      … 同意画面から完了コードまでの秒数
+//   ・send_failures   … 最後まで送れなかった記録の件数（0 なら取りこぼし無し）
+//   ・send_retries    … 作り直して送れた件数（サーバの調子を後から見るため）
+// 1問1行の記録（transfer_trials）は途中で落ちうるので、「完走したか」を
+// そちらの行数から推定すると、通信が悪かった人を非承認にしてしまう。
+//
+// 置き場所は既存の transfer_wellbeing コレクション。**record_kind 列で見分ける**
+// （"session" = この完走レコード / "" = 従来の見え心地の回答）。
+// 新しいコレクションを作るとルールの置き直し（firebase deploy）が要るので避けた。
+function sessionRecord(durS, nTrials) {
+  return {
+    kind: "transfer_wellbeing",
+    record_kind: "session",
+    modality: "transfer_session",
+    phase: PHASE, group: GROUP,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE,
+    n_trials: nTrials,
+    duration_s: durS,
+    send_failures: sendFailures,
+    send_retries: sendRetries,
+    version: VERSION, config_version: CFG.config_version,
+  };
 }
 
 // ---- 回答のかな表 ---------------------------------------------------------
@@ -1406,10 +1449,38 @@ function afterTrials() {
   showResults();
 }
 
-function showResults() {
+async function showResults() {
   const durS = Math.round(elapsedPrior + (Date.now() - T0) / 1000);
   if (window.PROD && PROD.enabled) PROD.saveState("transfer_" + PHASE, { completed: true, duration_s: durS });
-  screenEl.innerHTML = PROD.completionHTML(durS);
+  // 完走レコードを1行送る（承認の判定はこの行だけで済む）。
+  // 1問1行の記録はここまでに全部投げてあるので、失敗の件数もここで確定している。
+  // **これが送れなくても完了コードは出す。** 1問1行の記録に同じ完了コードが
+  // 入っているので、照合の手がかりが完全に消えるわけではないためである。
+  await sendRecord(sessionRecord(durS, mainDone()));
+  screenEl.innerHTML = finishHTML(durS);
+}
+
+// 最後の画面。**研究者モードでは完了コードを出さない**。
+// 研究者モードの完了コードは、送信もされず照合もできない使い捨ての12桁で、
+// 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
+function finishHTML(durS) {
+  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS);
+  return `<div style="text-align:center;padding:24px 10px">
+    <h1>動作確認が終わりました</h1>
+    <p class="muted">研究者向け動作確認モード（URL に <code>?prod=1</code> が無い）です。</p>
+    <p><b>完了コードは出ません。</b>このモードでは記録を送らないので、
+    コードを出しても記録側に残らず、照合できないためです。</p>
+    <p class="muted">v${VERSION} ／ ${PHASE}フェーズ 集団 ${GROUP} ／
+    答えた問題 ${mainDone()} 問 ／ 所要 ${durS} 秒 ／
+    送信できなかった記録 ${sendFailures} 件・作り直して送れた記録 ${sendRetries} 件</p></div>`;
+}
+
+// 出題を1回だけ組み立てる。**「進め方」の画面で問題数を出すために、本番へ入る前に
+// 組み立てておく**（推定式で数えると実装とずれる。→ buildTrialsNow の注記）。
+let builtTrials = null;
+function buildTrialsNow() {
+  builtTrials = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
+  return builtTrials;
 }
 
 function start() {
@@ -1423,7 +1494,8 @@ function start() {
     if (G.mode === "audio") prefetchStims(trials);
     return runTrial();
   }
-  trials = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
+  trials = builtTrials || buildTrialsNow();
+  builtTrials = null;
   results = []; ti = 0;
   if (G.mode === "audio") prefetchStims(trials);
   showTryGate();
@@ -1513,21 +1585,31 @@ function intro() {
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>。
        <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。${G.mode === "audio" ? "音量の確認だけ" : "見え方の確認だけ"}もう一度お願いします。</span></p>` : "";
-  const nTarget = MAX_TARGET_TRIALS > 0 ? MAX_TARGET_TRIALS
-    : TARGETS.length * (G.mode === "audio" ? audioGates("_default").length
-                                           : gatesFor(CFG.visual.gates_ms, "_default").length);
-  const approx = Math.round(nTarget * (1 + CFG.design.filler_ratio + CFG.design.check_full_rate + CFG.design.check_floor_rate));
+  // 問題数は**実際に組み立てた出題の配列を数えて**出す。
+  // 2026-08-21 まではここで推定式を立てていたが、実装と3か所ずれていて、
+  // 画面には「約91問」と出るのに本当は 108/134/94 問だった（最大43問のずれ）。
+  //   ① 聴覚の「全長」の1点（audio.include_full_gate）を数えていなかった
+  //   ② 群A′は progress_pct_levels（8水準）で出すのに visual.gates_ms（7点）を見ていた
+  //   ③ 確認問題の割合を「ターゲットのみ」に掛けていたが、
+  //      実装は「ターゲット＋まぎれ字」に掛けている
+  // **式を直すのではなく、数える対象を実物にした。** 式は必ずまた実装から遅れる。
+  const nQuestions = (resumeState && resumeState.trials)
+    ? resumeState.trials.filter(t => !t.practice).length
+    : buildTrialsNow().length;
   screenEl.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}
     <p>ひらがな1文字の${G.mode === "audio" ? "読み上げを聞いて" : "表示を見て"}、
     どの文字かを<b>かなの表から選ぶ</b>課題です。</p>
-    <p style="font-size:15px">問題数：約${approx}問</p>
+    <p style="font-size:15px">問題数：<span id="nq">${nQuestions}</span>問</p>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音量の確認" : "見え方の確認"}</button></p>
     ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>`}
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "津田塾大学 栗原研究室" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
   const shortRun = document.getElementById("shortRun");
   if (shortRun) shortRun.addEventListener("change", () => {
     MAX_TARGET_TRIALS = shortRun.checked ? CFG.design.short_run_trials : (Number(CFG.design.max_target_trials) || 0);
+    // 上限を変えたら出題を組み直し、画面の問題数もその場で合わせる
+    // （組み立て済みのものを使い回すと、表示と実際がまた食い違う）。
+    document.getElementById("nq").textContent = buildTrialsNow().length;
   });
   document.getElementById("go").onclick = (G.mode === "audio") ? volumeCheck : visionCheck;
 }
@@ -1587,12 +1669,35 @@ function visionCheck() {
   document.getElementById("go3").onclick = start;
 }
 
+// 同意画面に足す3項目（データの保管期間・同意の撤回・問い合わせ先）。
+// docs/informed_consent.md が「同意画面に載せること」と定めているのに、
+// prod_common.js の同意画面に入っていない項目である。値は transfer_config.js の
+// contact に置いてあり、**掲載前にユーザーが【要確認】を実際の値へ書き換える**。
+// 群C（transfer_comfort.js）にも同じ関数を写してある。片方だけ直さないこと。
+function consentExtraHTML() {
+  const c = CFG.contact || {};
+  const viaCs = c.via_crowdsourcing
+    ? "、または応募元の募集サイトのメッセージ機能" : "";
+  return `
+    <li><b>データの保管</b>：${c.retention || "【要確認：保管期間】"}
+        保管するのは回答と技術情報だけで、個人を特定できる情報は含みません。</li>
+    <li><b>同意の撤回</b>：この調査は<b>無記名</b>で行うため、回答とあなたご本人を
+        結びつける情報を研究者は持っていません。参加をやめたい場合は、
+        完了コードが表示される前ならブラウザを閉じるだけで結構です（記録は分析に使いません）。
+        提出後に削除をご希望のときは、<b>お手元の完了コード</b>を添えて下記へご連絡ください。
+        そのコードで記録を特定できた場合にかぎり削除します。</li>
+    <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
+        （${c.institution || "津田塾大学 栗原研究室"}）／
+        ${c.email || "【要確認：メールアドレス】"}${viaCs}へご連絡ください。</li>`;
+}
+
 // 同意画面の文言を、この実験の方針(同じことは1か所だけ・お願い口調の環境注意は書かない)に
 // そろえる。**prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
-// ページの中だけで直す。直すのは次の2つ。
+// ページの中だけで直す。直すのは次の3つ。
 //   1. 見出し「研究へのご協力のお願い」を消す(本文から始める)
 //   2. 「途中再開」の項目を「記録するもの」の項目にたたむ
 //      (再開した回数と中断していた時間は"記録するもの"なので、そこに書くのが素直)
+//   3. 保管期間・撤回の方法・問い合わせ先の3項目を足す(倫理審査で要る項目)
 function tidyConsentScreen() {
   const h1 = screenEl.querySelector("h1");
   if (h1 && h1.textContent.indexOf("ご協力") >= 0) h1.remove();
@@ -1605,6 +1710,8 @@ function tidyConsentScreen() {
       "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
     resume.remove();
   }
+  const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
+  if (ul) ul.insertAdjacentHTML("beforeend", consentExtraHTML());
 }
 
 // =========================================================================
@@ -1680,7 +1787,10 @@ async function startSession() {
   //   聴覚(acal/atest): 再生機器の申告あり → このあと「音量の確認」だけ
   //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
   const isAudio = (G.mode === "audio");
-  PROD.consentScreen(screenEl, G.task_label, 12, intro, isAudio,
+  // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、
+  // 出すようになったときに嘘にならないよう、集団ごとの見込みを渡す。
+  // 聴覚108問≒11.5分／視覚134問≒8.5分。一般の方はさらに1〜2分延びる）。
+  PROD.consentScreen(screenEl, G.task_label, isAudio ? 12 : 9, intro, isAudio,
     { noEnvNote: true, allowWireless: true,
       desc: isAudio
         ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"

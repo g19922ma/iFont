@@ -5,8 +5,14 @@
 <!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
 <meta name="robots" content="noindex,nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>かなの課題（後半の実験）</title>
-<link rel="stylesheet" href="transfer.css?v=3.4">
+<!--
+  タブに出る名前。較正フェーズ（transfer_calib.html）と**同じ名前でよい**。
+  参加者から見れば同じ課題であり、片方にしか参加しないためである。
+  研究者向けの見分けは、?prod=1 が無いときに transfer.js が足す
+  「［研究者確認：testフェーズ］」で行う。
+-->
+<title>ひらがなの聞き取り・見え方の課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.5">
 </head>
 <body>
 <div id="app"><div class="card" id="screen"></div></div>
@@ -14,15 +20,16 @@
   転写検証実験・検証フェーズの入口。
   このページを開いた人は、サイトの中で自動的に次のどちらかの集団に割り当てられる。
     atest … 音声を途中まで聞いて答える課題(聴覚の再測定・acal と同じ課題)
-    b     … 生成したアニメーションを途中まで見て答える課題 ＋ 最後に見え心地の質問
-  前半(transfer_calib.html)に参加した人は、サーバの名簿と照合してお断りする
-  (4つの集団は互いに独立でなければならないため)。
+    b     … 生成したアニメーションを途中まで見て答える課題(**識別課題だけで終わる**。
+            見え心地の質問は 2026-08-21 に群C・transfer_comfort.html へ切り出した)
+  較正フェーズ(transfer_calib.html)と群C(transfer_comfort.html)に参加した人は、
+  サーバの名簿と照合してお断りする(5つの集団は互いに独立でなければならないため)。
   ?v= はJS側の VERSION と揃える(キャッシュ対策)。
 -->
 <script>window.TRANSFER_PAGE = { phase: "test" };</script>
-<script src="prod_common.js?v=3.4"></script>
-<script src="transfer_config.js?v=3.4"></script>
-<script src="transfer_firestore.js?v=3.4"></script>
-<script src="transfer.js?v=3.4"></script>
+<script src="prod_common.js?v=3.5"></script>
+<script src="transfer_config.js?v=3.5"></script>
+<script src="transfer_firestore.js?v=3.5"></script>
+<script src="transfer.js?v=3.5"></script>
 </body>
 </html>
