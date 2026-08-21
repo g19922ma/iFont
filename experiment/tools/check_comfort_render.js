@@ -109,26 +109,67 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
 
 // ---- 3. 設定の筋 ----------------------------------------------------------
 {
-  const fams = Object.keys({ fade: 1, reveal: 1, blur: 1, wipe: 1 });
+  const known = { fade: 1, reveal: 1, blur: 1, wipe: 1 };
   for (const f of C.families) {
-    if (fams.indexOf(f) < 0) bad(`transfer_comfort_config.js の families に知らない方式 "${f}" がある`);
+    if (!known[f]) bad(`transfer_comfort_config.js の families に知らない方式 "${f}" がある`);
     if (!CFG.visual.families[f]) bad(`transfer_config.js の visual.families に "${f}" の描画パラメータが無い`);
   }
-  for (const ch of C.chars) {
+  const chars = [...new Set([C.single_char].concat(C.sequence))];
+  for (const ch of chars) {
     if (CFG.targets.indexOf(ch) < 0) {
-      bad(`代表字 "${ch}" が transfer_config.js の targets に入っていない` +
+      bad(`使う字 "${ch}" が transfer_config.js の targets に入っていない` +
           `(群Bで見せていない字を見え心地だけで聞くことになる)`);
     }
     const png = path.join(EXP, CFG.visual.base_dir, ch + ".png");
-    if (!fs.existsSync(png)) bad(`代表字 "${ch}" の画像 ${path.relative(EXP, png)} が無い`);
+    if (!fs.existsSync(png)) bad(`"${ch}" の画像 ${path.relative(EXP, png)} が無い`);
   }
-  const sample = (C.choice && C.choice.sample_char) || C.chars[0];
-  if (C.chars.indexOf(sample) < 0) bad(`choice.sample_char "${sample}" が chars に入っていない`);
-  const n = C.chars.length * C.families.length;
-  ok(`提示は ${C.chars.length}字 × ${C.families.length}方式 = ${n}本` +
-     `（7件法${C.items.length}項目 → ${n * C.items.length}回の回答 ＋ 最後の4択1問）`);
-  // 所要のめやす。1本あたり12秒(初回だけ25秒)＋最後の4択40秒＋前置き90秒で見積もる。
-  const est = 90 + 25 + (n - 1) * 12 + 40;
+  const knownPres = { single: 1, row5: 1, swap5: 1 };
+  for (const p of C.presentations) {
+    if (!knownPres[p]) bad(`presentations に知らない提示のしかた "${p}" がある`);
+    if (!C.presentation_labels[p]) bad(`presentation_labels に "${p}" の説明が無い`);
+  }
+  if (C.sequence.length < 2) bad("sequence が2字未満。5字続ける条件が作れない");
+  for (const k of (C.choice.presentation.sample_options || [])) {
+    if (C.presentations.indexOf(k) < 0) {
+      bad(`最後の質問2の選択肢 "${k}" を、本編で1度も見せていない`);
+    }
+  }
+
+  // ---- 間合いの検算 --------------------------------------------------------
+  // 「前の字が現れきってから inter_char_gap_ms 空けて次が始まる」ようになっているか。
+  // 視覚的マスキング（前後の刺激が互いの処理を邪魔する現象）が起きるのは、
+  // 字と字の**開始どうしの間隔（SOA）が200ミリ秒以下**とされる。そこから十分
+  // 離れていることを機械で確かめる（近づけると、見え心地ではなく干渉を測ってしまう）。
+  const anim = CFG.visual.base_anim_ms;
+  const gap = C.timing.inter_char_gap_ms;
+  const soa = anim + gap;
+  if (soa < 400) {
+    bad(`字と字の開始の間隔(SOA)が ${soa}ms しかない。視覚的マスキングが起きる` +
+        `時間帯(200ms以下)に近すぎる。inter_char_gap_ms を増やすこと`);
+  } else {
+    ok(`字と字の開始の間隔(SOA) ${soa}ms ＝ アニメ${anim}ms ＋ 空き${gap}ms` +
+       `（干渉が起きる時間帯200ms以下の ${(soa / 200).toFixed(1)} 倍）`);
+  }
+  if (C.layout.gap_ratio < 1) {
+    bad(`layout.gap_ratio が ${C.layout.gap_ratio}。横並びで字が近すぎる` +
+        `（隣の字が邪魔をする crowding の対策として、字間は1文字分以上あける）`);
+  } else {
+    ok(`横並びの字間は文字幅の ${C.layout.gap_ratio} 倍（crowding 対策）`);
+  }
+
+  // ---- 本数と所要のめやす --------------------------------------------------
+  const n = C.presentations.length * C.families.length;
+  ok(`提示は ${C.families.length}方式 × ${C.presentations.length}通りの出し方 = ${n}本` +
+     `（7件法${C.items.length}項目 → ${n * C.items.length}回の回答 ＋ 最後の2問）`);
+  const cycSingle = anim + C.timing.single.hold_ms + C.timing.single.gap_ms;
+  const cycSeq = C.sequence.length * soa + C.timing.sequence.hold_ms + C.timing.sequence.gap_ms;
+  ok(`1周の長さ: 1字条件 ${(cycSingle / 1000).toFixed(1)}秒 ／ ` +
+     `5字条件 ${(cycSeq / 1000).toFixed(1)}秒`);
+  // 所要 = 前置き100秒 ＋ 1本目の慣れ15秒 ＋ 各本(1周見る時間 ＋ 回答12秒)
+  //        ＋ 最後の2問70秒 ＋ 完了画面15秒。
+  const nSingle = (C.presentations.indexOf("single") >= 0) ? C.families.length : 0;
+  const nSeq = n - nSingle;
+  const est = 100 + 15 + nSingle * (cycSingle / 1000 + 12) + nSeq * (cycSeq / 1000 + 12) + 70 + 15;
   ok(`所要のめやす: 約 ${Math.round(est / 60 * 10) / 10} 分（同意から完了コードまで）`);
 }
 
