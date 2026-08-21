@@ -42,7 +42,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.3";
+const VERSION = "3.4";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -90,6 +90,47 @@ let MAX_TARGET_TRIALS = Number(CFG.design.max_target_trials) || 0;
 // 検証フェーズでは、較正フェーズの名簿に載っている人を断る(4集団は互いに独立)。
 // 問い合わせ先・仕様は gas/transfer_patch.md。
 const ROSTER = CFG.roster || {};
+
+// ---- 保存基盤(Firestore / GAS)の選び方 ------------------------------------
+// 名簿と記録の置き場所は設定で切り替える(transfer_config.js の backend)。
+// 主が全部だめだったときは、もう一方も試す(fallback)。**両方だめのときだけ**
+// お断り画面へ行く。
+//
+// 2026-08-21 に Firestore を主にした。GAS は応答の本体を
+// script.googleusercontent.com へリダイレクトして返す作りで、この中継が一過性で
+// 失敗して HTML を返すことがあるため(実機で発生)。Firestore は REST を直接叩く。
+// **切り戻しは backend.roster と backend.logging を "gas" に戻すだけでよい。**
+const BACKEND = CFG.backend || {};
+const FSTORE = window.TRANSFER_FIRESTORE || null;
+
+function firestoreReady() { return !!(FSTORE && FSTORE.enabled()); }
+function gasRosterReady() { return !!ROSTER.status_url; }
+function gasLoggingReady() { return !!(CFG.logging && CFG.logging.submit_url); }
+
+// 「どの順で試すか」の段取りを作る。使えない基盤は最初から外す。
+// 戻り値は [{backend:"firestore"|"gas", primary:true|false}, …]。
+function backendPlan(which, ready) {
+  const primary = (BACKEND[which] === "gas") ? "gas" : "firestore";
+  const order = (BACKEND.fallback === false)
+    ? [primary]
+    : [primary, primary === "gas" ? "firestore" : "gas"];
+  return order
+    .filter(b => ready(b))
+    .map((b, i) => ({ backend: b, primary: i === 0 && b === primary }));
+}
+
+// 記録の assign_source 列に何と書くか。あとから
+// 「どの基盤で・何回目に通ったか」を数えられるようにしておく。
+//   firestore / firestore:retry2 … Firestore が主で通った
+//   server / server:retry2       … GAS が主で通った(2026-08-20 までと同じ表記)
+//   gas-fallback / …             … Firestore がだめで GAS に落ちて通った
+function sourceLabel(step, tries) {
+  const base = (step.backend === "gas")
+    ? (step.primary ? "server" : "gas-fallback")
+    : (step.primary ? "firestore" : "firestore-fallback");
+  return tries > 1 ? base + ":retry" + tries : base;
+}
+
 function assignCacheKey(pid) { return "ifont_transfer_assign_" + PHASE + "_" + pid; }
 function readAssignCache(pid) {
   try { return JSON.parse(localStorage.getItem(assignCacheKey(pid)) || "null"); } catch (e) { return null; }
@@ -141,6 +182,37 @@ async function rosterQueryOnce(pid) {
   return { kind: "fail", why: "集団が読み取れない応答" };
 }
 
+// 名簿の問い合わせ1回ぶん(Firestore 版)。戻り値の形は GAS 版とそろえてある。
+//
+// 中でやっていることは transfer_firestore.js の resolveAssignment を見ること。
+// 要点は3つ。
+//   ・開き直した人には、名簿にある**前と同じ集団・同じ連番**を返す
+//   ・断るべきフェーズに出ていた人は、採番する前に断る(番号を無駄にしない)
+//   ・採番は Firestore の increment 変換なので、同時に来ても番号が衝突しない
+async function rosterQueryOnceFirestore(pid) {
+  const r = await FSTORE.resolveAssignment({
+    phase: PHASE,
+    groups: PHASE_GROUPS,
+    // 「このフェーズに来た人が、過去にどのフェーズに出ていたら断るか」の表。
+    blockers: (CFG.phase_blocks && CFG.phase_blocks[PHASE]) || [],
+    pid: pid,
+    worker_id: (window.PROD && PROD.workerId) || "",
+  });
+  if (r.kind === "blocked") return { kind: "blocked", reason: r.reason };
+  if (r.kind === "ok") {
+    if (PHASE_GROUPS.indexOf(r.group) < 0) {
+      return { kind: "fail", why: "名簿の集団が読めない(" + r.group + ")" };
+    }
+    return { kind: "ok", j: { group: r.group, assign_index: r.assign_index } };
+  }
+  return { kind: "fail", why: r.why || "名簿に問い合わせられない" };
+}
+
+// 基盤を選んで1回問い合わせる。
+function rosterQueryOnceVia(backend, pid) {
+  return (backend === "firestore") ? rosterQueryOnceFirestore(pid) : rosterQueryOnce(pid);
+}
+
 // 直近の問い合わせの様子。研究者向けの表示と、記録の assign_source に使う。
 let rosterTries = 0;
 let rosterLastWhy = "";
@@ -166,34 +238,45 @@ async function resolveAssignment() {
   if (cached && PHASE_GROUPS.indexOf(cached.group) >= 0) {
     return { group: cached.group, assign_index: cached.assign_index, source: "cache" };
   }
-  if (ROSTER.status_url) {
+  // 設定した基盤を順に試す(既定では Firestore → だめなら GAS)。
+  // それぞれの基盤の中で、間を空けて何度か作り直す。
+  const plan = backendPlan("roster", b => (b === "firestore") ? firestoreReady() : gasRosterReady());
+  if (plan.length) {
     const rc = ROSTER.retry || {};
     const attempts = Math.max(1, Number(rc.attempts) || 1);
+    const total = attempts * plan.length;
     rosterTries = 0;
     rosterLastWhy = "";
-    for (let i = 0; i < attempts; i++) {
-      if (i > 0) await sleep(backoffMs(rc, i - 1));
-      rosterTries = i + 1;
-      if (i > 0 && typeof onRosterRetry === "function") onRosterRetry(rosterTries, attempts);
-      const res = await rosterQueryOnce(pid);
-      if (res.kind === "ok") {
-        const a = { group: res.j.group, assign_index: Number(res.j.assign_index) || 0 };
-        writeAssignCache(pid, a);
-        if (rosterTries > 1) {
-          console.warn(`[transfer] 名簿サーバへの問い合わせは ${rosterTries} 回目で成功しました`);
+    for (const step of plan) {
+      for (let i = 0; i < attempts; i++) {
+        if (rosterTries > 0) await sleep(backoffMs(rc, i - 1));
+        rosterTries++;
+        if (rosterTries > 1 && typeof onRosterRetry === "function") onRosterRetry(rosterTries, total);
+        const res = await rosterQueryOnceVia(step.backend, pid);
+        if (res.kind === "ok") {
+          const a = { group: res.j.group, assign_index: Number(res.j.assign_index) || 0 };
+          writeAssignCache(pid, a);
+          if (rosterTries > 1) {
+            console.warn(`[transfer] 名簿への問い合わせは ${rosterTries} 回目(${step.backend})で成功しました`);
+          }
+          // どの基盤で・何回目に通ったかを記録に残す
+          // (列を増やさずに済むよう assign_source に書く)。
+          return Object.assign(a, { source: sourceLabel(step, i + 1) });
         }
-        // 何回目で通ったかを記録に残す(列を増やさずに済むよう assign_source に書く)。
-        return Object.assign(a, { source: rosterTries > 1 ? "server:retry" + rosterTries : "server" });
+        // 断られたのは「サーバが答えた結果」なので、作り直しても結論は変わらない。
+        if (res.kind === "blocked") return { blocked: true, reason: res.reason };
+        rosterLastWhy = res.why;
+        console.warn(`[transfer] 名簿(${step.backend})への問い合わせ ${i + 1}/${attempts} 回目が失敗: ${res.why}`);
       }
-      if (res.kind === "blocked") return { blocked: true, reason: res.reason };
-      rosterLastWhy = res.why;
-      console.warn(`[transfer] 名簿サーバへの問い合わせ ${rosterTries}/${attempts} 回目が失敗: ${res.why}`);
+      if (plan.length > 1 && step === plan[0]) {
+        console.warn(`[transfer] ${step.backend} がだめだったので、もう一方の基盤に切り替えます`);
+      }
     }
-    console.warn(`[transfer] 名簿サーバへ ${attempts} 回問い合わせて、すべて失敗しました`);
+    console.warn(`[transfer] 名簿へ ${total} 回問い合わせて、すべて失敗しました`);
     // サーバが答えないとき: 名簿の照合はできないが、課題は続けられるようにする。
     // (重複参加の除外は、あとから回答データの参加者IDを突き合わせて行う。)
     if (ROSTER.require_server) {
-      return { blocked: true, reason: "server_unavailable", why: rosterLastWhy, tries: attempts };
+      return { blocked: true, reason: "server_unavailable", why: rosterLastWhy, tries: total };
     }
   }
   const h = hashIndexFrom(pid);
@@ -239,46 +322,73 @@ function serverBody(body) {
   }, body);
 }
 
-// 封筒を GAS ウェブアプリへ渡す。応答は読まない(no-cors)。
-// GAS は許可の事前確認(preflight)が要らない text/plain で受ける。
+// 封筒を保存先へ渡す。名簿の問い合わせと同じ一過性の失敗に備えて、
+// **間を空けて作り直す**。それでもだめなら、もう一方の基盤へ回す。
 //
-// 名簿の問い合わせと同じ一過性の失敗に備えて、**間を空けて作り直す**。
-// no-cors では応答を読めないので、判断できるのは「送信そのものが失敗したか」だけ
-// (通信が切れている・宛先に届かない)。サーバ側で落ちた場合はここでは分からない。
+// 2つの基盤の違い(ここが移行の要点):
+//   Firestore … REST を直接叩く。**応答が読めるので「入ったか」がその場で分かる**
+//   GAS       … no-cors で投げっぱなし。判断できるのは「送信そのものが失敗したか」
+//               だけで、サーバ側で落ちた場合はここでは分からない
 let sendFailures = 0;      // 最後まで送れなかった件数(研究者向けの表示に使う)
 let sendRetries = 0;       // 作り直して送れた件数
-async function postRecord(url, envelope) {
+
+// 1回ぶんの送信。例外は投げず {ok, why} を返す。
+function sendOnce(backend, envelope) {
+  if (backend === "firestore") {
+    return FSTORE.submitRecord(envelope)
+      .then(r => (r.kind === "ok") ? { ok: true } : { ok: false, why: r.why });
+  }
+  const url = (CFG.logging && CFG.logging.submit_url) || "";
+  if (!url) return Promise.resolve({ ok: false, why: "GAS の送信先が空" });
+  // GAS は許可の事前確認(preflight)が要らない text/plain で受ける。
+  return fetch(url, {
+    method: "POST", mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(envelope),
+  }).then(() => ({ ok: true }))
+    .catch(e => ({ ok: false, why: (e && e.message) || "送信できない" }));
+}
+
+async function deliverRecord(envelope) {
+  const plan = backendPlan("logging", b => (b === "firestore") ? firestoreReady() : gasLoggingReady());
+  if (!plan.length) {
+    console.warn("[transfer] 記録の送信先が1つも設定されていないので記録が残りません");
+    return false;
+  }
   const rc = (CFG.logging && CFG.logging.retry) || {};
   const attempts = Math.max(1, Number(rc.attempts) || 1);
-  const body = JSON.stringify(envelope);
-  for (let i = 0; i < attempts; i++) {
-    if (i > 0) await sleep(backoffMs(rc, i - 1));
-    try {
-      await fetch(url, {
-        method: "POST", mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: body,
-      });
-      if (i > 0) {
-        sendRetries++;
-        console.warn(`[transfer] 記録の送信は ${i + 1} 回目で通りました`);
+  let tries = 0;
+  for (const step of plan) {
+    for (let i = 0; i < attempts; i++) {
+      if (tries > 0) await sleep(backoffMs(rc, i - 1));
+      tries++;
+      const r = await sendOnce(step.backend, envelope);
+      if (r.ok) {
+        if (tries > 1) {
+          sendRetries++;
+          console.warn(`[transfer] 記録の送信は ${tries} 回目(${step.backend})で通りました`);
+        }
+        // 見極め期間だけの二重書き込み。両方に同じ件数が入るかを確かめるためのもので、
+        // 常用はしない(GAS の同時実行30本の上限に当たるため)。失敗しても無視する。
+        if (BACKEND.dual_write_logging) {
+          const other = (step.backend === "firestore") ? "gas" : "firestore";
+          const ready = (other === "firestore") ? firestoreReady() : gasLoggingReady();
+          if (ready) sendOnce(other, envelope).catch(() => {});
+        }
+        return true;
       }
-      return true;
-    } catch (e) {
-      console.warn(`[transfer] 記録の送信 ${i + 1}/${attempts} 回目が失敗:`, e && e.message);
+      console.warn(`[transfer] 記録の送信(${step.backend}) ${i + 1}/${attempts} 回目が失敗: ${r.why}`);
     }
   }
   sendFailures++;
-  console.error(`[transfer] 記録を ${attempts} 回試して送れませんでした(この1問は失われます)`);
+  console.error(`[transfer] 記録を ${tries} 回試して送れませんでした(この1問は失われます)`);
   return false;
 }
 
 // 1レコードを設定ファイルの保存先へ渡す。研究者モード(?prod なし)では渡さない。
 function sendRecord(body) {
   if (!(window.PROD && PROD.enabled)) return;
-  const url = (CFG.logging && CFG.logging.submit_url) || "";
-  if (!url) { console.warn("[transfer] logging.submit_url が空なので記録が残りません"); return; }
-  postRecord(url, serverBody(body));
+  deliverRecord(serverBody(body));
 }
 
 // ---- 回答のかな表 ---------------------------------------------------------
@@ -1502,7 +1612,14 @@ function tidyConsentScreen() {
 // =========================================================================
 // すでに前のフェーズに参加した人へのお断り。報酬の説明を丁寧に添える。
 function blockedScreen(reason, info) {
-  const already = (reason === "already_participated" || reason === "already_in_calib");
+  // 「もう参加済み」で断る理由は4通りある(較正・群C・その他・GAS 版の古い呼び名)。
+  // どれも文面は同じでよいが、**接続できなかっただけ**の場合と区別する必要がある
+  // (あちらは「もう一度試す」ボタンを出して、その場でやり直せるようにするため)。
+  const already = (reason === "already_participated" ||
+                   reason === "already_in_calib" ||
+                   reason === "already_in_test" ||
+                   reason === "already_in_comfort" ||
+                   reason === "already_in_other_phase");
   // 接続できなかっただけの場合は、その場でもう一度試せるようにする。
   // 一過性の失敗で参加者を取りこぼさないため(2026-08-21 に実機で発生)。
   const canRetry = !already;

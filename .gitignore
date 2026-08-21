@@ -24,3 +24,14 @@ recordings_raw/
 # build_tts_candidates.py で作り直せる。聴き比べは tools/tts_voice_compare.html に
 # 音を埋め込んであるので、リポジトリだけで聴ける。
 experiment/tts_candidates/
+
+# Firestore の管理者用の鍵(サービスアカウント)。**本物の秘密**。
+# これがあれば全データを読めるし消せるので、絶対にコミットしない。
+# 解析のとき(experiment/tools/export_transfer_firestore.py)だけ使う。
+# 参加者のブラウザが使うウェブAPIキーとは性質が違う(あちらは公開前提・
+# transfer_config.js に入れてある)。
+firebase/*-sa.json
+firebase/service-account*.json
+*-firebase-adminsdk-*.json
+.firebase/
+firebase-debug.log

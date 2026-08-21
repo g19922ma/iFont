@@ -48,13 +48,82 @@ window.TRANSFER_CONFIG = {
   //   transfer_calib.html → phase "calib" → acal(聴覚) か aprime(視覚)
   //   transfer_test.html  → phase "test"  → atest(聴覚) か b(視覚)
   // 並び順は「この人が何番目か」を2で割った余りで選ぶので、2集団の人数が釣り合う。
+  //   transfer_comfort.html → phase "comfort" → c(見え心地。集団は1つだけ)
   phases: {
     calib: ["acal", "aprime"],
     test: ["atest", "b"],
+    // 群C(見え心地)は集団が1つしかないので、振り分けは起きない。連番だけ配る。
+    comfort: ["c"],
+  },
+
+  // ---- 重複参加を断る規則 --------------------------------------------------
+  // 「このフェーズに来た人が、**過去にどのフェーズに出ていたら**断るか」の表。
+  // 4つの集団(と群C)は互いに独立なので、同じ人が2つに出ると比較が濁る。
+  //
+  // 群Cと検証フェーズは**同時期に走る**ので、どちら向きにも塞ぐ必要がある
+  // (掲載前チェックリスト H-1)。較正フェーズは一番先に走るので、断る相手がいない。
+  //
+  // reason はお断り画面の文言の出し分けに使う。GAS 版と同じ文字列にそろえてある
+  // (transfer.js / transfer_comfort.js の blockedScreen が見ている)。
+  phase_blocks: {
+    calib: [],
+    test: [
+      { phase: "calib", reason: "already_in_calib" },
+      { phase: "comfort", reason: "already_in_comfort" },
+    ],
+    comfort: [
+      { phase: "calib", reason: "already_in_other_phase" },
+      { phase: "test", reason: "already_in_other_phase" },
+    ],
+  },
+
+  // ---- 保存基盤(Firestore / GAS)の選択 ------------------------------------
+  // 名簿と記録の置き場所を切り替える。**どちらか一方が落ちても続けられる**ように、
+  // 主で失敗したらもう一方を試す作りにしてある(fallback)。
+  //
+  // なぜ Firestore を主にするのか。GAS は応答の本体を script.googleusercontent.com へ
+  // リダイレクトして返す作りで、この中継が一過性で失敗し、JSON ではなく HTML の
+  // エラーページを返すことがある(2026-08-21 に実機で発生。サーバ自体は正常だった)。
+  // Firestore は REST を直接叩くので中継が無く、書き込みの成否もその場で分かる。
+  //
+  // **切り戻し方**: backend.roster と backend.logging を "gas" にするだけでよい。
+  // GAS 側のコードもデプロイもそのまま残してあるので、この2行で 2026-08-20 の構成に戻る。
+  backend: {
+    // 名簿(集団の振り分け・連番・重複チェック)をどちらに聞くか。"firestore" | "gas"
+    roster: "firestore",
+    // 回答と見え心地の記録をどちらへ送るか。"firestore" | "gas"
+    logging: "firestore",
+    // 主が(作り直しも含めて)全部だめだったとき、もう一方を試すか。
+    // 名簿は「両方だめならお断り画面」、記録は「両方だめならその1問が失われる」。
+    fallback: true,
+    // 記録だけ、成功しても**もう一方にも同じものを送る**(二重書き込み)。
+    // 移行の見極め期間だけ true にして、両方に同じ件数が入ることを確かめるのに使う。
+    // 常用はしない(GAS の同時実行30本の上限に当たるため)。
+    dual_write_logging: false,
+  },
+
+  // Firebase(Firestore)の接続先。
+  // プロジェクトは 2026-08-21 に firebase CLI で作った(ifont-transfer / 東京)。
+  //
+  // ⚠ api_key を**リポジトリに入れてよい理由**: Firebase のウェブAPIキーは、
+  //   設計上ブラウザに埋め込んで公開するものである。これは「秘密の合言葉」ではなく
+  //   「どのプロジェクト宛てか」を示す宛名にすぎない。守るのは
+  //   firebase/firestore.transfer.rules のほうで、いまのルールは
+  //   「作れるだけ・回答は読めない・書き換えられない・消せない」に絞ってある。
+  //   (GAS の DUMP_TOKEN のような、本来秘密であるべき値とは性質が違う。)
+  firestore: {
+    enabled: true,
+    project_id: "ifont-transfer",
+    api_key: "AIzaSyB87BFzuwRHtCRJVhjilYjjJwM0KfYRgio",
+    // 1回あたりの待ち上限ms。Firestore は東京(asia-northeast1)に置いたので、
+    // GAS の実測約6秒に比べてはるかに速い(実測 0.1〜0.3 秒)。
+    // それでも回線が細い端末を考えて10秒とってある。
+    timeout_ms: 10000,
   },
 
   // 参加者名簿(サーバ)。集団の割り当てと、フェーズをまたいだ重複参加の照合に使う。
   // status_url は GAS ウェブアプリの /exec URL。
+  // **backend.roster が "firestore" のときは使わない**(切り戻し用に残してある)。
   // 空にすると、参加者IDのハッシュから決める代用の割り当てになる(重複の照合はできない)。
   // サーバ側のコードは gas_transfer/(gas/code.gs に gas/transfer_patch.md を当てたもの)。
   roster: {

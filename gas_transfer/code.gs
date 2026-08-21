@@ -313,7 +313,35 @@ function handleSoa(sheetId, body) {
 // クラウドソーシングでは「掲載Aに参加した人は掲載Bに参加できない」を強制できない。
 // そこで同時期に走る2集団を1つの入口URLにまとめ、サーバ側で人数が釣り合うように
 // 振り分ける。フェーズをまたいだ重複(較正に参加した人が検証に来る)は名簿と照合して断る。
-const TRANSFER_PHASE_GROUPS = { calib: ["acal", "aprime"], test: ["atest", "b"] };
+// ⚠ ここから下は**切り戻し用の控え**である。2026-08-21 に名簿と記録の本番は
+//    Firestore へ移した(experiment/transfer_firestore.js)。
+//    transfer_config.js の backend.roster / backend.logging を "gas" に戻したときと、
+//    Firestore が落ちたときの受け皿(fallback)としてだけ動く。
+//    **Firestore 側と同じ規則を保つこと**(集団の表と、下の重複拒否の表)。
+
+const TRANSFER_PHASE_GROUPS = {
+  calib: ["acal", "aprime"],
+  test: ["atest", "b"],
+  // 群C(見え心地)。集団は1つだけなので振り分けは起きず、連番だけ配る。
+  comfort: ["c"],
+};
+
+// 「このフェーズに来た人が、**過去にどのフェーズに出ていたら**断るか」の表。
+// 4つの集団と群Cは互いに独立なので、同じ人が2つに出ると比較が濁る。
+// 群Cと検証フェーズは同時期に走るので、**どちら向きにも**塞ぐ必要がある
+// (掲載前チェックリスト H-1)。較正は一番先に走るので断る相手がいない。
+// transfer_config.js の phase_blocks と同じ内容にそろえてある。
+const TRANSFER_PHASE_BLOCKS = {
+  calib: [],
+  test: [
+    { phase: "calib", reason: "already_in_calib" },
+    { phase: "comfort", reason: "already_in_comfort" },
+  ],
+  comfort: [
+    { phase: "calib", reason: "already_in_other_phase" },
+    { phase: "test", reason: "already_in_other_phase" },
+  ],
+};
 const TRANSFER_SHEETS = ["transfer_trials", "transfer_wellbeing", "transfer_roster"];
 
 function doGet(e) {
@@ -396,19 +424,33 @@ function transferStatus(p) {
     const rows = s.getDataRange().getValues();   // [0] はヘッダ
     let inPhase = 0, inGroup = {};
     groups.forEach(function (g) { inGroup[g] = 0; });
+
+    // この人が過去に出たフェーズを集めながら、そのフェーズの人数も数える。
+    // **1回のなめで両方やる**(名簿が伸びても読み直さない)。
+    const seenPhases = {};
+    let mine = null;
     for (let i = 1; i < rows.length; i++) {
       const rPhase = String(rows[i][1]), rPid = String(rows[i][2]), rGroup = String(rows[i][4]);
-      // 同じフェーズに同じ人が戻ってきた: 前と同じ割り当てを返す(途中再開と整合)。
-      if (rPhase === phase && rPid === pid) {
-        return out({status: "ok", group: rGroup, assign_index: Number(rows[i][5]) || 0, returning: true});
-      }
-      // 検証フェーズに、較正フェーズの参加者が来た: 断る(4集団は互いに独立)。
-      if (phase === "test" && rPhase === "calib" && rPid === pid) {
-        return out({status: "ok", blocked: true, reason: "already_in_calib"});
+      if (rPid === pid) {
+        seenPhases[rPhase] = true;
+        // 同じフェーズに同じ人が戻ってきた: 前と同じ割り当てを返す(途中再開と整合)。
+        if (rPhase === phase) mine = {group: rGroup, assign_index: Number(rows[i][5]) || 0};
       }
       if (rPhase === phase) {
         inPhase++;
         if (inGroup[rGroup] !== undefined) inGroup[rGroup]++;
+      }
+    }
+
+    // 開き直しは、断る判定より**先**に見る(自分のフェーズには当然いるため)。
+    if (mine) {
+      return out({status: "ok", group: mine.group, assign_index: mine.assign_index, returning: true});
+    }
+    // 断るべきフェーズに出ていたか(較正→検証・較正→群C・群C→検証・検証→群C)。
+    const blocks = TRANSFER_PHASE_BLOCKS[phase] || [];
+    for (let b = 0; b < blocks.length; b++) {
+      if (seenPhases[blocks[b].phase]) {
+        return out({status: "ok", blocked: true, reason: blocks[b].reason});
       }
     }
     // 交互に配るので、2集団の人数は最大1人しか違わない。

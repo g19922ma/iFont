@@ -3,49 +3,76 @@ rules_version = '2';
 // =========================================================================
 // 転写検証実験（iFont transfer）の Firestore ルール
 // -------------------------------------------------------------------------
-// 参加者のブラウザは**ログインしない**。だから「誰でも書ける」状態から出発して、
-// **書ける形をルールで絞り込む**。方針は3つ。
-//   1. 読み出しは全面的に禁止する（他人の回答を覗けない）
-//   2. 作れるのは新規のドキュメントだけ。書き換えと削除は禁止する
-//   3. 採番カウンタだけは例外的に更新を許すが、**+1 ずつしか動かせない**ようにする
+// 参加者のブラウザは**ログインしない**（同意より前に個人を識別しない、という
+// いまの倫理設計と噛み合わないため）。だから「誰でも書ける」状態から出発して、
+// **書ける形をルールで絞り込む**。方針は4つ。
+//   1. 回答は作れるだけ。読み出し・書き換え・削除はいっさいできない
+//   2. 名簿は「1件ずつの読み出し」だけ許す。名簿全体の一覧は禁止（→ 下の注記）
+//   3. 採番カウンタは「n が 1 ずつ増える」書き込みしか通さない
+//   4. 上のどれにも当たらない場所は全面禁止
 //
-// 置き方: Firebase コンソール → Firestore Database → ルール に貼るか、
-//   firebase deploy --only firestore:rules  （firebase.json の firestore.rules に指定）
+// 置き方:
+//   firebase deploy --only firestore:rules --project ifont-transfer
+//   （リポジトリ直下の firebase.json がこのファイルを指している）
+//
+// -------------------------------------------------------------------------
+// ⚠ 名簿だけ「1件ずつの読み出し」を許している理由（設計を変えた判断・2026-08-21）
+// -------------------------------------------------------------------------
+// 当初の計画（docs/FIRESTORE_TRANSFER_MIGRATION.md 3.1）は「読み出しは全面禁止。
+// 名簿は create の成否だけで初参加/再訪を見分ける」というものだった。
+// これは**実装してみると成り立たない**。理由は2つある。
+//
+//   (a) 途中で開き直した人に、**前と同じ集団・同じ連番を返せない**。
+//       create が失敗したことは分かるが、「では何に割り当てられていたか」が
+//       分からない。別の集団で再開させると、音声と視覚の人数の釣り合いが崩れ、
+//       字×条件の割付（連番から決まる）も食い違う。
+//   (b) **フェーズをまたいだ重複参加を断れない**。「較正に出た人が検証へ来たら
+//       断る」は、他フェーズの名簿を**見に行かないと**判定できない。
+//       確かめるために create してしまうと、断るべき人を名簿に載せることになる。
+//
+// そこで名簿だけ get（ドキュメントIDを名指しでの1件読み）を許す。
+//   ・ID は "<フェーズ>_<参加者ID>"。**参加者IDを知っている人しか引けない**
+//   ・list（一覧・検索）は禁止したままなので、**名簿を端から舐めることはできない**
+//   ・名簿の中身は割り当てだけ（フェーズ・集団・連番・作業者ID）で、**回答は入らない**
+// 回答（transfer_trials / transfer_wellbeing）は読み出し全面禁止のままである。
 // =========================================================================
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---- 回答（1問1ドキュメント） ------------------------------------------
-    // 参加者は作るだけ。あとから書き換えたり消したりはできない。
+    // 参加者は作るだけ。あとから書き換えたり消したり、他人の回答を覗いたりはできない。
     match /transfer_trials/{doc} {
       allow create: if isTrial(request.resource.data);
       allow read, update, delete: if false;
     }
 
     // ---- 見え心地の評価（1参加者1ドキュメント） -----------------------------
+    // 群B（検証フェーズの末尾）と群C（独立の実験）が同じ場所へ入れる。
+    // どちらかは phase の値（"test" / "comfort"）で見分ける。
     match /transfer_wellbeing/{doc} {
-      allow create: if request.resource.data.participant_id is string;
+      allow create: if isWellbeing(request.resource.data);
       allow read, update, delete: if false;
     }
 
-    // ---- 名簿（参加者1人1ドキュメント。ドキュメントIDは "<フェーズ>_<参加者ID>"）----
-    // **重複参加の判定はここで行う。**
-    // 「作れたら初参加、既にあって作れなければ再訪」——読み出しを許さずに判定できる。
-    // Firestore は既にあるドキュメントへの create を必ず失敗させるため。
+    // ---- 名簿（参加者1人1ドキュメント。ID は "<フェーズ>_<参加者ID>"）--------
+    // get だけ許す。list（一覧）は許さない。上の注記を参照。
     match /transfer_roster/{doc} {
+      allow get: if true;
       allow create: if isRoster(request.resource.data);
-      allow read, update, delete: if false;
+      allow list, update, delete: if false;
     }
 
-    // ---- 採番カウンタ（フェーズごとに1つ） ----------------------------------
-    // ここだけ更新を許す。ただし **n が 1 だけ増える更新に限る**ので、
+    // ---- 採番カウンタ（フェーズごとに1つ。ID は "calib"/"test"/"comfort"）---
+    // ここだけ更新を許すが、**n が 1 だけ増える更新に限る**ので、
     // 誰かが番号を飛ばしたり巻き戻したりはできない。
-    // 参加者は増やした結果の値を「書き込みの応答」から受け取るので、
-    // 読み出しを許さなくても自分の番号が分かる。
+    // 参加者は増やしたあとの値を「書き込みの応答」（transformResults）から
+    // 受け取るので、**読み出しを許さなくても自分の番号が分かる**。
+    // 最初の1人は、まだドキュメントが無いところへ増やすので create になる（n は 1）。
     match /transfer_counters/{phase} {
-      allow create: if request.resource.data.n == 0;
-      allow update: if request.resource.data.n == resource.data.n + 1
-                    && request.resource.data.keys().hasOnly(['n']);
+      allow create: if request.resource.data.keys().hasOnly(['n'])
+                    && request.resource.data.n == 1;
+      allow update: if request.resource.data.keys().hasOnly(['n'])
+                    && request.resource.data.n == resource.data.n + 1;
       allow read, delete: if false;
     }
 
@@ -66,6 +93,13 @@ service cloud.firestore {
         && d.group is string;
   }
 
+  function isWellbeing(d) {
+    return d.participant_id is string
+        && d.phase is string
+        && d.group is string;
+  }
+
+  // 名簿の1行。連番は整数であること（文字列で入ると採番の突き合わせが壊れる）。
   function isRoster(d) {
     return d.participant_id is string
         && d.phase is string
