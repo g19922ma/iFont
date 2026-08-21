@@ -616,7 +616,7 @@ function buildAudioTrials() {
   let cells = [];
   for (let rep = 0; rep < CFG.design.reps; rep++) {
     TARGETS.forEach(ch => {
-      gatesFor(CFG.audio.gates_ms, ch).forEach(g => {
+      audioGates(ch).forEach(g => {
         cells.push({ mod: "audio", char: ch, gate_ms: g, is_filler: false, check_kind: "" });
       });
     });
@@ -624,7 +624,7 @@ function buildAudioTrials() {
   cells = shuffle(cells);
   if (MAX_TARGET_TRIALS > 0) cells = cells.slice(0, MAX_TARGET_TRIALS);
   const nFiller = Math.round(cells.length * CFG.design.filler_ratio);
-  const fillerGates = gatesFor(CFG.audio.gates_ms, "_default");
+  const fillerGates = audioGates("_default");
   for (let i = 0; i < nFiller; i++) {
     cells.push({ mod: "audio", char: pick(FILLERS), gate_ms: pick(fillerGates), is_filler: true, check_kind: "" });
   }
@@ -645,6 +645,16 @@ function comboForChar(charIndex) {
   const conds = CFG.conditions;
   const step = CFG.assignment.b_step || 1;
   return conds[(charIndex * step + ASSIGN) % conds.length];
+}
+
+// 聴覚で使う打ち切り時刻ms。下見のあいだだけ、設定で足した早い時点を混ぜる
+// (transfer_config.js の audio.pilot_extra_gates)。切ってあれば本体の表のまま。
+// 生成(warp)の材料にするのは gates_ms 本体の時点だけで、足した時点は床を見るためのもの。
+function audioGates(ch) {
+  const base = gatesFor(CFG.audio.gates_ms, ch);
+  const ex = CFG.audio.pilot_extra_gates;
+  if (!(ex && ex.enabled && ex.gate_ms && ex.gate_ms.length)) return base;
+  return [...new Set([...base, ...ex.gate_ms])].sort((a, b) => a - b);
 }
 
 // RQ4 の測定(transfer_config.js の visual.calib_speed_probe)。
@@ -1300,8 +1310,9 @@ function intro() {
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>。
        <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。${G.mode === "audio" ? "音量の確認だけ" : "見え方の確認だけ"}もう一度お願いします。</span></p>` : "";
-  const nTarget = MAX_TARGET_TRIALS > 0 ? MAX_TARGET_TRIALS : TARGETS.length * gatesFor(
-    G.mode === "audio" ? CFG.audio.gates_ms : CFG.visual.gates_ms, "_default").length;
+  const nTarget = MAX_TARGET_TRIALS > 0 ? MAX_TARGET_TRIALS
+    : TARGETS.length * (G.mode === "audio" ? audioGates("_default").length
+                                           : gatesFor(CFG.visual.gates_ms, "_default").length);
   const approx = Math.round(nTarget * (1 + CFG.design.filler_ratio + CFG.design.check_full_rate + CFG.design.check_floor_rate));
   screenEl.innerHTML = `<h1>課題の進め方</h1>
     ${resumeNote}

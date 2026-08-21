@@ -86,6 +86,13 @@ const TARGETS = CFG.targets.slice();
 const FILLERS = (CFG.fillers && CFG.fillers.length)
   ? CFG.fillers.slice() : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0);
 const gatesFor = (table, ch) => (table[ch] ? table[ch] : table._default).slice();
+// 聴覚は下見だけ早い時点を足せる(audio.pilot_extra_gates)。実験ページと同じ規則で混ぜる。
+function audioGates(ch) {
+  const base = gatesFor(CFG.audio.gates_ms, ch);
+  const ex = CFG.audio.pilot_extra_gates;
+  if (!(ex && ex.enabled && ex.gate_ms && ex.gate_ms.length)) return base;
+  return [...new Set([...base, ...ex.gate_ms])].sort((a, b) => a - b);
+}
 const key = (ch, g) => ch + "|" + (g === null ? "full" : String(g));
 
 if (TARGETS.length !== 8) bad(`ターゲットが ${TARGETS.length} 字（8字のはず）`);
@@ -100,10 +107,10 @@ ok(`見え心地の代表字 ${CFG.wellbeing.chars.join("・")}（ターゲッ�
 // buildAudioTrials(): ターゲット×その字の時点 ／ まぎれ字×_defaultの時点 ／
 //   確認問題A=ターゲットの全長 ／ 確認問題C=_defaultの最小の時点 ／ 練習=ターゲットの全長。
 // playSample(): 音量確認で あ・い・う・え・お を全長で鳴らす。
-const defGates = gatesFor(CFG.audio.gates_ms, "_default");
+const defGates = audioGates("_default");
 const want = new Set();
 TARGETS.forEach(ch => {
-  gatesFor(CFG.audio.gates_ms, ch).forEach(g => want.add(key(ch, g)));
+  audioGates(ch).forEach(g => want.add(key(ch, g)));
   want.add(key(ch, null));                       // 確認問題A・練習
   want.add(key(ch, Math.min(...defGates)));      // 確認問題C
 });

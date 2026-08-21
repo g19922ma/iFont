@@ -105,10 +105,24 @@ def load_config(path):
     return json.loads(out.stdout.decode("utf-8"))
 
 
-def gates_for(table, ch):
-    if ch in table:
-        return list(table[ch])
-    return list(table.get("_default", []))
+def gates_for(table, ch, extra=None):
+    """その字の打ち切り時刻ms。extra は下見だけ足す時点(audio.pilot_extra_gates)。"""
+    base = list(table[ch]) if ch in table else list(table.get("_default", []))
+    if extra:
+        base = sorted(set(base) | set(extra))
+    return base
+
+
+def extra_gates(cfg):
+    """下見だけ足す打ち切り時刻ms。設定が無い/切ってあれば空。
+
+    生成(warp)の材料にするのは gates_ms 本体の時点だけで、ここで足す時点は
+    「床がどこにあるか」を見るためのもの(計画書 7.1)。
+    """
+    ex = ((cfg or {}).get("audio") or {}).get("pilot_extra_gates") or {}
+    if not ex.get("enabled"):
+        return []
+    return [float(v) for v in (ex.get("gate_ms") or [])]
 
 
 # ---- onset 表の読み出し ----------------------------------------------------
@@ -258,6 +272,7 @@ def main():
     args = ap.parse_args()
 
     cfg = None
+    gate_extra = []
     if args.gates:
         with open(args.gates, encoding="utf-8") as f:
             gate_table = json.load(f)
@@ -267,6 +282,7 @@ def main():
         cfg = load_config(args.config)
         gate_table = cfg["audio"]["gates_ms"]
         fade_ms = args.fade_ms if args.fade_ms is not None else cfg["audio"].get("fade_out_ms", FADE_OUT_MS_DEFAULT)
+        gate_extra = extra_gates(cfg)
         if args.chars:
             chars = list(args.chars)
         else:
@@ -299,6 +315,9 @@ def main():
     leads = []
     n_files = 0
     print(f"音源: {args.src}  対象 {len(chars)} 字  終端フェード {fade_ms} ms  前置き {args.lead_ms} ms")
+    if gate_extra:
+        print("  下見だけの追加時点: " + " ".join(f"{g:g}ms" for g in gate_extra)
+              + f"  ※終端フェード{fade_ms:g}msぶんは減衰区間になる")
     for ch in chars:
         x, sr = read_wav(src_path(ch))
         if ch in onsets:
@@ -307,7 +326,7 @@ def main():
             onset_ms, how = detect_onset_ms(x, sr), "auto"
             detected[ch] = round(onset_ms, 1)
         avail_ms = len(x) / sr * 1000.0 - onset_ms
-        gates = gates_for(gate_table, ch) + [None]      # None = 打ち切りなし(全長)
+        gates = gates_for(gate_table, ch, gate_extra) + [None]   # None = 打ち切りなし(全長)
         line = []
         lead_used = args.lead_ms
         for g in gates:
@@ -340,6 +359,7 @@ def main():
         "onsets_from": ("auto" if args.onsets == "auto" else os.path.relpath(args.onsets, REPO)),
         "onsets_meta": onset_meta,
         "fade_out_ms": fade_ms,
+        "pilot_extra_gates_ms": [int(g) if g == int(g) else g for g in gate_extra],
         "lead_ms": args.lead_ms,
         "lead_ms_actual_range": [round(min(leads), 2), round(max(leads), 2)] if leads else [],
         "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。"
