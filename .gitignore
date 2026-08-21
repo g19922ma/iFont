@@ -19,3 +19,8 @@ experiment/answer_key_1char.json
 stroke_mask_images/
 stroke_mask_images_*/
 recordings_raw/
+
+# 話者選びのための合成音の候補(4話者×68字)。1話者を選んだら残りは捨てるので入れない。
+# build_tts_candidates.py で作り直せる。聴き比べは tools/tts_voice_compare.html に
+# 音を埋め込んであるので、リポジトリだけで聴ける。
+experiment/tts_candidates/
