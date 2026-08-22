@@ -77,6 +77,9 @@ function extractFn(text, name) {
 function normalize(s) { return s.replace(/\s+/g, " ").trim(); }
 
 // transfer.js から写した関数の一覧。写す対象を増やしたらここにも足すこと。
+// 前半は描画器と進み方（群Bと群Cで絵が食い違わないため）。
+// 後半は同意画面の追記と試し打ちの判定（文面と記録の扱いが食い違わないため）。
+// どちらも「片方だけ直した」が事故になるので、機械で突き合わせる。
 const COPIED = [
   "newCanvas", "drawBlank",
   "hashSeed", "mulberry32",
@@ -84,6 +87,7 @@ const COPIED = [
   "blurBegin", "blurDraw",
   "wipeDraw", "fadeAlpha", "fadeDraw",
   "warpSeries", "seriesAt",
+  "consentExtraHTML", "tidyConsentScreen", "mailLink", "isTestRun",
 ];
 let same = 0;
 for (const name of COPIED) {

@@ -27,7 +27,9 @@
  *   transfer_wellbeing  見え心地の評価（群Bの末尾ぶんと群Cぶん）。1参加者1件
  *   transfer_roster     名簿。1参加者1件。ID は "<フェーズ>_<参加者ID>"
  *   transfer_counters   採番。フェーズごとに1件（ID は "calib"/"test"/"comfort"）。
- *                       中身は n（そのフェーズの通し番号）ひとつだけ
+ *                       中身は n（そのフェーズの通し番号）ひとつだけ。
+ *                       試し打ちは別のカウンタ（"calib__test" など）から配るので、
+ *                       動作確認をしても本番の連番は動かない
  *
  * -------------------------------------------------------------------------
  * 採番が衝突しない理由（トランザクションを書いていない理由）
@@ -167,11 +169,12 @@
 
   // フェーズの通し番号を1つ取る。increment 変換なので同時に来ても衝突しない。
   // 戻ってくる n は **1 始まり**（1人目が 1）。
-  function bumpCounter(phase) {
+  // counterId は "calib" のようなフェーズ名か、試し打ち用の "calib__test"。
+  function bumpCounter(counterId) {
     var body = {
       writes: [{
         transform: {
-          document: docRoot() + "/transfer_counters/" + docSafe(phase),
+          document: docRoot() + "/transfer_counters/" + docSafe(counterId),
           fieldTransforms: [{ fieldPath: "n", increment: { integerValue: "1" } }],
         },
       }],
@@ -220,6 +223,22 @@
     return p.indexOf("curltest-") === 0 || p.indexOf("uitest-") === 0;
   }
 
+  // 掲載前フラグ（transfer_config.js の pre_launch）。true のあいだは、
+  // **参加者IDが何であっても**その回を試し打ちとして扱う。
+  // 参加者IDの頭だけを見ていると、URL から ?group= や wid= が落ちて本番モード扱いに
+  // なった回（2026-08-21 に実際に起きた）を拾えないため。
+  function preLaunch() { return cfg().pre_launch === true; }
+
+  // この回の記録に is_test を立てるか。**目印の判定はここ1か所に集める**。
+  function isTestRun(pid) { return preLaunch() || isTestPid(pid); }
+
+  // 採番カウンタのドキュメントID。試し打ちは本番と**別のカウンタ**から配るので、
+  // 動作確認をしても本番の連番を食いつぶさない（＝2集団の交互の振り分けがずれない）。
+  var TEST_COUNTER_SUFFIX = "__test";
+  function counterIdFor(phase, isTest) {
+    return isTest ? (phase + TEST_COUNTER_SUFFIX) : phase;
+  }
+
   /* -----------------------------------------------------------------------
    * 名簿に問い合わせて、集団と連番を決める（1回ぶん。作り直しは呼び出し側）。
    *
@@ -237,7 +256,9 @@
    *      （途中で開き直した人が別の集団に飛ばされないように）
    *   2. 断るべきフェーズの名簿に自分がいたら、断る
    *   3. 採番する（ここで初めて番号を消費する。断られた人は番号を使わない）
-   *   4. 名簿に載せる
+   *      試し打ち（is_test）の人は**テスト用のカウンタ**から配るので、
+   *      本番の連番は動かない。
+   *   4. 名簿に載せる（is_test の目印を付けて載せる）
    * --------------------------------------------------------------------- */
   function resolveAssignment(opts) {
     var phase = String(opts.phase || "");
@@ -276,8 +297,9 @@
       return nextBlocker().then(function (stop) {
         if (stop) return stop;
 
-        // 3. 採番
-        return bumpCounter(phase).then(function (c) {
+        // 3. 採番（試し打ちは本番と別のカウンタから配る）
+        var testRun = isTestRun(pid);
+        return bumpCounter(counterIdFor(phase, testRun)).then(function (c) {
           if (c.kind !== "ok") return { kind: "fail", why: c.why };
           var i0 = c.n - 1;                                    // n は1始まり → 0始まりに
           var group = groups[i0 % groups.length];
@@ -292,7 +314,9 @@
             assign_index: assignIndex,
             counter_n: c.n,
             ts: Date.now(),
-            is_test: isTestPid(pid),
+            // 名簿にも目印を残す（2026-08-22 まで名簿には is_test が無く、
+            // 混ざった行を機械で見分けられなかった）。
+            is_test: testRun,
           }).then(function (cr) {
             if (cr.kind === "ok") return { kind: "ok", group: group, assign_index: assignIndex };
             if (cr.kind === "exists") {
@@ -342,7 +366,7 @@
     if (col === "transfer_trials") {
       body.correct = (body.response_char === body.target_char);
     }
-    body.is_test = isTestPid(body.participant_id);
+    body.is_test = isTestRun(body.participant_id);
     // GAS 側の分岐にしか使わない値。Firestore では列を増やすだけなので落とす。
     delete body.kind;
 
@@ -362,8 +386,13 @@
     submitRecord: submitRecord,
     collectionFor: collectionFor,
     isTestPid: isTestPid,
+    // 掲載前フラグも含めた判定。ページ側（transfer.js / transfer_comfort.js）は
+    // **こちらを使う**（GAS へ送る封筒にも同じ値を入れるため）。
+    isTestRun: isTestRun,
+    preLaunch: preLaunch,
     // 試験と道具から使う下回り
     _internal: {
+      counterIdFor: counterIdFor,
       getRoster: getRoster, bumpCounter: bumpCounter, createRoster: createRoster,
       toFields: toFields, fromFields: fromFields, docSafe: docSafe, httpJson: httpJson,
     },

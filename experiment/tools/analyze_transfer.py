@@ -30,6 +30,13 @@
       --in project/pilot_data/pilot_20260821_trials.csv \
       --out project/pilot_data/out \
       --label-map A=anon-cdgptgrg,B=anon-olcnwkzp
+
+試し打ちの行について
+--------------------
+動作確認で作った行には `is_test` 列に真が入っている（参加者IDの頭が `curltest-` /
+`uitest-` の回と、掲載前フラグ `pre_launch` が立っていたあいだの回）。
+**既定では読み込んだ時点で外す。** 混ぜたいときだけ `--include-test` を付ける。
+`is_test` 列そのものが無い入力（下見用の短縮CSVなど）は、全行が本番として扱われる。
 """
 import argparse
 import csv
@@ -108,6 +115,15 @@ def load(path):
             d[SHORT.get(k, k)] = v
         out.append(d)
     return out
+
+
+def drop_test_rows(rows):
+    """動作確認で作った行（is_test が真）を外す。戻り値は (残した行, 外した数)。
+
+    `is_test` 列が無い入力（下見用の短縮CSVなど）は、全行が本番として残る。
+    """
+    kept = [r for r in rows if not truthy(r.get("is_test"))]
+    return kept, len(rows) - len(kept)
 
 
 def normalize(rows, label_map):
@@ -223,6 +239,8 @@ def main():
     ap.add_argument("--in", dest="inp", required=True, help="dump JSON か CSV")
     ap.add_argument("--out", default="analysis_out", help="出力先ディレクトリ")
     ap.add_argument("--label-map", default="", help='短縮IDの読み替え。"A=anon-xxx,B=anon-yyy"')
+    ap.add_argument("--include-test", action="store_true",
+                    help="動作確認の行（is_test）も混ぜて集計する（既定は外す）")
     args = ap.parse_args()
 
     label_map = {}
@@ -230,7 +248,15 @@ def main():
         k, _, v = pair.partition("=")
         label_map[k.strip()] = v.strip()
 
-    rows = normalize(load(args.inp), label_map)
+    raw_rows = load(args.inp)
+    dropped = 0
+    if not args.include_test:
+        raw_rows, dropped = drop_test_rows(raw_rows)
+        if dropped:
+            print(f"  試し打ちの行 {dropped} 件を外しました（混ぜるなら --include-test）")
+    elif any(truthy(r.get("is_test")) for r in raw_rows):
+        print("  ⚠ --include-test なので、試し打ちの行も集計に入っています")
+    rows = normalize(raw_rows, label_map)
     os.makedirs(args.out, exist_ok=True)
     jp_font = pick_jp_font()
 
@@ -259,7 +285,14 @@ def main():
     L = []
     L.append("# 転写検証 集計結果\n")
     L.append(f"- 入力: `{args.inp}`")
-    L.append(f"- 全レコード {len(rows)} 行 ／ ターゲットの本番の問題 {len(tgt)} 行\n")
+    L.append(f"- 全レコード {len(rows)} 行 ／ ターゲットの本番の問題 {len(tgt)} 行")
+    # 「何を数えたか」を必ず残す。動作確認の行が混ざったまま集計した表と、
+    # 外して集計した表を、あとから取り違えないため。
+    if args.include_test:
+        L.append("- 試し打ちの行（`is_test`）も**混ぜて**集計している（`--include-test`）")
+    else:
+        L.append(f"- 試し打ちの行（`is_test`）{dropped} 件を外して集計している")
+    L.append("")
 
     for pid in sorted({r["participant_id"] for r in rows}):
         sub = [r for r in rows if r["participant_id"] == pid]

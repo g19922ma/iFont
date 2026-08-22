@@ -45,7 +45,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.5";
+const VERSION = "3.6";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -114,6 +114,34 @@ const ROSTER = CFG.roster || {};
 const BACKEND = CFG.backend || {};
 const FSTORE = window.TRANSFER_FIRESTORE || null;
 
+// ---- 掲載前フラグ（transfer_config.js の pre_launch）------------------------
+// true のあいだは、本番モード（?prod=1）で動かしても全レコードに is_test を付け、
+// 名簿の連番も本番とは別のカウンタから配る。判定の本体は transfer_firestore.js に
+// あり（そちらが Firestore への書き込みで使う）、ここはページ側の入口である。
+// GAS へ回すときは封筒と問い合わせのURLに同じ値を載せる必要があるので、
+// ページ側からも同じ判定を引けるようにしてある。
+function isTestRun() {
+  const pid = (window.PROD && PROD.participantId) || "";
+  return FSTORE ? FSTORE.isTestRun(pid) : (CFG.pre_launch === true);
+}
+
+// 掲載前フラグが立っているあいだ、画面の隅に小さく出す帯。
+// **false に戻し忘れたまま掲載してしまう事故**を、開いて数秒で気づけるようにする
+// （気づかないと、本物の参加者のデータが全部テスト扱いになる）。
+function showPreLaunchBadge() {
+  if (!(CFG.pre_launch === true)) return;
+  console.warn("[transfer] 掲載前フラグ pre_launch=true。この回の記録はすべて " +
+               "is_test=true で保存され、名簿の連番もテスト用カウンタから配られます。" +
+               "掲載申請の直前に transfer_config.js の pre_launch を false にしてください。");
+  const el = document.createElement("div");
+  el.textContent = "掲載前モード：この記録はテスト扱いです";
+  el.setAttribute("style",
+    "position:fixed;top:0;right:0;z-index:9999;background:#7a2020;color:#fff;" +
+    "font-size:12px;line-height:1.4;padding:4px 10px;border-bottom-left-radius:8px;" +
+    "letter-spacing:.02em;opacity:.92;pointer-events:none");
+  document.body.appendChild(el);
+}
+
 function firestoreReady() { return !!(FSTORE && FSTORE.enabled()); }
 function gasRosterReady() { return !!ROSTER.status_url; }
 function gasLoggingReady() { return !!(CFG.logging && CFG.logging.submit_url); }
@@ -169,7 +197,11 @@ async function rosterQueryOnce(pid) {
   const url = base + (base.indexOf("?") >= 0 ? "&" : "?") +
     "action=transfer_status&phase=" + encodeURIComponent(PHASE) +
     "&participant_id=" + encodeURIComponent(pid) +
-    "&worker_id=" + encodeURIComponent((window.PROD && PROD.workerId) || "");
+    "&worker_id=" + encodeURIComponent((window.PROD && PROD.workerId) || "") +
+    // 試し打ちの目印。GAS 側は参加者IDの頭（curltest- / uitest-）も見るが、
+    // 掲載前フラグはブラウザ側にしかないので、こちらから伝える。
+    // GAS はこの印が立っている人を**本番の人数に数えない**（連番を消費しない）。
+    "&is_test=" + (isTestRun() ? "1" : "0");
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), ROSTER.timeout_ms || 8000);
   let r;
@@ -330,6 +362,9 @@ function serverBody(body) {
     resume_gap_s: resumeMeta.gapS,
     ua: ENV.ua, dpr: ENV.dpr, screen: ENV.screen, touch: !!ENV.touch,
     refresh_hz: (ENV.refreshHz != null) ? ENV.refreshHz : "",
+    // 試し打ちの目印。Firestore へ入れるときは transfer_firestore.js が同じ値を
+    // 付け直すが、GAS へ回ったときのためにここでも載せておく。
+    is_test: isTestRun(),
   }, body);
 }
 
@@ -1693,7 +1728,18 @@ function consentExtraHTML() {
         そのコードで記録を特定できた場合にかぎり削除します。</li>
     <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
         （${c.institution || "津田塾大学 栗原研究室"}）／
-        ${c.email || "【要確認：メールアドレス】"}${viaCs}へご連絡ください。</li>`;
+        ${mailLink(c.email)}${viaCs}へご連絡ください。</li>`;
+}
+
+// メールアドレスを、押せばメーラーが開くリンクにする。
+// 迷惑メールよけに「[at]」と崩す書き方は**採らない**（クラウドソーシングの参加者が
+// 報酬の問い合わせで使う宛先なので、そのままコピーできるほうを優先した。
+// 判断の理由は transfer_config.js の contact.email のコメントにある）。
+// **transfer.js と transfer_comfort.js で同じ中身にしておくこと。**
+function mailLink(addr) {
+  const a = String(addr || "").trim();
+  if (!a || a.indexOf("@") < 0) return a || "【要確認：メールアドレス】";
+  return `<a href="mailto:${a}">${a}</a>`;
 }
 
 // 同意画面の文言を、この実験の方針(同じことは1か所だけ・お願い口調の環境注意は書かない)に
@@ -1810,6 +1856,7 @@ async function startSession() {
 
 (async function () {
   try {
+    showPreLaunchBadge();
     if (!PHASE_GROUPS.length) {
       screenEl.innerHTML = `<h1>設定エラー</h1>
         <p class="muted">transfer_config.js の phases に "${PHASE}" がありません。</p>`;

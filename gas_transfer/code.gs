@@ -119,6 +119,22 @@ function isTestPid(pid) {
   return false;
 }
 
+// ブラウザ側から渡ってくる試し打ちの申告。
+// transfer_config.js の pre_launch（掲載前フラグ）が true のあいだ、ページは
+// 参加者IDに関係なく is_test=1 を送ってくる。参加者IDの頭だけを見ていると、
+// URL から wid= が落ちて本番モード扱いになった回を拾えないため
+// （2026-08-21 に実際に起き、名簿に本物の行が1件混ざった）。
+// 値は GET のクエリなら "1"/"0"、POST の本文なら true/false で来る。
+function isTestFlag(v) {
+  const s = String(v == null ? "" : v).toLowerCase();
+  return s === "1" || s === "true" || s === "yes";
+}
+
+// この記録／この参加者を試し打ちとして扱うか。**判定はここ1か所に集める。**
+function isTestRun(pid, flag) {
+  return isTestPid(pid) || isTestFlag(flag);
+}
+
 const SHEET_TRIALS = "trials";
 
 function doPost(e) {
@@ -353,6 +369,29 @@ function doGet(e) {
   return out({status: "ok", message: "iFont experiment endpoint"});
 }
 
+// シートの1行1行について「試し打ちの行か」を返す配列を作る。
+// **記録したときの is_test 列を見る**のが本筋である(2026-08-22 に切り替えた)。
+// 掲載前フラグ(transfer_config.js の pre_launch)で付いた印は、参加者IDの頭が
+// curltest- / uitest- とはかぎらないので、IDの形だけでは拾えないため。
+// 列が無い古いシートのために、IDの頭も見る作りは残してある。
+function transferTestFlags(sheet) {
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+  const width = sheet.getLastColumn();
+  const header = sheet.getRange(1, 1, 1, width).getValues()[0];
+  let testCol = -1, pidCol = -1;
+  for (let i = 0; i < header.length; i++) {
+    if (String(header[i]) === "is_test") testCol = i;
+    if (String(header[i]) === "participant_id") pidCol = i;
+  }
+  const rows = sheet.getRange(2, 1, last - 1, width).getValues();
+  return rows.map(function (r) {
+    const byFlag = (testCol >= 0) && isTestFlag(r[testCol]);
+    const byPid = (pidCol >= 0) && isTestPid(r[pidCol]);
+    return byFlag || byPid;
+  });
+}
+
 // 各シートの行数(ヘッダを除く)と、そのうち試し打ちの行数を返す。
 // POSTした行が本当にシートに入ったかを curl だけで確かめるために使う。
 function transferHealth() {
@@ -361,20 +400,14 @@ function transferHealth() {
   TRANSFER_SHEETS.forEach(function (name) {
     const s = ss.getSheetByName(name);
     if (!s) { counts[name] = 0; tests[name] = 0; return; }
-    const last = s.getLastRow();
-    counts[name] = Math.max(0, last - 1);
-    tests[name] = 0;
-    if (last < 2) return;
-    // 参加者IDの列は3シートとも決まっている(roster は3列目、他は2列目)。
-    const col = (name === "transfer_roster") ? 3 : 2;
-    const vals = s.getRange(2, col, last - 1, 1).getValues();
-    for (let i = 0; i < vals.length; i++) if (isTestPid(vals[i][0])) tests[name]++;
+    counts[name] = Math.max(0, s.getLastRow() - 1);
+    tests[name] = transferTestFlags(s).filter(function (t) { return t; }).length;
   });
   return out({status: "ok", spreadsheet_id: SPREADSHEET_ID, rows: counts, test_rows: tests});
 }
 
-// 試し打ちの行(参加者IDが curltest- で始まる行)だけを消す。
-// 消せるのはこの接頭辞の行だけなので、本物の参加者のデータには手が届かない。
+// 試し打ちの行(is_test の印が付いた行)だけを消す。
+// 印の付いた行しか触らないので、本物の参加者のデータには手が届かない。
 function transferPurgeTest() {
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
@@ -385,13 +418,10 @@ function transferPurgeTest() {
       removed[name] = 0;
       const s = ss.getSheetByName(name);
       if (!s) return;
-      const last = s.getLastRow();
-      if (last < 2) return;
-      const col = (name === "transfer_roster") ? 3 : 2;
-      const vals = s.getRange(2, col, last - 1, 1).getValues();
+      const flags = transferTestFlags(s);
       // 下から消す(消すたびに行番号がずれるのを避ける)。
-      for (let i = vals.length - 1; i >= 0; i--) {
-        if (isTestPid(vals[i][0])) { s.deleteRow(i + 2); removed[name]++; }
+      for (let i = flags.length - 1; i >= 0; i--) {
+        if (flags[i]) { s.deleteRow(i + 2); removed[name]++; }
       }
     });
     return out({status: "ok", removed: removed});
@@ -405,11 +435,20 @@ function transferPurgeTest() {
 //   GET <exec>?action=transfer_status&phase=calib&participant_id=xxx&worker_id=yyy
 //   → {"status":"ok","group":"acal","assign_index":12}
 //   → 既に前のフェーズに参加している人には {"status":"ok","blocked":true,"reason":"already_in_calib"}
+//
+// 試し打ち（is_test）の扱い（2026-08-22 に足した。Firestore 版と同じ考え方）:
+//   ・&is_test=1 が付いているか、参加者IDの頭が curltest- / uitest- なら試し打ち。
+//   ・名簿には is_test = true の行として載せる。
+//   ・**人数を数えるとき、試し打ちの行と本番の行を混ぜない。** 本番の人は本番の行だけを
+//     数えた順番で、試し打ちの人は試し打ちの行だけを数えた順番で振り分ける。
+//     こうしないと、動作確認を1回するたびに本番の連番が1つ進み、聴覚と視覚の
+//     交互の振り分けがずれる（2026-08-21 に実際に起きた）。
 function transferStatus(p) {
   const phase = String(p.phase || "");
   const pid = String(p.participant_id || "");
   const groups = TRANSFER_PHASE_GROUPS[phase];
   if (!groups || !pid) return out({status: "error", reason: "phase/participant_id required"});
+  const testRun = isTestRun(pid, p.is_test);
 
   const lock = LockService.getScriptLock();
   // 同時アクセスで同じ番号を2人に配らないように、名簿の読み書きは排他にする。
@@ -431,12 +470,14 @@ function transferStatus(p) {
     let mine = null;
     for (let i = 1; i < rows.length; i++) {
       const rPhase = String(rows[i][1]), rPid = String(rows[i][2]), rGroup = String(rows[i][4]);
+      const rTest = isTestFlag(rows[i][6]);
       if (rPid === pid) {
         seenPhases[rPhase] = true;
         // 同じフェーズに同じ人が戻ってきた: 前と同じ割り当てを返す(途中再開と整合)。
         if (rPhase === phase) mine = {group: rGroup, assign_index: Number(rows[i][5]) || 0};
       }
-      if (rPhase === phase) {
+      // 人数の勘定は**同じ種類の行どうしだけ**。試し打ちの行は本番の連番を進めない。
+      if (rPhase === phase && rTest === testRun) {
         inPhase++;
         if (inGroup[rGroup] !== undefined) inGroup[rGroup]++;
       }
@@ -456,7 +497,7 @@ function transferStatus(p) {
     // 交互に配るので、2集団の人数は最大1人しか違わない。
     const group = groups[inPhase % groups.length];
     const assignIndex = inGroup[group] || 0;
-    s.appendRow([new Date(), phase, pid, String(p.worker_id || ""), group, assignIndex, isTestPid(pid)]);
+    s.appendRow([new Date(), phase, pid, String(p.worker_id || ""), group, assignIndex, testRun]);
     return out({status: "ok", group: group, assign_index: assignIndex});
   } catch (err) {
     return out({status: "error", reason: String(err)});
@@ -509,7 +550,7 @@ function handleTransferTrial(sheetId, body) {
     body.audio_device || "",
     blank(body.resume_count), blank(body.resume_gap_s),
     body.version || "", body.config_version || "",
-    isTestPid(body.participant_id),
+    isTestRun(body.participant_id, body.is_test),
   ]);
   return out({status: "ok", correct: correct});
 }
@@ -549,7 +590,7 @@ function handleTransferWellbeing(sheetId, body) {
     blank(body.ua), blank(body.dpr), blank(body.screen),
     (body.touch === undefined ? "" : !!body.touch), blank(body.refresh_hz),
     body.version || "", body.config_version || "",
-    isTestPid(body.participant_id)]);
+    isTestRun(body.participant_id, body.is_test)]);
   return out({status: "ok"});
 }
 

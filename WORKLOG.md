@@ -2001,3 +2001,117 @@ node experiment/tools/check_comfort_render.js     # 合格（描画器14個が t
 ただし統合すると、統合前にすでに集めていた小規模データ（今回は初期の下見16人ぶん）を
 新しい問題数・設定にどう位置づけるかという別の未解決が生まれるので、統合の判断とは別に
 必ず片づけること。
+
+## 2026-08-22 追記3: 掲載前フラグを入れた（動作確認のデータが本番に混ざらないようにした）／同意画面の連絡先を埋めた
+
+### 概要
+2026-08-21 に、動作確認のつもりで開いたページの URL からクエリが落ち、本番モード扱いで
+名簿に本物の行が1件混ざった（`transfer_roster/calib_anon-eiq54sm9`）。回答には `is_test`
+列があったが名簿には無く、さらに**本番の連番を1つ消費**していた。これを構造的に起きなく
+するため、`transfer_config.js` に**掲載前フラグ `pre_launch`** を足した。あわせて、
+空欄のままだった同意画面の連絡先3項目（研究責任者・問い合わせ先・保管期間）を埋めた。
+
+### 掲載前フラグ `pre_launch` の使い方
+
+**`experiment/transfer_config.js` の `pre_launch` は、掲載申請を出す直前に `false` にする。**
+それまではずっと `true` のままでよい。掲載後に追加の動作確認をしたくなったら `true` に戻す。
+どちらの向きに変えても `?v=` を上げて配信し直すこと。
+
+| | `pre_launch: true`（掲載前） | `pre_launch: false`（掲載中） |
+|---|---|---|
+| 全レコードの `is_test` | 参加者IDに関係なく必ず `true` | IDの頭が `curltest-` / `uitest-` のときだけ `true` |
+| 名簿の連番を配るカウンタ | `transfer_counters/calib__test` など**試し打ち用** | `transfer_counters/calib` など**本番用** |
+| 本番の連番 | 動かない（動作確認で食いつぶさない） | 1人ごとに1つ進む |
+| 画面 | 右上に赤い帯「掲載前モード：この記録はテスト扱いです」 | 何も出ない |
+| 解析の既定 | 集計から外れる | 集計に入る |
+
+**`false` にし忘れると、本物の参加者のデータが全部テスト扱いになる**（解析の既定が
+`is_test` の行を外すので、集計した日に「0件」と出て初めて気づく）。配信されている実物で
+確かめる手順を掲載前チェックリストの0節（いちばん最初）に置いた。
+
+```bash
+curl -s https://g19922ma.github.io/iFont/experiment/transfer_config.js | grep -n "pre_launch"
+# → pre_launch: false,  でなければ掲載しない
+```
+
+### 変更したファイル
+
+| ファイル | 何を変えたか |
+|---|---|
+| `experiment/transfer_config.js` | `pre_launch: true` を新設（掲載前フラグ）。`contact` の3項目を実際の値に。暫定の項目を機械で拾えるよう `contact.provisional` を追加 |
+| `experiment/transfer_firestore.js` | 判定を1か所に集約（`isTestRun` = 掲載前フラグ or IDの頭）。名簿の行に `is_test` を保存。試し打ちの採番を `<フェーズ>__test` カウンタへ分離（`counterIdFor`） |
+| `experiment/transfer.js` / `transfer_comfort.js` | 記録の封筒に `is_test` を載せる（GAS へ回ったとき用）。GAS の名簿問い合わせに `&is_test=` を付ける。掲載前の赤い帯（`showPreLaunchBadge`）。問い合わせ先を `mailto:` リンクにする（`mailLink`）。版を 3.5→3.6 / c1.3→c1.4 |
+| `experiment/transfer_calib.html` / `transfer_test.html` / `transfer_comfort.html` | `?v=` を版に合わせて更新 |
+| `experiment/transfer.css` | 本文中のリンクの色を、既定の青から見出しと同じ藍（`#1E2A5E`）へ |
+| `gas_transfer/code.gs` | `isTestFlag` / `isTestRun` を追加。名簿の人数の勘定で**試し打ちの行と本番の行を混ぜない**（試し打ちが本番の連番を進めない）。行数集計と一括削除を、IDの頭ではなく `is_test` 列で判定するよう変更 |
+| `experiment/tools/analyze_transfer.py` | `--include-test` を追加。既定で `is_test` の行を外し、外した件数を `summary.md` にも書く |
+| `experiment/tools/purge_transfer_firestore.py` | `--mark-test <コレクション>/<ID>` を追加（消さずに `is_test` を後付け）。`--reset-counters` が試し打ち用カウンタも0に戻すよう変更 |
+| `experiment/tools/check_comfort_render.js` | 突き合わせる関数に `consentExtraHTML` / `tidyConsentScreen` / `mailLink` / `isTestRun` を追加（2ページで文面と判定が食い違わないように） |
+| `experiment/tools/export_transfer_firestore.py` / `gas_transfer/README.md` | `is_test` が付く条件の説明を更新（`--include-test` は前からある） |
+| `project/掲載前チェックリスト.md` | **0節（掲載前フラグ）を新設**。C-0b2 に「消さずに印を付ける」手順を追加。I-1 を暫定2項目の確認に書き換え |
+
+### 設計判断
+
+- **参加者IDの頭（`curltest-`）だけを目印にするのをやめた**。URL からクエリが落ちる、
+  `wid=` を付け忘れる、といった「うっかり」はIDの形に現れない。時期（掲載前かどうか）で
+  決めるほうが、人の注意力に頼らずに済む。
+- **試し打ちの採番を別カウンタにした**（負の値ではなく）。負の値だと「集団の割り当て＝
+  連番を集団数で割った余り」の計算にマイナスが混ざり、`assign_index` も負になる。
+  別のカウンタなら、試し打ちの中でも本番とまったく同じ振り分けの挙動を確かめられる。
+- **赤い帯を、研究者モードだけでなく本番モードでも出す**ようにした。`false` への戻し忘れは
+  「本番モードで動かしているのに印が付く」状態なので、そこに出ないと意味がない。
+  参加者の目に触れるのは、そもそも掲載してはいけない状態のときだけである。
+- **メールアドレスは崩さずそのまま載せる**（`qurihara [at] gmail.com` のような書き方は
+  採らない）。問い合わせるのは報酬の承認がかかった参加者で、打ち直しを求めると
+  その場でやめてしまう。3ページとも `noindex,nofollow` で、URL は募集サイトの中でしか
+  配らないので、収集ロボットに拾われる筋も薄い。`mailto:` のリンクにしてある。
+- **【要確認】の印を値の中に書かない**。値に書くと、直し忘れたときに参加者の同意画面に
+  そのまま出てしまう。かわりに `contact.provisional` という項目名の配列で持たせ、
+  チェック用のコマンドがそこを読む。
+
+### 同意画面に入れた値（**2つは暫定。先生に確認して確定する**）
+
+| 項目 | 値 | 状態 |
+|---|---|---|
+| `contact.pi` | 栗原一貴 | **暫定**。研究責任者を先生にするか学生にするかを確認する |
+| `contact.email` | qurihara@gmail.com | 確定（ユーザー指定） |
+| `contact.retention` | 研究成果の公表後3年間保管し、その後に削除します。 | **暫定**。年数を先生に確認する |
+| `contact.institution` | 津田塾大学 栗原研究室 | 確定（もとから入っていた） |
+
+`pi` に所属を入れないのは、同意画面が「pi（institution）」の形で組み立てるためである
+（入れると「栗原一貴（津田塾大学）（津田塾大学 栗原研究室）」と二重になる）。
+画面には **栗原一貴（津田塾大学 栗原研究室）** と出る。
+
+確認が済んだら `contact.provisional` を `[]` にする。残っているかは次で見る。
+
+```bash
+node -e 'global.window={};require("./experiment/transfer_config.js");
+  const c=window.TRANSFER_CONFIG.contact;
+  Object.entries(c).forEach(([k,v])=>{ if(String(v).includes("要確認")) console.log("未記入:",k); });
+  (c.provisional||[]).forEach(k=>console.log("暫定（先生に確認）:",k,"=",c[k]));'
+```
+
+### 確かめたこと
+
+- `node experiment/tools/test_transfer_firestore.js` … **32項目すべて合格**。参加者IDが
+  `curltest-` なので試し打ち用カウンタが使われ、そちらが0から始まった（＝本番の連番は
+  動いていない）ことが、連番 0..7 の判定が通ったことで裏づけられた。
+- `node experiment/tools/check_comfort_render.js` … 合格（突き合わせる関数は18個に増えた）。
+- `node experiment/tools/check_transfer_stimuli.js` … 合格（問題数は 108／134／94 のまま）。
+- 実機（ローカル配信 + Chrome）で3ページの同意画面を目視。較正・検証・群Cのすべてに
+  **研究責任者・問い合わせ先（`mailto:` リンク）・同意撤回の方法・データの保管期間**の
+  4項目が出て、右上に赤い帯が出ることを確認した。
+
+### 残タスク
+
+- [ ] **掲載申請の直前に `pre_launch` を `false` にする**（掲載前チェックリスト 0-1〜0-3）
+- [ ] `contact.pi` と `contact.retention` を先生に確認して確定し、`contact.provisional` を空にする
+- [ ] 混ざった名簿の行 `transfer_roster/calib_anon-eiq54sm9` を片づける
+      （`--mark-test` で印を付けるか、`firebase firestore:delete` で消す。チェックリスト C-0b2）。
+      **サービスアカウントの鍵が手元に無かったので未実施。**
+- [ ] `python3 experiment/tools/purge_transfer_firestore.py --yes` で、今回の疎通確認で
+      作った行（約60行）を消す。カウンタも `--reset-counters` で0へ戻す（掲載直前に1回）
+
+### 学び
+「印を付ける条件」を参加者IDの形に埋め込むと、印が要る場面（うっかり本番モードで動かした）
+ほど印が付かない。**印は、状態（掲載前かどうか）から決めるほうが漏れない。**

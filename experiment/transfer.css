@@ -41,6 +41,11 @@ button.primary:hover { filter: brightness(1.1); }
 /* 刺激を出す枠のまわりの余白も、画面が低いときは詰める。 */
 .vbox { text-align: center; margin: clamp(4px, 1vh, 10px) 0 clamp(2px, 0.6vh, 6px); }
 .muted { color: #6b7280; font-size: 13px; }
+/* 本文中のリンク。いまは同意画面の問い合わせ先(mailto:)だけに出る。
+   既定の青はこの画面の色(藍と青緑)から浮くので、見出しと同じ藍にそろえる。
+   下線は残す——押せることが色だけで伝わらない人がいるため。 */
+a { color: #1E2A5E; text-underline-offset: 2px; }
+a:hover { color: #2E7D8F; }
 .ask { font-weight: 700; color: #2E7D8F; }
 .playbtn { font-size: 18px; padding: 16px 36px; border-radius: 999px; border: 0;
            background: #2E7D8F; color: #fff; cursor: pointer; letter-spacing: .02em;
