@@ -85,7 +85,7 @@ const COPIED = [
   "hashSeed", "mulberry32",
   "revealPrepare", "revealBegin", "revealDraw",
   "blurBegin", "blurDraw",
-  "wipeDraw", "fadeAlpha", "fadeDraw",
+  "wipeInkThreshold", "wipeBBoxPrepare", "wipeBegin", "wipeDraw", "fadeAlpha", "fadeDraw",
   "warpSeries", "seriesAt",
   "consentExtraHTML", "tidyConsentScreen", "mailLink", "isTestRun",
 ];

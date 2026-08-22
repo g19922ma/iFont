@@ -45,7 +45,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.6";
+const VERSION = "3.7";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -723,18 +723,76 @@ function blurDraw(ctx, ch, s) {
 }
 
 // ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられる。
+//
+// 進み具合 s は「画面の端(0)から端(SIZE)まで」ではなく、**字のインクが実際にある
+// 範囲(bbox)の中だけ**で動かす。そのままだと、字によっては書き出しの位置が
+// 画像の端から離れている(左右・上下に余白がある)ため、s の前半ぶんが余白を
+// なぞるだけの「何も起きない区間」になってしまう(丸山・2026-08-22の下見で発覚)。
+// bbox の外側は s によらずつねに欠けたまま/つねに映ったままなので、
+// s=0 でちょうど「インクが何も見えない」、s=1 でちょうど「インクが全部見える」に
+// そろう。字ごとに余白の量が違う(字形しだい)ので、そろえないと同じ s でも
+// 字によって実質の情報量が変わってしまう(較正データの字間比較を歪める)。
+const wipeBBox = {};   // かな → {xMin, xMax, yMin, yMax}(xMax/yMaxは「最後のインク列/行+1」)
+function wipeInkThreshold() {
+  const w = CFG.visual.families.wipe;
+  return (w && typeof w.ink_threshold === "number") ? w.ink_threshold
+    : CFG.visual.families.reveal.ink_threshold;
+}
+function wipeBBoxPrepare(ch) {
+  if (wipeBBox[ch]) return wipeBBox[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = wipeInkThreshold();
+  let xMin = SIZE, xMax = 0, yMin = SIZE, yMax = 0, found = false;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const i = y * SIZE + x;
+      const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+      if (lum <= th) {
+        found = true;
+        if (x < xMin) xMin = x; if (x + 1 > xMax) xMax = x + 1;
+        if (y < yMin) yMin = y; if (y + 1 > yMax) yMax = y + 1;
+      }
+    }
+  }
+  // インク画素が1つも無い(白紙の画像など)ときは、bboxを使わず元の挙動(0..SIZE)に落とす。
+  const bbox = found ? { xMin, xMax, yMin, yMax } : { xMin: 0, xMax: SIZE, yMin: 0, yMax: SIZE };
+  wipeBBox[ch] = bbox;
+  return bbox;
+}
+function wipeBegin(ch) { wipeBBoxPrepare(ch); }
 function wipeDraw(ctx, ch, s) {
   const p = Math.max(0, Math.min(1, s));
   drawBlank(ctx);
-  if (!imgs[ch] || p <= 0) return;
+  if (!imgs[ch]) return;
   const dir = CFG.visual.families.wipe.direction || "ltr";
-  const w = SIZE * p, h = SIZE * p;
+  const b = wipeBBoxPrepare(ch);
+  let rx = 0, ry = 0, rw = 0, rh = SIZE;
+  // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
+  // ltr/ttb は0側(左/上)を固定してインク側の遠い端へ伸ばす → w/hはxMin→xMaxで増える。
+  // rtl/btt はSIZE側(右/下)を固定してインク側の遠い端へ伸ばす → w/hは(SIZE-xMax)→(SIZE-xMin)で増える。
+  if (dir === "ltr" || dir === "rtl") {
+    const w = (dir === "ltr")
+      ? b.xMin + (b.xMax - b.xMin) * p        // 0:xMin(何も新しく見えない) → 1:xMax(インク全部)
+      : (SIZE - b.xMax) + (b.xMax - b.xMin) * p;
+    rw = w; rh = SIZE;
+    rx = (dir === "ltr") ? 0 : SIZE - w;
+    ry = 0;
+  } else {
+    const h = (dir === "ttb")
+      ? b.yMin + (b.yMax - b.yMin) * p
+      : (SIZE - b.yMax) + (b.yMax - b.yMin) * p;
+    rw = SIZE; rh = h;
+    rx = 0;
+    ry = (dir === "ttb") ? 0 : SIZE - h;
+  }
+  if (rw <= 0 || rh <= 0) return;
   ctx.save();
   ctx.beginPath();
-  if (dir === "ltr") ctx.rect(0, 0, w, SIZE);
-  else if (dir === "rtl") ctx.rect(SIZE - w, 0, w, SIZE);
-  else if (dir === "ttb") ctx.rect(0, 0, SIZE, h);
-  else ctx.rect(0, SIZE - h, SIZE, h);
+  ctx.rect(rx, ry, rw, rh);
   ctx.clip();
   ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
   ctx.restore();
@@ -763,7 +821,7 @@ const RENDERERS = {
   fade:   { begin: () => {},                     draw: fadeDraw },
   reveal: { begin: (ch, ctx) => revealBegin(ch, ctx), draw: revealDraw },
   blur:   { begin: (ch) => blurBegin(ch),        draw: blurDraw },
-  wipe:   { begin: () => {},                     draw: wipeDraw },
+  wipe:   { begin: (ch) => wipeBegin(ch),        draw: wipeDraw },
 };
 
 // =========================================================================
