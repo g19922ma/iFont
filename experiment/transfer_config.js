@@ -39,7 +39,15 @@ window.TRANSFER_CONFIG = {
   //                      (Furui 1986 の知見＋下見の結果。audio.gates_ms の注記を見る)。
   //                      あわせて「全長」を各字の1点として足し、下見だけの10ms追加は切った。
   //                      見え心地(RQ3)は群Bの末尾から独立の実験(群C)へ切り出した。
-  config_version: "prov-2026-08-21",
+  //   prov-2026-08-23  … 聴覚刺激を自然音声からあみたろ(COEIROINK・切出版)へ切り替えた。
+  //                      VOICEVOX・AivisSpeech・COEIROINKの10話者を比較し、清濁のVOTが
+  //                      最も明瞭(か-が=48ms)で、息っぽさ・音程のばらつきも小さい話者として
+  //                      採用(project/合成音声_話者候補.md 11章)。単独の1モーラを直接
+  //                      合成すると発話全体が間延びする問題があったため、「字+ん」で合成した
+  //                      あとに対象字だけを自動検出で切り出す方式（キャリアフレーズ法）を
+  //                      採った。切り出し境界は高域エネルギー比率の低下(鼻音「ん」の特徴)を
+  //                      手がかりに自動検出しており、全数の目視確認はまだ行っていない。
+  config_version: "prov-2026-08-23",
 
   // =======================================================================
   // ⚠⚠ 掲載前フラグ ⚠⚠  **募集サイトへ掲載申請する直前に false にする**
@@ -303,13 +311,17 @@ window.TRANSFER_CONFIG = {
     //   （このファイルは「代入1つだけ」の制約があり、関数や条件分岐は使えないため。
     //    切り替えのたびに config_version を上げ、check_transfer_stimuli.js を通し直すこと）。
     //   候補:
-    //     自然音声（丸山の肉声・現行）: "transfer_audio_manifest.json" / "transfer_stimuli"
-    //     花音（AivisSpeech・2026-08-23生成）: "transfer_audio_manifest_kanon.json" / "transfer_stimuli_kanon"
-    //       クレジット表記が要る場合: "AivisSpeech:花音"（ACML 1.0はクレジット任意）
-    //     あみたろ（COEIROINK・未生成）: "transfer_audio_manifest_amitaro.json" / "transfer_stimuli_amitaro"
-    //       クレジット表記必須: "COEIROINK:あみたろ"
-    manifest_url: "transfer_audio_manifest.json",
-    stimuli_dir: "transfer_stimuli",
+    //     あみたろ（COEIROINK・切出版・2026-08-23採用・現行）:
+    //       "transfer_audio_manifest_amitaro.json" / "transfer_stimuli_amitaro"
+    //       クレジット表記必須: "COEIROINK:あみたろ"（あみたろ提供元は研究利用を歓迎する規約だが、
+    //       COEIROINK自体の規約でクレジットは必須。生成音声を「誰でも二次利用可」として
+    //       公開することは禁止 — 詳しくは project/合成音声_話者候補.md）
+    //     花音（AivisSpeech・単独発話版・2026-08-23生成・不採用）:
+    //       "transfer_audio_manifest_kanon.json" / "transfer_stimuli_kanon"
+    //       息っぽさ・字ごとの音程のばらつき(225Hz)が大きく見送った。クレジットは任意(ACML 1.0)
+    //     自然音声（丸山の肉声・2026-08-23まで使用）: "transfer_audio_manifest.json" / "transfer_stimuli"
+    manifest_url: "transfer_audio_manifest_amitaro.json",
+    stimuli_dir: "transfer_stimuli_amitaro",
     // 本番刺激(自然音声)が揃うまでの代用。manifest_url が読めないときだけ使う。
     // 既存の合成音プールを、ブラウザ側で同じ規則(onset起点・終端5msフェード)で
     // 切って鳴らす。**研究者の動作確認専用**で、本番データ取得には使わない。
