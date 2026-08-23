@@ -45,7 +45,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.7";
+const VERSION = "3.8";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -1776,6 +1776,14 @@ function consentExtraHTML() {
   const c = CFG.contact || {};
   const viaCs = c.via_crowdsourcing
     ? "、または応募元の募集サイトのメッセージ機能" : "";
+  // 音声課題（G.mode === "audio"）のときだけ、使用している合成音声のクレジットを足す。
+  // transfer_comfort.js（群C）は音声を使わないので、この行は出ない。
+  // G が無い/未設定でも例外にならないよう typeof で守る（transfer_comfort.js には G 自体が無い）。
+  const isAudio = (typeof G !== "undefined") && G && G.mode === "audio";
+  const creditLi = isAudio
+    ? `<li><b>音声について</b>：この課題の音声には、COEIROINKの音声ライブラリ「あみたろ」を
+        利用しています（COEIROINK:あみたろ）。</li>`
+    : "";
   return `
     <li><b>データの保管</b>：${c.retention || "【要確認：保管期間】"}
         保管するのは回答と技術情報だけで、個人を特定できる情報は含みません。</li>
@@ -1786,7 +1794,7 @@ function consentExtraHTML() {
         そのコードで記録を特定できた場合にかぎり削除します。</li>
     <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
         （${c.institution || "津田塾大学 栗原研究室"}）／
-        ${mailLink(c.email)}${viaCs}へご連絡ください。</li>`;
+        ${mailLink(c.email)}${viaCs}へご連絡ください。</li>${creditLi}`;
 }
 
 // メールアドレスを、押せばメーラーが開くリンクにする。
