@@ -298,6 +298,16 @@ window.TRANSFER_CONFIG = {
 
     // 事前生成した「打ち切り済みWAV」の置き場所と索引。
     // 生成は experiment/tools/build_transfer_gates.py。
+    //
+    // ⚠ 音源の切り替えは、この2行をまとめて書き換えるだけで行う
+    //   （このファイルは「代入1つだけ」の制約があり、関数や条件分岐は使えないため。
+    //    切り替えのたびに config_version を上げ、check_transfer_stimuli.js を通し直すこと）。
+    //   候補:
+    //     自然音声（丸山の肉声・現行）: "transfer_audio_manifest.json" / "transfer_stimuli"
+    //     花音（AivisSpeech・2026-08-23生成）: "transfer_audio_manifest_kanon.json" / "transfer_stimuli_kanon"
+    //       クレジット表記が要る場合: "AivisSpeech:花音"（ACML 1.0はクレジット任意）
+    //     あみたろ（COEIROINK・未生成）: "transfer_audio_manifest_amitaro.json" / "transfer_stimuli_amitaro"
+    //       クレジット表記必須: "COEIROINK:あみたろ"
     manifest_url: "transfer_audio_manifest.json",
     stimuli_dir: "transfer_stimuli",
     // 本番刺激(自然音声)が揃うまでの代用。manifest_url が読めないときだけ使う。

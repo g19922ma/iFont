@@ -24,6 +24,11 @@ recordings_raw/
 # build_tts_candidates.py で作り直せる。聴き比べは tools/tts_voice_compare.html に
 # 音を埋め込んであるので、リポジトリだけで聴ける。
 experiment/tts_candidates/
+# 2026-08-23: AivisSpeech/COEIROINK候補・カバーフレーズ試作の合成音(同じ理由で除外)。
+# 採用した話者(花音)の本番用打ち切り版は experiment/transfer_stimuli_kanon/ に別途コミット済み。
+experiment/tts_candidates_aivis/
+experiment/tts_candidates_carrier/
+experiment/tts_candidates_coeiroink/
 
 # Firestore の管理者用の鍵(サービスアカウント)。**本物の秘密**。
 # これがあれば全データを読めるし消せるので、絶対にコミットしない。
