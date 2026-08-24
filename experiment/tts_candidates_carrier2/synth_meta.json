@@ -1,0 +1,1252 @@
+{
+  "engine": "COEIROINK v2",
+  "base": "http://127.0.0.1:50032",
+  "speaker": "あみたろ",
+  "speaker_uuid": "d93140ec-d365-11ec-8f1d-0242ac1c0002",
+  "style": "のーまるv5",
+  "style_id": 1564398632,
+  "credit": "COEIROINK:あみたろ",
+  "synth_params": {
+    "speedScale": 1.0,
+    "volumeScale": 1.0,
+    "pitchScale": 0.0,
+    "intonationScale": 1.0,
+    "prePhonemeLength": 0.1,
+    "postPhonemeLength": 0.1,
+    "outputSamplingRate": 44100
+  },
+  "followers": [
+    "あ"
+  ],
+  "follower_map": {},
+  "n_kana": 68,
+  "takes": {
+    "あ": {
+      "あ": {
+        "text": "ああ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "い": {
+        "text": "いあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "i",
+              "hira": "い",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "う": {
+        "text": "うあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "u",
+              "hira": "う",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "え": {
+        "text": "えあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "e",
+              "hira": "え",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "お": {
+        "text": "おあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "o",
+              "hira": "お",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "か": {
+        "text": "かあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "k-a",
+              "hira": "か",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "き": {
+        "text": "きあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "k-i",
+              "hira": "き",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "く": {
+        "text": "くあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "k-u",
+              "hira": "く",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "け": {
+        "text": "けあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "k-e",
+              "hira": "け",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "こ": {
+        "text": "こあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "k-o",
+              "hira": "こ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "さ": {
+        "text": "さあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "s-a",
+              "hira": "さ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "し": {
+        "text": "しあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "sh-i",
+              "hira": "し",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "す": {
+        "text": "すあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "s-u",
+              "hira": "す",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "せ": {
+        "text": "せあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "s-e",
+              "hira": "せ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "そ": {
+        "text": "そあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "s-o",
+              "hira": "そ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "た": {
+        "text": "たあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "t-a",
+              "hira": "た",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "て": {
+        "text": "てあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "t-e",
+              "hira": "て",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "と": {
+        "text": "とあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "t-o",
+              "hira": "と",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ち": {
+        "text": "ちあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "ch-i",
+              "hira": "ち",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "つ": {
+        "text": "つあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "ts-u",
+              "hira": "つ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "な": {
+        "text": "なあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "n-a",
+              "hira": "な",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "に": {
+        "text": "にあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "n-i",
+              "hira": "に",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぬ": {
+        "text": "ぬあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "n-u",
+              "hira": "ぬ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ね": {
+        "text": "ねあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "n-e",
+              "hira": "ね",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "の": {
+        "text": "のあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "n-o",
+              "hira": "の",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "は": {
+        "text": "はあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "h-a",
+              "hira": "は",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ひ": {
+        "text": "ひあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "h-i",
+              "hira": "ひ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ふ": {
+        "text": "ふあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "f-u",
+              "hira": "ふ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "へ": {
+        "text": "へあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "h-e",
+              "hira": "へ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ほ": {
+        "text": "ほあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "h-o",
+              "hira": "ほ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ま": {
+        "text": "まあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "m-a",
+              "hira": "ま",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "み": {
+        "text": "みあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "m-i",
+              "hira": "み",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "む": {
+        "text": "むあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "m-u",
+              "hira": "む",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "め": {
+        "text": "めあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "m-e",
+              "hira": "め",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "も": {
+        "text": "もあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "m-o",
+              "hira": "も",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "や": {
+        "text": "やあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "y-a",
+              "hira": "や",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ゆ": {
+        "text": "ゆあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "y-u",
+              "hira": "ゆ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "よ": {
+        "text": "よあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "y-o",
+              "hira": "よ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "わ": {
+        "text": "わあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "w-a",
+              "hira": "わ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ら": {
+        "text": "らあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "r-a",
+              "hira": "ら",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "り": {
+        "text": "りあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "r-i",
+              "hira": "り",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "る": {
+        "text": "るあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "r-u",
+              "hira": "る",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "れ": {
+        "text": "れあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "r-e",
+              "hira": "れ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ろ": {
+        "text": "ろあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "r-o",
+              "hira": "ろ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ん": {
+        "text": "んあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "N",
+              "hira": "ん",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "が": {
+        "text": "があ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "g-a",
+              "hira": "が",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぎ": {
+        "text": "ぎあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "g-i",
+              "hira": "ぎ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぐ": {
+        "text": "ぐあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "g-u",
+              "hira": "ぐ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "げ": {
+        "text": "げあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "g-e",
+              "hira": "げ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ご": {
+        "text": "ごあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "g-o",
+              "hira": "ご",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ざ": {
+        "text": "ざあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "z-a",
+              "hira": "ざ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "じ": {
+        "text": "じあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "j-i",
+              "hira": "じ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ず": {
+        "text": "ずあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "z-u",
+              "hira": "ず",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぜ": {
+        "text": "ぜあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "z-e",
+              "hira": "ぜ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぞ": {
+        "text": "ぞあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "z-o",
+              "hira": "ぞ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "だ": {
+        "text": "だあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "d-a",
+              "hira": "だ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "で": {
+        "text": "であ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "d-e",
+              "hira": "で",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ど": {
+        "text": "どあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "d-o",
+              "hira": "ど",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ば": {
+        "text": "ばあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "b-a",
+              "hira": "ば",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "び": {
+        "text": "びあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "b-i",
+              "hira": "び",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぶ": {
+        "text": "ぶあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "b-u",
+              "hira": "ぶ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "べ": {
+        "text": "べあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "b-e",
+              "hira": "べ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぼ": {
+        "text": "ぼあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "b-o",
+              "hira": "ぼ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぱ": {
+        "text": "ぱあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "p-a",
+              "hira": "ぱ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぴ": {
+        "text": "ぴあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "p-i",
+              "hira": "ぴ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぷ": {
+        "text": "ぷあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "p-u",
+              "hira": "ぷ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぺ": {
+        "text": "ぺあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "p-e",
+              "hira": "ぺ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      },
+      "ぽ": {
+        "text": "ぽあ",
+        "follower": "あ",
+        "prosody": [
+          [
+            {
+              "phoneme": "p-o",
+              "hira": "ぽ",
+              "accent": 1
+            },
+            {
+              "phoneme": "a",
+              "hira": "あ",
+              "accent": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "note": "2026-08-23版がどのスタイルで作られたかの記録は残っていない。基本周波数の中央値で照合して のーまるv5 を選んだ（337Hz 対 322Hz）。"
+}

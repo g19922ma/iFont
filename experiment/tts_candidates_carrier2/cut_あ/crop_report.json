@@ -1,0 +1,345 @@
+{
+ "note": "後続「あ」版。母音なので閉鎖が無く境目を音量で決められないため、同じ話者・同じ話速・同じアクセントで作った「ぱ」版のモーラ長で切っている。",
+ "items": {
+  "あ": {
+   "onset_ms": 115.0,
+   "mora_ms": 99.5,
+   "cut_dur_ms": 214.5
+  },
+  "い": {
+   "onset_ms": 110.0,
+   "mora_ms": 94.5,
+   "cut_dur_ms": 204.5
+  },
+  "う": {
+   "onset_ms": 110.0,
+   "mora_ms": 84.5,
+   "cut_dur_ms": 194.5
+  },
+  "え": {
+   "onset_ms": 120.0,
+   "mora_ms": 94.5,
+   "cut_dur_ms": 214.5
+  },
+  "お": {
+   "onset_ms": 115.0,
+   "mora_ms": 89.5,
+   "cut_dur_ms": 204.5
+  },
+  "か": {
+   "onset_ms": 105.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 187.1
+  },
+  "き": {
+   "onset_ms": 105.0,
+   "mora_ms": 104.5,
+   "cut_dur_ms": 209.5
+  },
+  "く": {
+   "onset_ms": 115.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 197.1
+  },
+  "け": {
+   "onset_ms": 115.0,
+   "mora_ms": 107.0,
+   "cut_dur_ms": 222.0
+  },
+  "こ": {
+   "onset_ms": 100.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 182.1
+  },
+  "さ": {
+   "onset_ms": 100.0,
+   "mora_ms": 159.4,
+   "cut_dur_ms": 259.4
+  },
+  "し": {
+   "onset_ms": 100.0,
+   "mora_ms": 97.1,
+   "cut_dur_ms": 197.1
+  },
+  "す": {
+   "onset_ms": 100.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 182.1
+  },
+  "せ": {
+   "onset_ms": 100.0,
+   "mora_ms": 164.4,
+   "cut_dur_ms": 264.4
+  },
+  "そ": {
+   "onset_ms": 100.0,
+   "mora_ms": 166.9,
+   "cut_dur_ms": 266.9
+  },
+  "た": {
+   "onset_ms": 100.0,
+   "mora_ms": 89.6,
+   "cut_dur_ms": 189.6
+  },
+  "て": {
+   "onset_ms": 100.0,
+   "mora_ms": 94.5,
+   "cut_dur_ms": 194.5
+  },
+  "と": {
+   "onset_ms": 100.0,
+   "mora_ms": 94.6,
+   "cut_dur_ms": 194.6
+  },
+  "ち": {
+   "onset_ms": 100.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 182.1
+  },
+  "つ": {
+   "onset_ms": 105.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 187.1
+  },
+  "な": {
+   "onset_ms": 110.0,
+   "mora_ms": 141.9,
+   "cut_dur_ms": 251.9
+  },
+  "に": {
+   "onset_ms": 110.0,
+   "mora_ms": 132.0,
+   "cut_dur_ms": 242.0
+  },
+  "ぬ": {
+   "onset_ms": 110.0,
+   "mora_ms": 146.9,
+   "cut_dur_ms": 256.9
+  },
+  "ね": {
+   "onset_ms": 110.0,
+   "mora_ms": 129.5,
+   "cut_dur_ms": 239.5
+  },
+  "の": {
+   "onset_ms": 110.0,
+   "mora_ms": 129.5,
+   "cut_dur_ms": 239.5
+  },
+  "は": {
+   "onset_ms": 100.0,
+   "mora_ms": 92.1,
+   "cut_dur_ms": 192.1
+  },
+  "ひ": {
+   "onset_ms": 100.0,
+   "mora_ms": 104.5,
+   "cut_dur_ms": 204.5
+  },
+  "ふ": {
+   "onset_ms": 100.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 182.1
+  },
+  "へ": {
+   "onset_ms": 100.0,
+   "mora_ms": 92.1,
+   "cut_dur_ms": 192.1
+  },
+  "ほ": {
+   "onset_ms": 100.0,
+   "mora_ms": 102.0,
+   "cut_dur_ms": 202.0
+  },
+  "ま": {
+   "onset_ms": 120.0,
+   "mora_ms": 136.9,
+   "cut_dur_ms": 256.9
+  },
+  "み": {
+   "onset_ms": 110.0,
+   "mora_ms": 132.0,
+   "cut_dur_ms": 242.0
+  },
+  "む": {
+   "onset_ms": 105.0,
+   "mora_ms": 139.4,
+   "cut_dur_ms": 244.4
+  },
+  "め": {
+   "onset_ms": 110.0,
+   "mora_ms": 134.5,
+   "cut_dur_ms": 244.5
+  },
+  "も": {
+   "onset_ms": 115.0,
+   "mora_ms": 127.0,
+   "cut_dur_ms": 242.0
+  },
+  "や": {
+   "onset_ms": 110.0,
+   "mora_ms": 156.9,
+   "cut_dur_ms": 266.9
+  },
+  "ゆ": {
+   "onset_ms": 115.0,
+   "mora_ms": 107.0,
+   "cut_dur_ms": 222.0
+  },
+  "よ": {
+   "onset_ms": 110.0,
+   "mora_ms": 129.5,
+   "cut_dur_ms": 239.5
+  },
+  "わ": {
+   "onset_ms": 115.0,
+   "mora_ms": 122.0,
+   "cut_dur_ms": 237.0
+  },
+  "ら": {
+   "onset_ms": 110.0,
+   "mora_ms": 117.0,
+   "cut_dur_ms": 227.0
+  },
+  "り": {
+   "onset_ms": 105.0,
+   "mora_ms": 109.5,
+   "cut_dur_ms": 214.5
+  },
+  "る": {
+   "onset_ms": 110.0,
+   "mora_ms": 117.0,
+   "cut_dur_ms": 227.0
+  },
+  "れ": {
+   "onset_ms": 115.0,
+   "mora_ms": 114.5,
+   "cut_dur_ms": 229.5
+  },
+  "ろ": {
+   "onset_ms": 110.0,
+   "mora_ms": 104.5,
+   "cut_dur_ms": 214.5
+  },
+  "ん": {
+   "onset_ms": 110.0,
+   "mora_ms": 94.5,
+   "cut_dur_ms": 204.5
+  },
+  "が": {
+   "onset_ms": 115.0,
+   "mora_ms": 104.5,
+   "cut_dur_ms": 219.5
+  },
+  "ぎ": {
+   "onset_ms": 105.0,
+   "mora_ms": 99.5,
+   "cut_dur_ms": 204.5
+  },
+  "ぐ": {
+   "onset_ms": 100.0,
+   "mora_ms": 97.0,
+   "cut_dur_ms": 197.0
+  },
+  "げ": {
+   "onset_ms": 115.0,
+   "mora_ms": 97.1,
+   "cut_dur_ms": 212.1
+  },
+  "ご": {
+   "onset_ms": 105.0,
+   "mora_ms": 104.5,
+   "cut_dur_ms": 209.5
+  },
+  "ざ": {
+   "onset_ms": 100.0,
+   "mora_ms": 122.0,
+   "cut_dur_ms": 222.0
+  },
+  "じ": {
+   "onset_ms": 100.0,
+   "mora_ms": 124.5,
+   "cut_dur_ms": 224.5
+  },
+  "ず": {
+   "onset_ms": 100.0,
+   "mora_ms": 129.5,
+   "cut_dur_ms": 229.5
+  },
+  "ぜ": {
+   "onset_ms": 100.0,
+   "mora_ms": 119.5,
+   "cut_dur_ms": 219.5
+  },
+  "ぞ": {
+   "onset_ms": 100.0,
+   "mora_ms": 114.5,
+   "cut_dur_ms": 214.5
+  },
+  "だ": {
+   "onset_ms": 100.0,
+   "mora_ms": 97.0,
+   "cut_dur_ms": 197.0
+  },
+  "で": {
+   "onset_ms": 110.0,
+   "mora_ms": 94.5,
+   "cut_dur_ms": 204.5
+  },
+  "ど": {
+   "onset_ms": 100.0,
+   "mora_ms": 89.5,
+   "cut_dur_ms": 189.5
+  },
+  "ば": {
+   "onset_ms": 110.0,
+   "mora_ms": 99.5,
+   "cut_dur_ms": 209.5
+  },
+  "び": {
+   "onset_ms": 110.0,
+   "mora_ms": 92.0,
+   "cut_dur_ms": 202.0
+  },
+  "ぶ": {
+   "onset_ms": 105.0,
+   "mora_ms": 87.0,
+   "cut_dur_ms": 192.0
+  },
+  "べ": {
+   "onset_ms": 110.0,
+   "mora_ms": 89.5,
+   "cut_dur_ms": 199.5
+  },
+  "ぼ": {
+   "onset_ms": 105.0,
+   "mora_ms": 92.0,
+   "cut_dur_ms": 197.0
+  },
+  "ぱ": {
+   "onset_ms": 100.0,
+   "mora_ms": 89.5,
+   "cut_dur_ms": 189.5
+  },
+  "ぴ": {
+   "onset_ms": 110.0,
+   "mora_ms": 84.5,
+   "cut_dur_ms": 194.5
+  },
+  "ぷ": {
+   "onset_ms": 100.0,
+   "mora_ms": 92.1,
+   "cut_dur_ms": 192.1
+  },
+  "ぺ": {
+   "onset_ms": 100.0,
+   "mora_ms": 99.5,
+   "cut_dur_ms": 199.5
+  },
+  "ぽ": {
+   "onset_ms": 105.0,
+   "mora_ms": 82.1,
+   "cut_dur_ms": 187.1
+  }
+ }
+}
