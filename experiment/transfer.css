@@ -46,6 +46,23 @@ button.primary:hover { filter: brightness(1.1); }
    下線は残す——押せることが色だけで伝わらない人がいるため。 */
 a { color: #1E2A5E; text-underline-offset: 2px; }
 a:hover { color: #2E7D8F; }
+/* ---- 同意画面の折りたたみ「研究の説明を読む」 ----------------------------
+   最初に見えるのは要点の4行だけにして、くわしい説明はこの中に入れてある
+   (組み立ては transfer.js / transfer_comfort.js の tidyConsentScreen)。
+   <details> はブラウザの機能だけで開閉するので、JavaScript は要らない。
+   既定の三角(marker)は行の頭に付いて字下げがそろわないので消し、
+   ::before で「▶／▼」を自分で描いている。 */
+details.consent-more { margin: 12px 0 4px; }
+details.consent-more > summary { display: inline-block; cursor: pointer;
+  color: #2E7D8F; font-size: 14px; font-weight: 700; padding: 3px 0;
+  list-style: none; user-select: none; }
+details.consent-more > summary::-webkit-details-marker { display: none; }
+details.consent-more > summary::before { content: "\25B6\00A0"; font-size: 10px;
+  vertical-align: 1px; }
+details.consent-more[open] > summary::before { content: "\25BC\00A0"; }
+details.consent-more > summary:hover { color: #1E2A5E; }
+details.consent-more > ul { font-size: 13.5px; line-height: 1.85; color: #444;
+  margin: 6px 0 0; padding: 2px 0 2px 2em; border-left: 3px solid #e3e6ee; }
 .ask { font-weight: 700; color: #2E7D8F; }
 .playbtn { font-size: 18px; padding: 16px 36px; border-radius: 999px; border: 0;
            background: #2E7D8F; color: #fff; cursor: pointer; letter-spacing: .02em;

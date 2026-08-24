@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.9";
+const VERSION = "c1.10";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
@@ -1253,7 +1253,8 @@ function visionCheck() {
   document.getElementById("go3").onclick = () => { resuming ? showClip() : intro(); };
 }
 
-// 同意画面に足す3項目（データの保管期間・同意の撤回・問い合わせ先）。
+// 折りたたみ（「研究の説明を読む」）の中に足す3項目
+// ——データの保管期間・同意の撤回・問い合わせ先。
 // **transfer.js の同名の関数と同じ中身にしておくこと**（片方だけ直さない）。
 // 値は transfer_config.js の contact にあり、掲載前にユーザーが【要確認】を埋める。
 function consentExtraHTML() {
@@ -1292,7 +1293,8 @@ function mailLink(addr) {
   return `<a href="mailto:${a}">${a}</a>`;
 }
 
-// 同意画面の文言を、この実験の方針にそろえる（transfer.js と同じ手当て）。
+// 同意画面を「最初に見えるのは要点だけ・くわしい説明は折りたたみの中」に組み替える
+// （transfer.js と同じ手当て。判断の理由と注意はそちらのコメントに詳しく書いてある）。
 // prod_common.js は実験1と共用なので触らず、描かれたあとにこのページの中だけで直す。
 function tidyConsentScreen() {
   const h1 = screenEl.querySelector("h1");
@@ -1300,14 +1302,38 @@ function tidyConsentScreen() {
   const items = [...screenEl.querySelectorAll("li")];
   const rec = items.find(li => li.textContent.indexOf("記録するもの") >= 0);
   const resume = items.find(li => li.textContent.indexOf("途中再開") >= 0);
-  if (rec && resume) {
+  const age = items.find(li => li.textContent.indexOf("参加できる方") >= 0);
+  // 「中断して開き直した場合」の一文は、再開の項目そのものが出ない研究者モードでも足す。
+  // ここを `rec && resume` にしていたせいで、研究者モードだけこの65字が消え、
+  // 本番と表示が食い違っていた（2026-08-24 に修正）。
+  if (rec) {
     rec.insertAdjacentHTML("beforeend",
       "中断して開き直した場合は、再開した回数と中断していた時間も記録します" +
       "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
-    resume.remove();
   }
+  if (resume) resume.remove();
+  // 年齢の条件は折りたたみの外（要点）に出すので、中からは消す（二重に出さない）。
+  if (age) age.remove();
   const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
-  if (ul) ul.insertAdjacentHTML("beforeend", consentExtraHTML());
+  if (!ul) return;
+  const c = CFG.contact || {};
+  // 折りたたみを作り、prod_common.js が書いた項目をそのまま中へ移す。
+  // <details> は JavaScript なしで開閉するので、開閉の処理は書かなくてよい。
+  const det = document.createElement("details");
+  det.className = "consent-more";
+  det.innerHTML = '<summary>研究の説明を読む</summary><ul></ul>';
+  const full = det.querySelector("ul");
+  while (ul.firstChild) full.appendChild(ul.firstChild);
+  full.insertAdjacentHTML("beforeend", consentExtraHTML());
+  // 折りたたみの外に出す要点。ここに書いた以上のことは、すべて折りたたみの中にある。
+  ul.innerHTML = `
+    <li>18歳以上の方が参加いただけます。</li>
+    <li>回答と端末の情報（画面の大きさなど）を記録します。氏名やメールアドレスなど、
+        個人を特定できる情報は記録しません。</li>
+    <li>募集ページに記載した説明にご同意のうえ、開始してください。</li>
+    <li>お問い合わせ：${c.pi || "【要確認：研究責任者】"}
+        （${c.institution || "津田塾大学 栗原研究室"}）／${mailLink(c.email)}</li>`;
+  ul.insertAdjacentElement("afterend", det);
 }
 
 // =========================================================================

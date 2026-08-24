@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.11";
+const VERSION = "3.12";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -2060,10 +2060,13 @@ function visionCheck() {
   document.getElementById("go3").onclick = start;
 }
 
-// 同意画面に足す3項目（データの保管期間・同意の撤回・問い合わせ先）。
+// 折りたたみ（「研究の説明を読む」）の中に足す3項目
+// ——データの保管期間・同意の撤回・問い合わせ先。
 // docs/informed_consent.md が「同意画面に載せること」と定めているのに、
 // prod_common.js の同意画面に入っていない項目である。値は transfer_config.js の
 // contact に置いてあり、**掲載前にユーザーが【要確認】を実際の値へ書き換える**。
+// 2026-08-24 から、この3項目は最初から見えている場所ではなく折りたたみの中に入る
+// （見えている側には問い合わせ先だけを1行で出す。理由は tidyConsentScreen の説明）。
 // 群C（transfer_comfort.js）にも同じ関数を写してある。片方だけ直さないこと。
 function consentExtraHTML() {
   const c = CFG.contact || {};
@@ -2101,27 +2104,71 @@ function mailLink(addr) {
   return `<a href="mailto:${a}">${a}</a>`;
 }
 
-// 同意画面の文言を、この実験の方針(同じことは1か所だけ・お願い口調の環境注意は書かない)に
-// そろえる。**prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
-// ページの中だけで直す。直すのは次の3つ。
-//   1. 見出し「研究へのご協力のお願い」を消す(本文から始める)
+// 同意画面を「最初に見えるのは要点だけ・くわしい説明は折りたたみの中」に組み替える。
+// **prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
+// ページの中だけで直す。
+//
+// **なぜ短くするのか（2026-08-24 の判断）。**
+// 参加者を募る Yahoo!クラウドソーシングは、タスク説明文に「回答の利用目的・データの
+// 管理方法・プライバシー保護」と「掲載者の問い合わせ先」を書くことを求めている。
+// つまり応募する前に、募集ページで説明を読んでもらう仕組みになっている。
+// それと同じ説明を課題の1画面目にもう一度**全文で**出すと（実測で視覚759字・
+// 聴覚906字あった）、読まずに離脱する人が増えるだけである。そこで見えている側は
+// 要点だけにして、全文は折りたたみに移した。**全文を消したわけではない**——
+// 募集ページを通さずURLを直接開いた人にも読めるようにしておく必要があるため。
+//
+// **組み替えの中身。**
+//   1. 見出し「研究へのご協力のお願い」を消す（本文から始める）
 //   2. 「途中再開」の項目を「記録するもの」の項目にたたむ
-//      (再開した回数と中断していた時間は"記録するもの"なので、そこに書くのが素直)
-//   3. 保管期間・撤回の方法・問い合わせ先の3項目を足す(倫理審査で要る項目)
+//      （再開した回数と中断していた時間は"記録するもの"なので、そこに書くのが素直）
+//   3. 保管期間・撤回の方法・問い合わせ先の3項目を足す（倫理審査で要る項目）
+//   4. prod_common.js が書いた項目をまるごと <details>（折りたたみ）の中へ移す
+//   5. 折りたたみの外には、要点だけの4行を出す
+//
+// ⚠ **要素を消さずに組み替えること。** 「同意して始める」ボタン（#cstGo）と
+//   音の再生機器のラジオ（input[name="dev"]）には prod_common.js と transfer.js が
+//   リスナーを付けている。innerHTML で作り直すとリスナーが消え、ボタンを押しても
+//   何も起きなくなる。ここでは折りたたみを ul の直後に差し込むだけなので
+//   （ボタンと機器の選択はもともとその後ろにある）、順番を入れ替える必要は無い。
+//   もし今後この2つを動かすなら、必ず appendChild で**移す**こと。
 function tidyConsentScreen() {
   const h1 = screenEl.querySelector("h1");
   if (h1 && h1.textContent.indexOf("ご協力") >= 0) h1.remove();
   const items = [...screenEl.querySelectorAll("li")];
   const rec = items.find(li => li.textContent.indexOf("記録するもの") >= 0);
   const resume = items.find(li => li.textContent.indexOf("途中再開") >= 0);
-  if (rec && resume) {
+  const age = items.find(li => li.textContent.indexOf("参加できる方") >= 0);
+  // 「中断して開き直した場合」の一文は、再開の項目そのものが出ない研究者モードでも足す。
+  // ここを `rec && resume` にしていたせいで、研究者モードだけこの65字が消え、
+  // 本番と表示が食い違っていた（2026-08-24 に修正）。
+  if (rec) {
     rec.insertAdjacentHTML("beforeend",
       "中断して開き直した場合は、再開した回数と中断していた時間も記録します" +
       "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
-    resume.remove();
   }
+  if (resume) resume.remove();
+  // 年齢の条件は折りたたみの外（要点）に出すので、中からは消す（二重に出さない）。
+  if (age) age.remove();
   const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
-  if (ul) ul.insertAdjacentHTML("beforeend", consentExtraHTML());
+  if (!ul) return;
+  const c = CFG.contact || {};
+  // 折りたたみを作り、prod_common.js が書いた項目をそのまま中へ移す。
+  // <details> は JavaScript なしで開閉するので、開閉の処理は書かなくてよい。
+  const det = document.createElement("details");
+  det.className = "consent-more";
+  det.innerHTML = '<summary>研究の説明を読む</summary><ul></ul>';
+  const full = det.querySelector("ul");
+  while (ul.firstChild) full.appendChild(ul.firstChild);
+  full.insertAdjacentHTML("beforeend", consentExtraHTML());
+  // 折りたたみの外に出す要点。ここに書いた以上のことは、すべて折りたたみの中にある。
+  ul.innerHTML = `
+    <li>18歳以上の方が参加いただけます。</li>
+    <li>回答と端末の情報（画面の大きさなど）を記録します。氏名やメールアドレスなど、
+        個人を特定できる情報は記録しません。</li>
+    <li>募集ページに記載した説明にご同意のうえ、開始してください。</li>
+    <li>お問い合わせ：${c.pi || "【要確認：研究責任者】"}
+        （${c.institution || "津田塾大学 栗原研究室"}）／${mailLink(c.email)}</li>`;
+  ul.insertAdjacentElement("afterend", det);
 }
 
 // =========================================================================
