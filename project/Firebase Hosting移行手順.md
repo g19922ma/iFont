@@ -3,8 +3,27 @@
 実験ページの配り先を、GitHub Pages（`https://g19922ma.github.io/iFont/experiment/...`）から
 Firebase Hosting（`https://kana-task.web.app/...`）へ移すための手順書。
 
-**この文書を書いた時点では、まだデプロイしていない。**
-「ん」の問題が片づいてから、下の「3. デプロイする」を実行する。
+## 現在の状態（2026-08-24 時点）
+
+**デプロイ済み。`https://kana-task.web.app` は動いている。掲載はまだしていない。**
+
+| 項目 | 状態 |
+|---|---|
+| Hosting サイト `kana-task` | 作成済み・デプロイ済み（643ファイル・7.5MB） |
+| `pre_launch`（掲載前フラグ） | **`true`**。記録はすべて試し打ち扱いで、本番の連番も進まない |
+| 聴覚刺激 | 「ん」が残る版のまま。**作り直したら再デプロイが必要** |
+| `transfer_warp.json`（転写の進み方の表） | まだ無い。群Bの本番前に要る |
+| 掲載文・掲載手順のURL | `kana-task.web.app` に書き換え済み |
+| GitHub Pages | 残してある（切り戻し用）。ただし**参加者には案内しない** |
+
+> ### ⚠ 掲載するときに必ずやること
+>
+> 1. `experiment/transfer_config.js` の `pre_launch` を **`false`** に戻す
+>    （いまは `true`。戻し忘れると、本物の参加者のデータが全部テスト扱いになる）
+> 2. 入口4ページの `?v=` を上げる（`transfer_config.js` を変えたため）
+> 3. `bash experiment/tools/build_hosting.sh` → `firebase deploy --only hosting:kana-task`
+>
+> 1 を忘れたままだと、**手順 3 のビルドがその場で止まる**ようにしてある。
 
 ---
 
@@ -124,17 +143,55 @@ cd /Users/maruyama/Documents/GitHub/iFont
 # 1. 最新を取り込む(他の人の変更を混ぜてしまわないため)
 git pull --rebase
 
-# 2. 掲載前フラグが false であることを手元で確認
-grep -n "^  pre_launch:" experiment/transfer_config.js
-#    → pre_launch: false,  でなければ掲載用のデプロイをしない
-
-# 3. 公開するファイルを集め直す
+# 2. 公開するファイルを集め直す
 bash experiment/tools/build_hosting.sh
 ```
 
-スクリプトは最後に「ファイル数・大きさ・直下のファイル一覧」を出す。
-**正解表や `.py` `.md` が混ざっていたらその場で止まる**ようにしてある
-（名前で見張っているだけの簡単な検査だが、事故はたいていこの形で起きる）。
+**掲載用のビルドは、`pre_launch` が `true` のままだとその場で止まる。**
+確認を人の記憶に頼らないための仕掛けである。動作確認のために
+`true` のまま作りたいときだけ、明示的に迂回する:
+
+```bash
+ALLOW_PRELAUNCH=1 bash experiment/tools/build_hosting.sh
+```
+
+スクリプトがやること（順番に）:
+
+1. `transfer_config.js` から音源のフォルダ名と索引名を読み、必要なファイルだけコピーする
+2. **JavaScript からコメントを落とす**（下の「3-1b」）
+3. 落とす前後で**意味が変わっていないか**を確かめる
+4. `build_info.json`（掲載前の確認に使う目印）を書き出す
+5. `pre_launch` が `true` なら止まる
+6. 正解表や `.py` `.md` が混ざっていないか名前で見張る
+
+### 3-1b. 配信するファイルからコメントを落としている
+
+`experiment/` の JavaScript には、実験計画書・仮説・下見の正答率に触れた説明が
+大量に書いてある（`transfer_config.js` だけで設計の話が29行）。ファイルは
+参加者のブラウザに配信されるので、開発者ツールを開かれると
+「何を測られているか」が読めてしまう。URL から研究名を消しても、これが残ると隠した意味が薄い。
+
+そこで、**配信用にコピーしたほうだけ**コメントを落としている。
+`experiment/` の元のファイルはそのままで、説明も残っている。
+
+- 使っているのは **esbuild**（本物の JavaScript 解析器）で、`--minify-whitespace` だけを
+  指定している。**変数名の書き換えも構文の作り替えもしない**（コメントと余白を落とすだけ）。
+  素朴な正規表現だと、文字列の中の `//`（URLなど）や正規表現リテラルを巻き込んで壊すので使わない。
+- 初回だけネットにつながっている必要がある（以後は手元の控えで動く）。
+  取ってこられないときは**素通しにせず止まる**。
+
+落としたあと、`experiment/tools/verify_stripped_js.js` が次を確かめる。
+1つでも落ちたら、配信用のファイルを差し替えずに止まる。
+
+| 対象 | 確かめかた |
+|---|---|
+| 設定2本（`transfer_config.js` / `transfer_comfort_config.js`） | 実際に読み込んで、できあがる設定を**キーの順序ごと**突き合わせる |
+| 部品2本（`prod_common.js` / `transfer_firestore.js`） | 外に出している関数の名前と種類の一覧を突き合わせる |
+| 本体2本（`transfer.js` / `transfer_comfort.js`） | 画面に出る文字列（**使用許諾の表記**・所属名）が同じ回数あるか数える |
+| 全6本 | 文法として読めるか（`node --check`）／極端に縮んでいないか |
+
+> 使用許諾の表記「COEIROINK:あみたろ」は**画面に出す文字列**なので消えない
+> （コメントではない）。検査でも回数を数えて見張っている。
 
 ### 3-2. 手元で見てから上げる（推奨）
 
@@ -183,11 +240,15 @@ done
 
 ```bash
 # (2) 配信中のファイルで掲載前フラグが false か(手元ではなく実物を見る)
-curl -s $B/transfer_config.js | grep -n "pre_launch"
-#   → pre_launch: false,  でなければ掲載しない
+curl -s $B/build_info.json
+#   → "pre_launch": false,  でなければ掲載しない
+#   config_version / stimuli_dir / git_commit が手元と合っているかも合わせて見る
+#
+#   ⚠ かつては transfer_config.js を grep していたが、配信するファイルは
+#     コメントを落としてあり全体が1行なので使えない。値だけを別に書き出してある。
 
-# (3) 設定の版が想定どおりか
-curl -s $B/transfer_config.js | grep -n "config_version"
+# (3) 配信されているのが手元と同じ版か
+git rev-parse --short HEAD     # build_info.json の git_commit と一致すること
 
 # (4) 出してはいけないものが 404 か
 for p in answer_key_merged.json tools/ PRODUCTION.md index.html transfer_stimuli_kanon/ ; do
@@ -306,11 +367,45 @@ firebase hosting:disable --site kana-task     # 公開を止める(サイトは�
 
 | いつ | やること | なぜ自動化できないか |
 |---|---|---|
-| ~~移行前~~ | ~~Firebase に `kana-task` サイトを作る~~ | **2026-08-24 に作成済み**（`firebase hosting:sites:create kana-task`） |
-| デプロイ後 | ブラウザで4つの入口を最後まで1回ずつ通す（`?wid=uitest-...`） | 音が鳴るか・アニメが出るか・完了コードが出るかは、実際に人が見ないと分からない |
+| ~~移行前~~ | ~~Firebase に `kana-task` サイトを作る~~ | ✓ 2026-08-24 に作成済み |
+| ~~移行前~~ | ~~デプロイする~~ | ✓ 2026-08-24 に実施済み |
+| ~~移行後~~ | ~~`project/` の URL を書き換える~~ | ✓ 2026-08-24 に実施済み（上の「5.」） |
+| **いま** | **ブラウザで4つの入口を最後まで1回ずつ通す**（下の 7-1） | 音が鳴るか・アニメが出るか・完了コードが出るかは、実際に人が見ないと分からない |
+| 刺激の作り直し後 | 再ビルドして再デプロイ | 「ん」が残る版のまま配信している |
+| 掲載直前 | `pre_launch` を `false` に戻し、`?v=` を上げて再デプロイ | 実験の設定を変える判断そのもの |
 | 掲載直前 | 掲載サイトの作業URL を貼り替える | 掲載サイトの管理画面での作業 |
-| 掲載直前 | `project/` の URL を一括で書き換える（上の「5.」） | 移行が済んでからにする、と決めたため |
 | 群Bの本番前 | `transfer_warp.json` を生成して置く | まだ存在しない。**無いと提案手法が等速で代用され、検証のデータにならない** |
+
+### 7-1. いまやってほしいブラウザでの確認
+
+`?wid=` の頭を **`uitest-`** にして開くこと。この頭の名前が付いた回は
+`is_test` の印が付き、本番の連番とは別のカウンタから番号が配られる
+（いまは `pre_launch` も `true` なので二重に守られている）。
+
+```
+https://kana-task.web.app/listen?prod=1&wid=uitest-check1
+https://kana-task.web.app/look?prod=1&wid=uitest-check2
+https://kana-task.web.app/read?prod=1&wid=uitest-check3
+https://kana-task.web.app/survey?prod=1&wid=uitest-check4
+```
+
+見るところ:
+
+- 音が鳴るか／文字のアニメが出るか（＝刺激ファイルの参照が壊れていないか）
+- 最後まで進んで完了コードが出るか（＝Firestore への保存が通っているか）
+- 画面の右上に「掲載前モード：この記録はテスト扱いです」の**赤い帯が出ているか**
+  （`pre_launch: true` が効いている印。掲載時にはこれが消えていること）
+- 開発者ツールの Console に赤いエラーが無いか
+
+終わったら、試し打ちの行を消す:
+
+```bash
+python3 experiment/tools/purge_transfer_firestore.py --key firebase/ifont-transfer-sa.json        # 数えるだけ
+python3 experiment/tools/purge_transfer_firestore.py --key firebase/ifont-transfer-sa.json --yes  # 実際に消す
+```
+
+> このスクリプトは **`is_test` の印が付いた行しか消さない**ので、
+> 本物のデータに手が届かない。
 
 ---
 
@@ -326,23 +421,35 @@ firebase hosting:disable --site kana-task     # 公開を止める(サイトは�
 
 ---
 
-## 9. 残っている懸念（判断待ち）
+## 9. 残っている懸念
 
-### 9-1. 配信する JavaScript のコメントに、研究の設計がそのまま書いてある
+### 9-1. 配信する JavaScript のコメント → **✓ 解決済み（2026-08-24）**
 
-URL からは研究名が消えるが、**ページのソースを開くと設計が読める**状態は残る。
+かつては、URL から研究名を消しても**ページのソースを開くと設計が読めた**
+（`transfer_config.js` に実験計画書・仮説・下見の正答率に触れた説明が29行、
+`transfer.js` に5行）。
 
-- `transfer_config.js`: 実験計画書・仮説・下見の正答率・`project/` の文書名に触れた
-  コメントが **29行**（例:「対照条件が構造的に不利になっていた」「仮説1が勝って当たり前の比較」）
-- `transfer.js`: 同種のコメントが 5行
+配信用にコピーする段階でコメントを落とすようにして解決した（「3-1b」）。
+元のファイルは触っていないので、開発時の読みやすさと設計判断の記録は残っている。
 
-これは **GitHub Pages のときから同じ**で、移行によって悪化はしない。
-参加者が開発者ツールを開かないかぎり見えないので、優先度は URL の問題より低い。
+実際の効果（デプロイ済みのファイルで確認）:
 
-気になるなら、`build_hosting.sh` のコピーの直後にコメントを落とす処理
-（`npx terser --comments false` など）を足せる。ただし、
-**「配信中のファイルを curl して `pre_launch` を grep する」という掲載前の確認手順が使えなくなる**
-ので、確認のやり方を先に決める必要がある。今回は**手を付けていない**。
+| | 元のファイル | 配信されているファイル |
+|---|---|---|
+| 「仮説」「計画書」「パイロット」「対照条件」の出現 | 51 か所 | **0 か所** |
+| `transfer_config.js` の大きさ | 85KB | 6.6KB |
+| `transfer.js` の大きさ | 132KB | 69KB |
+| 6本の合計 | 300KB | 135KB |
+| 使用許諾の表記「COEIROINK:あみたろ」 | 1 か所 | **1 か所（残っている）** |
+
+副産物として、参加者がダウンロードする量が半分以下になった。
+
+**掲載前の確認への影響**: `transfer_config.js` を curl して `pre_launch` を grep する
+やり方は使えなくなった（全体が1行に潰れるため）。かわりに 2 つ用意した。
+
+1. `build_info.json` を配信し、`pre_launch` などの値をそこで確かめる（「4.」の (2)）
+2. **`pre_launch` が `true` のままだと掲載用のビルドが止まる**（「3-1.」）
+   —— 確認を忘れる余地をなくすほうが確実なので、こちらを主にした
 
 ### 9-2. 消しきれなかった「ifont」の文字列
 
@@ -359,6 +466,50 @@ URL からは研究名が消えるが、**ページのソースを開くと設�
 
 ---
 
+### 9-3. ⚠ Firestore に「本物扱い」の行が 103 行たまっている（**要判断**）
+
+デプロイ後の疎通確認のついでに Firestore の中身を数えたところ、
+**`is_test` の印が付いていない行**が次のだけ入っていた（2026-08-24 時点）。
+
+| コレクション | 全行 | うち印なし（＝解析に混ざる） |
+|---|---|---|
+| `transfer_trials`（回答） | 127 | **96** |
+| `transfer_wellbeing`（見え心地） | 2 | **1** |
+| `transfer_roster`（名簿） | 55 | **6** |
+
+印なしの参加者IDは `anon-darawfgc` / `anon-w071hbw7` / `anon-11pism0f` /
+`anon-tp56ewrj` / `anon-y0x05w11` の5人ぶんで、いずれも較正フェーズ（群Acal・群A′）である。
+
+**掲載はまだしていないので、これはクラウドソーシングの参加者ではない。**
+`pre_launch` が `false` だったあいだに GitHub Pages 側のページを
+`uitest-` などの頭を付けずに開いた回（研究者・先生の動作確認）が、
+そのまま本物として保存されたものと考えられる。
+`transfer_config.js` のコメントが警告している 2026-08-21 の事故と同じ形である。
+
+**放っておくと2つ困る。**
+
+1. 解析の既定（`export_transfer_firestore.py`）は `is_test` の行だけを外すので、
+   **この96行は本物の回答として集計に混ざる**
+2. 名簿の6行が**本番の連番を6つ消費している**ので、較正フェーズの
+   群Acal・群A′ の割り当ての釣り合いが最初からずれている
+
+**丸山の判断が要る。** 心当たりのある回なら、印を付けてから消すのが安全:
+
+```bash
+# まず中身を見る（誰の・いつの回か）
+python3 experiment/tools/export_transfer_firestore.py --key firebase/ifont-transfer-sa.json
+
+# 動作確認だったと分かったら、名指しで印を付ける（--yes を付けるまで実際には変えない）
+python3 experiment/tools/purge_transfer_firestore.py --key firebase/ifont-transfer-sa.json \
+    --mark-test transfer_roster/calib_anon-darawfgc
+# 印を付けたら purge で消え、--reset-counters で連番も0に戻せる
+```
+
+> ⚠ `--reset-counters` は**掲載が始まったあとは使わないこと**（配った番号と重なる）。
+> いまは掲載前なので使ってよい。
+
+---
+
 ## 10. 変更したファイル（このセッション）
 
 | ファイル | 変更 |
@@ -366,10 +517,16 @@ URL からは研究名が消えるが、**ページのソースを開くと設�
 | `firebase.json` | `hosting` の節を追加（サイト `kana-task`／公開元 `hosting_dist`／短いURLの読み替え／キャッシュと検索避けの指定）。既存の `firestore` の節はそのまま |
 | `.firebaserc`（新規） | 既定のプロジェクトを `ifont-transfer` に。以後 `--project` を省ける |
 | `.gitignore` | `hosting_dist/` を追加（中身は全部コピーなので git に入れない） |
-| `experiment/tools/build_hosting.sh`（新規） | 公開するファイルだけを `hosting_dist/` に集めるスクリプト |
-| `experiment/transfer_config.js` | 167行目、コメント内の確認用 curl を新 URL に |
-| `experiment/prod_common.js` | 2行目、コメントから「iFont」を削除 |
+| `experiment/tools/build_hosting.sh`（新規） | 公開するファイルだけを `hosting_dist/` に集め、コメントを落とし、検査し、`build_info.json` を書き出すスクリプト |
+| `experiment/tools/verify_stripped_js.js`（新規） | コメントを落とす前後で意味が変わっていないかを確かめる |
+| `experiment/transfer_config.js` | コメント内の確認用 curl を新 URL に／`pre_launch` を `true` に戻した（掲載しないため） |
+| `experiment/prod_common.js` | 冒頭のコメントから「iFont」を削除 |
+| `experiment/PRODUCTION.md` | 冒頭に「この文書は乙課題・frac課題だけ。転写検証は別の配信先」と範囲を明示 |
+| `project/掲載文.md` | 参加者に渡す作業URL 7か所を `kana-task.web.app` に |
+| `project/掲載手順_最終.md` | 掲載する4本のURL |
+| `project/掲載前チェックリスト.md` | URL／`pre_launch` の確認を `build_info.json` に／Firebase へのデプロイ手順（E-1b）と非公開の確認（E-2b）を追加 |
+| `project/先生への連絡_20260824.md` | 先生に試してもらう2本のURL |
 | `project/Firebase Hosting移行手順.md`（新規） | この文書 |
 
-Firebase 側で行った操作は **`kana-task` サイトの作成のみ**。デプロイはしていない
-（`https://kana-task.web.app/` はまだ 404 を返す）。
+Firebase 側で行った操作は **`kana-task` サイトの作成**と**デプロイ**の2つ。
+`https://kana-task.web.app` は動いている（掲載はまだしていない）。

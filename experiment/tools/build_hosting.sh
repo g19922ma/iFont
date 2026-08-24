@@ -135,6 +135,107 @@ User-agent: *
 Disallow: /
 EOF
 
+# --- 4.5 JavaScript からコメントを落とす -----------------------------------
+# なぜやるか。experiment/ の JavaScript には、実験計画書・仮説・下見の正答率に
+# 触れた説明が大量に書いてある（transfer_config.js だけで設計の話が29行）。
+# ファイルは参加者のブラウザに配信されるので、開発者ツールを開かれると
+# 「何を測られているか」が読めてしまう。URL から研究名を消しても、これが残ると
+# 隠した意味が薄い。
+#
+# **元のファイルは触らない。** 説明は開発の役に立つし、なぜその値にしたかの記録でもある。
+# 配信用にコピーしたほう（hosting_dist/）だけを削る。
+#
+# ⚠ 素朴な正規表現（"//" 以降を消す等）は使えない。文字列の中の "//"（URL など）や
+#   正規表現リテラルの中の "/" を巻き込んで、コードを壊す。ここでは esbuild という
+#   本物の JavaScript 解析器に読ませて書き出し直す。
+#   --minify-whitespace だけを付けているのが要点で、これは
+#   **変数名の書き換えも構文の作り替えもしない**（コメントと余白を落とすだけ）。
+#   --charset=utf8 は、日本語を \uXXXX に潰されないようにするため。
+ESBUILD_VER="0.23.1"
+JS_FILES=(prod_common.js transfer_config.js transfer_firestore.js
+          transfer.js transfer_comfort_config.js transfer_comfort.js)
+
+echo
+echo "JavaScript からコメントを落とす（esbuild ${ESBUILD_VER}）…"
+TMPJS="$(mktemp -d)"
+trap 'rm -rf "$TMPJS"' EXIT
+
+# npx は一度取ってくればあとは手元の控えから動く（＝2回目以降はネット不要）。
+# 取ってこられないときは**黙って素通しにせず、その場で止める**。
+# 素通しすると設計の説明が付いたまま配信されてしまい、この工程の意味が無くなる。
+if ! (cd "$DIST" && npx --prefer-offline --yes "esbuild@${ESBUILD_VER}" \
+        "${JS_FILES[@]}" \
+        --minify-whitespace --target=esnext --charset=utf8 \
+        --legal-comments=none --outdir="$TMPJS" >/dev/null); then
+  echo "エラー: esbuild を実行できなかった。" >&2
+  echo "  初回だけネットにつながっている必要がある（以後は手元の控えで動く）。" >&2
+  echo "  コメントを落とせないまま配信するのは危ないので、ここで止める。" >&2
+  exit 1
+fi
+
+for f in "${JS_FILES[@]}"; do
+  if [ ! -s "$TMPJS/$f" ]; then
+    echo "エラー: ${f} の書き出しが空。" >&2
+    exit 1
+  fi
+  # 文法として読めるか。**空ファイルでも通る検査**なので、これだけに頼らない
+  # （中身が同じ意味かどうかは、この下の verify_stripped_js.js が見る）。
+  if ! node --check "$TMPJS/$f"; then
+    echo "エラー: ${f} がコメント除去で壊れた。" >&2
+    exit 1
+  fi
+done
+
+# --- 4.6 除去の前後で意味が変わっていないかを確かめる -----------------------
+# 設定2本は「読み込んでできる値」を、部品2本は「外に出している関数の一覧」を、
+# 本体2本は「画面に出る文字列（使用許諾の表記など）」を突き合わせる。
+# ここで build_info.json（掲載前の確認に使う目印）も書き出す。
+WARP_PRESENT=no
+[ -f "$DIST/transfer_warp.json" ] && WARP_PRESENT=yes
+GIT_COMMIT="$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+
+echo
+echo "コメント除去の前後で意味が変わっていないかを確かめる…"
+if ! node "$SRC/tools/verify_stripped_js.js" \
+        "$SRC" "$TMPJS" "$STIM_DIR" "$MANIFEST" "$GIT_COMMIT" "$WARP_PRESENT"; then
+  echo "エラー: 検査に落ちた。配信用のファイルを差し替えずに止める。" >&2
+  exit 1
+fi
+
+# 検査を通ったので、はじめて配信用フォルダのファイルを差し替える。
+for f in "${JS_FILES[@]}"; do cp "$TMPJS/$f" "$DIST/$f"; done
+cp "$TMPJS/build_info.json" "$DIST/build_info.json"
+
+# --- 4.7 掲載前フラグの見張り ----------------------------------------------
+# transfer_config.js の pre_launch が true のあいだは、記録がすべて「試し打ち」
+# 扱いで保存され、名簿の連番も本番とは別のカウンタから配られる。
+# **true のまま掲載すると、本物の参加者のデータが全部テスト扱いになる**
+# （解析の既定では除外されるので、集計が0件になって初めて気づく）。
+#
+# コメントを落とすと、これまでの「配信中の transfer_config.js を curl して
+# pre_launch を grep する」という確認ができなくなった（1行に潰れ、説明も消えるため）。
+# かわりに **ここで止める**。確認を忘れる余地をなくす、という考え方である。
+#
+#   掲載用のビルド : そのまま実行する（pre_launch が true なら止まる）
+#   動作確認のビルド: ALLOW_PRELAUNCH=1 bash experiment/tools/build_hosting.sh
+PRE_LAUNCH="$(node -e 'const j=require(process.argv[1]);console.log(j.pre_launch?"true":"false")' "$DIST/build_info.json")"
+echo
+if [ "$PRE_LAUNCH" = "true" ]; then
+  if [ "${ALLOW_PRELAUNCH:-}" = "1" ]; then
+    echo "⚠ pre_launch は true。**動作確認用のビルド**として続ける（ALLOW_PRELAUNCH=1 が指定された）。"
+    echo "  この状態で配信すると、記録はすべて試し打ち扱いになり本番データにならない。"
+    echo "  掲載するときは transfer_config.js の pre_launch を false に戻すこと。"
+  else
+    echo "エラー: transfer_config.js の pre_launch が true のままである。" >&2
+    echo "  このまま掲載すると、本物の参加者のデータが全部テスト扱いになる。" >&2
+    echo "  ・掲載用に作るなら → transfer_config.js の pre_launch を false にする" >&2
+    echo "  ・動作確認用に作るなら → ALLOW_PRELAUNCH=1 bash experiment/tools/build_hosting.sh" >&2
+    exit 1
+  fi
+else
+  echo "pre_launch は false（掲載用のビルド）。"
+fi
+
 # --- 5. 出してはいけないものが混ざっていないかの見張り ----------------------
 # 名前で引っかける単純な検査だが、コピー漏れならぬ「コピーしすぎ」の事故は
 # たいてい正解表・解析スクリプト・書きかけの文書が混ざる形で起きる。
