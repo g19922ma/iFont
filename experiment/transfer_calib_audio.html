@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなの聞き取りの課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.10">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  転写検証実験・較正フェーズの入口（**集団を決め打ちした版**。2026-08-24 追加）。
+  このページに来た人は必ず **acal（聴覚・群Acal）** に割り当てられる。
+
+  ■ なぜ入口を2つに分けたか
+  較正フェーズは群Acal（聴覚・約11.5分）と群A′（視覚・約4〜5分）で所要が倍以上違うので、
+  報酬を別々（250円／130円）に決めた。ところがクラウドソーシングの掲載は
+  **1本につき金額が1つ**なので、1本にまとめたままでは2つの金額を付けられない。
+  そこで掲載を2本に分け、入口ページ側で集団を固定することにした。
+
+  ■ 重複参加はこれまでどおり名簿で防ぐ
+  フェーズ名は "calib" のまま**共通**なので、片方の掲載に出た人がもう片方を開くと、
+  名簿は前の割り当てを返す。このページが決め打ちしている集団と食い違うので、
+  **お断り画面**になる。ページを分けても2集団が互いに独立であることは保たれる。
+
+  ■ 振り分け版（transfer_calib.html）も残してある
+  研究者の動作確認と、報酬を1本にそろえて掲載し直したくなったときのため。
+  **本番の掲載で使うのは transfer_calib_audio.html と transfer_calib_visual.html の2枚**である。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "calib", force_group: "acal" };</script>
+<script src="prod_common.js?v=3.10"></script>
+<script src="transfer_config.js?v=3.10"></script>
+<script src="transfer_firestore.js?v=3.10"></script>
+<script src="transfer.js?v=3.10"></script>
+</body>
+</html>

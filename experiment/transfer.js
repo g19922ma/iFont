@@ -81,9 +81,30 @@ const GROUPS = {
 };
 // このページがどのフェーズの入口か。各HTMLが読み込みの前に埋め込む。
 //   <script>window.TRANSFER_PAGE = { phase: "calib" };</script>
+//
+// ■ force_group（2026-08-24 追加）
+//   入口ページが「この掲載に来た人は必ずこの集団」と決め打ちできる。
+//     <script>window.TRANSFER_PAGE = { phase: "calib", force_group: "acal" };</script>
+//
+//   **なぜ要るのか。** 較正フェーズは群Acal（聴覚・約11.5分）と群A′（視覚・約4〜5分）で
+//   所要が倍以上違うので、報酬を別々（250円／130円）に決めた。ところが
+//   クラウドソーシングの掲載は**1本につき金額が1つ**なので、1本にまとめたままでは
+//   2つの金額を付けられない。そこで掲載を2本に分け、入口ページ側で集団を固定する。
+//
+//   **重複参加はこれまでどおり名簿で防ぐ。** フェーズ名は "calib" のまま共通なので、
+//   聴覚の掲載に出た人が視覚の掲載を開くと、名簿は前の割り当て（acal）を返す。
+//   このページが決め打ちしている集団（aprime）と食い違うので、**お断り画面**へ送る。
+//   ページを分けても、2集団が互いに独立であることは保たれる。
 const PAGE = window.TRANSFER_PAGE || { phase: "calib" };
 const PHASE = PAGE.phase;
-const PHASE_GROUPS = (CFG.phases && CFG.phases[PHASE]) || [];
+// このページが集団を決め打ちしているか（設定に無い集団名は無視する）。
+const FORCED_GROUP = (CFG.phases && CFG.phases[PAGE.phase] &&
+                      CFG.phases[PAGE.phase].indexOf(PAGE.force_group) >= 0)
+                       ? PAGE.force_group : "";
+// 名簿に「この集団から配ってほしい」と伝える並び。決め打ちなら1つだけになる。
+const PHASE_GROUPS = FORCED_GROUP ? [FORCED_GROUP] : ((CFG.phases && CFG.phases[PHASE]) || []);
+// 名簿が返しうる集団の全部（開き直しの人が別の集団で載っていることがある）。
+const PHASE_GROUPS_ALL = (CFG.phases && CFG.phases[PHASE]) || [];
 
 // 集団と割付は起動時に決まる(サーバの参加者名簿に問い合わせる)。
 let GROUP = "", G = null, ASSIGN = 0;
@@ -202,6 +223,9 @@ async function rosterQueryOnce(pid) {
   const base = ROSTER.status_url;
   const url = base + (base.indexOf("?") >= 0 ? "&" : "?") +
     "action=transfer_status&phase=" + encodeURIComponent(PHASE) +
+    // このページが集団を決め打ちしているときは、サーバにもそれを伝える
+    // (伝えないと GAS 側が交互の振り分けで別の集団を返してしまう)。
+    (FORCED_GROUP ? "&group=" + encodeURIComponent(FORCED_GROUP) : "") +
     "&participant_id=" + encodeURIComponent(pid) +
     "&worker_id=" + encodeURIComponent((window.PROD && PROD.workerId) || "") +
     // 試し打ちの目印。GAS 側は参加者IDの頭（curltest- / uitest-）も見るが、
@@ -227,6 +251,11 @@ async function rosterQueryOnce(pid) {
     return { kind: "fail", why: "JSONでない応答(" + text.slice(0, 40).replace(/\s+/g, " ") + "…)" };
   }
   if (j && j.blocked) return { kind: "blocked", reason: j.reason || "already_participated" };
+  // このページが決め打ちしている集団と違う集団が返ってきた＝**同じフェーズの
+  // もう一方の掲載にすでに出ている人**である。お断りする(2集団は互いに独立)。
+  if (j && FORCED_GROUP && PHASE_GROUPS_ALL.indexOf(j.group) >= 0 && j.group !== FORCED_GROUP) {
+    return { kind: "blocked", reason: "already_in_calib" };
+  }
   if (j && PHASE_GROUPS.indexOf(j.group) >= 0) return { kind: "ok", j: j };
   return { kind: "fail", why: "集団が読み取れない応答" };
 }
@@ -249,6 +278,11 @@ async function rosterQueryOnceFirestore(pid) {
   });
   if (r.kind === "blocked") return { kind: "blocked", reason: r.reason };
   if (r.kind === "ok") {
+    // このページが決め打ちしている集団と違う集団が名簿にある＝**同じフェーズの
+    // もう一方の掲載にすでに出ている人**である。お断りする(2集団は互いに独立)。
+    if (FORCED_GROUP && PHASE_GROUPS_ALL.indexOf(r.group) >= 0 && r.group !== FORCED_GROUP) {
+      return { kind: "blocked", reason: "already_in_calib" };
+    }
     if (PHASE_GROUPS.indexOf(r.group) < 0) {
       return { kind: "fail", why: "名簿の集団が読めない(" + r.group + ")" };
     }
@@ -286,6 +320,12 @@ async function resolveAssignment() {
   const cached = readAssignCache(pid);
   if (cached && PHASE_GROUPS.indexOf(cached.group) >= 0) {
     return { group: cached.group, assign_index: cached.assign_index, source: "cache" };
+  }
+  // 端末に残っている割り当てが、このページの決め打ちと違う集団だった
+  // ＝同じフェーズのもう一方の掲載を先にやった人。サーバに聞くまでもなく断る。
+  if (cached && FORCED_GROUP && PHASE_GROUPS_ALL.indexOf(cached.group) >= 0 &&
+      cached.group !== FORCED_GROUP) {
+    return { blocked: true, reason: "already_in_calib" };
   }
   // 設定した基盤を順に試す(既定では Firestore → だめなら GAS)。
   // それぞれの基盤の中で、間を空けて何度か作り直す。

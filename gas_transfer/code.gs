@@ -336,9 +336,10 @@ function handleSoa(sheetId, body) {
 //    **Firestore 側と同じ規則を保つこと**(集団の表と、下の重複拒否の表)。
 
 const TRANSFER_PHASE_GROUPS = {
-  // 2026-08-24: 群Acal 50人・群A′ 100人にするため、並びに aprime を2回書いて 1:2 にした
-  // (振り分けは「何人目か ÷ 並びの長さ の余り」で選ぶ)。transfer_config.js と同じにすること。
-  calib: ["acal", "aprime", "aprime"],
+  // 2026-08-24: 較正フェーズは掲載を2本に分けたので、実際には自動振り分けを使わない
+  // (入口ページが &group=acal / &group=aprime を送ってくる)。この並びは
+  // 「ありうる集団の一覧」として使う。transfer_config.js の phases と同じにすること。
+  calib: ["acal", "aprime"],
   // 検証フェーズ。2026-08-24 に検証用の音声集団(atest)を廃止したので群Bだけになった。
   // 集団は1つなので振り分けは起きず、連番だけ配る。
   test: ["b"],
@@ -450,8 +451,14 @@ function transferPurgeTest() {
 function transferStatus(p) {
   const phase = String(p.phase || "");
   const pid = String(p.participant_id || "");
-  const groups = TRANSFER_PHASE_GROUPS[phase];
-  if (!groups || !pid) return out({status: "error", reason: "phase/participant_id required"});
+  const allGroups = TRANSFER_PHASE_GROUPS[phase];
+  if (!allGroups || !pid) return out({status: "error", reason: "phase/participant_id required"});
+  // 入口ページが集団を決め打ちしてきたとき(&group=acal など)は、その集団だけから配る。
+  // 較正フェーズは所要と報酬が違うので掲載を2本に分けており、どちらの掲載から来たかを
+  // サーバは URL のこの印でしか知れない(2026-08-24)。
+  // 知らない集団名は無視する(決め打ちなしと同じ扱い)。
+  const forced = String(p.group || "");
+  const groups = (forced && allGroups.indexOf(forced) >= 0) ? [forced] : allGroups;
   const testRun = isTestRun(pid, p.is_test);
 
   const lock = LockService.getScriptLock();
@@ -465,8 +472,10 @@ function transferStatus(p) {
       s.appendRow(["ts", "phase", "participant_id", "worker_id", "group", "assign_index", "is_test"]);
     }
     const rows = s.getDataRange().getValues();   // [0] はヘッダ
+    // inPhase は「この掲載から何人目か」。決め打ちのときはその集団の人数だけを数える
+    // (もう一方の掲載の人数で番号が飛ばないように)。
     let inPhase = 0, inGroup = {};
-    groups.forEach(function (g) { inGroup[g] = 0; });
+    allGroups.forEach(function (g) { inGroup[g] = 0; });
 
     // この人が過去に出たフェーズを集めながら、そのフェーズの人数も数える。
     // **1回のなめで両方やる**(名簿が伸びても読み直さない)。
@@ -482,13 +491,19 @@ function transferStatus(p) {
       }
       // 人数の勘定は**同じ種類の行どうしだけ**。試し打ちの行は本番の連番を進めない。
       if (rPhase === phase && rTest === testRun) {
-        inPhase++;
+        // 決め打ちのときは、その集団の行だけを「何人目か」に数える。
+        if (!forced || rGroup === forced) inPhase++;
         if (inGroup[rGroup] !== undefined) inGroup[rGroup]++;
       }
     }
 
     // 開き直しは、断る判定より**先**に見る(自分のフェーズには当然いるため)。
     if (mine) {
+      // 決め打ちの掲載に、もう一方の掲載で登録済みの人が来た＝同じフェーズの
+      // 別の集団にすでに出ている。ブラウザ側でも弾いているが、ここでも断る。
+      if (forced && mine.group !== forced) {
+        return out({status: "ok", blocked: true, reason: "already_in_calib"});
+      }
       return out({status: "ok", group: mine.group, assign_index: mine.assign_index, returning: true});
     }
     // 断るべきフェーズに出ていたか(較正→検証・較正→群C・群C→検証・検証→群C)。

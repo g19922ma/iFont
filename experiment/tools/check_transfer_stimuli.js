@@ -44,7 +44,8 @@ const versionMatch = jsText.match(/const VERSION = "([^"]+)"/);
 const VERSION = versionMatch ? versionMatch[1] : null;
 if (!VERSION) bad("transfer.js から VERSION を読めない");
 
-for (const page of ["transfer_calib.html", "transfer_test.html"]) {
+for (const page of ["transfer_calib.html", "transfer_calib_audio.html",
+                    "transfer_calib_visual.html", "transfer_test.html"]) {
   const html = fs.readFileSync(path.join(EXP, page), "utf8");
   const refs = [...html.matchAll(/(?:src|href)="([^"]+?)(?:\?v=([^"]*))?"/g)];
   let found = 0;
@@ -58,6 +59,22 @@ for (const page of ["transfer_calib.html", "transfer_test.html"]) {
   }
   if (found < 4) bad(`${page}: 読み込んでいるファイルが ${found} 個しかない(CSS+JS3本のはず)`);
   ok(`${page}: 参照 ${found} 件すべて実在・?v=${VERSION} で一致`);
+
+  // 集団を決め打ちしている入口ページ(2026-08-24 追加)は、その集団名が
+  // 設定の phases に無いと**黙って振り分け版と同じ挙動になる**ので機械で見る。
+  const pageDecl = html.match(/window\.TRANSFER_PAGE\s*=\s*\{([^}]*)\}/);
+  const phaseM = pageDecl && pageDecl[1].match(/phase\s*:\s*"([^"]+)"/);
+  const forceM = pageDecl && pageDecl[1].match(/force_group\s*:\s*"([^"]+)"/);
+  if (forceM) {
+    const ph = phaseM ? phaseM[1] : "";
+    const list = (CFG.phases && CFG.phases[ph]) || [];
+    if (list.indexOf(forceM[1]) < 0) {
+      bad(`${page}: force_group "${forceM[1]}" が transfer_config.js の phases.${ph}`
+          + `（${JSON.stringify(list)}）に無い。決め打ちが効かず振り分けになる`);
+    } else {
+      ok(`${page}: 集団を "${forceM[1]}" に決め打ち（phase=${ph}）`);
+    }
+  }
 }
 
 // ---- 索引を読む -----------------------------------------------------------

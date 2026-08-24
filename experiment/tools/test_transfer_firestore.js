@@ -12,7 +12,8 @@
  *
  * 確かめること（掲載前チェックリスト C 節・H 節の Firestore 版）:
  *   1. 採番が飛ばない・重複しない（連続 & 同時アクセスの両方）
- *   2. 2集団が交互に配られる（音声と視覚が半々になる）
+ *   2. 較正フェーズの2集団が設定した比で配られる（2026-08-24 から **1:2**。
+ *      群Acal 50人・群A′ 100人を1本の掲載から配るため）
  *   3. 同じ人が開き直したら、前と同じ集団・同じ連番が返る
  *   4. 重複拒否が **3方向すべて** 効く
  *        較正 → 検証   ／ 較正 → 群C ／ 群C → 検証
@@ -83,24 +84,39 @@ function assign(phase, pid) {
     calibRes.forEach(r => { (byGroup[r.group] = byGroup[r.group] || []).push(r.assign_index); });
     const gs = Object.keys(byGroup).sort();
     ok(gs.join(",") === "acal,aprime", "集団は acal と aprime の2つだけ", gs.join(","));
-    ok(byGroup.acal && byGroup.aprime && byGroup.acal.length === 8 && byGroup.aprime.length === 8,
-       "8人ずつ半々に配られる",
+    // 設定の並び（phases.calib）どおりの比で配られるか。
+    // 2026-08-24 から並びは ["acal","aprime","aprime"] なので **1:2** になる。
+    const want = {};
+    PHASES.calib.forEach(g => { want[g] = (want[g] || 0) + 1; });
+    const cycle = PHASES.calib.length;                     // 3
+    const perCycle = Math.floor(calibRes.length / cycle);  // 16人なら5周ぶん
+    const okRatio = Object.keys(want).every(g =>
+      Math.abs((byGroup[g] || []).length - want[g] * (calibRes.length / cycle)) <= 1);
+    ok(okRatio, `設定の比 ${JSON.stringify(want)} どおりに配られる（並び ${JSON.stringify(PHASES.calib)}）`,
        JSON.stringify({ acal: (byGroup.acal || []).length, aprime: (byGroup.aprime || []).length }));
 
-    // 交互か（人数の差が最大1人であること＝各時点で釣り合っている）
-    let alternating = true;
+    // 並びの順に配られるか（i 番目の人は phases.calib[i % 並びの長さ]）。
+    let inOrder = true;
     for (let i = 0; i < calibRes.length; i++) {
-      if (calibRes[i].group !== PHASES.calib[i % 2]) alternating = false;
+      if (calibRes[i].group !== PHASES.calib[i % cycle]) inOrder = false;
     }
-    ok(alternating, "acal → aprime → acal … と交互に配られる",
+    ok(inOrder, `設定の並びの順に配られる（${PHASES.calib.join(" → ")} の繰り返し）`,
        calibRes.map(r => r.group).join(" "));
 
+    // 連番は「並びの長さで割った商」なので、同じ集団が並びに2回出ると**同じ連番が2人に配られる**。
+    // これは意図した挙動（群A′の割付は24人で一巡するので釣り合いは崩れない）。
     gs.forEach(g => {
+      const times = want[g];                               // その集団が並びに何回出るか
       const idx = byGroup[g].slice().sort((a, b) => a - b);
-      const want = idx.map((_, i) => i);
-      ok(JSON.stringify(idx) === JSON.stringify(want),
-         `連番が 0..${idx.length - 1} で飛びも重複もない（${g}）`, JSON.stringify(idx));
+      let expected = [];
+      for (let k = 0; expected.length < idx.length; k++) {
+        for (let t = 0; t < times && expected.length < idx.length; t++) expected.push(k);
+      }
+      ok(JSON.stringify(idx) === JSON.stringify(expected),
+         `連番が0から詰まっている（${g}。並びに${times}回出るので同じ番号が${times}人ぶん）`,
+         JSON.stringify(idx));
     });
+    void perCycle;
   }
 
   // =====================================================================
@@ -114,9 +130,13 @@ function assign(phase, pid) {
      `1回目 ${first.group}/${first.assign_index} → 2回目 ${again.group}/${again.assign_index}`);
 
   // 開き直しでは番号を消費しない（＝次の人が連番の続きをもらえる）。
+  // 17人目（0始まりで16番目）が受け取るはずの集団と連番を、設定の並びから計算する。
+  const cyc = PHASES.calib.length;
+  const wantGroup16 = PHASES.calib[16 % cyc];
+  const wantIndex16 = Math.floor(16 / cyc);
   const nextOne = await assign("calib", RUN + "-calib-16");
-  ok(nextOne.kind === "ok" && nextOne.group === "acal" && nextOne.assign_index === 8,
-     "開き直しは採番を消費しない（次の人は acal/8）",
+  ok(nextOne.kind === "ok" && nextOne.group === wantGroup16 && nextOne.assign_index === wantIndex16,
+     `開き直しは採番を消費しない（次の人は ${wantGroup16}/${wantIndex16}）`,
      JSON.stringify({ group: nextOne.group, assign_index: nextOne.assign_index }));
 
   // =====================================================================
@@ -146,9 +166,10 @@ function assign(phase, pid) {
       detail.push(g + ":" + idx.join(","));
     });
     ok(gapless, "同時に来ても連番に飛びが無い（0から詰まっている）", detail.join(" / "));
-    ok((byGroup.atest || []).length === 12 && (byGroup.b || []).length === 12,
-       "atest と b に12人ずつ",
-       JSON.stringify({ atest: (byGroup.atest || []).length, b: (byGroup.b || []).length }));
+    // 2026-08-24 に検証用の音声集団(atest)を廃止したので、検証フェーズは群Bだけである。
+    ok((byGroup.b || []).length === 24 && Object.keys(byGroup).join(",") === "b",
+       "検証フェーズは群Bだけに24人（2026-08-24 に atest を廃止）",
+       JSON.stringify(Object.fromEntries(Object.entries(byGroup).map(([k, v]) => [k, v.length]))));
   }
 
   // =====================================================================
