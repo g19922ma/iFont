@@ -1299,7 +1299,7 @@ function tidyConsentScreen() {
   const add = document.createElement("p");
   add.innerHTML =
     "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
-    `<span class="c-contact">お問い合わせ：${c.pi || "【要確認：研究責任者】"}` +
+    `<span class="c-contact">お問い合わせ：${c.contact_name || c.institution || "【要確認：問い合わせ先】"}` +
     `　${mailLink(c.email)}</span>`;
   const lead = screenEl.querySelector("p");
   if (lead) lead.insertAdjacentElement("afterend", add);

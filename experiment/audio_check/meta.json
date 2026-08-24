@@ -1,0 +1,24 @@
+{
+ "engine": "COEIROINK v2",
+ "speaker": "あみたろ",
+ "speaker_uuid": "d93140ec-d365-11ec-8f1d-0242ac1c0002",
+ "style": "のーまるv5",
+ "style_id": 1564398632,
+ "credit": "COEIROINK:あみたろ",
+ "synth_params": {
+  "speedScale": 1.0,
+  "volumeScale": 1.0,
+  "pitchScale": 0.0,
+  "intonationScale": 1.0,
+  "prePhonemeLength": 0.1,
+  "postPhonemeLength": 0.1,
+  "outputSamplingRate": 44100
+ },
+ "digits": {
+  "1": "いち",
+  "2": "に",
+  "3": "さん",
+  "4": "よん"
+ },
+ "note": "聞き取り確認用。打ち切らない全長。本番の刺激とは別物である。"
+}

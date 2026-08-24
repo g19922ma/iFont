@@ -89,9 +89,17 @@ OPTIONAL_FILES=(
   "transfer_warp.json"
 )
 
+# 聞き取り確認の音の置き場。**設定（audio.check.dir）から取り出す**ので、
+# 設定を変えたらここも自動で追従する（手で書かない）。
+CHECK_DIR="$(node -e 'const w={};require(process.argv[1]);
+  const c=w.TRANSFER_CONFIG||global.window.TRANSFER_CONFIG;
+  process.stdout.write(((c.audio&&c.audio.check&&c.audio.check.dir)||"audio_check"))' \
+  "$SRC/transfer_config.js" 2>/dev/null || echo audio_check)"
+
 DIRS=(
   "$STIM_DIR"    # 打ち切り済みの音声（544ファイル・約7MB）
   "$BASE_DIR"    # かなの完成形PNG 84字（約340KB）
+  "$CHECK_DIR"   # 聞き取り確認の数字の音（4ファイル・約220KB）
 )
 
 # --- 3. 作り直し ------------------------------------------------------------

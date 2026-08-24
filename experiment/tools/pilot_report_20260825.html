@@ -1,0 +1,148 @@
+<!doctype html><meta charset="utf-8">
+<title>自己テストの結果（2026-08-25）</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;margin:16px;background:#faf9f6;
+     color:#1b2030;max-width:880px;line-height:1.75}
+h1{font-size:21px;margin:0 0 4px}
+h2{font-size:17px;margin:30px 0 8px;padding-bottom:5px;border-bottom:2px solid #dde1ea}
+h3{font-size:14.5px;margin:18px 0 6px;color:#2b3a52}
+p,li{font-size:14px}
+table{border-collapse:collapse;margin:10px 0;font-size:13px}
+th,td{border:1px solid #dde1ea;padding:5px 10px;background:#fff;text-align:center}
+th{background:#f2f4f8}
+td.l{text-align:left}
+.box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:12px 16px;margin:12px 0;
+     font-size:13.5px}
+.good{background:#f1f9f3;border-color:#a8d3b5}
+.bad{background:#fff8f3;border-color:#f0c4a8}
+.hl{background:#fff3bf;padding:0 3px;border-radius:3px}
+.k{color:#8a90a0;font-size:12.5px}
+</style>
+
+<h1>自己テストの結果（2026-08-25）</h1>
+<p class="k">丸山さんが本番URLで、聴覚を最後まで・視覚を途中まで通した記録の分析です。
+記録は <code>pre_launch: true</code> なので試し打ち扱いで、本番データには混ざりません。</p>
+
+<div class="box bad">
+<b class="hl">結論を先に。掲載の前に視覚の水準を直す必要があります。</b>
+聴覚はきれいな曲線が出ていて、このまま掲載できます。視覚には次の2つの穴があります。
+<ol>
+<li><b>7%と20%のあいだに水準が1つも無い。</b> 曲線が立ち上がるのはちょうどそこなので、
+    いまの配置では**立ち上がりを1点も測れません**。</li>
+<li><b>「ぼやけ→はっきり」だけ床がありません。</b> 最大ぼかし（24px）でも読めてしまい、
+    いちばん薄い条件で 4/4 正解でした。
+    床が無いと曲線を当てはめられません。</li>
+</ol>
+</div>
+
+<h2>1. 聴覚（群Acal）— <span style="color:#2f7d4f">問題なし</span></h2>
+<p>70問・正答 37問（53%）。
+所要は記録された反応時間の合計で約 1.5 分（画面の表示は242秒）。</p>
+<svg viewBox="0 0 560 210" style="width:100%;max-width:560px"><line x1="44" y1="180.0" x2="546" y2="180.0" stroke="#e6e9f0"/><text x="38" y="184.0" font-size="10" fill="#8a90a0" text-anchor="end">0%</text><line x1="44" y1="138.5" x2="546" y2="138.5" stroke="#e6e9f0"/><text x="38" y="142.5" font-size="10" fill="#8a90a0" text-anchor="end">25%</text><line x1="44" y1="97.0" x2="546" y2="97.0" stroke="#e6e9f0"/><text x="38" y="101.0" font-size="10" fill="#8a90a0" text-anchor="end">50%</text><line x1="44" y1="55.5" x2="546" y2="55.5" stroke="#e6e9f0"/><text x="38" y="59.5" font-size="10" fill="#8a90a0" text-anchor="end">75%</text><line x1="44" y1="14.0" x2="546" y2="14.0" stroke="#e6e9f0"/><text x="38" y="18.0" font-size="10" fill="#8a90a0" text-anchor="end">100%</text><line x1="44" y1="177.6" x2="546" y2="177.6" stroke="#c7743f" stroke-dasharray="4 3"/><text x="546" y="173.6" font-size="9.5" fill="#c7743f" text-anchor="end">当て推量の水準 1.5%</text><polyline points="44.0,152.3 65.8,180.0 87.7,180.0 109.5,138.5 131.3,97.0 153.1,146.8 175.0,14.0 196.8,97.0 218.6,14.0 240.4,97.0 262.3,97.0 284.1,97.0 305.9,180.0 327.7,14.0 371.4,69.3 393.2,14.0 436.9,14.0 502.3,14.0 546.0,97.0" fill="none" stroke="#2E7D8F" stroke-width="1.8"/><circle cx="44.0" cy="152.3" r="7.0" fill="#2E7D8F"><title>10.0打ち切り時刻 ms … 2/12 問（17%）</title></circle><circle cx="65.8" cy="180.0" r="3.0" fill="#2E7D8F"><title>15.0打ち切り時刻 ms … 0/1 問（0%）</title></circle><circle cx="87.7" cy="180.0" r="5.5" fill="#2E7D8F"><title>20.0打ち切り時刻 ms … 0/6 問（0%）</title></circle><circle cx="109.5" cy="138.5" r="4.5" fill="#2E7D8F"><title>25.0打ち切り時刻 ms … 1/4 問（25%）</title></circle><circle cx="131.3" cy="97.0" r="3.5" fill="#2E7D8F"><title>30.0打ち切り時刻 ms … 1/2 問（50%）</title></circle><circle cx="153.1" cy="146.8" r="5.0" fill="#2E7D8F"><title>35.0打ち切り時刻 ms … 1/5 問（20%）</title></circle><circle cx="175.0" cy="14.0" r="4.0" fill="#2E7D8F"><title>40.0打ち切り時刻 ms … 3/3 問（100%）</title></circle><circle cx="196.8" cy="97.0" r="4.5" fill="#2E7D8F"><title>45.0打ち切り時刻 ms … 2/4 問（50%）</title></circle><circle cx="218.6" cy="14.0" r="3.5" fill="#2E7D8F"><title>50.0打ち切り時刻 ms … 2/2 問（100%）</title></circle><circle cx="240.4" cy="97.0" r="3.5" fill="#2E7D8F"><title>55.0打ち切り時刻 ms … 1/2 問（50%）</title></circle><circle cx="262.3" cy="97.0" r="3.5" fill="#2E7D8F"><title>60.0打ち切り時刻 ms … 1/2 問（50%）</title></circle><circle cx="284.1" cy="97.0" r="3.5" fill="#2E7D8F"><title>65.0打ち切り時刻 ms … 1/2 問（50%）</title></circle><circle cx="305.9" cy="180.0" r="3.0" fill="#2E7D8F"><title>70.0打ち切り時刻 ms … 0/1 問（0%）</title></circle><circle cx="327.7" cy="14.0" r="3.5" fill="#2E7D8F"><title>75.0打ち切り時刻 ms … 2/2 問（100%）</title></circle><circle cx="371.4" cy="69.3" r="4.0" fill="#2E7D8F"><title>85.0打ち切り時刻 ms … 2/3 問（67%）</title></circle><circle cx="393.2" cy="14.0" r="3.5" fill="#2E7D8F"><title>90.0打ち切り時刻 ms … 2/2 問（100%）</title></circle><circle cx="436.9" cy="14.0" r="3.0" fill="#2E7D8F"><title>100.0打ち切り時刻 ms … 1/1 問（100%）</title></circle><circle cx="502.3" cy="14.0" r="3.0" fill="#2E7D8F"><title>115.0打ち切り時刻 ms … 1/1 問（100%）</title></circle><circle cx="546.0" cy="97.0" r="3.5" fill="#2E7D8F"><title>125.0打ち切り時刻 ms … 1/2 問（50%）</title></circle><text x="44.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">10</text><text x="65.8" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">15</text><text x="87.7" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">20</text><text x="109.5" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">25</text><text x="131.3" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">30</text><text x="153.1" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">35</text><text x="175.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">40</text><text x="196.8" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">45</text><text x="218.6" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">50</text><text x="240.4" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">55</text><text x="262.3" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">60</text><text x="284.1" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">65</text><text x="305.9" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">70</text><text x="327.7" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">75</text><text x="371.4" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">85</text><text x="393.2" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">90</text><text x="436.9" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">100</text><text x="502.3" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">115</text><text x="546.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">125</text><text x="295.0" y="208" font-size="10" fill="#59606e" text-anchor="middle">打ち切り時刻 ms</text></svg>
+<p>10ms で 2/12（当て推量に近い）から、
+40ms 以降はおおむね当たるところまで上がっています。<b>床と天井の両方があり、
+そのあいだが滑らかに埋まっている</b>ので、S字を当てはめられます。これが欲しい形です。</p>
+
+<h2>2. 視覚（群A′）— <span style="color:#9a3412">水準の配置に穴</span></h2>
+<p>25問・正答 13問（52%）。
+途中までなので数は少なく、以下は<b>傾向を見るためのもの</b>です。</p>
+<svg viewBox="0 0 560 210" style="width:100%;max-width:560px"><line x1="44" y1="180.0" x2="546" y2="180.0" stroke="#e6e9f0"/><text x="38" y="184.0" font-size="10" fill="#8a90a0" text-anchor="end">0%</text><line x1="44" y1="138.5" x2="546" y2="138.5" stroke="#e6e9f0"/><text x="38" y="142.5" font-size="10" fill="#8a90a0" text-anchor="end">25%</text><line x1="44" y1="97.0" x2="546" y2="97.0" stroke="#e6e9f0"/><text x="38" y="101.0" font-size="10" fill="#8a90a0" text-anchor="end">50%</text><line x1="44" y1="55.5" x2="546" y2="55.5" stroke="#e6e9f0"/><text x="38" y="59.5" font-size="10" fill="#8a90a0" text-anchor="end">75%</text><line x1="44" y1="14.0" x2="546" y2="14.0" stroke="#e6e9f0"/><text x="38" y="18.0" font-size="10" fill="#8a90a0" text-anchor="end">100%</text><line x1="44" y1="177.6" x2="546" y2="177.6" stroke="#c7743f" stroke-dasharray="4 3"/><text x="546" y="173.6" font-size="9.5" fill="#c7743f" text-anchor="end">当て推量の水準 1.5%</text><polyline points="44.0,97.0 55.5,180.0 67.0,180.0 137.2,55.5 546.0,14.0" fill="none" stroke="#2E7D8F" stroke-width="1.8"/><circle cx="44.0" cy="97.0" r="6.5" fill="#2E7D8F"><title>1.75進み具合 % … 4/8 問（50%）</title></circle><circle cx="55.5" cy="180.0" r="5.0" fill="#2E7D8F"><title>4.0進み具合 % … 0/5 問（0%）</title></circle><circle cx="67.0" cy="180.0" r="3.5" fill="#2E7D8F"><title>6.25進み具合 % … 0/2 問（0%）</title></circle><circle cx="137.2" cy="55.5" r="4.5" fill="#2E7D8F"><title>20.0進み具合 % … 3/4 問（75%）</title></circle><circle cx="546.0" cy="14.0" r="5.5" fill="#2E7D8F"><title>100.0進み具合 % … 6/6 問（100%）</title></circle><text x="44.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">1.75</text><text x="55.5" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">4</text><text x="67.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">6.25</text><text x="137.2" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">20</text><text x="546.0" y="194" font-size="9.5" fill="#8a90a0" text-anchor="middle">100</text><text x="295.0" y="208" font-size="10" fill="#59606e" text-anchor="middle">進み具合 %</text></svg>
+
+<h3>方式ごとに分けると、問題がはっきりします</h3>
+<table><tr><th>方式</th><th>1.75%</th><th>4%</th><th>6.25%</th><th>20%</th><th>100%</th></tr><tr><td class="l">ぼやけ→はっきり</td><td style="background:#e6f4ea;font-weight:700">4/4</td><td style="color:#c2c7d0">—</td><td style="color:#c2c7d0">—</td><td style="background:#e6f4ea;font-weight:700">1/1</td><td style="background:#e6f4ea;font-weight:700">2/2</td></tr><tr><td class="l">うすい→濃い</td><td>0/2</td><td>0/1</td><td>0/1</td><td style="background:#e6f4ea;font-weight:700">1/1</td><td style="background:#e6f4ea;font-weight:700">2/2</td></tr><tr><td class="l">点が増える</td><td>0/1</td><td>0/2</td><td>0/1</td><td style="background:#e6f4ea;font-weight:700">1/1</td><td style="background:#e6f4ea;font-weight:700">2/2</td></tr><tr><td class="l">端から現れる</td><td>0/1</td><td>0/2</td><td style="color:#c2c7d0">—</td><td>0/1</td><td style="color:#c2c7d0">—</td></tr></table>
+<p class="k">緑は全問正解。「—」はその組合せが出なかったところ。</p>
+
+<div class="box bad">
+<b>「ぼやけ→はっきり」だけが薄い側で当たっています。</b>
+ぼかしの半径は「最大 24px ×（1−進み具合）」なので、進み具合 1.75% ではほぼ最大のぼかしのはず。
+それで読めるということは、<b>24px では字が消えていない</b>ということです。<br>
+他の3方式は薄い側で全滅しており、<b>同じ「進み具合1.75%」でも方式によって難しさが桁違い</b>です。
+方式ごとに曲線を測る設計なのでそれ自体は想定内ですが、
+<b>blur は床（当て推量の水準）に一度も届いていない</b>ため、
+その曲線の下half を推定できず、生成に使う逆引きが定義できません。
+</div>
+
+<h2>3. なぜ「何も見えない問題」が多いのか</h2>
+<p>水準は <b>1, 3.25, 5.5, 20, 100%</b> の5つで、参加者ごとに下3つが
+0.75%ずつずれます。<b>1人が担当するのは3水準</b>で、選び方は
+<code>[0,1,3]</code> を字ごとに回転させるので、<b>平均して3問中1.8問が薄い側（1〜7%）</b>
+に当たります。今回の実測でも
+<b>15/25問（60%）が10%以下</b>で、
+そのうち正解は 4問だけでした。</p>
+<p>これは「見え始めるところを密に測る」というねらい（先生のパイロットで13%以上が
+天井に張り付いたため薄い側へ寄せた）の裏返しですが、
+<b>寄せすぎて全部が床に落ち、肝心の立ち上がりを跨いでしまっています。</b></p>
+
+<h2>3.5 根本原因 — 水準を決めた元データは「アニメ600ms」のものだった</h2>
+<div class="box bad">
+<b class="hl">2026-08-24 に、逆向きの変更を2つ同時に入れてしまっていました。</b>
+<ol>
+<li><b>基準アニメを 600ms → 300ms に半減</b>（群Bの対照条件が構造的に不利だったため）</li>
+<li><b>提示水準を薄い側へ寄せる</b>（先生のパイロットで13%以上が天井に張り付いたため）</li>
+</ol>
+ところが<b>②の根拠になった先生のパイロットは 600ms で取ったもの</b>です
+（記録の base_anim_ms は 600 と 1000）。①で見ている時間が半分になれば同じ進み具合でも
+格段に難しくなるので、<b>水準は上へ動かすべきところを、下へ動かしていました。</b>
+</div>
+
+<table>
+<tr><th>進み具合</th><th>先生 600ms</th><th>丸山 300ms（ぼかし除く）</th></tr>
+<tr><td>3% / 1.75%</td><td><b>61%</b></td><td><b>0%</b></td></tr>
+<tr><td>6% / 6.25%</td><td><b>75%</b></td><td><b>0%</b></td></tr>
+<tr><td>13%</td><td>86%</td><td class="k">測っていない</td></tr>
+<tr><td>20〜22%</td><td>93%</td><td>67%</td></tr>
+<tr><td>100%</td><td>97%</td><td>100%</td></tr>
+</table>
+<p><b>しきい値が「3%未満」から「6〜20%のどこか」へ動いています。</b>
+いまの水準 <code>[1, 3.25, 5.5, 20, 100]</code> は、そのしきい値の<b>下と上に離れて置かれていて、
+またいでしまっています</b>。</p>
+<p class="k">※ 丸山さんのぼかし除きは18問と少ないので、値そのものより
+「6.25%以下は0/11、20%以上は6/7」という向きを見てください。</p>
+
+<h2>4. 直しかたの案</h2>
+<div class="box">
+<h3>案1: 300ms に合わせて水準を置き直す（推奨）</h3>
+<p>いまの <code>[1, 3.25, 5.5, 20, 100]</code> を、<b>床・立ち上がり・天井の3つが揃うよう</b>
+置き直します。実測から、床は6%以下、立ち上がりは6〜25%あたりです。案:</p>
+<p style="font-size:16px;text-align:center"><b><code>[3, 6, 9, 12, 16, 22, 35, 100]</code></b>（8水準）</p>
+<table>
+<tr><th>区分</th><th>水準</th><th>ねらい</th></tr>
+<tr><td>床</td><td>3・6%</td><td class="l">当て推量に近い水準を取る（実測 0/11）</td></tr>
+<tr><td>立ち上がり</td><td>9・12・16・22%</td><td class="l"><b>いま1点も無い帯。ここが本体</b></td></tr>
+<tr><td>天井</td><td>35・100%</td><td class="l">上端を押さえる</td></tr>
+</table>
+<p><b>8水準は既に対応済みです</b>— <code>assignment.point_subsets</code> に
+<code>"8": [0,3,5]</code> があるので、設定を差し替えるだけで1人3水準の配り方はそのまま動きます。
+HANDOFF の「視覚の水準を5→8に（1人3水準・集団で8）」という積み残しとも一致します。</p>
+
+<h3>案2: 「ぼやけ」の最大ぼかしを強くする</h3>
+<p><code>visual.families.blur.max_radius_px</code> を <b>24 → 40〜56</b> に上げ、
+進み具合0%で字が判別できない状態にする。<b>案1と両方やる必要があります</b>
+（案1だけでは blur の床が無いままです）。<br>
+ぼかしは<b>600msでも300msでも簡単</b>でした（先生 3%で8/9、丸山 1.75%で4/4）。
+つまりアニメの長さの問題ではなく、<b>最大ぼかし24pxが弱いこと自体</b>が原因です。<br>
+<span class="k">※ 上げすぎると今度は立ち上がりが上に寄るので、上げたあとに
+もう一度自分で通して確かめること。</span></p>
+
+<h3>やってはいけないこと</h3>
+<p><b>結果を見てから本命8字を変えないこと。</b>変えるのは水準とぼかしの強さだけにし、
+<b>変えたことと理由を計画書に書き残す</b>（データを取る前の変更なので問題ありません）。</p>
+</div>
+
+<h2>5. その他に気づいたこと</h2>
+<ul>
+<li><b>参加者IDに記号が混ざっていました</b>（<code>test-qurihara`|</code>）。
+    URLをコピーしたときにバッククォートが入ったものです。
+    <b>先生に渡すURLは、記号が混ざらない形で書いて渡してください。</b></li>
+<li><b>所要の見込みが実測とずれています。</b> 掲載文は聴覚 約7.5分ですが、実測は約4分でした。
+    研究者本人なので一般の方はもう少しかかりますが、見込みは多めです。
+    謝礼115円は「時給900円×7.5分」で決めた額なので、実際が4〜6分なら時給1,100〜1,700円相当になります。</li>
+<li>反応時間の中央値は聴覚 1.2秒 ／ 視覚 1.3秒でした。</li>
+</ul>
+
+<h2>6. 実際の見た目を確かめるページ</h2>
+<p><code>experiment/tools/visual_trial_list.html</code> に、
+<b>参加者が実際に見る絵と同じ描画コード</b>で1人ぶん70問を並べてあります。
+水準を変えたあとは、そちらを作り直して目で確かめてください。</p>

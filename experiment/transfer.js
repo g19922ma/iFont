@@ -33,8 +33,8 @@
 //   完了コード・途中再開は prod_common.js の部品をそのまま使う。
 //   ただし土台は1人が聴覚と視覚の両方をやる統合セッションだったのに対し、この実験は
 //   1人が片方だけをやる。そのため**準備の画面は集団ごとに出し分ける**。
-//     聴覚(acal)      : 同意(再生機器の申告あり) → 音量の確認 → 聴覚の説明と練習
-//     視覚(aprime / b): 同意(明るさの案内あり)   → 見え方の確認 → 視覚の説明と練習
+//     聴覚(acal)      : 同意(再生機器の申告あり) → 聞き取り確認 → 聴覚の説明と練習
+//     視覚(aprime / b): 同意(明るさの案内あり)   → 見え方確認   → 視覚の説明と練習
 //   計画書10章の差分として変えたのは次の4点。
 //     1. 聴覚の打ち切りが「割合(frac%)」から「音の実体の開始からの絶対ms」になった。
 //        刺激は事前に打ち切って作った WAV を配信する(生成: tools/build_transfer_gates.py)。
@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.13";
+const VERSION = "3.14";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -395,6 +395,10 @@ if (window.PROD) PROD.setEnv(ENV);
 // そのまま埋まるようにするため)。prod_common.js が外に見せていない3つの値
 // (再生機器の申告・再開回数・中断していた合計秒)は、下の2か所で同じ規則で作り直す。
 let audioDeviceAnswer = "";                 // 同意画面での再生機器の申告(聴覚の集団のみ)
+// 課題に入る前の関門（聞き取り確認・見え方確認）を何回外したか。
+// **除外には使わない。** 解析のとき「音や画面の環境が悪かった人」を見分ける材料にする。
+let audioCheckMisses = 0;
+let visionCheckMisses = 0;
 let resumeMeta = { count: 0, gapS: 0 };     // 途中再開の回数と、中断していた合計秒
 
 function serverBody(body) {
@@ -404,6 +408,8 @@ function serverBody(body) {
     completion_code: (window.PROD && PROD.completionCode) || "",
     ts: Date.now(),
     audio_device: audioDeviceAnswer,
+    audio_check_misses: audioCheckMisses,     // 聞き取り確認を外した回数
+    vision_check_misses: visionCheckMisses,   // 見え方確認を外した回数
     resume_count: resumeMeta.count,
     resume_gap_s: resumeMeta.gapS,
     ua: ENV.ua, dpr: ENV.dpr, screen: ENV.screen, touch: !!ENV.touch,
@@ -1822,8 +1828,20 @@ function sendAwareness(answer, chars, text) {
 // 完了・開始
 // =========================================================================
 function afterTrials() {
-  // 出題範囲に気づいたかの質問を先に置く(課題の記憶が新しいうちに聞く)。
-  if (!awarenessAnswers) return awarenessScreen();
+  // 出題範囲に気づいたかの質問（「同じ字が繰り返し出たと感じたか」＋「どの字か」）。
+  //
+  // **2026-08-25 に丸山判断で出さないことにした**（design.ask_awareness = false）。
+  // 仕掛けは丸ごと残してあるので、設定を true に戻せばそのまま復活する。
+  //
+  // ⚠ 消したことで失う指標と、失わない指標をはっきりさせておくこと（計画書 7.4）。
+  //   失うもの : aware_repeated / aware_chars / aware_n_hit_target
+  //              （補助指標のうちの1つ。**もともと除外の基準には使わない**）
+  //   残るもの : **主指標はそのまま**。回答が本命8字／よく出る20字に入る割合を
+  //              試行の通し番号で追うロジスティック回帰（resp_in_target_set /
+  //              resp_in_frequent_set）は1問ごとに記録し続けている。
+  //              確認問題Cの正答率・誤答時に本命字を答えた割合・回答分布のエントロピー・
+  //              前半後半の曲線比較も、すべて回答の中身から計算するので影響を受けない。
+  if (CFG.design.ask_awareness && !awarenessAnswers) return awarenessScreen();
   afterAwareness();
 }
 
@@ -1980,7 +1998,7 @@ function intro() {
   const resumeNote = (resumeState && resumeState.trials)
     ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
        <b>前回の続きから再開します</b>。
-       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。${G.mode === "audio" ? "音量の確認だけ" : "見え方の確認だけ"}もう一度お願いします。</span></p>` : "";
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。${G.mode === "audio" ? "音が聞こえるかの確認だけ" : "画面が見えるかの確認だけ"}もう一度お願いします。</span></p>` : "";
   // 問題数は**実際に組み立てた出題の配列を数えて**出す。
   // 2026-08-21 まではここで推定式を立てていたが、実装と3か所ずれていて、
   // 画面には「約91問」と出るのに本当は 108/134/94 問だった（最大43問のずれ）。
@@ -1997,7 +2015,7 @@ function intro() {
     <p>ひらがな1文字の${G.mode === "audio" ? "読み上げを聞いて" : "表示を見て"}、
     どの文字かを<b>かなの表から選ぶ</b>課題です。</p>
     <p style="font-size:15px">問題数：<span id="nq">${nQuestions}</span>問</p>
-    <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音量の確認" : "見え方の確認"}</button></p>
+    <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音が聞こえるかの確認" : "画面が見えるかの確認"}</button></p>
     ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>`}
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "津田塾大学 栗原研究室" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
   const shortRun = document.getElementById("shortRun");
@@ -2012,57 +2030,177 @@ function intro() {
 
 // 音量確認のサンプル(あ・い・う・え・お を打ち切りなしで続けて鳴らす)。
 // 全部読み終えてから並べて鳴らす(読み込みの遅れで間隔がばらつかないように)。
-async function playSample() {
-  const list = ["あ", "い", "う", "え", "お"].filter(c => ALL_KANA.indexOf(c) >= 0);
+// ---- 聞き取り確認 ---------------------------------------------------------
+// **2026-08-25 に、それまでの「音量の確認」を作り直したもの。**
+//
+// ⚠ **元の画面には穴があった。** サンプルを鳴らすボタンを**押しただけ**で
+//   「課題へ進む」が有効になり、**実際に聞こえたかを確かめていなかった**。
+//   iPhone の着信スイッチ（マナーモード）は Web Audio も消すので、無音のまま
+//   70問答えて確認問題で除外される人が出る。参加者の時間と謝礼が無駄になる。
+//   そこで**数字を当てられないと先へ進めない関門**にした（設定は audio.check）。
+//
+// ⚠ 元のサンプルは「あ・い・う・え・お」の**本番の刺激そのもの**を鳴らしていた。
+//   打ち切って曖昧に作った音なので音量の基準にならないうえ、本番前に5字ぶん
+//   聞かせることになっていた。数字に替えてどちらも解消した。
+function checkDigits() {
+  const c = (CFG.audio && CFG.audio.check) || {};
+  return Object.keys(c.digits || {});
+}
+async function playCheckDigit(d) {
   const ctx = ensureCtx();
   stopAll();
-  const bufs = await Promise.all(list.map(ch => loadStim(ch, null).catch(() => null)));
-  const t0 = ctx.currentTime + 0.15;
-  bufs.forEach((buf, i) => {
-    if (!buf) return;
-    const s = ctx.createBufferSource();
-    s.buffer = buf; s.connect(ctx.destination); s.start(t0 + i * 0.5);
-    _nodes.push(s);
-  });
+  const buf = await fetchBuffer(
+    CFG.audio.check.dir + "/" + encodeURIComponent(d) + ".wav");
+  const s = ctx.createBufferSource();
+  s.buffer = buf; s.connect(ctx.destination); s.start(ctx.currentTime + 0.05);
+  _nodes.push(s);
 }
-// 音量の確認。**聴覚の集団(acal)だけ**が通る画面。
+
+// 音量の確認 ＋ 聞き取り確認。**聴覚の集団(acal)だけ**が通る画面。
 function volumeCheck() {
   const resuming = !!(resumeState && resumeState.trials);
-  const mobileNote = ENV.touch
-    ? `スマートフォンの場合は、静かな場所で、音量をやや大きめにすると聞き取りやすくなります。` : ``;
-  screenEl.innerHTML = `<h2 style="color:#1E2A5E">音量の確認</h2>
-    <p>下のボタンで<b>サンプル音</b>を鳴らし、聞き取りやすい音量になるよう端末の音量を調節してください。
-    調節が終わったら、<b>この音量のまま</b>課題に進みます。</p>
-    <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
-      <button id="sample" style="font-size:16px;padding:12px 26px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ サンプル音を鳴らす（あ・い・う・え・お）</button>
-      <div class="muted" style="margin-top:10px">何度でも鳴らせます。${mobileNote}この課題は静かな環境で行ってください。</div></div>
-    <p style="text-align:center;margin-top:14px"><button class="primary" id="go2" disabled style="opacity:.5">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>
-    <p class="muted" id="volHint"></p>`;
-  let played = false;
-  const go2 = document.getElementById("go2");
-  document.getElementById("sample").onclick = () => {
-    playSample(); played = true;
-    document.getElementById("volHint").textContent = "小さすぎ・大きすぎと感じたら、端末の音量を変えてもう一度鳴らして確認してください。";
-    go2.disabled = false; go2.style.opacity = "1";
-  };
-  // 聴覚の集団は「見え方の確認」を通らない(見る刺激が無いため)。ここから本番へ。
-  go2.onclick = () => { if (played) start(); };
+  const cfg = (CFG.audio && CFG.audio.check) || { digits: {}, rounds: 2 };
+  const keys = checkDigits();
+  const need = Math.max(1, Math.round(Number(cfg.rounds) || 1));
+  let streak = 0, current = null, played = false;
+
+  function pick1() { current = keys[Math.floor(Math.random() * keys.length)]; played = false; }
+
+  function draw(msg) {
+    const mobile = ENV.touch
+      ? "<li><b>iPhoneの方は、本体の横にあるスイッチ（マナーモード）を解除してください。</b>"
+        + "マナーモードのままだと、この課題の音は鳴りません。</li>"
+        + "<li>端末の音量を上げてください。静かな場所でお願いします。</li>"
+      : "<li>パソコンとスピーカー／イヤホンの両方の音量を確かめてください。</li>";
+    screenEl.innerHTML = `<h2 style="color:#1E2A5E">音が聞こえるか確かめます</h2>
+      <p>数字を1つ読み上げます。<b>聞こえた数字を選んでください。</b>
+      ここで<b>${need}回続けて正解</b>すると課題に進めます。何度でもやり直せます。</p>
+      ${ENV.touch ? `<p style="background:#fff8f3;border:1px solid #f0c4a8;border-radius:8px;
+        padding:9px 13px;font-size:13.5px;margin:10px 0"><b>iPhoneの方へ：本体の横にあるスイッチ
+        （マナーモード）を解除してください。</b>マナーモードのままだと音が鳴りません。</p>` : ``}
+      <div style="background:#eef4f6;border:1px solid #d3e2e7;border-radius:8px;padding:16px 14px;text-align:center">
+        <button id="play" style="font-size:16px;padding:12px 26px;border-radius:999px;border:2px solid #2E7D8F;background:#fff;color:#2E7D8F;cursor:pointer">▶ 音を鳴らす</button>
+        <div class="muted" style="margin-top:8px">聞こえにくいときは、音量を変えて何度でも鳴らせます。</div>
+        <div id="choices" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+      </div>
+      <p id="msg" style="text-align:center;margin-top:14px;font-size:15px">${msg || ""}</p>
+      <div id="help" style="display:none;background:#fff8f3;border:1px solid #f0c4a8;border-radius:8px;padding:12px 16px;margin-top:12px">
+        <b>音が聞こえないときは</b><ul style="margin:6px 0 0;line-height:1.9">${mobile}
+        <li>他のアプリが音を鳴らしていないか確かめてください。</li></ul></div>`;
+    const box = document.getElementById("choices");
+    keys.forEach(k => {
+      const b = document.createElement("button");
+      b.textContent = k;
+      b.style.cssText = "font-size:20px;min-width:56px;padding:10px 16px;border-radius:10px;"
+        + "border:1px solid #b9c0cf;background:#fff;cursor:pointer;font-family:inherit";
+      b.disabled = !played;
+      b.style.opacity = played ? "1" : ".45";
+      b.onclick = () => answer(k);
+      box.appendChild(b);
+    });
+    document.getElementById("play").onclick = () => {
+      playCheckDigit(current).catch(() => {});
+      played = true;
+      box.querySelectorAll("button").forEach(b => { b.disabled = false; b.style.opacity = "1"; });
+    };
+  }
+
+  function answer(k) {
+    if (k === current) {
+      streak++;
+      if (streak >= need) { start(); return; }
+      pick1();
+      draw(`<span style="color:#2f7d4f">正解です。</span>もう ${need - streak} 回お願いします。`);
+    } else {
+      audioCheckMisses++;
+      streak = 0;
+      pick1();
+      draw(`<span style="color:#9a3412">ちがいました。</span>音量やマナーモードを確かめて、もう一度お願いします。`);
+      const h = document.getElementById("help");
+      if (h) h.style.display = "block";
+    }
+  }
+  pick1();
+  draw(resuming ? "（再開のまえに、音が出るかだけ確かめます）" : "");
 }
+
 // 見え方の確認。**視覚の集団(aprime / b)だけ**が通る画面。
+//
+// **2026-08-25 に作り直した（聞き取り確認の視覚版）。**
+//
+// ⚠ **元の画面には2つ問題があった。**
+//   1. 見本を出して**ボタンを押すだけ**で通れた。画面が暗い・小さい・画像が
+//      読み込めていない、といった状態でも通過できてしまう。
+//   2. 見本に **「あ」を使っていた。「あ」は本命8字である。**
+//      課題の前に見せると「これが本命だ」と教えることになる。
+//
+// そこで **打ち切らずに全部表示した字を4択で当てる関門**にした（設定は visual.check）。
+// 全部表示なら画面が正常なら必ず読めるので、外す＝環境に問題がある、と分かる。
+// 使う字は **本命8字と、その人の decoy 12字を避けて**選ぶ（出題の範囲を先に見せない）。
 function visionCheck() {
   const resuming = !!(resumeState && resumeState.trials);
-  screenEl.innerHTML = `<h2 style="color:#1E2A5E">見え方の確認</h2>
-    <p>本番と同じ枠・同じ大きさで、見本の字「あ」を表示しています。
-    ふだん画面を見る距離のまま、<b>はっきり見えること</b>を確認してください。見えにくい場合は画面の明るさを上げてください。</p>
-    <div id="vcheck" style="text-align:center"></div>
-    <p style="text-align:center;margin-top:16px"><button class="primary" id="go3">${resuming ? "続きから再開する" : "課題へ進む"}</button></p>`;
-  const canvas = newCanvas();
-  document.getElementById("vcheck").appendChild(canvas);
-  const ctx = canvas.getContext("2d");
-  drawBlank(ctx);
-  // この画面に来るのは視覚の集団だけなので、本番と同じ画像をそのまま出す。
-  if (imgs["あ"]) ctx.drawImage(imgs["あ"], 0, 0, SIZE, SIZE);
-  document.getElementById("go3").onclick = start;
+  const cfg = (CFG.visual && CFG.visual.check) || { rounds: 2, n_choices: 4 };
+  const need = Math.max(1, Math.round(Number(cfg.rounds) || 1));
+  const nch = Math.max(2, Math.round(Number(cfg.n_choices) || 4));
+  const avoid = TARGETS.concat(decoyChars()).concat(["ん"]);
+  const pool = ALL_KANA.filter(c => avoid.indexOf(c) < 0 && imgs[c]);
+  // 使える字が足りないときは、本命だけ避けて広げる（画像が揃っていない環境の保険）。
+  const usable = pool.length >= nch ? pool
+    : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 && imgs[c]);
+  let streak = 0, current = null, choices = [];
+
+  function pick1() {
+    current = pick(usable);
+    choices = shuffle(usable.filter(c => c !== current)).slice(0, nch - 1).concat([current]);
+    shuffle(choices);
+  }
+
+  function draw(msg) {
+    screenEl.innerHTML = `<h2 style="color:#1E2A5E">画面が見えるか確かめます</h2>
+      <p>本番と同じ枠・同じ大きさで字を1つ出します。<b>出ている字を選んでください。</b>
+      ここで<b>${need}回続けて正解</b>すると課題に進めます。<br>
+      <span class="muted">見えにくい場合は画面の明るさを上げ、ふだん画面を見る距離でご覧ください。</span></p>
+      <div id="vcheck" style="text-align:center"></div>
+      <div id="choices" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
+      <p id="msg" style="text-align:center;margin-top:14px;font-size:15px">${msg || ""}</p>
+      <div id="help" style="display:none;background:#fff8f3;border:1px solid #f0c4a8;border-radius:8px;padding:12px 16px;margin-top:12px">
+        <b>字が見えないときは</b><ul style="margin:6px 0 0;line-height:1.9">
+        <li>画面の明るさを上げてください。</li>
+        <li>画面が汚れていないか、保護フィルムで見えにくくなっていないか確かめてください。</li>
+        <li>ブラウザの拡大率をふつう（100%）に戻してください。</li></ul></div>`;
+    const canvas = newCanvas();
+    document.getElementById("vcheck").appendChild(canvas);
+    const ctx = canvas.getContext("2d");
+    drawBlank(ctx);
+    if (imgs[current]) ctx.drawImage(imgs[current], 0, 0, SIZE, SIZE);
+    const box = document.getElementById("choices");
+    choices.forEach(c => {
+      const b = document.createElement("button");
+      b.textContent = c;
+      b.style.cssText = "font-size:22px;min-width:56px;padding:10px 16px;border-radius:10px;"
+        + "border:1px solid #b9c0cf;background:#fff;cursor:pointer;font-family:inherit";
+      b.onclick = () => answer(c);
+      box.appendChild(b);
+    });
+  }
+
+  function answer(c) {
+    if (c === current) {
+      streak++;
+      if (streak >= need) { start(); return; }
+      pick1();
+      draw(`<span style="color:#2f7d4f">正解です。</span>もう ${need - streak} 回お願いします。`);
+    } else {
+      visionCheckMisses++;
+      streak = 0;
+      pick1();
+      draw(`<span style="color:#9a3412">ちがいました。</span>画面の明るさを確かめて、もう一度お願いします。`);
+      const h = document.getElementById("help");
+      if (h) h.style.display = "block";
+    }
+  }
+  pick1();
+  draw(resuming ? "（再開のまえに、画面が見えるかだけ確かめます）" : "");
 }
 
 
@@ -2111,7 +2249,7 @@ function tidyConsentScreen() {
   const add = document.createElement("p");
   add.innerHTML =
     "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
-    `<span class="c-contact">お問い合わせ：${c.pi || "【要確認：研究責任者】"}` +
+    `<span class="c-contact">お問い合わせ：${c.contact_name || c.institution || "【要確認：問い合わせ先】"}` +
     `　${mailLink(c.email)}</span>`;
   const lead = screenEl.querySelector("p");
   if (lead) lead.insertAdjacentElement("afterend", add);
@@ -2196,8 +2334,8 @@ async function startSession() {
   await preload();
   // 研究者モード(?prod なし)でも本番と同じ流れ。送信と途中保存だけが無効。
   // 説明文・機器の申告・環境の案内は、割り当てられた集団に合うものだけを出す。
-  //   聴覚(acal)      : 再生機器の申告あり → このあと「音量の確認」だけ
-  //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
+  //   聴覚(acal)      : 再生機器の申告あり → このあと「聞き取り確認」だけ
+  //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方確認」だけ
   const isAudio = (G.mode === "audio");
   // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、
   // 出すようになったときに嘘にならないよう、集団ごとの見込みを渡す。
