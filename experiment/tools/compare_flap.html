@@ -1,0 +1,107 @@
+<!doctype html><meta charset="utf-8">
+<title>ら行の弾き音の聞き比べ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;margin:16px;background:#faf9f6;
+     color:#1b2030;max-width:1100px}
+h1{font-size:19px;margin:0 0 8px}
+p.note{line-height:1.85;font-size:14px;max-width:880px}
+table{border-collapse:collapse;margin-top:12px;width:100%}
+th,td{border:1px solid #dde1ea;padding:7px 8px;text-align:center;vertical-align:top;
+      background:#fff}
+thead th{background:#eef1f6;font-size:12.5px;line-height:1.4}
+tbody th{width:78px;font-size:22px;font-weight:700;background:#f7f8fb}
+tr.ref th{font-size:18px;color:#666}
+tr.ref td{background:#fbfbfd}
+.sub{font-size:10.5px;color:#8a90a0;font-weight:400;margin-top:2px}
+button.p{width:100%;font-size:11.5px;padding:6px 2px;border-radius:6px;cursor:pointer;
+     border:1px solid #b9c0cf;font-weight:700;line-height:1.3}
+button.am{background:#eef6f8;border-color:#2E7D8F;color:#1f5f6d}
+button.nat{background:#eef7ef;border-color:#3d7a4a;color:#2b5c36}
+button.nat2{background:#f4faf5;border-color:#7aa886;color:#3d6b48}
+button.rest{background:#fff6e5;border-color:#b98a2a;color:#8a6413}
+button.raw{background:#f4f1fb;border-color:#6b5bb5;color:#4a3f80}
+button.flap{background:#fdf1ec;border-color:#b5502f;color:#8d3d23}
+button.hidden{display:none}
+td.refc{display:none}
+button.playing{background:#1b2030!important;color:#fff!important;border-color:#1b2030!important}
+.ms{font-size:10px;color:#7a8090;margin-top:4px}
+#bar{position:sticky;top:0;background:#fff9db;border:1px solid #e0d090;border-radius:8px;
+     padding:9px 13px;margin:10px 0;z-index:5}
+#bar button{font-size:14px;padding:5px 12px;border-radius:6px;border:1px solid #99a;
+     background:#fff;cursor:pointer;margin-right:4px}
+#now{margin-left:10px;font-weight:700;font-size:15px}
+.box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:10px 14px;
+     margin:12px 0;font-size:13.5px;line-height:1.8}
+</style>
+<h1>ら行の弾き音（r）が聞こえるかの聞き比べ</h1>
+<p class="note">
+「『り』の子音が消えて『い』に聞こえる」というご報告を受けて作ったページです。<br>
+<b>まず各行の左から順に押して、どこから「り」に聞こえ始めるかを確かめてください。</b>
+そのあと、下の<b>くらべる母音</b>（り なら「い」）と聞き比べて、<b>区別が付くか</b>を見てください。
+区別が付かなければ、子音の手がかりが効いていないことになります。<br>
+<b>3つのどれなのかが、この並びで分かります。</b>
+⑤の「切り出し前」の時点で変なら<b>合成そのものがおかしい</b>。
+②の「戻した版」の方がよく聞こえるなら<b>切り出しが削りすぎ</b>。
+①②⑤が同じで③だけちゃんと聞こえるなら<b>短く切って単独で聞かせることの限界</b>です。
+</p>
+<div class="box">
+<b>機械で調べた結果（先にお伝えします）</b><br>
+・<b>切り落としではありません。</b>onset より前に捨てている音は全68字で -48dB 以下（聞こえない立ち上がりのごく初期）だけでした。
+「り」の弾き音は onset の直後 0〜16ms に、ピーク比 -20dB で残っています。<br>
+・<b>自然音声と比べても、弾き音の長さ・強さはほぼ同じです。</b>
+ら行5字で長さの差は -24〜+8ms、強さはどちらも -20〜-25dB でした。<br>
+→ 機械の上では「切り落としではない」「合成音だから弱いとも言えない」となります。<br>
+<b>ただし、この機械の判定は前回まちがえた前科があります。</b>捨てている区間は最大20msあり、
+弾き音そのものが16msしかない字もあるので、「-48dB以下だから聞こえない」は
+うのみにしないでください。<b>②で耳で確かめられるようにしてあります。</b>
+</div>
+<div id="bar">
+  <button id="allRow">▶ 上から順に全部</button>
+  <button id="allAm">▶ あみたろだけ続けて</button>
+  <button id="allNat">▶ 自然音声（同じ長さ）だけ続けて</button>
+  <button id="stop">■ 停止</button>
+  <span id="now"></span>
+</div>
+<table>
+<thead><tr><th>字</th>
+<th>① あみたろ<br>切り出し後<br>（実験で使う刺激）</th>
+<th>② 捨てた区間を<br>戻した版<br>★削りすぎ？</th>
+<th>③ 自然音声<br>同じ長さに切ったもの<br>★合成のせい？</th>
+<th>④ 自然音声<br>録音のまま</th>
+<th>⑤ あみたろ<br>切り出し前<br>★合成が変？</th>
+<th>⑥ 子音の<br>ところだけ</th>
+<th></th></tr></thead>
+<tbody>
+<tr><th>ら<div class="sub">対 あ</div></th><td><button class="p am" data-k="ら" data-l="あみたろ・切り出し後" data-f="ら_amitaro.wav">あみたろ・切り出し後</button><div class="ms">127ms（実験で使う刺激）</div></td><td><button class="p rest" data-k="ら" data-l="捨てた区間を戻した版" data-f="ら_restored.wav">捨てた区間を戻した版</button><div class="ms">頭に15ms戻した<br>その区間の最大 -58.0dB</div></td><td><button class="p nat" data-k="ら" data-l="自然音声・同じ長さ" data-f="ら_nat_cut.wav">自然音声・同じ長さ</button><div class="ms">127ms</div></td><td><button class="p nat2" data-k="ら" data-l="自然音声・録音のまま" data-f="ら_nat_full.wav">自然音声・録音のまま</button><div class="ms">323ms</div></td><td><button class="p raw" data-k="ら" data-l="あみたろ・切り出し前" data-f="ら_raw.wav">あみたろ・切り出し前</button><div class="ms">「らさ」全体</div></td><td><button class="p flap" data-k="ら" data-l="子音のところだけ" data-f="ら_flap.wav">子音のところだけ</button><div class="ms">頭30ms</div></td><td class="refc"><button class="p hidden" data-k="ら" data-l="　" data-f="ら_amitaro.wav">　</button></td></tr><tr class="ref"><th>あ<div class="sub">くらべる母音</div></th><td><button class="p am" data-k="あ" data-l="あみたろ・切り出し後" data-f="あ_amitaro.wav">あみたろ・切り出し後</button><div class="ms">104ms</div></td><td><button class="p rest" data-k="あ" data-l="捨てた区間を戻した版" data-f="あ_restored.wav">捨てた区間を戻した版</button></td><td><button class="p nat" data-k="あ" data-l="自然音声・同じ長さ" data-f="あ_nat_cut.wav">自然音声・同じ長さ</button></td><td></td><td><button class="p raw" data-k="あ" data-l="あみたろ・切り出し前" data-f="あ_raw.wav">あみたろ・切り出し前</button></td><td></td><td class="refc"></td></tr><tr><th>り<div class="sub">対 い</div></th><td><button class="p am" data-k="り" data-l="あみたろ・切り出し後" data-f="り_amitaro.wav">あみたろ・切り出し後</button><div class="ms">104ms（実験で使う刺激）</div></td><td><button class="p rest" data-k="り" data-l="捨てた区間を戻した版" data-f="り_restored.wav">捨てた区間を戻した版</button><div class="ms">頭に0ms戻した<br>その区間の最大 NonedB</div></td><td><button class="p nat" data-k="り" data-l="自然音声・同じ長さ" data-f="り_nat_cut.wav">自然音声・同じ長さ</button><div class="ms">104ms</div></td><td><button class="p nat2" data-k="り" data-l="自然音声・録音のまま" data-f="り_nat_full.wav">自然音声・録音のまま</button><div class="ms">375ms</div></td><td><button class="p raw" data-k="り" data-l="あみたろ・切り出し前" data-f="り_raw.wav">あみたろ・切り出し前</button><div class="ms">「りさ」全体</div></td><td><button class="p flap" data-k="り" data-l="子音のところだけ" data-f="り_flap.wav">子音のところだけ</button><div class="ms">頭30ms</div></td><td class="refc"><button class="p hidden" data-k="り" data-l="　" data-f="り_amitaro.wav">　</button></td></tr><tr class="ref"><th>い<div class="sub">くらべる母音</div></th><td><button class="p am" data-k="い" data-l="あみたろ・切り出し後" data-f="い_amitaro.wav">あみたろ・切り出し後</button><div class="ms">77ms</div></td><td><button class="p rest" data-k="い" data-l="捨てた区間を戻した版" data-f="い_restored.wav">捨てた区間を戻した版</button></td><td><button class="p nat" data-k="い" data-l="自然音声・同じ長さ" data-f="い_nat_cut.wav">自然音声・同じ長さ</button></td><td></td><td><button class="p raw" data-k="い" data-l="あみたろ・切り出し前" data-f="い_raw.wav">あみたろ・切り出し前</button></td><td></td><td class="refc"></td></tr><tr><th>る<div class="sub">対 う</div></th><td><button class="p am" data-k="る" data-l="あみたろ・切り出し後" data-f="る_amitaro.wav">あみたろ・切り出し後</button><div class="ms">124ms（実験で使う刺激）</div></td><td><button class="p rest" data-k="る" data-l="捨てた区間を戻した版" data-f="る_restored.wav">捨てた区間を戻した版</button><div class="ms">頭に5ms戻した<br>その区間の最大 -51.5dB</div></td><td><button class="p nat" data-k="る" data-l="自然音声・同じ長さ" data-f="る_nat_cut.wav">自然音声・同じ長さ</button><div class="ms">124ms</div></td><td><button class="p nat2" data-k="る" data-l="自然音声・録音のまま" data-f="る_nat_full.wav">自然音声・録音のまま</button><div class="ms">393ms</div></td><td><button class="p raw" data-k="る" data-l="あみたろ・切り出し前" data-f="る_raw.wav">あみたろ・切り出し前</button><div class="ms">「るさ」全体</div></td><td><button class="p flap" data-k="る" data-l="子音のところだけ" data-f="る_flap.wav">子音のところだけ</button><div class="ms">頭30ms</div></td><td class="refc"><button class="p hidden" data-k="る" data-l="　" data-f="る_amitaro.wav">　</button></td></tr><tr class="ref"><th>う<div class="sub">くらべる母音</div></th><td><button class="p am" data-k="う" data-l="あみたろ・切り出し後" data-f="う_amitaro.wav">あみたろ・切り出し後</button><div class="ms">77ms</div></td><td><button class="p rest" data-k="う" data-l="捨てた区間を戻した版" data-f="う_restored.wav">捨てた区間を戻した版</button></td><td><button class="p nat" data-k="う" data-l="自然音声・同じ長さ" data-f="う_nat_cut.wav">自然音声・同じ長さ</button></td><td></td><td><button class="p raw" data-k="う" data-l="あみたろ・切り出し前" data-f="う_raw.wav">あみたろ・切り出し前</button></td><td></td><td class="refc"></td></tr><tr><th>れ<div class="sub">対 え</div></th><td><button class="p am" data-k="れ" data-l="あみたろ・切り出し後" data-f="れ_amitaro.wav">あみたろ・切り出し後</button><div class="ms">110ms（実験で使う刺激）</div></td><td><button class="p rest" data-k="れ" data-l="捨てた区間を戻した版" data-f="れ_restored.wav">捨てた区間を戻した版</button><div class="ms">頭に10ms戻した<br>その区間の最大 -60.5dB</div></td><td><button class="p nat" data-k="れ" data-l="自然音声・同じ長さ" data-f="れ_nat_cut.wav">自然音声・同じ長さ</button><div class="ms">110ms</div></td><td><button class="p nat2" data-k="れ" data-l="自然音声・録音のまま" data-f="れ_nat_full.wav">自然音声・録音のまま</button><div class="ms">359ms</div></td><td><button class="p raw" data-k="れ" data-l="あみたろ・切り出し前" data-f="れ_raw.wav">あみたろ・切り出し前</button><div class="ms">「れさ」全体</div></td><td><button class="p flap" data-k="れ" data-l="子音のところだけ" data-f="れ_flap.wav">子音のところだけ</button><div class="ms">頭30ms</div></td><td class="refc"><button class="p hidden" data-k="れ" data-l="　" data-f="れ_amitaro.wav">　</button></td></tr><tr class="ref"><th>え<div class="sub">くらべる母音</div></th><td><button class="p am" data-k="え" data-l="あみたろ・切り出し後" data-f="え_amitaro.wav">あみたろ・切り出し後</button><div class="ms">100ms</div></td><td><button class="p rest" data-k="え" data-l="捨てた区間を戻した版" data-f="え_restored.wav">捨てた区間を戻した版</button></td><td><button class="p nat" data-k="え" data-l="自然音声・同じ長さ" data-f="え_nat_cut.wav">自然音声・同じ長さ</button></td><td></td><td><button class="p raw" data-k="え" data-l="あみたろ・切り出し前" data-f="え_raw.wav">あみたろ・切り出し前</button></td><td></td><td class="refc"></td></tr><tr><th>ろ<div class="sub">対 お</div></th><td><button class="p am" data-k="ろ" data-l="あみたろ・切り出し後" data-f="ろ_amitaro.wav">あみたろ・切り出し後</button><div class="ms">120ms（実験で使う刺激）</div></td><td><button class="p rest" data-k="ろ" data-l="捨てた区間を戻した版" data-f="ろ_restored.wav">捨てた区間を戻した版</button><div class="ms">頭に10ms戻した<br>その区間の最大 -61.6dB</div></td><td><button class="p nat" data-k="ろ" data-l="自然音声・同じ長さ" data-f="ろ_nat_cut.wav">自然音声・同じ長さ</button><div class="ms">120ms</div></td><td><button class="p nat2" data-k="ろ" data-l="自然音声・録音のまま" data-f="ろ_nat_full.wav">自然音声・録音のまま</button><div class="ms">280ms</div></td><td><button class="p raw" data-k="ろ" data-l="あみたろ・切り出し前" data-f="ろ_raw.wav">あみたろ・切り出し前</button><div class="ms">「ろさ」全体</div></td><td><button class="p flap" data-k="ろ" data-l="子音のところだけ" data-f="ろ_flap.wav">子音のところだけ</button><div class="ms">頭30ms</div></td><td class="refc"><button class="p hidden" data-k="ろ" data-l="　" data-f="ろ_amitaro.wav">　</button></td></tr><tr class="ref"><th>お<div class="sub">くらべる母音</div></th><td><button class="p am" data-k="お" data-l="あみたろ・切り出し後" data-f="お_amitaro.wav">あみたろ・切り出し後</button><div class="ms">82ms</div></td><td><button class="p rest" data-k="お" data-l="捨てた区間を戻した版" data-f="お_restored.wav">捨てた区間を戻した版</button></td><td><button class="p nat" data-k="お" data-l="自然音声・同じ長さ" data-f="お_nat_cut.wav">自然音声・同じ長さ</button></td><td></td><td><button class="p raw" data-k="お" data-l="あみたろ・切り出し前" data-f="お_raw.wav">あみたろ・切り出し前</button></td><td></td><td class="refc"></td></tr>
+</tbody></table>
+<script>
+const DIR="compare_flap/";
+let cur=null, timer=null;
+function stop(){ if(cur){cur.pause();cur=null;} if(timer){clearTimeout(timer);timer=null;}
+  document.querySelectorAll("button.playing").forEach(b=>b.classList.remove("playing"));
+  document.getElementById("now").textContent=""; }
+function play(btn){ if(cur){cur.pause();cur=null;}
+  document.querySelectorAll("button.playing").forEach(b=>b.classList.remove("playing"));
+  const a=new Audio(DIR+encodeURIComponent(btn.dataset.f));
+  btn.classList.add("playing"); a.onended=()=>btn.classList.remove("playing");
+  cur=a; a.play(); return a; }
+document.querySelectorAll("button[data-f]").forEach(b=>b.onclick=()=>{
+  if(timer){clearTimeout(timer);timer=null;document.getElementById("now").textContent="";}
+  play(b); });
+document.getElementById("stop").onclick=stop;
+function runList(list){ stop(); let i=0;
+  (function next(){ if(i>=list.length){document.getElementById("now").textContent="おわり";return;}
+    const b=list[i++];
+    document.getElementById("now").textContent=b.dataset.k+" ／ "+b.dataset.l+"（"+i+"/"+list.length+"）";
+    const a=play(b);
+    a.onended=()=>{b.classList.remove("playing"); timer=setTimeout(next,520);};
+    a.onerror=()=>{timer=setTimeout(next,120);};
+  })();
+}
+document.getElementById("allRow").onclick=()=>runList(
+  [...document.querySelectorAll("tbody button.p")].filter(b=>!b.classList.contains("hidden")));
+document.getElementById("allAm").onclick=()=>runList([...document.querySelectorAll("button.am")]);
+document.getElementById("allNat").onclick=()=>runList([...document.querySelectorAll("button.nat")]);
+</script>

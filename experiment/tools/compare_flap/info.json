@@ -1,0 +1,82 @@
+{
+ "ら": {
+  "mora_ms": 127.0,
+  "discarded_ms": 15.0,
+  "discarded_peak_db": -58.0,
+  "nat_type": "弾き音 /ɾ/",
+  "nat_note": "舌を弾く一瞬の音。短く弱い",
+  "nat_dur_ms": 323.0
+ },
+ "あ": {
+  "mora_ms": 104.5,
+  "discarded_ms": 15.0,
+  "discarded_peak_db": -54.9,
+  "nat_type": "母音",
+  "nat_note": "声がいきなり始まる。onsetは取りやすい",
+  "nat_dur_ms": 331.0
+ },
+ "り": {
+  "mora_ms": 104.5,
+  "discarded_ms": 0.0,
+  "discarded_peak_db": null,
+  "nat_type": "弾き音 /ɾ/",
+  "nat_note": "舌を弾く一瞬の音。短く弱い",
+  "nat_dur_ms": 375.0
+ },
+ "い": {
+  "mora_ms": 77.1,
+  "discarded_ms": 20.0,
+  "discarded_peak_db": -52.8,
+  "nat_type": "母音",
+  "nat_note": "声がいきなり始まる。onsetは取りやすい",
+  "nat_dur_ms": 295.0
+ },
+ "る": {
+  "mora_ms": 124.5,
+  "discarded_ms": 5.0,
+  "discarded_peak_db": -51.5,
+  "nat_type": "弾き音 /ɾ/",
+  "nat_note": "舌を弾く一瞬の音。短く弱い",
+  "nat_dur_ms": 393.0
+ },
+ "う": {
+  "mora_ms": 77.1,
+  "discarded_ms": 10.0,
+  "discarded_peak_db": -50.2,
+  "nat_type": "母音",
+  "nat_note": "声がいきなり始まる。onsetは取りやすい",
+  "nat_dur_ms": 341.0
+ },
+ "れ": {
+  "mora_ms": 109.5,
+  "discarded_ms": 10.0,
+  "discarded_peak_db": -60.5,
+  "nat_type": "弾き音 /ɾ/",
+  "nat_note": "舌を弾く一瞬の音。短く弱い",
+  "nat_dur_ms": 359.0
+ },
+ "え": {
+  "mora_ms": 99.5,
+  "discarded_ms": 20.0,
+  "discarded_peak_db": -49.9,
+  "nat_type": "母音",
+  "nat_note": "声がいきなり始まる。onsetは取りやすい",
+  "nat_dur_ms": 301.0
+ },
+ "ろ": {
+  "mora_ms": 119.5,
+  "discarded_ms": 10.0,
+  "discarded_peak_db": -61.6,
+  "nat_type": "弾き音 /ɾ/",
+  "nat_note": "舌を弾く一瞬の音。短く弱い",
+  "nat_dur_ms": 280.0
+ },
+ "お": {
+  "mora_ms": 82.1,
+  "discarded_ms": 15.0,
+  "discarded_peak_db": -50.7,
+  "nat_type": "母音",
+  "nat_note": "声がいきなり始まる。onsetは取りやすい",
+  "nat_dur_ms": 295.0
+ }
+}
