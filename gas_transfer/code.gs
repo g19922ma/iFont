@@ -540,7 +540,9 @@ function handleTransferTrial(sheetId, body) {
       // 刺激
       "stimulus_id", "target_char", "response_char", "correct",
       "modality", "family", "condition", "gate_ms", "progress_pct",
-      "is_filler", "check_kind", "is_catch", "n_choices",
+      "is_filler", "is_decoy", "check_kind", "is_catch", "n_choices",
+      // 出題範囲の学習を測る列(2026-08-24 追加)
+      "resp_in_target_set", "resp_in_frequent_set", "n_frequent",
       // 実測
       "rt_ms", "actual_ms", "actual_frames", "actual_s", "progress_source", "base_anim_ms",
       // 端末・再開・版
@@ -560,8 +562,10 @@ function handleTransferTrial(sheetId, body) {
     body.modality || "", body.family || "", body.condition || "",
     blank(body.gate_ms), blank(body.progress_pct),
     (body.is_filler === undefined ? "" : !!body.is_filler),
+    (body.is_decoy === undefined ? "" : !!body.is_decoy),
     body.check_kind || "", (body.is_catch === undefined ? "" : !!body.is_catch),
     blank(body.n_choices),
+    blank(body.resp_in_target_set), blank(body.resp_in_frequent_set), blank(body.n_frequent),
     blank(body.rt_ms), blank(body.actual_ms), blank(body.actual_frames), blank(body.actual_s),
     body.progress_source || "", blank(body.base_anim_ms),
     blank(body.ua), blank(body.dpr), blank(body.screen),

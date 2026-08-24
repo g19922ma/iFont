@@ -132,7 +132,9 @@ def normalize(rows, label_map):
         pid = r.get("participant_id", "")
         r["participant_id"] = label_map.get(pid, pid)
         r["correct"] = truthy(r.get("correct"))
-        r["is_filler"] = truthy(r.get("is_filler"))
+        # is_decoy は 2026-08-24 に足した新しい列名。is_filler は同じ意味の旧称なので、
+        # どちらか片方でも立っていれば「偽のターゲット（解析から外す行）」とみなす。
+        r["is_filler"] = truthy(r.get("is_filler")) or truthy(r.get("is_decoy"))
         r["check_kind"] = (r.get("check_kind") or "").strip()
         r["gate_ms"] = num(r.get("gate_ms"))
         r["progress_pct"] = num(r.get("progress_pct"))

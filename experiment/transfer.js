@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.10";
+const VERSION = "3.11";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -520,9 +520,13 @@ const GRID = CFG.answer_grid;
 const ALL_KANA = GRID.flat().filter(c => c !== "");
 const N_CHOICES = ALL_KANA.length;
 const TARGETS = CFG.targets.slice();
-const FILLERS = (CFG.fillers && CFG.fillers.length)
-  ? CFG.fillers.slice()
-  : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0);
+// decoy(偽のターゲット)の候補。本命8字と、設定で外した字(「ん」)を除いた残り。
+// 実際にその参加者へ出る12字は decoyChars() が連番から決める。
+const DECOY_CFG = CFG.decoys || {};
+const DECOY_POOL = (DECOY_CFG.pool && DECOY_CFG.pool.length)
+  ? DECOY_CFG.pool.slice()
+  : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 &&
+                         ((DECOY_CFG.exclude || []).indexOf(c) < 0));
 function kanaLabel(ch) { return (CFG.homophone_label && CFG.homophone_label[ch]) || ch; }
 
 const screenEl = document.getElementById("screen");
@@ -977,60 +981,169 @@ async function preload() {
 // =========================================================================
 // 出題の組み立て
 // =========================================================================
-// 確認問題を混ぜる。full = 打ち切りなし(操作チェックA)、floor = 最小の時点(操作チェックC)。
-function addChecks(list, makeFull, makeFloor) {
-  const nFull = Math.round(list.length * CFG.design.check_full_rate);
-  const nFloor = Math.round(list.length * CFG.design.check_floor_rate);
-  for (let i = 0; i < nFull; i++) list.push(makeFull());
-  for (let i = 0; i < nFloor; i++) list.push(makeFloor());
-  return list;
+// ■ 2026-08-24 の作り直し（transfer_config.js の prov-2026-08-24c）
+//   1人あたりの構成は3集団とも同じ:
+//     本命8字 × 3点            = 24問   （その字の測定点のうち3点。参加者間で分担）
+//     decoy 12字 × 3点         = 36問   （本命とまったく同じ回数。参加者ごとに違う12字）
+//     確認問題A(全部提示) 10%  = 6問    （位置はランダム）
+//     確認問題C(最小の点) 6%   = 4問    （位置はランダム）
+//     ─────────────────────────────
+//     合計 70問
+//   よく出る20字（本命8＋decoy12）は**どれも3回ずつ**出る（確認問題に当たった字だけ+1回）。
+//   出現頻度から本命を見分けられないようにするための設計である。
+
+// ---- 決定的な小道具（連番から決めるので、再開しても同じ結果になる） ----------
+// 連番 n を種にした並べ替え。Math.random は使わない。
+function seededShuffle(arr, seedStr) {
+  const a = arr.slice();
+  const rnd = mulberry32(hashSeed(String(seedStr)));
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 }
 
-// 聴覚(群Acal / 群Atest): ターゲット8字 × 時点。まぎれ字と確認問題を混ぜる。
+// この参加者に出る decoy 12字。
+// 候補59字（全68かな − 本命8字 − 「ん」）を、**巡ごとに並べ替えて12字ずつ配る**。
+//   一巡 = ceil(59 / 12) = 5人。5人で候補をひととおり使い切る（端は先頭へ回り込む）。
+//   巡ごとに並べ替えの種を変えるので、同じ字がいつも同じ人に当たることはない。
+// これで集団全体では59字がほぼ均等に使われる（80人なら1字あたり16回前後）。
+function decoyChars() {
+  const k = Math.max(0, Math.round(Number(DECOY_CFG.per_participant) || 0));
+  const pool = DECOY_POOL.slice();
+  if (!k || !pool.length) return [];
+  const n = Math.max(0, Math.round(ASSIGN) || 0);
+  const perCycle = Math.max(1, Math.ceil(pool.length / k));   // 何人で候補を一巡するか
+  const cycle = Math.floor(n / perCycle);
+  const slot = n % perCycle;
+  const order = seededShuffle(pool, (DECOY_CFG.seed_prefix || "decoy:") + cycle);
+  const out = [];
+  for (let j = 0; j < k; j++) out.push(order[(slot * k + j) % order.length]);
+  return out;
+}
+
+// その参加者にとって「よく出る20字」= 本命8字 + decoy 12字。
+// 確認問題の字と、記録の resp_in_frequent_set 列に使う。
+let _freqCache = null;
+function frequentChars() {
+  if (!_freqCache) _freqCache = TARGETS.concat(decoyChars());
+  return _freqCache;
+}
+
+// **その字について、1人が担当する点の番号**を返す（不完全ブロック配置）。
+//   nPoints … その字の測定点の数（聴覚8・群A′5・群B7）
+//   rot     … 連番 + 字の番号。字ごとに1つずつずらすので、1人の中でも点が散る
+// 設定の基準（assignment.point_subsets）を rot だけ巡回させたもの。
+// 集団全体では、どの点にも「人数 × 担当点数 ÷ 点数」人が入る。
+function pointSubset(nPoints, rot) {
+  const k = Math.max(1, Math.round(Number(CFG.design.target_points_per_char) || 3));
+  const table = (CFG.assignment && CFG.assignment.point_subsets) || {};
+  let base = table[String(nPoints)];
+  if (!base || !base.length) {            // 表に無い点数のときの代用（先頭から順に）
+    base = [];
+    for (let i = 0; i < Math.min(k, nPoints); i++) base.push(i);
+  }
+  const r = ((Math.round(rot) % nPoints) + nPoints) % nPoints;
+  const set = [];
+  base.forEach(b => { const v = ((b + r) % nPoints + nPoints) % nPoints; if (set.indexOf(v) < 0) set.push(v); });
+  return set.sort((a, b) => a - b);
+}
+
+// 同じ字が近くで繰り返されないように並べる。
+// 単純なシャッフルだと「か」が2問続くことがあり、**繰り返しに気づく手がかり**になる。
+// 先にシャッフルしてから、直前 gap 問に同じ字が出ていない候補を先頭から取っていく。
+// どうしても置けないときだけ間隔を諦める（並びが破綻しないようにするため）。
+function spacedShuffle(list, gap) {
+  const g = Math.max(0, Math.round(Number(gap) || 0));
+  if (!g) return shuffle(list.slice());
+  // 字ごとの束に分け、**残りが多い字から**置いていく（残りをためこむと最後に
+  // 同じ字が固まるため。よくある「同じ仕事を間隔を空けて並べる」やり方）。
+  const bins = {};
+  shuffle(list.slice()).forEach(t => { (bins[t.char] = bins[t.char] || []).push(t); });
+  const out = [];
+  const lastAt = {};
+  let left = list.length;
+  while (left > 0) {
+    const cand = Object.keys(bins).filter(ch => bins[ch].length &&
+      (lastAt[ch] === undefined || (out.length - lastAt[ch]) > g));
+    let ch;
+    if (cand.length) {
+      // 残りが最多の字（同数なら乱数で）
+      const max = Math.max.apply(null, cand.map(c => bins[c].length));
+      ch = pick(cand.filter(c => bins[c].length === max));
+    } else {
+      // どうしても間隔を空けられないときだけ諦める（最後の数問で起きうる）
+      ch = pick(Object.keys(bins).filter(c => bins[c].length));
+    }
+    out.push(bins[ch].pop());
+    lastAt[ch] = out.length - 1;
+    left--;
+  }
+  return out;
+}
+
+// 確認問題を作って混ぜ、並びを返す。
+//   ・確認問題に使う字は「よく出る20字」から重複なしで選ぶ（本命だけを使うと
+//     本命の出現回数が増えて、頻度で見分けられてしまう）。
+//   ・**位置はすべてランダム**（1問目を特別扱いしない）。テスト用の問題だと
+//     気づかれないことが、まじめに答えているかの判定には要るためである。
+function assembleTrials(cells, mkCheck) {
+  const nFull = Math.max(0, Math.round(cells.length * (CFG.design.check_full_rate || 0)));
+  const nFloor = Math.max(0, Math.round(cells.length * (CFG.design.check_floor_rate || 0)));
+  const order = shuffle(frequentChars().slice());   // 確認問題に使う字（重複しないように順に取る）
+  const checks = [];
+  for (let i = 0; i < nFull; i++) checks.push(mkCheck("full", order[i % order.length]));
+  for (let i = 0; i < nFloor; i++) checks.push(mkCheck("floor", order[(nFull + i) % order.length]));
+  return spacedShuffle(cells.concat(checks), CFG.design.min_same_char_gap);
+}
+
+// ---- 聴覚(群Acal) ---------------------------------------------------------
+// その字の測定点。打ち切り時刻の並び ＋（設定が true なら）「打ち切りなし(全長)」。
+function audioPoints(ch) {
+  const pts = audioGates(ch).slice();
+  return CFG.audio.include_full_gate ? pts.concat([null]) : pts;
+}
+
 function buildAudioTrials() {
-  let cells = [];
-  for (let rep = 0; rep < CFG.design.reps; rep++) {
-    TARGETS.forEach(ch => {
-      audioGates(ch).forEach(g => {
-        cells.push({ mod: "audio", char: ch, gate_ms: g, is_filler: false, check_kind: "" });
-      });
-      // 「打ち切りなし(全長)」をその字の1点として足す(transfer_config.js の
-      // audio.include_full_gate)。時点を字ごとに置くようにしたので、曲線の天井が
-      // 取れているかも字ごとに確かめられるようにしておく。
-      if (CFG.audio.include_full_gate) {
-        cells.push({ mod: "audio", char: ch, gate_ms: null, is_filler: false, check_kind: "" });
-      }
+  const n = Math.max(0, Math.round(ASSIGN) || 0);
+  let targetCells = [];
+  TARGETS.forEach((ch, i) => {
+    const pts = audioPoints(ch);
+    pointSubset(pts.length, n + i).forEach(pi => {
+      targetCells.push({ mod: "audio", char: ch, gate_ms: pts[pi], is_decoy: false, is_filler: false, check_kind: "" });
     });
+  });
+  let decoyCells = [];
+  decoyChars().forEach((ch, m) => {
+    const pts = audioPoints(ch);
+    pointSubset(pts.length, n + m).forEach(pi => {
+      decoyCells.push({ mod: "audio", char: ch, gate_ms: pts[pi], is_decoy: true, is_filler: true, check_kind: "" });
+    });
+  });
+  if (MAX_TARGET_TRIALS > 0) {          // 研究者の動作確認用の短縮版
+    targetCells = shuffle(targetCells).slice(0, MAX_TARGET_TRIALS);
+    decoyCells = shuffle(decoyCells).slice(0, MAX_TARGET_TRIALS);
   }
-  cells = shuffle(cells);
-  if (MAX_TARGET_TRIALS > 0) cells = cells.slice(0, MAX_TARGET_TRIALS);
-  const nFiller = Math.round(cells.length * CFG.design.filler_ratio);
-  const fillerGates = audioGates("_default");
-  for (let i = 0; i < nFiller; i++) {
-    cells.push({ mod: "audio", char: pick(FILLERS), gate_ms: pick(fillerGates), is_filler: true, check_kind: "" });
-  }
-  addChecks(cells,
-    () => ({ mod: "audio", char: pick(TARGETS), gate_ms: null, is_filler: false, check_kind: "full" }),
-    // 確認問題C(ほとんど情報のない問題)は、**その字にとっていちばん早い時点**を使う。
-    // 時点を字ごとに置くようにしたので、全字共通の最小値(20ms)を当てると、
-    // その字の表に無い刺激を要求してしまう(例: し は 30ms から始まる)。
-    () => { const ch = pick(TARGETS);
-            return { mod: "audio", char: ch, gate_ms: Math.min(...audioGates(ch)),
-                     is_filler: false, check_kind: "floor" }; });
-  return shuffle(cells);
+  const mk = (kind, ch) => ({
+    mod: "audio", char: ch, is_decoy: false, is_filler: false, check_kind: kind,
+    // 確認問題A=全長 ／ 確認問題C=その字のいちばん早い時点（字ごとに違う）
+    gate_ms: kind === "full" ? null : Math.min.apply(null, audioGates(ch)),
+  });
+  return assembleTrials(targetCells.concat(decoyCells), mk);
 }
 
-// 視覚(群A′ / 群B)。1人の参加者が担当する「字 × 方式(群B は条件)」の一覧を返す。
+// 視覚(群A′ / 群B)。1人の参加者が担当する「字 × 方式(条件)」の一覧を返す。
 // どの字にどれを当てるかは参加者の連番から決める(乱数は使わない。同じ人が途中で
 // 閉じて開き直しても同じ割付に戻る)。釣り合いは集団全体で取る。
 //
 //   群B  : **8字すべて**。字ごとに条件を1つ。
-//   群A′ : **8字のうち4字**。1字につき1方式で、4方式がちょうど1つずつ当たる。
-//          2026-08-24 に「8字 × 1方式」からこの形に変えた。RQ4 の速さ2水準を
-//          4方式すべてに広げても、1人あたりの問題数が増えないようにするためである
+//   群A′ : **8字すべて**。字ごとに方式1つ・速さ1つ（1人で4方式・2速度をすべて経験する）。
+//          2026-08-24 に「4字 × 1方式 × 2速度」からこの形に変えた。
+//          1人あたりの点を減らして参加者間で分担する作り直しに合わせたものである
 //          (詳しい算数は transfer_config.js の assignment の注記)。
 //
-// 戻り値の各要素: { index, char, family, condition }
+// 戻り値の各要素: { index, char, family, condition, base_anim_ms }
 function assignedCombos() {
   const n = Math.max(0, Math.round(ASSIGN) || 0);
   if (GROUP !== "aprime") {
@@ -1038,23 +1151,20 @@ function assignedCombos() {
     const step = CFG.assignment.b_step || 1;
     return TARGETS.map((ch, i) => {
       const c = conds[(i * step + n) % conds.length];
-      return { index: i, char: ch, family: c.family, condition: c.condition };
+      return { index: i, char: ch, family: c.family, condition: c.condition,
+               base_anim_ms: CFG.visual.base_anim_ms };
     });
   }
   const fams = CFG.assignment.aprime_families;
   const nf = fams.length;
-  // 字を方式の数だけの束に分ける。8字・4方式なら stride = 2 で、
-  // 連番が偶数の人は 0,2,4,6 番目の字、奇数の人は 1,3,5,7 番目の字を担当する。
-  const stride = Math.max(1, Math.floor(TARGETS.length / nf));
-  const offset = n % stride;                    // どの束を担当するか
-  const rot = Math.floor(n / stride) % nf;      // 方式の回し量
-  const out = [];
-  for (let k = 0; k < nf; k++) {
-    const i = k * stride + offset;
-    if (i >= TARGETS.length) break;
-    out.push({ index: i, char: TARGETS[i], family: fams[(k + rot) % nf], condition: "calib" });
-  }
-  return out;
+  return TARGETS.map((ch, i) => {
+    const family = fams[(i + n) % nf];
+    const speeds = speedsFor(family);
+    // 速さは「字の番号 + 連番を方式の数で割った商」で決める。
+    // 1人の中で速さが半々になり、集団では 字 × 方式 × 速さ が8人で1周する。
+    const base = speeds[(i + Math.floor(n / nf)) % speeds.length];
+    return { index: i, char: ch, family, condition: "calib", base_anim_ms: base };
+  });
 }
 
 // 聴覚で使う打ち切り時刻ms。下見のあいだだけ、設定で足した早い時点を混ぜる
@@ -1067,13 +1177,6 @@ function audioGates(ch) {
   return [...new Set([...base, ...ex.gate_ms])].sort((a, b) => a - b);
 }
 
-// RQ4 の測定(transfer_config.js の visual.calib_speed_probe)。
-// 群A′の決められた方式(2026-08-24 から**4方式すべて**)で、基準アニメの速さを2通り出して
-// 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を測る。
-// 較正フェーズのあいだはずっと入れておく(下見は予備・本番の群A′が本答え)。
-// 生成(warp)に使う視覚の曲線は generation_level_ms の水準だけと事前に決めてあり、
-// もう一方の水準は RQ4 に答えるためだけに使う(計画書 3章 RQ4・6.1)。
-// 設定を切ると speedsFor は必ず1要素(既定の速さ)を返すので、挙動は元どおりになる。
 // 視覚較正(群A′)で使う打ち切り水準%。
 // **参加者ごとに、薄い側の水準をまとめて少しずらす**(transfer_config.js の
 // visual.progress_pct_shift)。ずらし量は参加者の連番から決まるので、
@@ -1092,6 +1195,12 @@ function progressLevels() {
   return base.map((v, i) => (i < n ? Math.round((v + d) * 100) / 100 : v));
 }
 
+// RQ4 の測定(transfer_config.js の visual.calib_speed_probe)。
+// 群A′の決められた方式(2026-08-24 から**4方式すべて**)で、基準アニメの速さを2通り出して
+// 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を測る。
+// 2026-08-24 の作り直しで、**1人は1つの字につき片方の速さだけ**を見るようにした
+// (1人あたりの問題数を増やさずに8字すべてを出すため)。1人の中では字によって速さが
+// 変わるので、速さの比較は人の中でも取れる(字は効果として入れる)。
 function speedProbe() {
   const p = CFG.visual.calib_speed_probe;
   return (p && p.enabled && p.base_anim_ms_levels && p.base_anim_ms_levels.length > 1) ? p : null;
@@ -1107,83 +1216,82 @@ function speedsFor(family) {
 }
 
 function buildVisualTrials() {
-  // その参加者が担当する「字 × 方式(条件)」。群A′は4組、群Bは8組。
-  const combos = assignedCombos();
-  let cells = [];
-  for (let rep = 0; rep < CFG.design.reps; rep++) {
-    combos.forEach(c => {
-      if (GROUP === "aprime") {
-        // 速さの水準ぶんだけ繰り返す(RQ4 の測定を切ってあれば1通りだけ)。
-        speedsFor(c.family).forEach(baseMs => {
-          progressLevels().forEach(pct => {
-            cells.push({ mod: "visual", play: "calib", char: c.char, family: c.family, condition: "calib",
-                         progress_pct: pct, gate_ms: null, is_filler: false, check_kind: "",
-                         base_anim_ms: baseMs });
-          });
-        });
-      } else {
-        gatesFor(CFG.visual.gates_ms, c.char).forEach(g => {
-          cells.push({ mod: "visual", play: "warp", char: c.char, family: c.family, condition: c.condition,
-                       progress_pct: null, gate_ms: g, is_filler: false, check_kind: "" });
-        });
-      }
-    });
-  }
-  cells = shuffle(cells);
-  if (MAX_TARGET_TRIALS > 0) cells = cells.slice(0, MAX_TARGET_TRIALS);
-
-  // まぎれ字。方式・条件は、その参加者が担当している組合せから借りる
-  // (まぎれ字だけ見え方が違うと「これは本命ではない」と気づかれるため)。
-  const gateList = gatesFor(CFG.visual.gates_ms, "_default");
-  const nFiller = Math.round(cells.length * CFG.design.filler_ratio);
-  for (let i = 0; i < nFiller; i++) {
-    const c = pick(combos);
-    const ch = pick(FILLERS.filter(x => imgs[x]));
+  const n = Math.max(0, Math.round(ASSIGN) || 0);
+  const combos = assignedCombos();          // 8字ぶん(群A′・群Bとも)
+  const levels = progressLevels();          // 群A′の水準(この人向けにずれている)
+  const mkCell = (c, ch, isDecoy, rot) => {
+    const out = [];
     if (GROUP === "aprime") {
-      // まぎれ字の速さも本命と同じ集合から選ぶ(まぎれ字だけいつも同じ速さだと、
-      // 速さの違いが「本命かどうか」の手がかりになってしまうため)。
-      cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
-                   progress_pct: pick(progressLevels()), gate_ms: null, is_filler: true, check_kind: "",
-                   base_anim_ms: pick(speedsFor(c.family)) });
+      pointSubset(levels.length, rot).forEach(pi => {
+        out.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
+                   progress_pct: levels[pi], gate_ms: null, is_decoy: isDecoy, is_filler: isDecoy,
+                   check_kind: "", base_anim_ms: c.base_anim_ms });
+      });
     } else {
-      cells.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
-                   progress_pct: null, gate_ms: pick(gateList), is_filler: true, check_kind: "" });
+      const g = gatesFor(CFG.visual.gates_ms, ch);
+      pointSubset(g.length, rot).forEach(pi => {
+        out.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
+                   progress_pct: null, gate_ms: g[pi], is_decoy: isDecoy, is_filler: isDecoy,
+                   check_kind: "" });
+      });
     }
+    return out;
+  };
+  let targetCells = [];
+  combos.forEach(c => { targetCells = targetCells.concat(mkCell(c, c.char, false, n + c.index)); });
+  // decoy。**見え方(方式・条件・速さ)は本命の割付から借りる**
+  // (decoy だけ見え方が違うと「これは本命ではない」と気づかれるため)。
+  let decoyCells = [];
+  decoyChars().forEach((ch, m) => {
+    if (!imgs[ch]) return;                  // 画像が無い字は出さない
+    const c = combos[m % combos.length];
+    decoyCells = decoyCells.concat(mkCell(c, ch, true, n + m));
+  });
+  if (MAX_TARGET_TRIALS > 0) {              // 研究者の動作確認用の短縮版
+    targetCells = shuffle(targetCells).slice(0, MAX_TARGET_TRIALS);
+    decoyCells = shuffle(decoyCells).slice(0, MAX_TARGET_TRIALS);
   }
-  // 確認問題。full は打ち切りなし(進み具合が1に届くまで見せる)。floor は最小の時点。
-  const minGate = Math.min(...gateList);
-  const minPct = Math.min(...progressLevels());
-  const mk = (kind) => {
-    // 確認問題も、その参加者が担当している字・方式の中から出す
-    // (担当していない組合せを混ぜると、本命と見え方の違う問題になってしまう)。
-    const c = pick(combos);
-    const base = { mod: "visual", char: c.char, family: c.family, condition: c.condition,
-                   is_filler: false, check_kind: kind };
+  // 確認問題。full は打ち切りなし(進み具合が1に届くまで見せる)。floor は最小の点。
+  const minPct = Math.min.apply(null, levels);
+  const mk = (kind, ch) => {
+    const c = pick(combos);                 // 見え方は担当している組合せから借りる
+    const base = { mod: "visual", char: ch, family: c.family, condition: c.condition,
+                   is_decoy: false, is_filler: false, check_kind: kind };
     if (GROUP === "aprime") {
       // 確認問題は「いつもの速さ」に固定する(操作チェックの基準を1つに保つため)。
       return Object.assign(base, { play: "calib", condition: "calib", gate_ms: null,
                                    progress_pct: kind === "full" ? 100 : minPct,
                                    base_anim_ms: CFG.visual.base_anim_ms });
     }
+    const g = gatesFor(CFG.visual.gates_ms, ch);
     return Object.assign(base, { play: "warp", progress_pct: null,
-                                 gate_ms: kind === "full" ? null : minGate });
+                                 gate_ms: kind === "full" ? null : Math.min.apply(null, g) });
   };
-  addChecks(cells, () => mk("full"), () => mk("floor"));
-  return shuffle(cells);
+  return assembleTrials(targetCells.concat(decoyCells), mk);
 }
 
 // 練習(記録しない・何度でも)。よく分かる条件で出す。
+// **練習には decoy の字しか出さない**。練習は答えを見せる画面なので、本命字を出すと
+// 「この字が本命だ」と教えてしまうためである(2026-08-24)。
+function practiceChar() {
+  const d = decoyChars();
+  return d.length ? pick(d) : pick(TARGETS);
+}
 function buildTryout() {
+  const ch = practiceChar();
   if (G.mode === "audio") {
-    return { mod: "audio", char: pick(TARGETS), gate_ms: null, is_filler: false, check_kind: "", practice: true };
+    return { mod: "audio", char: ch, gate_ms: null, is_decoy: false, is_filler: false,
+             check_kind: "", practice: true };
   }
   const c = pick(assignedCombos());
   if (GROUP === "aprime") {
-    return { mod: "visual", play: "calib", char: c.char, family: c.family, condition: "calib",
-             progress_pct: 100, gate_ms: null, is_filler: false, check_kind: "", practice: true };
+    return { mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
+             progress_pct: 100, gate_ms: null, is_decoy: false, is_filler: false,
+             check_kind: "", practice: true, base_anim_ms: CFG.visual.base_anim_ms };
   }
-  return { mod: "visual", play: "warp", char: c.char, family: c.family, condition: c.condition,
-           progress_pct: null, gate_ms: null, is_filler: false, check_kind: "", practice: true };
+  return { mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
+           progress_pct: null, gate_ms: null, is_decoy: false, is_filler: false,
+           check_kind: "", practice: true };
 }
 
 // =========================================================================
@@ -1194,6 +1302,7 @@ let resumeState = null, elapsedPrior = 0;
 let introduced = false;        // 1問目だけ丁寧な文言・長めの間
 let tried = 0, tryReturn = null;
 let wellbeingAnswers = null;   // 群Bの見え心地評価
+let awarenessAnswers = null;   // 出題範囲に気づいたかの質問(全集団)
 const T0 = Date.now();
 const SESSION_V = 1;           // 途中データの互換版。構造を変えたら上げる。
 
@@ -1272,6 +1381,7 @@ function saveProgress() {
   if (window.PROD && PROD.enabled) PROD.saveState("transfer_" + PHASE,
     { session_v: SESSION_V, phase: PHASE, group: GROUP, trials, results, ti, assign: ASSIGN,
       wellbeing: wellbeingAnswers, wb_idx: wbIdx, wb_clips: wbClips,
+      awareness: awarenessAnswers,
       elapsed_s: Math.round(elapsedPrior + (Date.now() - T0) / 1000) });
 }
 
@@ -1292,9 +1402,19 @@ function makeRecord(t, picked, extra) {
     condition: t.condition || "",
     gate_ms: (t.gate_ms === null || t.gate_ms === undefined) ? "" : t.gate_ms,
     progress_pct: (t.progress_pct === null || t.progress_pct === undefined) ? "" : t.progress_pct,
-    is_filler: !!t.is_filler,
+    is_filler: !!t.is_filler,                // 旧称。decoy と同じ意味(既存の解析との互換で残す)
+    is_decoy: !!t.is_decoy,                  // 偽のターゲット。解析からはこの列で外す
     check_kind: t.check_kind || "",
     is_catch: t.check_kind === "full",       // 既存の列に合わせる(全部見せ・全部聞かせ)
+    // ---- 出題範囲の学習を測る2列(2026-08-24) --------------------------------
+    // 「回答が本命8字に入ったか」と「回答がよく出る20字に入ったか」を試行の通し番号に
+    // 対して別々に追うと、
+    //   後者だけ上がる … 出題の集合は学習されたが、本命の特定には至っていない
+    //   前者も上がる   … 本命の特定まで進んだ
+    // が言い分けられる。計画書 7.2 の学習検出。
+    resp_in_target_set: picked ? (TARGETS.indexOf(picked) >= 0) : "",
+    resp_in_frequent_set: picked ? (frequentChars().indexOf(picked) >= 0) : "",
+    n_frequent: frequentChars().length,      // よく出る字の数(本命8＋decoy12＝20)
     trial_index: mainDone() + 1,             // 何問目か(学習の検出用・練習は数えない)
     assign_index: ASSIGN,
     n_choices: N_CHOICES,
@@ -1611,9 +1731,98 @@ function wellbeingChoice() {
 }
 
 // =========================================================================
+// 出題範囲に気づいたかの質問(awareness check・2026-08-24 追加)
+// =========================================================================
+// **除外の基準には使わない。** 「出てくる字の範囲を学習したか」を測るための指標である
+// (計画書 7.2)。回答の中身(どの字を挙げたか)と、記録から導ける
+// 「回答が本命8字に入った割合の推移」を突き合わせて、学習が起きたかどうかを見る。
+//
+// 2問構成。1問目「繰り返し出てくる字があったと感じたか」(はい/いいえ)、
+// はいなら2問目「どの字だと思ったか」(かな表から複数選択・自由記述も可)。
+function awarenessScreen() {
+  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後に：課題の印象についての質問</h2>
+    <p>ここからは<b>当てる課題ではありません</b>。答えの正しさは報酬に関係しません。
+    感じたとおりにお答えください。</p>
+    <p style="font-size:16px;margin-top:18px"><b>この課題の中で、特定の文字が何度も繰り返し出てきたと感じましたか。</b></p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+      <button class="primary" id="awYes" style="background:#1E2A5E;padding:12px 28px">はい</button>
+      <button class="primary" id="awNo"  style="background:#6b7280;padding:12px 28px">いいえ</button>
+    </div>`;
+  document.getElementById("awYes").onclick = () => awarenessChars();
+  document.getElementById("awNo").onclick = () => sendAwareness("no", [], "");
+}
+
+function awarenessChars() {
+  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後に：課題の印象についての質問</h2>
+    <p><b>どの文字が繰り返し出ていたと思いますか。</b>
+    思いあたる字を表から選んでください（いくつでも／もう一度押すと外れます）。
+    <span class="muted">分からなければ、何も選ばずに「次へ」を押してかまいません。</span></p>
+    <div id="awArea"></div>
+    <div style="margin-top:12px">
+      <input id="awText" type="text" placeholder="ほかに気づいたことがあれば（任意）"
+             style="width:100%;box-sizing:border-box;padding:10px;font-size:15px;border:1px solid #cdd3e6;border-radius:8px">
+    </div>
+    <p style="text-align:center;margin-top:14px">
+      <button class="primary" id="awDone" style="background:#1E2A5E">次へ</button></p>`;
+  const chosen = [];
+  const grid = buildKanaGrid((ch) => {});   // 押しても進まない表を作り、下で押し方を差し替える
+  document.getElementById("awArea").appendChild(grid);
+  grid.querySelectorAll("button.kana").forEach(b => {
+    const ch = ALL_KANA.find(c => kanaLabel(c) === b.textContent) || b.textContent;
+    b.onclick = () => {
+      const i = chosen.indexOf(ch);
+      if (i >= 0) { chosen.splice(i, 1); b.style.background = ""; b.style.color = ""; }
+      else { chosen.push(ch); b.style.background = "#1E2A5E"; b.style.color = "#fff"; }
+    };
+  });
+  document.getElementById("awDone").onclick = () => {
+    const txt = (document.getElementById("awText").value || "").slice(0, 200);
+    sendAwareness("yes", chosen, txt);
+  };
+}
+
+function sendAwareness(answer, chars, text) {
+  const freq = frequentChars();
+  awarenessAnswers = {
+    repeated: answer,                 // "yes" | "no"
+    chars: chars.slice(),             // 参加者が挙げた字
+    text: text,
+    n_selected: chars.length,
+    n_hit_target: chars.filter(c => TARGETS.indexOf(c) >= 0).length,      // 本命8字を当てた数
+    n_hit_frequent: chars.filter(c => freq.indexOf(c) >= 0).length,       // よく出る20字を当てた数
+  };
+  const rec = {
+    kind: "transfer_awareness",
+    stimulus_id: "awareness|" + GROUP,
+    target_char: "-", response_char: "-",
+    modality: "transfer_awareness", q_set: "transfer", phase: PHASE, group: GROUP,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: N_CHOICES,
+    aware_repeated: answer,
+    aware_chars: chars.join(""),
+    aware_text: text,
+    aware_n_selected: chars.length,
+    aware_n_hit_target: awarenessAnswers.n_hit_target,
+    aware_n_hit_frequent: awarenessAnswers.n_hit_frequent,
+    decoy_chars: decoyChars().join(""),   // この人に出ていた偽のターゲット
+    n_frequent: freq.length,
+    version: VERSION, config_version: CFG.config_version,
+  };
+  if (window.PROD) PROD.saveFracTrial(rec);
+  sendRecord(rec);
+  saveProgress();
+  afterAwareness();
+}
+
+// =========================================================================
 // 完了・開始
 // =========================================================================
 function afterTrials() {
+  // 出題範囲に気づいたかの質問を先に置く(課題の記憶が新しいうちに聞く)。
+  if (!awarenessAnswers) return awarenessScreen();
+  afterAwareness();
+}
+
+function afterAwareness() {
   if (G.wellbeing) {
     if (!wellbeingAnswers) { wellbeingAnswers = { clips: [], choice: "" }; wbClips = buildWellbeingClips(); }
     if (!wbClips.length) wbClips = buildWellbeingClips();
@@ -1659,6 +1868,7 @@ function finishHTML(durS) {
 // 組み立てておく**（推定式で数えると実装とずれる。→ buildTrialsNow の注記）。
 let builtTrials = null;
 function buildTrialsNow() {
+  _freqCache = null;      // 連番が確定してから「よく出る20字」を作り直す
   builtTrials = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
   return builtTrials;
 }
@@ -1669,6 +1879,7 @@ function start() {
     trials = resumeState.trials; results = resumeState.results || [];
     ti = resumeState.ti || 0; elapsedPrior = resumeState.elapsed_s || 0;
     wellbeingAnswers = resumeState.wellbeing || null;
+    awarenessAnswers = resumeState.awareness || null;
     wbClips = resumeState.wb_clips || []; wbIdx = resumeState.wb_idx || 0;
     introduced = true; tried = 1;
     if (G.mode === "audio") prefetchStims(trials);

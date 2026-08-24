@@ -105,8 +105,11 @@ if (CFG.audio.fallback && CFG.audio.fallback.enabled) {
 // ---- 実験ページと同じ導出 -------------------------------------------------
 const ALL_KANA = CFG.answer_grid.flat().filter(c => c !== "");
 const TARGETS = CFG.targets.slice();
-const FILLERS = (CFG.fillers && CFG.fillers.length)
-  ? CFG.fillers.slice() : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0);
+// decoy(偽のターゲット)の候補。実際に誰へどの字が出るかは transfer.js が連番から決める。
+const DECOY_CFG = CFG.decoys || {};
+const DECOY_POOL = (DECOY_CFG.pool && DECOY_CFG.pool.length)
+  ? DECOY_CFG.pool.slice()
+  : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 && ((DECOY_CFG.exclude || []).indexOf(c) < 0));
 const gatesFor = (table, ch) => (table[ch] ? table[ch] : table._default).slice();
 // 聴覚は下見だけ早い時点を足せる(audio.pilot_extra_gates)。実験ページと同じ規則で混ぜる。
 function audioGates(ch) {
@@ -122,7 +125,9 @@ for (const ch of TARGETS) if (ALL_KANA.indexOf(ch) < 0) bad(`ターゲット ${c
 for (const ch of CFG.wellbeing.chars) {
   if (TARGETS.indexOf(ch) < 0) bad(`見え心地の代表字 ${ch} がターゲット8字に入っていない`);
 }
-ok(`ターゲット ${TARGETS.join("・")} ／ まぎれ字 ${FILLERS.length} 字 ／ 回答は ${ALL_KANA.length} 択`);
+ok(`ターゲット ${TARGETS.join("・")} ／ decoy の候補 ${DECOY_POOL.length} 字`
+   + `（除外 ${(DECOY_CFG.exclude || []).join("・") || "なし"}）／ 回答は ${ALL_KANA.length} 択`);
+if (DECOY_POOL.length < 30) bad(`decoy の候補が ${DECOY_POOL.length} 字しかない（30字以上必要）`);
 ok(`見え心地の代表字 ${CFG.wellbeing.chars.join("・")}（ターゲット内から事前固定）`);
 
 // ---- 2+3. 実験ページが引きうる見出しが全部あるか --------------------------
@@ -139,7 +144,14 @@ TARGETS.forEach(ch => {
   want.add(key(ch, null));                       // 全長の水準・確認問題A・練習
   want.add(key(ch, Math.min(...g)));             // 確認問題C(その字の最小の時点)
 });
-FILLERS.forEach(ch => defGates.forEach(g => want.add(key(ch, g))));
+// decoy は候補59字のどれになるか分からないので、**候補全部**について
+// 「その字の時点 + 全長 + いちばん早い時点」を要求する。
+DECOY_POOL.forEach(ch => {
+  const g = audioGates(ch);
+  g.forEach(v => want.add(key(ch, v)));
+  want.add(key(ch, null));
+  want.add(key(ch, Math.min(...g)));
+});
 ["あ", "い", "う", "え", "お"].filter(c => ALL_KANA.indexOf(c) >= 0)
   .forEach(ch => want.add(key(ch, null)));       // 音量確認のサンプル
 
@@ -214,7 +226,8 @@ function countTrialsByRunningPage() {
   const out = {};
   // transfer.js は `const VERSION = …` のような宣言を持つので、**集団ごとに
   // まっさらな入れ物（context）で読み直す**（同じ入れ物に2回読むと二重宣言になる）。
-  for (const [group, phase] of [["acal", "calib"], ["aprime", "calib"], ["b", "test"]]) {
+  for (const [group, phase, nPeople] of [["acal", "calib", 80], ["aprime", "calib", 150],
+                                         ["b", "test", 168]]) {
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;
     sandbox.TRANSFER_PAGE = { phase };
@@ -224,16 +237,31 @@ function countTrialsByRunningPage() {
       vmMod.runInContext(fs.readFileSync(path.join(EXP, f), "utf8"), ctx, { filename: f });
     }
     const src = fs.readFileSync(path.join(EXP, "transfer.js"), "utf8")
-      // 実験ページと同じコードのまま、集団だけ差し込んで組み立てさせる小窓を足す。
-      + `\n;globalThis.__count = function (g) {
-             GROUP = g; G = GROUPS[g]; ASSIGN = 0; ASSIGN_SOURCE = "harness";
+      // 実験ページと同じコードのまま、集団と連番だけ差し込んで組み立てさせる小窓を足す。
+      // 画像を要求する視覚の出題も通るように、imgs には全かなの偽物を入れておく。
+      + `\n;globalThis.__build = function (g, n) {
+             GROUP = g; G = GROUPS[g]; ASSIGN = n; ASSIGN_SOURCE = "harness";
+             _freqCache = null;
+             ALL_KANA.forEach(c => { imgs[c] = imgs[c] || {}; });
              const t = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
-             return { total: t.length,
-                      target: t.filter(x => !x.is_filler && !x.check_kind).length,
-                      filler: t.filter(x => x.is_filler).length,
-                      check:  t.filter(x => x.check_kind).length }; };`;
+             return { trials: t.map(x => ({ char: x.char, gate_ms: x.gate_ms === null ? "full" : x.gate_ms,
+                                            progress_pct: x.progress_pct, family: x.family || "",
+                                            condition: x.condition || "", base_anim_ms: x.base_anim_ms || 0,
+                                            is_decoy: !!x.is_decoy, check_kind: x.check_kind || "" })),
+                      decoys: decoyChars(), frequent: frequentChars(),
+                      levels: (g === "aprime" ? progressLevels() : []) }; };`;
     vmMod.runInContext(src, ctx, { filename: "transfer.js" });
-    out[group] = ctx.__count(group);
+    const runs = [];
+    for (let n = 0; n < nPeople; n++) runs.push(ctx.__build(group, n));
+    const t0 = runs[0].trials;
+    out[group] = {
+      nPeople,
+      total: t0.length,
+      target: t0.filter(x => !x.is_decoy && !x.check_kind).length,
+      decoy: t0.filter(x => x.is_decoy).length,
+      check: t0.filter(x => x.check_kind).length,
+      runs,
+    };
   }
   return out;
 }
@@ -247,8 +275,9 @@ function countTrialsByRunningPage() {
     for (const g of ["acal", "aprime", "b"]) {
       const c = counts[g];
       ok(`${label[g]} は1人あたり ${c.total} 問`
-         + `（ターゲット${c.target}＋まぎれ字${c.filler}＋確認問題${c.check}）`);
+         + `（本命${c.target}＋decoy${c.decoy}＋確認問題${c.check}）`);
     }
+    checkDesignBalance(counts);
     // 「課題の進め方」画面がこの数を出すこと。推定式に戻していないかを見る。
     const jsHasFormula = /問題数：約\$\{/.test(jsText);
     if (jsHasFormula) {
@@ -268,6 +297,113 @@ function countTrialsByRunningPage() {
     ok(`掲載文に書く問題数: 較正フェーズ 約${span(["acal", "aprime"])}`
        + "（集団によって違うので幅で書く） ／ "
        + `検証フェーズ ${span(["b"])}（群Bだけなので幅は無い）`);
+  }
+}
+
+// ---- 6. 出題設計の検算（2026-08-24 の作り直しで追加） ----------------------
+// 機械で確かめること:
+//   (a) よく出る20字（本命8＋decoy12）の出現回数がそろっているか
+//   (b) 1問目が確認問題A（全部提示）になっているか・その字が人によって変わるか
+//   (c) 同じ字が近くで繰り返されていないか（design.min_same_char_gap）
+//   (d) 本命のセル（字×測定点）が集団全体で均等に埋まるか
+//   (e) decoy が候補59字に均等に配られるか
+function checkDesignBalance(counts) {
+  const gap = Number(CFG.design.min_same_char_gap) || 0;
+  const label = { acal: "聴覚(acal)", aprime: "視覚較正(aprime)", b: "視覚検証(b)" };
+  for (const g of ["acal", "aprime", "b"]) {
+    const c = counts[g];
+    const runs = c.runs;
+
+    // (a) 頻度の均等性（確認問題を除いた本体）
+    let freqBad = 0, freqSeen = new Set();
+    runs.forEach(r => {
+      const n = {};
+      r.trials.filter(x => !x.check_kind).forEach(x => { n[x.char] = (n[x.char] || 0) + 1; });
+      const vals = Object.values(n);
+      vals.forEach(v => freqSeen.add(v));
+      if (Object.keys(n).length !== r.frequent.length) freqBad++;
+      if (vals.some(v => v !== vals[0])) freqBad++;
+    });
+    if (freqBad) bad(`${label[g]}: よく出る字の回数がそろっていない参加者が ${freqBad} 人`);
+    else ok(`${label[g]}: よく出る ${runs[0].frequent.length} 字は全員が各 ${[...freqSeen].join("/")} 回`
+            + "（確認問題を除く。**頻度から本命を見分けられない**）");
+
+    // (b) 確認問題の位置がばらけているか（1問目に固定していないこと）
+    const firstKinds = new Set(runs.map(r => r.trials[0].check_kind || "本題"));
+    const posAll = [];
+    runs.forEach(r => r.trials.forEach((x, i) => { if (x.check_kind === "full") posAll.push(i); }));
+    const nCheckFull = runs[0].trials.filter(x => x.check_kind === "full").length;
+    ok(`${label[g]}: 確認問題A は1人 ${nCheckFull} 問で、位置は ${Math.min(...posAll) + 1}〜`
+       + `${Math.max(...posAll) + 1}問目に散る（1問目の中身は ${[...firstKinds].join("/")} の`
+       + `${firstKinds.size} 通り＝固定していない）`);
+
+    // (c) 同じ字の間隔
+    let tooClose = 0;
+    runs.forEach(r => {
+      const last = {};
+      r.trials.forEach((x, i) => {
+        if (last[x.char] !== undefined && i - last[x.char] <= gap) tooClose++;
+        last[x.char] = i;
+      });
+    });
+    if (tooClose > runs.length * 0.02) {
+      bad(`${label[g]}: 同じ字が ${gap} 問以内に再登場した回数 ${tooClose}（多すぎる）`);
+    } else {
+      ok(`${label[g]}: 同じ字は ${gap} 問以上あけて出る（${runs.length}人ぶんで例外 ${tooClose} 回）`);
+    }
+
+    // (d) 本命のセルの埋まり方（設計どおりのセルの単位で数える）
+    const cellKey = {
+      acal:   (x) => x.char + "|" + x.gate_ms,
+      aprime: (x) => x.char + "|" + x.family + "|" + x.base_anim_ms + "|" + x.progress_pct,
+      b:      (x) => x.char + "|" + x.family + "|" + x.condition + "|" + x.gate_ms,
+    }[g];
+    const poolKey = {
+      acal:   (x) => x.gate_ms,                            // 8字を合計した1時点あたり
+      aprime: (x) => x.family + "|" + x.progress_pct,      // 8字・2速度を合計
+      b:      (x) => x.family + "|" + x.condition + "|" + x.gate_ms,  // 8字を合計（距離Eを測る単位）
+    }[g];
+    const cell = {}, pool = {};
+    runs.forEach(r => r.trials.filter(x => !x.is_decoy && !x.check_kind).forEach(x => {
+      const k = cellKey(x); cell[k] = (cell[k] || 0) + 1;
+      const q = poolKey(x); pool[q] = (pool[q] || 0) + 1;
+    }));
+    const cv = Object.values(cell), pv = Object.values(pool);
+    const avg = (a) => (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1);
+    ok(`${label[g]}: ${c.nPeople}人で本命のセルは ${cv.length} 通り・1セル `
+       + `${Math.min(...cv)}〜${Math.max(...cv)}回答（平均 ${avg(cv)}）`
+       + (g === "aprime" ? "（水準は人ごとにずれるので、名目の水準ではなく実際の値で数えている）" : ""));
+    if (g === "aprime") {
+      // 名目の水準（薄い側1〜3番目・20%・100%）で数え直す。計画書の「1セル○回答」はこの単位。
+      const nom = {};
+      runs.forEach(r => r.trials.filter(x => !x.is_decoy && !x.check_kind).forEach(x => {
+        const li = r.levels.indexOf(x.progress_pct);
+        const k = x.char + "|" + x.family + "|" + x.base_anim_ms + "|L" + li;
+        nom[k] = (nom[k] || 0) + 1;
+      }));
+      const nv = Object.values(nom);
+      ok(`${label[g]}: 名目の水準で数えると ${nv.length} セル・1セル ${Math.min(...nv)}〜${Math.max(...nv)}回答`
+         + `（平均 ${avg(nv)}）`);
+    }
+    ok(`${label[g]}: まとめた単位（${g === "acal" ? "1時点あたり・8字合計"
+        : g === "aprime" ? "1方式×1水準あたり・8字と2速度を合計" : "1条件×1時点あたり・8字合計"}）は `
+       + `${pv.length} 通り・${Math.min(...pv)}〜${Math.max(...pv)}回答（平均 ${avg(pv)}）`);
+
+    // (e) decoy の配られ方
+    const use = {};
+    runs.forEach(r => r.decoys.forEach(ch => { use[ch] = (use[ch] || 0) + 1; }));
+    const uv = Object.values(use);
+    const nUsed = Object.keys(use).length;
+    if (nUsed !== DECOY_POOL.length) {
+      bad(`${label[g]}: decoy に使われた字が ${nUsed} 字（候補 ${DECOY_POOL.length} 字を使い切っていない）`);
+    } else {
+      ok(`${label[g]}: decoy は候補 ${nUsed} 字すべてに配られ、1字あたり `
+         + `${Math.min(...uv)}〜${Math.max(...uv)}人（${c.nPeople}人ぶん）`);
+    }
+    // 本命字が decoy に混ざっていないこと
+    if (runs.some(r => r.decoys.some(ch => TARGETS.indexOf(ch) >= 0))) {
+      bad(`${label[g]}: decoy に本命字が混ざっている`);
+    }
   }
 }
 
