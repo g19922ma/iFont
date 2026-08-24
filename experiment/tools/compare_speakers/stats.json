@@ -1,0 +1,237 @@
+{
+ "labels": {
+  "amitaro": "あみたろ（現行）",
+  "resynth": "あみたろ（作り直し）",
+  "tsukuyomi": "つくよみちゃん（COEIROINK）",
+  "tsumugi": "春日部つむぎ（VOICEVOX）",
+  "metan": "四国めたん（VOICEVOX）",
+  "hau": "雨晴はう（VOICEVOX）",
+  "takehiro": "玄野武宏（男声）（VOICEVOX）",
+  "natural": "人の録音（自然音声）"
+ },
+ "stats": {
+  "amitaro": {
+   "ら": {
+    "cons_ms": 9,
+    "cons_db": -21.2,
+    "mora_ms": 127.0
+   },
+   "り": {
+    "cons_ms": 16,
+    "cons_db": -20.4,
+    "mora_ms": 104.5
+   },
+   "る": {
+    "cons_ms": 35,
+    "cons_db": -21.3,
+    "mora_ms": 124.5
+   },
+   "れ": {
+    "cons_ms": 6,
+    "cons_db": -24.4,
+    "mora_ms": 109.5
+   },
+   "ろ": {
+    "cons_ms": 6,
+    "cons_db": -21.7,
+    "mora_ms": 119.5
+   }
+  },
+  "resynth": {
+   "ら": {
+    "cons_ms": 9,
+    "cons_db": -21.2,
+    "mora_ms": 127.0
+   },
+   "り": {
+    "cons_ms": 16,
+    "cons_db": -20.4,
+    "mora_ms": 104.5
+   },
+   "る": {
+    "cons_ms": 35,
+    "cons_db": -21.3,
+    "mora_ms": 124.5
+   },
+   "れ": {
+    "cons_ms": 6,
+    "cons_db": -24.4,
+    "mora_ms": 109.5
+   },
+   "ろ": {
+    "cons_ms": 6,
+    "cons_db": -21.7,
+    "mora_ms": 119.5
+   }
+  },
+  "tsukuyomi": {
+   "ら": {
+    "cons_ms": 18,
+    "cons_db": -22.5,
+    "mora_ms": 110.0
+   },
+   "り": {
+    "cons_ms": 12,
+    "cons_db": -20.6,
+    "mora_ms": 77.1
+   },
+   "る": {
+    "cons_ms": 26,
+    "cons_db": -20.5,
+    "mora_ms": 77.1
+   },
+   "れ": {
+    "cons_ms": 20,
+    "cons_db": -21.1,
+    "mora_ms": 94.6
+   },
+   "ろ": {
+    "cons_ms": 15,
+    "cons_db": -23.6,
+    "mora_ms": 110.0
+   }
+  },
+  "tsumugi": {
+   "ら": {
+    "cons_ms": 10,
+    "cons_db": -21.6,
+    "mora_ms": 95.0
+   },
+   "り": {
+    "cons_ms": 26,
+    "cons_db": -21.7,
+    "mora_ms": 75.0
+   },
+   "る": {
+    "cons_ms": 16,
+    "cons_db": -21.2,
+    "mora_ms": 75.0
+   },
+   "れ": {
+    "cons_ms": 11,
+    "cons_db": -22.2,
+    "mora_ms": 87.5
+   },
+   "ろ": {
+    "cons_ms": 19,
+    "cons_db": -20.5,
+    "mora_ms": 87.5
+   }
+  },
+  "metan": {
+   "ら": {
+    "cons_ms": 2,
+    "cons_db": -45.4,
+    "mora_ms": 75.0
+   },
+   "り": {
+    "cons_ms": 7,
+    "cons_db": -22.9,
+    "mora_ms": 75.0
+   },
+   "る": {
+    "cons_ms": 2,
+    "cons_db": -23.2,
+    "mora_ms": 75.0
+   },
+   "れ": {
+    "cons_ms": 7,
+    "cons_db": -20.6,
+    "mora_ms": 75.0
+   },
+   "ろ": {
+    "cons_ms": 3,
+    "cons_db": -26.1,
+    "mora_ms": 75.0
+   }
+  },
+  "hau": {
+   "ら": {
+    "cons_ms": 11,
+    "cons_db": -23.0,
+    "mora_ms": 97.5
+   },
+   "り": {
+    "cons_ms": 10,
+    "cons_db": -24.0,
+    "mora_ms": 75.0
+   },
+   "る": {
+    "cons_ms": 8,
+    "cons_db": -23.1,
+    "mora_ms": 75.0
+   },
+   "れ": {
+    "cons_ms": 5,
+    "cons_db": -23.0,
+    "mora_ms": 92.5
+   },
+   "ろ": {
+    "cons_ms": 11,
+    "cons_db": -22.7,
+    "mora_ms": 107.5
+   }
+  },
+  "takehiro": {
+   "ら": {
+    "cons_ms": 13,
+    "cons_db": -20.6,
+    "mora_ms": 92.5
+   },
+   "り": {
+    "cons_ms": 18,
+    "cons_db": -27.9,
+    "mora_ms": 100.0
+   },
+   "る": {
+    "cons_ms": 7,
+    "cons_db": -28.9,
+    "mora_ms": 80.0
+   },
+   "れ": {
+    "cons_ms": 5,
+    "cons_db": -25.9,
+    "mora_ms": 102.5
+   },
+   "ろ": {
+    "cons_ms": 10,
+    "cons_db": -20.7,
+    "mora_ms": 95.0
+   }
+  },
+  "natural": {
+   "ら": {
+    "cons_ms": 10,
+    "cons_db": -21.5,
+    "mora_ms": 127.0
+   },
+   "り": {
+    "cons_ms": 9,
+    "cons_db": -22.6,
+    "mora_ms": 104.5
+   },
+   "る": {
+    "cons_ms": 11,
+    "cons_db": -25.2,
+    "mora_ms": 124.5
+   },
+   "れ": {
+    "cons_ms": 14,
+    "cons_db": -22.6,
+    "mora_ms": 109.5
+   },
+   "ろ": {
+    "cons_ms": 11,
+    "cons_db": -20.8,
+    "mora_ms": 119.5
+   }
+  }
+ },
+ "byte_same": {
+  "ら": true,
+  "り": true,
+  "る": true,
+  "れ": true,
+  "ろ": true
+ }
+}

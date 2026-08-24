@@ -1,0 +1,94 @@
+<!doctype html><meta charset="utf-8">
+<title>ら行の弾き音・話者ちがいの聞き比べ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;margin:16px;background:#faf9f6;
+     color:#1b2030;max-width:1120px}
+h1{font-size:19px;margin:0 0 8px}
+p.note{line-height:1.85;font-size:14px;max-width:900px}
+table{border-collapse:collapse;margin-top:12px;width:100%}
+th,td{border:1px solid #dde1ea;padding:7px;background:#fff;text-align:center;vertical-align:top}
+thead th{background:#eef1f6;font-size:20px}
+tbody th{text-align:left;font-size:13px;width:186px;background:#f7f8fb;line-height:1.5}
+tr.cur th{background:#eef6f8}
+tr.cur td{background:#fbfeff}
+button.p{width:100%;font-size:12px;padding:5px 2px;border-radius:5px;cursor:pointer;
+     border:1px solid #b9c0cf;font-weight:700;margin-bottom:3px}
+button.full{background:#f4f1fb;border-color:#6b5bb5;color:#4a3f80}
+button.cut{background:#eef6f8;border-color:#2E7D8F;color:#1f5f6d}
+button.playing{background:#1b2030!important;color:#fff!important;border-color:#1b2030!important}
+.ms{font-size:10px;color:#7a8090;line-height:1.35;margin-top:2px}
+.nt{font-size:10.5px;color:#8a6413;font-weight:400;margin-top:4px;line-height:1.5}
+#bar{position:sticky;top:0;background:#fff9db;border:1px solid #e0d090;border-radius:8px;
+     padding:9px 13px;margin:10px 0;z-index:5}
+#bar button{font-size:14px;padding:5px 12px;border-radius:6px;border:1px solid #99a;
+     background:#fff;cursor:pointer;margin-right:4px}
+#now{margin-left:10px;font-weight:700;font-size:15px}
+.box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:11px 14px;
+     margin:12px 0;font-size:13.5px;line-height:1.85}
+</style>
+<h1>ら行の弾き音・話者ちがいの聞き比べ</h1>
+<p class="note">
+「りさ」が「いさ」に聞こえる件で、<b>話者を変えれば直るのか</b>を確かめるページです。
+上の紫のボタンが<b>切り出す前の「らさ」など全体</b>、下の青が<b>切り出した第1モーラ</b>。
+「子音 ○ms」は、音が始まってから母音の大きさになるまでの時間（弾き音はここに出ます）。
+</p>
+<div class="box">
+<b>先に分かっていること（機械で確認済み）</b><br>
+① <b>音素列は正しい。</b>「りさ」の音素は <code>^ r i ] s a $</code> で /r/ は入っています。<br>
+② <b>作り直しても音は変わりません。</b>同じ設定で合成し直すと、ら行5字とも
+<b>バイト単位で現行と同一</b>でした（この表の2行目で耳でも確かめられます）。<br>
+③ <b>弾き音が短いのはあみたろ固有ではありません。</b>他の話者でも 1〜26ms です。
+しかも<b>人の録音の「り」は9msで、あみたろの16msより短い</b>——つまり
+「子音部の長さ」だけでは説明がつきません。<br>
+→ ですので<b>「人の録音」の行が基準</b>です。これがちゃんと「り」に聞こえて、
+合成音が聞こえないなら、長さ以外の何か（弾き音の鋭さ・母音への渡り方）が違うことになります。
+</div>
+<div id="bar">
+  <button id="allFull">▶ 各行の「らさ」を続けて</button>
+  <button id="allCut">▶ 各行の切り出しを続けて</button>
+  <button id="colRi">▶ 「り」だけ全話者</button>
+  <button id="stop">■ 停止</button><span id="now"></span>
+</div>
+<table>
+<thead><tr><th style="font-size:13px">話者・音源</th><th>ら</th><th>り</th><th>る</th><th>れ</th><th>ろ</th></tr></thead>
+<tbody>
+<tr class="cur"><th>あみたろ（現行）</th><td><button class="p full" data-l="あみたろ（現行）／らさ 全体" data-f="ら_amitaro_full.wav">▶ らさ</button><button class="p cut" data-l="あみたろ（現行）／ら 切り出し" data-f="ら_amitaro_cut.wav">▶ ら</button><div class="ms">子音 9ms<br>-21.2dB</div></td><td><button class="p full" data-l="あみたろ（現行）／りさ 全体" data-f="り_amitaro_full.wav">▶ りさ</button><button class="p cut" data-l="あみたろ（現行）／り 切り出し" data-f="り_amitaro_cut.wav">▶ り</button><div class="ms">子音 16ms<br>-20.4dB</div></td><td><button class="p full" data-l="あみたろ（現行）／るさ 全体" data-f="る_amitaro_full.wav">▶ るさ</button><button class="p cut" data-l="あみたろ（現行）／る 切り出し" data-f="る_amitaro_cut.wav">▶ る</button><div class="ms">子音 35ms<br>-21.3dB</div></td><td><button class="p full" data-l="あみたろ（現行）／れさ 全体" data-f="れ_amitaro_full.wav">▶ れさ</button><button class="p cut" data-l="あみたろ（現行）／れ 切り出し" data-f="れ_amitaro_cut.wav">▶ れ</button><div class="ms">子音 6ms<br>-24.4dB</div></td><td><button class="p full" data-l="あみたろ（現行）／ろさ 全体" data-f="ろ_amitaro_full.wav">▶ ろさ</button><button class="p cut" data-l="あみたろ（現行）／ろ 切り出し" data-f="ろ_amitaro_cut.wav">▶ ろ</button><div class="ms">子音 6ms<br>-21.7dB</div></td></tr><tr><th>あみたろ（作り直し）<div class="nt">ら行5字のうち **5字がバイト単位で現行と同一**。合成は決定的なので、作り直しても音は変わりません。</div></th><td><button class="p full" data-l="あみたろ（作り直し）／らさ 全体" data-f="ら_resynth_full.wav">▶ らさ</button><button class="p cut" data-l="あみたろ（作り直し）／ら 切り出し" data-f="ら_resynth_cut.wav">▶ ら</button><div class="ms">子音 9ms<br>-21.2dB</div></td><td><button class="p full" data-l="あみたろ（作り直し）／りさ 全体" data-f="り_resynth_full.wav">▶ りさ</button><button class="p cut" data-l="あみたろ（作り直し）／り 切り出し" data-f="り_resynth_cut.wav">▶ り</button><div class="ms">子音 16ms<br>-20.4dB</div></td><td><button class="p full" data-l="あみたろ（作り直し）／るさ 全体" data-f="る_resynth_full.wav">▶ るさ</button><button class="p cut" data-l="あみたろ（作り直し）／る 切り出し" data-f="る_resynth_cut.wav">▶ る</button><div class="ms">子音 35ms<br>-21.3dB</div></td><td><button class="p full" data-l="あみたろ（作り直し）／れさ 全体" data-f="れ_resynth_full.wav">▶ れさ</button><button class="p cut" data-l="あみたろ（作り直し）／れ 切り出し" data-f="れ_resynth_cut.wav">▶ れ</button><div class="ms">子音 6ms<br>-24.4dB</div></td><td><button class="p full" data-l="あみたろ（作り直し）／ろさ 全体" data-f="ろ_resynth_full.wav">▶ ろさ</button><button class="p cut" data-l="あみたろ（作り直し）／ろ 切り出し" data-f="ろ_resynth_cut.wav">▶ ろ</button><div class="ms">子音 6ms<br>-21.7dB</div></td></tr><tr><th>人の録音（自然音声）<div class="nt">1モーラだけの読み上げなので「らさ」ではありません。弾き音の基準として。</div></th><td><button class="p full" data-l="人の録音（自然音声）／らさ 全体" data-f="ら_natural_full.wav">▶ らさ</button><button class="p cut" data-l="人の録音（自然音声）／ら 切り出し" data-f="ら_natural_cut.wav">▶ ら</button><div class="ms">子音 10ms<br>-21.5dB</div></td><td><button class="p full" data-l="人の録音（自然音声）／りさ 全体" data-f="り_natural_full.wav">▶ りさ</button><button class="p cut" data-l="人の録音（自然音声）／り 切り出し" data-f="り_natural_cut.wav">▶ り</button><div class="ms">子音 9ms<br>-22.6dB</div></td><td><button class="p full" data-l="人の録音（自然音声）／るさ 全体" data-f="る_natural_full.wav">▶ るさ</button><button class="p cut" data-l="人の録音（自然音声）／る 切り出し" data-f="る_natural_cut.wav">▶ る</button><div class="ms">子音 11ms<br>-25.2dB</div></td><td><button class="p full" data-l="人の録音（自然音声）／れさ 全体" data-f="れ_natural_full.wav">▶ れさ</button><button class="p cut" data-l="人の録音（自然音声）／れ 切り出し" data-f="れ_natural_cut.wav">▶ れ</button><div class="ms">子音 14ms<br>-22.6dB</div></td><td><button class="p full" data-l="人の録音（自然音声）／ろさ 全体" data-f="ろ_natural_full.wav">▶ ろさ</button><button class="p cut" data-l="人の録音（自然音声）／ろ 切り出し" data-f="ろ_natural_cut.wav">▶ ろ</button><div class="ms">子音 11ms<br>-20.8dB</div></td></tr><tr><th>つくよみちゃん（COEIROINK）</th><td><button class="p full" data-l="つくよみちゃん（COEIROINK）／らさ 全体" data-f="ら_tsukuyomi_full.wav">▶ らさ</button><button class="p cut" data-l="つくよみちゃん（COEIROINK）／ら 切り出し" data-f="ら_tsukuyomi_cut.wav">▶ ら</button><div class="ms">子音 18ms<br>-22.5dB</div></td><td><button class="p full" data-l="つくよみちゃん（COEIROINK）／りさ 全体" data-f="り_tsukuyomi_full.wav">▶ りさ</button><button class="p cut" data-l="つくよみちゃん（COEIROINK）／り 切り出し" data-f="り_tsukuyomi_cut.wav">▶ り</button><div class="ms">子音 12ms<br>-20.6dB</div></td><td><button class="p full" data-l="つくよみちゃん（COEIROINK）／るさ 全体" data-f="る_tsukuyomi_full.wav">▶ るさ</button><button class="p cut" data-l="つくよみちゃん（COEIROINK）／る 切り出し" data-f="る_tsukuyomi_cut.wav">▶ る</button><div class="ms">子音 26ms<br>-20.5dB</div></td><td><button class="p full" data-l="つくよみちゃん（COEIROINK）／れさ 全体" data-f="れ_tsukuyomi_full.wav">▶ れさ</button><button class="p cut" data-l="つくよみちゃん（COEIROINK）／れ 切り出し" data-f="れ_tsukuyomi_cut.wav">▶ れ</button><div class="ms">子音 20ms<br>-21.1dB</div></td><td><button class="p full" data-l="つくよみちゃん（COEIROINK）／ろさ 全体" data-f="ろ_tsukuyomi_full.wav">▶ ろさ</button><button class="p cut" data-l="つくよみちゃん（COEIROINK）／ろ 切り出し" data-f="ろ_tsukuyomi_cut.wav">▶ ろ</button><div class="ms">子音 15ms<br>-23.6dB</div></td></tr><tr><th>春日部つむぎ（VOICEVOX）</th><td><button class="p full" data-l="春日部つむぎ（VOICEVOX）／らさ 全体" data-f="ら_tsumugi_full.wav">▶ らさ</button><button class="p cut" data-l="春日部つむぎ（VOICEVOX）／ら 切り出し" data-f="ら_tsumugi_cut.wav">▶ ら</button><div class="ms">子音 10ms<br>-21.6dB</div></td><td><button class="p full" data-l="春日部つむぎ（VOICEVOX）／りさ 全体" data-f="り_tsumugi_full.wav">▶ りさ</button><button class="p cut" data-l="春日部つむぎ（VOICEVOX）／り 切り出し" data-f="り_tsumugi_cut.wav">▶ り</button><div class="ms">子音 26ms<br>-21.7dB</div></td><td><button class="p full" data-l="春日部つむぎ（VOICEVOX）／るさ 全体" data-f="る_tsumugi_full.wav">▶ るさ</button><button class="p cut" data-l="春日部つむぎ（VOICEVOX）／る 切り出し" data-f="る_tsumugi_cut.wav">▶ る</button><div class="ms">子音 16ms<br>-21.2dB</div></td><td><button class="p full" data-l="春日部つむぎ（VOICEVOX）／れさ 全体" data-f="れ_tsumugi_full.wav">▶ れさ</button><button class="p cut" data-l="春日部つむぎ（VOICEVOX）／れ 切り出し" data-f="れ_tsumugi_cut.wav">▶ れ</button><div class="ms">子音 11ms<br>-22.2dB</div></td><td><button class="p full" data-l="春日部つむぎ（VOICEVOX）／ろさ 全体" data-f="ろ_tsumugi_full.wav">▶ ろさ</button><button class="p cut" data-l="春日部つむぎ（VOICEVOX）／ろ 切り出し" data-f="ろ_tsumugi_cut.wav">▶ ろ</button><div class="ms">子音 19ms<br>-20.5dB</div></td></tr><tr><th>四国めたん（VOICEVOX）</th><td><button class="p full" data-l="四国めたん（VOICEVOX）／らさ 全体" data-f="ら_metan_full.wav">▶ らさ</button><button class="p cut" data-l="四国めたん（VOICEVOX）／ら 切り出し" data-f="ら_metan_cut.wav">▶ ら</button><div class="ms">子音 2ms<br>-45.4dB</div></td><td><button class="p full" data-l="四国めたん（VOICEVOX）／りさ 全体" data-f="り_metan_full.wav">▶ りさ</button><button class="p cut" data-l="四国めたん（VOICEVOX）／り 切り出し" data-f="り_metan_cut.wav">▶ り</button><div class="ms">子音 7ms<br>-22.9dB</div></td><td><button class="p full" data-l="四国めたん（VOICEVOX）／るさ 全体" data-f="る_metan_full.wav">▶ るさ</button><button class="p cut" data-l="四国めたん（VOICEVOX）／る 切り出し" data-f="る_metan_cut.wav">▶ る</button><div class="ms">子音 2ms<br>-23.2dB</div></td><td><button class="p full" data-l="四国めたん（VOICEVOX）／れさ 全体" data-f="れ_metan_full.wav">▶ れさ</button><button class="p cut" data-l="四国めたん（VOICEVOX）／れ 切り出し" data-f="れ_metan_cut.wav">▶ れ</button><div class="ms">子音 7ms<br>-20.6dB</div></td><td><button class="p full" data-l="四国めたん（VOICEVOX）／ろさ 全体" data-f="ろ_metan_full.wav">▶ ろさ</button><button class="p cut" data-l="四国めたん（VOICEVOX）／ろ 切り出し" data-f="ろ_metan_cut.wav">▶ ろ</button><div class="ms">子音 3ms<br>-26.1dB</div></td></tr><tr><th>雨晴はう（VOICEVOX）</th><td><button class="p full" data-l="雨晴はう（VOICEVOX）／らさ 全体" data-f="ら_hau_full.wav">▶ らさ</button><button class="p cut" data-l="雨晴はう（VOICEVOX）／ら 切り出し" data-f="ら_hau_cut.wav">▶ ら</button><div class="ms">子音 11ms<br>-23.0dB</div></td><td><button class="p full" data-l="雨晴はう（VOICEVOX）／りさ 全体" data-f="り_hau_full.wav">▶ りさ</button><button class="p cut" data-l="雨晴はう（VOICEVOX）／り 切り出し" data-f="り_hau_cut.wav">▶ り</button><div class="ms">子音 10ms<br>-24.0dB</div></td><td><button class="p full" data-l="雨晴はう（VOICEVOX）／るさ 全体" data-f="る_hau_full.wav">▶ るさ</button><button class="p cut" data-l="雨晴はう（VOICEVOX）／る 切り出し" data-f="る_hau_cut.wav">▶ る</button><div class="ms">子音 8ms<br>-23.1dB</div></td><td><button class="p full" data-l="雨晴はう（VOICEVOX）／れさ 全体" data-f="れ_hau_full.wav">▶ れさ</button><button class="p cut" data-l="雨晴はう（VOICEVOX）／れ 切り出し" data-f="れ_hau_cut.wav">▶ れ</button><div class="ms">子音 5ms<br>-23.0dB</div></td><td><button class="p full" data-l="雨晴はう（VOICEVOX）／ろさ 全体" data-f="ろ_hau_full.wav">▶ ろさ</button><button class="p cut" data-l="雨晴はう（VOICEVOX）／ろ 切り出し" data-f="ろ_hau_cut.wav">▶ ろ</button><div class="ms">子音 11ms<br>-22.7dB</div></td></tr><tr><th>玄野武宏（男声）（VOICEVOX）</th><td><button class="p full" data-l="玄野武宏（男声）（VOICEVOX）／らさ 全体" data-f="ら_takehiro_full.wav">▶ らさ</button><button class="p cut" data-l="玄野武宏（男声）（VOICEVOX）／ら 切り出し" data-f="ら_takehiro_cut.wav">▶ ら</button><div class="ms">子音 13ms<br>-20.6dB</div></td><td><button class="p full" data-l="玄野武宏（男声）（VOICEVOX）／りさ 全体" data-f="り_takehiro_full.wav">▶ りさ</button><button class="p cut" data-l="玄野武宏（男声）（VOICEVOX）／り 切り出し" data-f="り_takehiro_cut.wav">▶ り</button><div class="ms">子音 18ms<br>-27.9dB</div></td><td><button class="p full" data-l="玄野武宏（男声）（VOICEVOX）／るさ 全体" data-f="る_takehiro_full.wav">▶ るさ</button><button class="p cut" data-l="玄野武宏（男声）（VOICEVOX）／る 切り出し" data-f="る_takehiro_cut.wav">▶ る</button><div class="ms">子音 7ms<br>-28.9dB</div></td><td><button class="p full" data-l="玄野武宏（男声）（VOICEVOX）／れさ 全体" data-f="れ_takehiro_full.wav">▶ れさ</button><button class="p cut" data-l="玄野武宏（男声）（VOICEVOX）／れ 切り出し" data-f="れ_takehiro_cut.wav">▶ れ</button><div class="ms">子音 5ms<br>-25.9dB</div></td><td><button class="p full" data-l="玄野武宏（男声）（VOICEVOX）／ろさ 全体" data-f="ろ_takehiro_full.wav">▶ ろさ</button><button class="p cut" data-l="玄野武宏（男声）（VOICEVOX）／ろ 切り出し" data-f="ろ_takehiro_cut.wav">▶ ろ</button><div class="ms">子音 10ms<br>-20.7dB</div></td></tr>
+</tbody></table>
+<script>
+const DIR="compare_speakers/";
+const KANA=["ら", "り", "る", "れ", "ろ"];
+let cur=null, timer=null;
+function stop(){ if(cur){cur.pause();cur=null;} if(timer){clearTimeout(timer);timer=null;}
+  document.querySelectorAll("button.playing").forEach(b=>b.classList.remove("playing"));
+  document.getElementById("now").textContent=""; }
+function play(b){ if(cur){cur.pause();cur=null;}
+  document.querySelectorAll("button.playing").forEach(x=>x.classList.remove("playing"));
+  const a=new Audio(DIR+encodeURIComponent(b.dataset.f));
+  b.classList.add("playing"); a.onended=()=>b.classList.remove("playing");
+  cur=a; a.play(); return a; }
+document.querySelectorAll("button[data-f]").forEach(b=>b.onclick=()=>{
+  if(timer){clearTimeout(timer);timer=null;document.getElementById("now").textContent="";}
+  play(b); });
+document.getElementById("stop").onclick=stop;
+function runList(list){ stop(); let i=0;
+  (function next(){ if(i>=list.length){document.getElementById("now").textContent="おわり";return;}
+    const b=list[i++];
+    document.getElementById("now").textContent=b.dataset.l+"（"+i+"/"+list.length+"）";
+    const a=play(b);
+    a.onended=()=>{b.classList.remove("playing"); timer=setTimeout(next,540);};
+    a.onerror=()=>{timer=setTimeout(next,120);};
+  })();
+}
+document.getElementById("allFull").onclick=()=>runList([...document.querySelectorAll("button.full")]);
+document.getElementById("allCut").onclick=()=>runList([...document.querySelectorAll("button.cut")]);
+document.getElementById("colRi").onclick=()=>{
+  const idx=KANA.indexOf("り");
+  const out=[];
+  document.querySelectorAll("tbody tr").forEach(tr=>{
+    const td=tr.querySelectorAll("td")[idx];
+    if(td) td.querySelectorAll("button").forEach(b=>out.push(b));
+  });
+  runList(out); };
+</script>
