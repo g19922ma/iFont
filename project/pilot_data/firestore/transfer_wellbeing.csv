@@ -1,0 +1,4 @@
+ts,participant_id,worker_id,completion_code,record_kind,modality,phase,group,assign_index,assign_source,choice,wellbeing_json,n_trials,duration_s,send_failures,send_retries,ua,dpr,screen,touch,refresh_hz,version,config_version,is_test,audio_device,n_choices,q_set,response_char,resume_count,resume_gap_s,stimulus_id,target_char
+1787308516301,curltest-mt2tc8s9-wb,w,,,transfer_wellbeing,comfort,c,0,server,fade,"{""fade"":[5,4,6]}",,,,,,,,,,test,prov-2026-08-21,TRUE,,4,transfer,-,,,comfort|c,-
+1787359501854,curltest-mt3np27e-wb,w,,,transfer_wellbeing,comfort,c,0,server,fade,"{""fade"":[5,4,6]}",,,,,,,,,,test,prov-2026-08-21,TRUE,,4,transfer,-,,,comfort|c,-
+1787533554227,kurihara-pilot2,kurihara-pilot2,JQZXHZCDN627,session,transfer_session,calib,aprime,11,cache,,,134,571,0,0,"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",2,1512x982,FALSE,123,3.8,prov-2026-08-23,TRUE,,,,,0,0,,

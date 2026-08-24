@@ -45,7 +45,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.8";
+const VERSION = "3.9";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -1003,15 +1003,21 @@ function audioGates(ch) {
 // 生成(warp)に使う視覚の曲線は generation_level_ms の水準だけと事前に決めてあり、
 // もう一方の水準は RQ4 に答えるためだけに使う(計画書 3章 RQ4・6.1)。
 // 設定を切ると speedsFor は必ず1要素(既定の速さ)を返すので、挙動は元どおりになる。
-// 視覚較正で使う打ち切り水準%。下見のあいだだけ、設定で足した薄い水準を混ぜる
-// (transfer_config.js の visual.pilot_extra_levels)。切ってあれば本体の並びのまま。
+// 視覚較正(群A′)で使う打ち切り水準%。
+// **参加者ごとに、薄い側の水準をまとめて少しずらす**(transfer_config.js の
+// visual.progress_pct_shift)。ずらし量は参加者の連番から決まるので、
+// 同じ人が途中で閉じて再開しても同じ並びになる(乱数は使わない)。
+// 全員が同じ8水準だと測れる s も8個しかないが、3通りにずらすと集団全体では
+// 1.0〜9.5% を 0.5% 刻みで埋められる。設定を切れば設定の並びがそのまま出る。
 function progressLevels() {
-  const base = CFG.visual.progress_pct_levels.slice();
-  const ex = CFG.visual.pilot_extra_levels;
-  if (!(ex && ex.enabled && ex.progress_pct && ex.progress_pct.length)) return base;
-  const set = new Set(base);
-  ex.progress_pct.forEach(v => set.add(v));
-  return [...set].sort((a, b) => a - b);
+  const base = CFG.visual.progress_pct_levels.slice().sort((a, b) => a - b);
+  const sh = CFG.visual.progress_pct_shift;
+  if (!(sh && sh.enabled && sh.count > 1 && sh.step_pct > 0)) return base;
+  const k = ((Math.round(ASSIGN) % sh.count) + sh.count) % sh.count;   // 連番 → 0..count-1
+  const d = k * sh.step_pct;
+  const n = Math.max(0, Math.min(Number(sh.apply_to_lowest) || 0, base.length));
+  // 0.1% 単位に丸める(0.5 の足し算で 4.300000000000001 のような値が記録に残らないように)。
+  return base.map((v, i) => (i < n ? Math.round((v + d) * 10) / 10 : v));
 }
 
 function speedProbe() {
