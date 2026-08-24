@@ -389,6 +389,51 @@ function checkDesignBalance(counts) {
         : g === "aprime" ? "1方式×1水準あたり・8字と2速度を合計" : "1条件×1時点あたり・8字合計"}）は `
        + `${pv.length} 通り・${Math.min(...pv)}〜${Math.max(...pv)}回答（平均 ${avg(pv)}）`);
 
+    // (d2) **偽のターゲットの出方が本命と似ているか**（2026-08-24 追加）
+    // 「偽物だけ簡単」「偽物だけ特定の方式に偏る」ことが無いかを、分布の差で見る。
+    //   ・提示の強さ … その字の測定点の何番目か（0=いちばん情報が少ない）で数える。
+    //     字によって時点の実数値は違うので、**順位**でそろえて比べる
+    //   ・視覚は方式・速さ・水準の分布も比べる
+    {
+      const rankOf = (x, r) => {
+        if (g === "aprime") return r.levels.indexOf(x.progress_pct);
+        const list = (g === "acal")
+          ? audioGates(x.char).concat(["full"])
+          : gatesFor(CFG.visual.gates_ms, x.char);
+        return list.map(String).indexOf(String(x.gate_ms));
+      };
+      const dist = (pred, key) => {
+        const d = {}; let n = 0;
+        runs.forEach(r => r.trials.filter(x => !x.check_kind && pred(x)).forEach(x => {
+          const k = key(x, r); d[k] = (d[k] || 0) + 1; n++;
+        }));
+        Object.keys(d).forEach(k => { d[k] = d[k] / n; });
+        return d;
+      };
+      const gapPP = (a, b) => {
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        let worst = 0, at = "";
+        keys.forEach(k => { const v = Math.abs((a[k] || 0) - (b[k] || 0)) * 100;
+                            if (v > worst) { worst = v; at = k; } });
+        return { worst, at };
+      };
+      const cmp = (name, key) => {
+        const t = dist(x => !x.is_decoy, key);
+        const d = dist(x => x.is_decoy, key);
+        const { worst, at } = gapPP(t, d);
+        const msg = `${label[g]}: 本命と偽のターゲットの「${name}」の分布のずれは最大 `
+                  + `${worst.toFixed(1)} 割合ポイント（${at}）`;
+        if (worst > 5) bad(msg + " ← 5ポイントを超えている。偏りを直すこと");
+        else ok(msg);
+      };
+      cmp("提示の強さ（その字の測定点の何番目か）", (x, r) => "第" + (rankOf(x, r) + 1) + "点");
+      if (g !== "acal") {
+        cmp("方式", (x) => x.family);
+        if (g === "aprime") cmp("速さ", (x) => x.base_anim_ms + "ms");
+        else cmp("条件", (x) => x.condition);
+      }
+    }
+
     // (e) decoy の配られ方
     const use = {};
     runs.forEach(r => r.decoys.forEach(ch => { use[ch] = (use[ch] || 0) + 1; }));
