@@ -87,7 +87,7 @@ const COPIED = [
   "blurBegin", "blurDraw",
   "wipeInkThreshold", "wipeBBoxPrepare", "wipeBegin", "wipeDraw", "fadeAlpha", "fadeDraw",
   "warpSeries", "seriesAt",
-  "consentExtraHTML", "tidyConsentScreen", "mailLink", "isTestRun",
+  "tidyConsentScreen", "mailLink", "isTestRun",
 ];
 let same = 0;
 for (const name of COPIED) {

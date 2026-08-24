@@ -1,0 +1,418 @@
+{
+  "src": "experiment/tts_candidates_carrier2/cut_さ",
+  "out": "experiment/tts_candidates_carrier2/norm_さ",
+  "target_a_rms_dbfs": -15.41,
+  "iqr_k": 1.5,
+  "peak_cap": 0.85,
+  "outliers_left_as_is": [],
+  "items": {
+    "あ": {
+      "a_rms_dbfs_before": -13.1,
+      "gain_db": -2.31,
+      "outlier": false,
+      "peak_after": 0.5994
+    },
+    "い": {
+      "a_rms_dbfs_before": -20.97,
+      "gain_db": 2.34,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "う": {
+      "a_rms_dbfs_before": -17.32,
+      "gain_db": 1.91,
+      "outlier": false,
+      "peak_after": 0.8488
+    },
+    "え": {
+      "a_rms_dbfs_before": -14.37,
+      "gain_db": -1.04,
+      "outlier": false,
+      "peak_after": 0.6758
+    },
+    "お": {
+      "a_rms_dbfs_before": -11.8,
+      "gain_db": -3.61,
+      "outlier": false,
+      "peak_after": 0.442
+    },
+    "か": {
+      "a_rms_dbfs_before": -15.58,
+      "gain_db": 0.17,
+      "outlier": false,
+      "peak_after": 0.6788
+    },
+    "が": {
+      "a_rms_dbfs_before": -12.47,
+      "gain_db": -2.94,
+      "outlier": false,
+      "peak_after": 0.4985
+    },
+    "き": {
+      "a_rms_dbfs_before": -23.64,
+      "gain_db": 7.64,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "ぎ": {
+      "a_rms_dbfs_before": -21.32,
+      "gain_db": 5.91,
+      "outlier": false,
+      "peak_after": 0.8304
+    },
+    "く": {
+      "a_rms_dbfs_before": -20.63,
+      "gain_db": 5.22,
+      "outlier": false,
+      "peak_after": 0.8229
+    },
+    "ぐ": {
+      "a_rms_dbfs_before": -16.45,
+      "gain_db": 1.04,
+      "outlier": false,
+      "peak_after": 0.6516
+    },
+    "け": {
+      "a_rms_dbfs_before": -18.65,
+      "gain_db": 3.24,
+      "outlier": false,
+      "peak_after": 0.7576
+    },
+    "げ": {
+      "a_rms_dbfs_before": -16.23,
+      "gain_db": 0.82,
+      "outlier": false,
+      "peak_after": 0.6549
+    },
+    "こ": {
+      "a_rms_dbfs_before": -12.65,
+      "gain_db": -2.76,
+      "outlier": false,
+      "peak_after": 0.4742
+    },
+    "ご": {
+      "a_rms_dbfs_before": -12.27,
+      "gain_db": -3.14,
+      "outlier": false,
+      "peak_after": 0.4804
+    },
+    "さ": {
+      "a_rms_dbfs_before": -15.36,
+      "gain_db": -0.05,
+      "outlier": false,
+      "peak_after": 0.6827
+    },
+    "ざ": {
+      "a_rms_dbfs_before": -12.46,
+      "gain_db": -2.95,
+      "outlier": false,
+      "peak_after": 0.5335
+    },
+    "し": {
+      "a_rms_dbfs_before": -21.04,
+      "gain_db": 4.56,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "じ": {
+      "a_rms_dbfs_before": -20.77,
+      "gain_db": 4.87,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "す": {
+      "a_rms_dbfs_before": -26.03,
+      "gain_db": 10.24,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "ず": {
+      "a_rms_dbfs_before": -19.39,
+      "gain_db": 3.8,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "せ": {
+      "a_rms_dbfs_before": -17.08,
+      "gain_db": 1.68,
+      "outlier": false,
+      "peak_after": 0.7145
+    },
+    "ぜ": {
+      "a_rms_dbfs_before": -15.46,
+      "gain_db": 0.05,
+      "outlier": false,
+      "peak_after": 0.7304
+    },
+    "そ": {
+      "a_rms_dbfs_before": -16.2,
+      "gain_db": 0.79,
+      "outlier": false,
+      "peak_after": 0.629
+    },
+    "ぞ": {
+      "a_rms_dbfs_before": -14.52,
+      "gain_db": -0.89,
+      "outlier": false,
+      "peak_after": 0.5686
+    },
+    "た": {
+      "a_rms_dbfs_before": -11.78,
+      "gain_db": -3.63,
+      "outlier": false,
+      "peak_after": 0.4506
+    },
+    "だ": {
+      "a_rms_dbfs_before": -12.35,
+      "gain_db": -3.06,
+      "outlier": false,
+      "peak_after": 0.5399
+    },
+    "ち": {
+      "a_rms_dbfs_before": -21.32,
+      "gain_db": 5.47,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "つ": {
+      "a_rms_dbfs_before": -19.57,
+      "gain_db": 4.16,
+      "outlier": false,
+      "peak_after": 0.8148
+    },
+    "て": {
+      "a_rms_dbfs_before": -14.7,
+      "gain_db": -0.71,
+      "outlier": false,
+      "peak_after": 0.6121
+    },
+    "で": {
+      "a_rms_dbfs_before": -13.58,
+      "gain_db": -1.83,
+      "outlier": false,
+      "peak_after": 0.5969
+    },
+    "と": {
+      "a_rms_dbfs_before": -13.74,
+      "gain_db": -1.67,
+      "outlier": false,
+      "peak_after": 0.454
+    },
+    "ど": {
+      "a_rms_dbfs_before": -12.67,
+      "gain_db": -2.74,
+      "outlier": false,
+      "peak_after": 0.475
+    },
+    "な": {
+      "a_rms_dbfs_before": -13.64,
+      "gain_db": -1.77,
+      "outlier": false,
+      "peak_after": 0.5536
+    },
+    "に": {
+      "a_rms_dbfs_before": -19.83,
+      "gain_db": 4.42,
+      "outlier": false,
+      "peak_after": 0.7696
+    },
+    "ぬ": {
+      "a_rms_dbfs_before": -16.51,
+      "gain_db": 1.1,
+      "outlier": false,
+      "peak_after": 0.658
+    },
+    "ね": {
+      "a_rms_dbfs_before": -14.55,
+      "gain_db": -0.86,
+      "outlier": false,
+      "peak_after": 0.6331
+    },
+    "の": {
+      "a_rms_dbfs_before": -14.5,
+      "gain_db": -0.91,
+      "outlier": false,
+      "peak_after": 0.5753
+    },
+    "は": {
+      "a_rms_dbfs_before": -16.02,
+      "gain_db": 0.61,
+      "outlier": false,
+      "peak_after": 0.6529
+    },
+    "ば": {
+      "a_rms_dbfs_before": -12.73,
+      "gain_db": -2.68,
+      "outlier": false,
+      "peak_after": 0.5349
+    },
+    "ぱ": {
+      "a_rms_dbfs_before": -11.23,
+      "gain_db": -4.18,
+      "outlier": false,
+      "peak_after": 0.4212
+    },
+    "ひ": {
+      "a_rms_dbfs_before": -22.94,
+      "gain_db": 6.11,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "び": {
+      "a_rms_dbfs_before": -23.54,
+      "gain_db": 7.7,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "ぴ": {
+      "a_rms_dbfs_before": -21.94,
+      "gain_db": 6.53,
+      "outlier": false,
+      "peak_after": 0.7915
+    },
+    "ふ": {
+      "a_rms_dbfs_before": -20.12,
+      "gain_db": 4.71,
+      "outlier": false,
+      "peak_after": 0.8053
+    },
+    "ぶ": {
+      "a_rms_dbfs_before": -16.74,
+      "gain_db": 1.33,
+      "outlier": false,
+      "peak_after": 0.6437
+    },
+    "ぷ": {
+      "a_rms_dbfs_before": -16.59,
+      "gain_db": 1.18,
+      "outlier": false,
+      "peak_after": 0.557
+    },
+    "へ": {
+      "a_rms_dbfs_before": -18.22,
+      "gain_db": 2.81,
+      "outlier": false,
+      "peak_after": 0.7645
+    },
+    "べ": {
+      "a_rms_dbfs_before": -13.68,
+      "gain_db": -1.73,
+      "outlier": false,
+      "peak_after": 0.5754
+    },
+    "ぺ": {
+      "a_rms_dbfs_before": -15.05,
+      "gain_db": -0.36,
+      "outlier": false,
+      "peak_after": 0.5687
+    },
+    "ほ": {
+      "a_rms_dbfs_before": -13.35,
+      "gain_db": -2.06,
+      "outlier": false,
+      "peak_after": 0.5426
+    },
+    "ぼ": {
+      "a_rms_dbfs_before": -11.59,
+      "gain_db": -3.82,
+      "outlier": false,
+      "peak_after": 0.4408
+    },
+    "ぽ": {
+      "a_rms_dbfs_before": -12.84,
+      "gain_db": -2.57,
+      "outlier": false,
+      "peak_after": 0.4799
+    },
+    "ま": {
+      "a_rms_dbfs_before": -12.64,
+      "gain_db": -2.77,
+      "outlier": false,
+      "peak_after": 0.5314
+    },
+    "み": {
+      "a_rms_dbfs_before": -20.27,
+      "gain_db": 4.86,
+      "outlier": false,
+      "peak_after": 0.7338
+    },
+    "む": {
+      "a_rms_dbfs_before": -15.06,
+      "gain_db": -0.35,
+      "outlier": false,
+      "peak_after": 0.6393
+    },
+    "め": {
+      "a_rms_dbfs_before": -14.4,
+      "gain_db": -1.01,
+      "outlier": false,
+      "peak_after": 0.6436
+    },
+    "も": {
+      "a_rms_dbfs_before": -12.43,
+      "gain_db": -2.98,
+      "outlier": false,
+      "peak_after": 0.5434
+    },
+    "や": {
+      "a_rms_dbfs_before": -13.91,
+      "gain_db": -1.5,
+      "outlier": false,
+      "peak_after": 0.536
+    },
+    "ゆ": {
+      "a_rms_dbfs_before": -18.9,
+      "gain_db": 3.49,
+      "outlier": false,
+      "peak_after": 0.7495
+    },
+    "よ": {
+      "a_rms_dbfs_before": -14.56,
+      "gain_db": -0.85,
+      "outlier": false,
+      "peak_after": 0.5908
+    },
+    "ら": {
+      "a_rms_dbfs_before": -13.34,
+      "gain_db": -2.07,
+      "outlier": false,
+      "peak_after": 0.6135
+    },
+    "り": {
+      "a_rms_dbfs_before": -24.21,
+      "gain_db": 8.23,
+      "outlier": false,
+      "peak_after": 0.85
+    },
+    "る": {
+      "a_rms_dbfs_before": -16.94,
+      "gain_db": 1.53,
+      "outlier": false,
+      "peak_after": 0.71
+    },
+    "れ": {
+      "a_rms_dbfs_before": -14.07,
+      "gain_db": -1.34,
+      "outlier": false,
+      "peak_after": 0.5847
+    },
+    "ろ": {
+      "a_rms_dbfs_before": -15.7,
+      "gain_db": 0.29,
+      "outlier": false,
+      "peak_after": 0.6315
+    },
+    "わ": {
+      "a_rms_dbfs_before": -12.52,
+      "gain_db": -2.89,
+      "outlier": false,
+      "peak_after": 0.4923
+    },
+    "ん": {
+      "a_rms_dbfs_before": -17.61,
+      "gain_db": 2.2,
+      "outlier": false,
+      "peak_after": 0.7678
+    }
+  }
+}

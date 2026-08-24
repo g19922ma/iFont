@@ -1,0 +1,703 @@
+{
+ "src": "experiment/tts_candidates_carrier2/raw_さ",
+ "out": "experiment/tts_candidates_carrier2/cut_さ",
+ "params": {
+  "frame_ms": 15.0,
+  "hop_ms": 2.5,
+  "hi_band": [
+   4000,
+   10000
+  ],
+  "hi_ratio": 0.15,
+  "hold_ms": 20.0,
+  "min_mora_ms": 75.0,
+  "fade_out_ms": 5.0
+ },
+ "items": {
+  "あ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 219.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.006,
+   "fric_hi_ratio": 0.307,
+   "cut_dur_ms": 219.5
+  },
+  "い": {
+   "onset_ms": 120.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 197.1,
+   "mora_ms": 77.1,
+   "found": true,
+   "vowel_hi_ratio": 0.029,
+   "fric_hi_ratio": 0.44,
+   "cut_dur_ms": 197.1
+  },
+  "う": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 187.1,
+   "mora_ms": 77.1,
+   "found": true,
+   "vowel_hi_ratio": 0.009,
+   "fric_hi_ratio": 0.393,
+   "cut_dur_ms": 187.1
+  },
+  "え": {
+   "onset_ms": 120.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 219.5,
+   "mora_ms": 99.5,
+   "found": true,
+   "vowel_hi_ratio": 0.023,
+   "fric_hi_ratio": 0.401,
+   "cut_dur_ms": 219.5
+  },
+  "お": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 683.1,
+   "fric_start_ms": 197.1,
+   "mora_ms": 82.1,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.286,
+   "cut_dur_ms": 197.1
+  },
+  "か": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 209.5,
+   "mora_ms": 99.5,
+   "found": true,
+   "vowel_hi_ratio": 0.037,
+   "fric_hi_ratio": 0.287,
+   "cut_dur_ms": 209.5
+  },
+  "が": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 219.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.008,
+   "fric_hi_ratio": 0.234,
+   "cut_dur_ms": 219.5
+  },
+  "き": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 202.0,
+   "mora_ms": 87.0,
+   "found": true,
+   "vowel_hi_ratio": 0.027,
+   "fric_hi_ratio": 0.372,
+   "cut_dur_ms": 202.0
+  },
+  "ぎ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 97.0,
+   "found": true,
+   "vowel_hi_ratio": 0.037,
+   "fric_hi_ratio": 0.42,
+   "cut_dur_ms": 207.0
+  },
+  "く": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 683.1,
+   "fric_start_ms": 192.1,
+   "mora_ms": 77.1,
+   "found": true,
+   "vowel_hi_ratio": 0.009,
+   "fric_hi_ratio": 0.339,
+   "cut_dur_ms": 192.1
+  },
+  "ぐ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 202.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.01,
+   "fric_hi_ratio": 0.332,
+   "cut_dur_ms": 202.0
+  },
+  "け": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 204.5,
+   "mora_ms": 94.5,
+   "found": true,
+   "vowel_hi_ratio": 0.023,
+   "fric_hi_ratio": 0.391,
+   "cut_dur_ms": 204.5
+  },
+  "げ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 217.0,
+   "mora_ms": 102.0,
+   "found": true,
+   "vowel_hi_ratio": 0.02,
+   "fric_hi_ratio": 0.36,
+   "cut_dur_ms": 217.0
+  },
+  "こ": {
+   "onset_ms": 105.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 209.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.004,
+   "fric_hi_ratio": 0.245,
+   "cut_dur_ms": 209.5
+  },
+  "ご": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 219.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.002,
+   "fric_hi_ratio": 0.228,
+   "cut_dur_ms": 219.5
+  },
+  "さ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 264.4,
+   "mora_ms": 164.4,
+   "found": true,
+   "vowel_hi_ratio": 0.278,
+   "fric_hi_ratio": 0.307,
+   "cut_dur_ms": 264.4
+  },
+  "ざ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 741.2,
+   "fric_start_ms": 232.0,
+   "mora_ms": 122.0,
+   "found": true,
+   "vowel_hi_ratio": 0.02,
+   "fric_hi_ratio": 0.264,
+   "cut_dur_ms": 232.0
+  },
+  "し": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 177.1,
+   "mora_ms": 77.1,
+   "found": true,
+   "vowel_hi_ratio": 0.925,
+   "fric_hi_ratio": 0.428,
+   "cut_dur_ms": 177.1
+  },
+  "じ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 204.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.078,
+   "fric_hi_ratio": 0.436,
+   "cut_dur_ms": 204.5
+  },
+  "す": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 207.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.23,
+   "fric_hi_ratio": 0.382,
+   "cut_dur_ms": 207.0
+  },
+  "ず": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 214.5,
+   "mora_ms": 114.5,
+   "found": true,
+   "vowel_hi_ratio": 0.215,
+   "fric_hi_ratio": 0.392,
+   "cut_dur_ms": 214.5
+  },
+  "せ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 251.9,
+   "mora_ms": 151.9,
+   "found": true,
+   "vowel_hi_ratio": 0.237,
+   "fric_hi_ratio": 0.35,
+   "cut_dur_ms": 251.9
+  },
+  "ぜ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 217.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.015,
+   "fric_hi_ratio": 0.35,
+   "cut_dur_ms": 217.0
+  },
+  "そ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 264.4,
+   "mora_ms": 164.4,
+   "found": true,
+   "vowel_hi_ratio": 0.405,
+   "fric_hi_ratio": 0.239,
+   "cut_dur_ms": 264.4
+  },
+  "ぞ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 217.0,
+   "mora_ms": 117.0,
+   "found": true,
+   "vowel_hi_ratio": 0.079,
+   "fric_hi_ratio": 0.296,
+   "cut_dur_ms": 217.0
+  },
+  "た": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 209.5,
+   "mora_ms": 109.5,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.284,
+   "cut_dur_ms": 209.5
+  },
+  "だ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 219.5,
+   "mora_ms": 109.5,
+   "found": true,
+   "vowel_hi_ratio": 0.004,
+   "fric_hi_ratio": 0.284,
+   "cut_dur_ms": 219.5
+  },
+  "ち": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 214.5,
+   "mora_ms": 114.5,
+   "found": true,
+   "vowel_hi_ratio": 0.848,
+   "fric_hi_ratio": 0.399,
+   "cut_dur_ms": 214.5
+  },
+  "つ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 199.5,
+   "mora_ms": 99.5,
+   "found": true,
+   "vowel_hi_ratio": 0.193,
+   "fric_hi_ratio": 0.344,
+   "cut_dur_ms": 199.5
+  },
+  "て": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 197.1,
+   "mora_ms": 97.1,
+   "found": true,
+   "vowel_hi_ratio": 0.013,
+   "fric_hi_ratio": 0.374,
+   "cut_dur_ms": 197.1
+  },
+  "で": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 97.0,
+   "found": true,
+   "vowel_hi_ratio": 0.01,
+   "fric_hi_ratio": 0.371,
+   "cut_dur_ms": 207.0
+  },
+  "と": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 197.1,
+   "mora_ms": 97.1,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.281,
+   "cut_dur_ms": 197.1
+  },
+  "ど": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 207.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.002,
+   "fric_hi_ratio": 0.298,
+   "cut_dur_ms": 207.0
+  },
+  "な": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 251.9,
+   "mora_ms": 141.9,
+   "found": true,
+   "vowel_hi_ratio": 0.006,
+   "fric_hi_ratio": 0.278,
+   "cut_dur_ms": 251.9
+  },
+  "に": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 251.9,
+   "mora_ms": 141.9,
+   "found": true,
+   "vowel_hi_ratio": 0.006,
+   "fric_hi_ratio": 0.351,
+   "cut_dur_ms": 251.9
+  },
+  "ぬ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 239.5,
+   "mora_ms": 129.5,
+   "found": true,
+   "vowel_hi_ratio": 0.0,
+   "fric_hi_ratio": 0.32,
+   "cut_dur_ms": 239.5
+  },
+  "ね": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 254.4,
+   "mora_ms": 144.4,
+   "found": true,
+   "vowel_hi_ratio": 0.002,
+   "fric_hi_ratio": 0.37,
+   "cut_dur_ms": 254.4
+  },
+  "の": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 741.2,
+   "fric_start_ms": 242.0,
+   "mora_ms": 132.0,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.243,
+   "cut_dur_ms": 242.0
+  },
+  "は": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 209.5,
+   "mora_ms": 109.5,
+   "found": true,
+   "vowel_hi_ratio": 0.163,
+   "fric_hi_ratio": 0.252,
+   "cut_dur_ms": 209.5
+  },
+  "ば": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.006,
+   "fric_hi_ratio": 0.246,
+   "cut_dur_ms": 207.0
+  },
+  "ぱ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 197.1,
+   "mora_ms": 97.1,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.289,
+   "cut_dur_ms": 197.1
+  },
+  "ひ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 204.5,
+   "mora_ms": 104.5,
+   "found": true,
+   "vowel_hi_ratio": 0.657,
+   "fric_hi_ratio": 0.341,
+   "cut_dur_ms": 204.5
+  },
+  "び": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 822.4,
+   "fric_start_ms": 321.8,
+   "mora_ms": 102.3,
+   "found": true,
+   "vowel_hi_ratio": 0.013,
+   "fric_hi_ratio": 0.409,
+   "lead_vowel": "あ",
+   "target_start_ms": 219.5,
+   "onset_rule": "前の母音との谷（閉鎖の始まり）",
+   "head_cut_ms": 219.5,
+   "lead_pad_ms": 60.0,
+   "cut_dur_ms": 162.3
+  },
+  "ぴ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 194.6,
+   "mora_ms": 79.6,
+   "found": true,
+   "vowel_hi_ratio": 0.022,
+   "fric_hi_ratio": 0.404,
+   "cut_dur_ms": 194.6
+  },
+  "ふ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 194.6,
+   "mora_ms": 94.6,
+   "found": true,
+   "vowel_hi_ratio": 0.026,
+   "fric_hi_ratio": 0.34,
+   "cut_dur_ms": 194.6
+  },
+  "ぶ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 192.1,
+   "mora_ms": 77.1,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.325,
+   "cut_dur_ms": 192.1
+  },
+  "ぷ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 683.1,
+   "fric_start_ms": 182.1,
+   "mora_ms": 82.1,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.341,
+   "cut_dur_ms": 182.1
+  },
+  "へ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 207.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.027,
+   "fric_hi_ratio": 0.359,
+   "cut_dur_ms": 207.0
+  },
+  "べ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.323,
+   "cut_dur_ms": 207.0
+  },
+  "ぺ": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 207.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.326,
+   "cut_dur_ms": 207.0
+  },
+  "ほ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.036,
+   "fric_hi_ratio": 0.197,
+   "cut_dur_ms": 207.0
+  },
+  "ぼ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 204.5,
+   "mora_ms": 94.5,
+   "found": true,
+   "vowel_hi_ratio": 0.001,
+   "fric_hi_ratio": 0.228,
+   "cut_dur_ms": 204.5
+  },
+  "ぽ": {
+   "onset_ms": 100.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 207.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.001,
+   "fric_hi_ratio": 0.26,
+   "cut_dur_ms": 207.0
+  },
+  "ま": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 254.4,
+   "mora_ms": 139.4,
+   "found": true,
+   "vowel_hi_ratio": 0.005,
+   "fric_hi_ratio": 0.263,
+   "cut_dur_ms": 254.4
+  },
+  "み": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 741.2,
+   "fric_start_ms": 239.5,
+   "mora_ms": 129.5,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.379,
+   "cut_dur_ms": 239.5
+  },
+  "む": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 239.5,
+   "mora_ms": 129.5,
+   "found": true,
+   "vowel_hi_ratio": 0.001,
+   "fric_hi_ratio": 0.329,
+   "cut_dur_ms": 239.5
+  },
+  "め": {
+   "onset_ms": 105.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 242.0,
+   "mora_ms": 137.0,
+   "found": true,
+   "vowel_hi_ratio": 0.007,
+   "fric_hi_ratio": 0.351,
+   "cut_dur_ms": 242.0
+  },
+  "も": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 254.4,
+   "mora_ms": 139.4,
+   "found": true,
+   "vowel_hi_ratio": 0.001,
+   "fric_hi_ratio": 0.251,
+   "cut_dur_ms": 254.4
+  },
+  "や": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 254.4,
+   "mora_ms": 144.4,
+   "found": true,
+   "vowel_hi_ratio": 0.011,
+   "fric_hi_ratio": 0.309,
+   "cut_dur_ms": 254.4
+  },
+  "ゆ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 741.2,
+   "fric_start_ms": 217.0,
+   "mora_ms": 107.0,
+   "found": true,
+   "vowel_hi_ratio": 0.019,
+   "fric_hi_ratio": 0.397,
+   "cut_dur_ms": 217.0
+  },
+  "よ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 251.9,
+   "mora_ms": 141.9,
+   "found": true,
+   "vowel_hi_ratio": 0.014,
+   "fric_hi_ratio": 0.288,
+   "cut_dur_ms": 251.9
+  },
+  "ら": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 752.8,
+   "fric_start_ms": 242.0,
+   "mora_ms": 127.0,
+   "found": true,
+   "vowel_hi_ratio": 0.006,
+   "fric_hi_ratio": 0.235,
+   "cut_dur_ms": 242.0
+  },
+  "り": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 706.3,
+   "fric_start_ms": 204.5,
+   "mora_ms": 89.5,
+   "found": true,
+   "vowel_hi_ratio": 0.016,
+   "fric_hi_ratio": 0.426,
+   "cut_dur_ms": 204.5
+  },
+  "る": {
+   "onset_ms": 105.0,
+   "orig_dur_ms": 729.6,
+   "fric_start_ms": 229.5,
+   "mora_ms": 124.5,
+   "found": true,
+   "vowel_hi_ratio": 0.007,
+   "fric_hi_ratio": 0.299,
+   "cut_dur_ms": 229.5
+  },
+  "れ": {
+   "onset_ms": 110.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 219.5,
+   "mora_ms": 109.5,
+   "found": true,
+   "vowel_hi_ratio": 0.004,
+   "fric_hi_ratio": 0.334,
+   "cut_dur_ms": 219.5
+  },
+  "ろ": {
+   "onset_ms": 120.0,
+   "orig_dur_ms": 694.7,
+   "fric_start_ms": 217.0,
+   "mora_ms": 97.0,
+   "found": true,
+   "vowel_hi_ratio": 0.004,
+   "fric_hi_ratio": 0.291,
+   "cut_dur_ms": 217.0
+  },
+  "わ": {
+   "onset_ms": 120.0,
+   "orig_dur_ms": 764.4,
+   "fric_start_ms": 251.9,
+   "mora_ms": 131.9,
+   "found": true,
+   "vowel_hi_ratio": 0.002,
+   "fric_hi_ratio": 0.29,
+   "cut_dur_ms": 251.9
+  },
+  "ん": {
+   "onset_ms": 115.0,
+   "orig_dur_ms": 718.0,
+   "fric_start_ms": 207.0,
+   "mora_ms": 92.0,
+   "found": true,
+   "vowel_hi_ratio": 0.003,
+   "fric_hi_ratio": 0.296,
+   "cut_dur_ms": 207.0
+  }
+ }
+}

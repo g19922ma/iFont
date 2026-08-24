@@ -13,25 +13,15 @@
  },
  "stats": {
   "current": {
-   "ら": {
-    "cons_ms": 9,
-    "cons_db": -21.2,
-    "mora_ms": 127.0
+   "び": {
+    "cons_ms": 8,
+    "cons_db": -21.6,
+    "mora_ms": 89.6
    },
    "り": {
     "cons_ms": 16,
     "cons_db": -20.4,
     "mora_ms": 104.5
-   },
-   "る": {
-    "cons_ms": 35,
-    "cons_db": -21.3,
-    "mora_ms": 124.5
-   },
-   "れ": {
-    "cons_ms": 6,
-    "cons_db": -24.4,
-    "mora_ms": 109.5
    },
    "ろ": {
     "cons_ms": 6,
@@ -40,25 +30,15 @@
    }
   },
   "sp08": {
-   "ら": {
-    "cons_ms": 4,
-    "cons_db": -20.6,
-    "mora_ms": 159.4
+   "び": {
+    "cons_ms": 2,
+    "cons_db": -22.4,
+    "mora_ms": 119.5
    },
    "り": {
     "cons_ms": 16,
     "cons_db": -20.2,
     "mora_ms": 119.5
-   },
-   "る": {
-    "cons_ms": 37,
-    "cons_db": -23.5,
-    "mora_ms": 146.9
-   },
-   "れ": {
-    "cons_ms": 6,
-    "cons_db": -26.1,
-    "mora_ms": 156.9
    },
    "ろ": {
     "cons_ms": 5,
@@ -67,25 +47,15 @@
    }
   },
   "sp07": {
-   "ら": {
-    "cons_ms": 3,
-    "cons_db": -20.1,
-    "mora_ms": 191.8
+   "び": {
+    "cons_ms": 4,
+    "cons_db": -20.5,
+    "mora_ms": 131.9
    },
    "り": {
     "cons_ms": 18,
     "cons_db": -20.8,
     "mora_ms": 139.5
-   },
-   "る": {
-    "cons_ms": 20,
-    "cons_db": -21.2,
-    "mora_ms": 149.4
-   },
-   "れ": {
-    "cons_ms": 6,
-    "cons_db": -26.3,
-    "mora_ms": 179.3
    },
    "ろ": {
     "cons_ms": 5,
@@ -94,25 +64,15 @@
    }
   },
   "sp06": {
-   "ら": {
-    "cons_ms": 4,
-    "cons_db": -20.7,
-    "mora_ms": 214.3
+   "び": {
+    "cons_ms": 5,
+    "cons_db": -20.4,
+    "mora_ms": 154.4
    },
    "り": {
     "cons_ms": 18,
     "cons_db": -20.4,
     "mora_ms": 164.4
-   },
-   "る": {
-    "cons_ms": 28,
-    "cons_db": -20.1,
-    "mora_ms": 184.4
-   },
-   "れ": {
-    "cons_ms": 2,
-    "cons_db": -24.4,
-    "mora_ms": 206.8
    },
    "ろ": {
     "cons_ms": 6,
@@ -121,24 +81,14 @@
    }
   },
   "in13": {
-   "ら": {
-    "cons_ms": 9,
-    "cons_db": -21.2,
-    "mora_ms": 129.4
+   "び": {
+    "cons_ms": 8,
+    "cons_db": -21.4,
+    "mora_ms": 89.6
    },
    "り": {
     "cons_ms": 16,
     "cons_db": -20.1,
-    "mora_ms": 107.0
-   },
-   "る": {
-    "cons_ms": 36,
-    "cons_db": -21.8,
-    "mora_ms": 127.0
-   },
-   "れ": {
-    "cons_ms": 6,
-    "cons_db": -21.0,
     "mora_ms": 107.0
    },
    "ろ": {
@@ -148,25 +98,15 @@
    }
   },
   "in15": {
-   "ら": {
-    "cons_ms": 9,
-    "cons_db": -21.2,
-    "mora_ms": 127.0
+   "び": {
+    "cons_ms": 8,
+    "cons_db": -21.4,
+    "mora_ms": 89.6
    },
    "り": {
     "cons_ms": 16,
     "cons_db": -20.2,
     "mora_ms": 107.0
-   },
-   "る": {
-    "cons_ms": 39,
-    "cons_db": -21.3,
-    "mora_ms": 119.5
-   },
-   "れ": {
-    "cons_ms": 5,
-    "cons_db": -24.7,
-    "mora_ms": 112.0
    },
    "ろ": {
     "cons_ms": 6,
@@ -175,25 +115,15 @@
    }
   },
   "acc0": {
-   "ら": {
-    "cons_ms": 2,
-    "cons_db": -22.8,
-    "mora_ms": 122.0
+   "び": {
+    "cons_ms": 1,
+    "cons_db": -21.9,
+    "mora_ms": 77.1
    },
    "り": {
     "cons_ms": 2,
     "cons_db": -27.3,
     "mora_ms": 89.5
-   },
-   "る": {
-    "cons_ms": 2,
-    "cons_db": -22.9,
-    "mora_ms": 77.1
-   },
-   "れ": {
-    "cons_ms": 8,
-    "cons_db": -20.2,
-    "mora_ms": 109.5
    },
    "ろ": {
     "cons_ms": 4,
@@ -202,25 +132,15 @@
    }
   },
   "acc2": {
-   "ら": {
-    "cons_ms": 6,
-    "cons_db": -21.8,
-    "mora_ms": 117.0
+   "び": {
+    "cons_ms": 5,
+    "cons_db": -21.2,
+    "mora_ms": 77.1
    },
    "り": {
     "cons_ms": 4,
     "cons_db": -26.8,
     "mora_ms": 77.1
-   },
-   "る": {
-    "cons_ms": 28,
-    "cons_db": -20.6,
-    "mora_ms": 92.1
-   },
-   "れ": {
-    "cons_ms": 7,
-    "cons_db": -20.8,
-    "mora_ms": 119.5
    },
    "ろ": {
     "cons_ms": 4,
@@ -229,25 +149,15 @@
    }
   },
   "engine": {
-   "ら": {
-    "cons_ms": 9,
-    "cons_db": -21.2,
-    "mora_ms": 127.0
+   "び": {
+    "cons_ms": 8,
+    "cons_db": -21.6,
+    "mora_ms": 89.6
    },
    "り": {
     "cons_ms": 16,
     "cons_db": -20.4,
     "mora_ms": 104.5
-   },
-   "る": {
-    "cons_ms": 35,
-    "cons_db": -21.3,
-    "mora_ms": 124.5
-   },
-   "れ": {
-    "cons_ms": 6,
-    "cons_db": -24.4,
-    "mora_ms": 109.5
    },
    "ろ": {
     "cons_ms": 6,
@@ -256,25 +166,15 @@
    }
   },
   "ctx": {
-   "ら": {
-    "cons_ms": 1,
-    "cons_db": -20.2,
-    "mora_ms": 109.8
+   "び": {
+    "cons_ms": 31,
+    "cons_db": -20.6,
+    "mora_ms": 102.3
    },
    "り": {
     "cons_ms": 1,
     "cons_db": -21.5,
     "mora_ms": 97.3
-   },
-   "る": {
-    "cons_ms": 16,
-    "cons_db": -20.8,
-    "mora_ms": 72.3
-   },
-   "れ": {
-    "cons_ms": 0,
-    "cons_db": -18.4,
-    "mora_ms": 107.3
    },
    "ろ": {
     "cons_ms": 2,
@@ -284,10 +184,8 @@
   }
  },
  "kana": [
-  "ら",
+  "び",
   "り",
-  "る",
-  "れ",
   "ろ"
  ]
 }

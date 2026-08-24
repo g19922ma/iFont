@@ -76,6 +76,24 @@ MIN_MORA_MS = 75.0     # onset からこれ以上あとでないと切り口に�
 #   まったく別の原理（無音を探す／雑音を探す）・別の録音で一致したので、
 #   どちらの切り出しも正しいと考えてよい。
 FADE_OUT_MS = 5.0
+HEAD_KEEP_MS = 0.0     # 前置き母音を削るとき、谷のどれだけ手前から残すか
+# ↑ **0 にすること（谷ちょうどで切る）。2026-08-25 に 10 → 0 へ直した。**
+#   はじめは「閉鎖の入口を落とさないように」と前の母音を 10ms 残していた。
+#   ところがそうすると、**いちばん短い打ち切り条件（10ms）が母音「あ」の断片になる**。
+#   実測（onset より後ろの実効値）:
+#       び −19.8dB ／ ば −28.0 ／ ぶ −26.1 ／ ら −39.4
+#   他の字の最短条件は「子音の入りかけ」でかすかなのに、**び だけ母音がはっきり鳴る**。
+#   これでは最短条件で「あ」と答えられてしまい、曲線の床が壊れる。
+#   谷ちょうどで切れば、刺激は閉鎖（ほぼ無音）から始まり、他の字と同じ性質になる。
+#   使うのは前置き母音を付けた字だけ（いまは「び」だけ）。
+
+LEAD_ROOM_MS = 60.0    # 前置き母音を削った字の頭に足す無音の長さ
+# ↑ **なぜ足すのか。** 他の字は合成時の前置き無音（prePhonemeLength 0.1秒）がそのまま
+#   残るので、刺激を作るとき onset の 50ms 手前から鳴らす余白がある。
+#   ところが前置き母音を削った字は途中から切り出すので**余白がゼロ**になり、
+#   その字だけ音が唐突に始まってしまう（実測でも「前置き=0ms」と出た）。
+#   そこで無音を足して、**全字で同じ 50ms の前置き**が取れるようにする。
+#   足すのはデジタル無音なので、音の中身は変わらない。
 
 
 def features(x, sr):
@@ -139,15 +157,59 @@ def fricative_start(x, sr, onset_ms):
     return None, info
 
 
+def target_start(x, sr, onset_ms, end_ms):
+    """**前置き母音がある字だけ**使う。対象モーラの始まりの時刻(ms)。
+
+    前に母音を置いた字（いまは「び」だけ）は、音の実体の立ち上がりが**前の母音「あ」の
+    始まり**になってしまうので、立ち上がりを始点にできない。代わりに
+    **前の母音と対象モーラのあいだの音量の谷**を取る。破裂音では、この谷が
+    そのまま**閉鎖（唇を閉じてほぼ無音になる区間）の始まり**にあたる。
+
+    ⚠ **この字だけ onset の決め方が他と違う**ことになる。偽ターゲットの候補なので
+      解析には影響しないが、論文の刺激の節には書くこと。
+    """
+    F = features(x, sr)
+    lo = onset_ms + 60.0                      # 前の母音の本体を避ける
+    hi = max(onset_ms + 70.0, end_ms - 60.0)  # 後続「さ」の手前で止める
+    seg = [(t, db) for t, db, _hr, _lo, _hi in F if lo <= t <= hi]
+    if not seg:
+        return None
+    return min(seg, key=lambda p: p[1])[0]
+
+
+def load_lead_map(src):
+    """合成時の記録から「前置き母音を付けた字」の表を読む。
+
+    build_carrier_takes.py が <out>/synth_meta.json に lead_vowel_by_kana を書いている。
+    src は <out>/raw_<後続音> なので、1つ上を見る。無ければ空の表を返す（従来どおりの動作）。
+    """
+    p = os.path.join(os.path.dirname(os.path.abspath(src)), "synth_meta.json")
+    if not os.path.exists(p):
+        return {}
+    try:
+        with open(p, encoding="utf-8") as f:
+            return json.load(f).get("lead_vowel_by_kana") or {}
+    except Exception:
+        return {}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--src", required=True)
     ap.add_argument("--out", default=None)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--lead-map", default=None,
+                    help='前置き母音の表(JSON)。例 {"び":"あ"}。'
+                         "既定は src の1つ上の synth_meta.json から読む")
     args = ap.parse_args()
     if not args.dry_run and not args.out:
         sys.exit("--out か --dry-run のどちらかが要ります")
+
+    lead_map = json.loads(args.lead_map) if args.lead_map else load_lead_map(args.src)
+    if lead_map:
+        print(f"  前置き母音を付けた字: "
+              + " ".join(f"{k}（{v}＋{k}＋さ）" for k, v in lead_map.items()))
 
     names = sorted(n for n in os.listdir(args.src) if n.endswith(".wav"))
     items = {}
@@ -156,11 +218,20 @@ def main():
         x, sr = read_wav(os.path.join(args.src, n))
         onset = detect_onset_ms(x, sr)
         b, info = fricative_start(x, sr, onset)
+        # 前置き母音がある字は始点も探す。無い字は従来どおり頭から使う（start=0）
+        start = None
+        if kana in lead_map and b is not None:
+            start = target_start(x, sr, onset, b)
+        base = start if start is not None else onset
         items[kana] = {"onset_ms": round(onset, 1),
                        "orig_dur_ms": round(len(x) / sr * 1000.0, 1),
                        "fric_start_ms": None if b is None else round(b, 1),
-                       "mora_ms": None if b is None else round(b - onset, 1),
+                       "mora_ms": None if b is None else round(b - base, 1),
                        "found": b is not None, **info}
+        if kana in lead_map:
+            items[kana]["lead_vowel"] = lead_map[kana]
+            items[kana]["target_start_ms"] = None if start is None else round(start, 1)
+            items[kana]["onset_rule"] = "前の母音との谷（閉鎖の始まり）"
 
     ok = [v for v in items.values() if v["found"]]
     ng = [k for k, v in items.items() if not v["found"]]
@@ -184,7 +255,17 @@ def main():
         x, sr = read_wav(os.path.join(args.src, n))
         v = items[kana]
         end = int(sr * v["fric_start_ms"] / 1000) if v["found"] else len(x)
-        y = apply_fade_out(x[:end], sr)
+        # 前置き母音がある字（いまは「び」だけ）は頭も削る。他の字は従来どおり頭から。
+        # 削るときは谷の少し手前から取り、閉鎖の始まりを切り落とさないようにする。
+        head = 0
+        if v.get("target_start_ms") is not None:
+            head = max(0, int(sr * (v["target_start_ms"] - HEAD_KEEP_MS) / 1000))
+        y = apply_fade_out(x[head:end], sr)
+        if head:
+            # 途中から切り出したので前置きの余白がない。全字で同じ前置きが取れるよう無音を足す
+            y = np.concatenate([np.zeros(int(sr * LEAD_ROOM_MS / 1000), dtype=y.dtype), y])
+            v["head_cut_ms"] = round(head / sr * 1000.0, 1)
+            v["lead_pad_ms"] = LEAD_ROOM_MS
         write_wav(os.path.join(args.out, kana + ".wav"), y, sr)
         v["cut_dur_ms"] = round(len(y) / sr * 1000.0, 1)
     with open(os.path.join(args.out, "crop_report.json"), "w", encoding="utf-8") as f:

@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.12";
+const VERSION = "3.13";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -1005,22 +1005,27 @@ function seededShuffle(arr, seedStr) {
 }
 
 // この参加者に出る decoy 12字。
-// 候補59字（全68かな − 本命8字 − 「ん」）を、**巡ごとに並べ替えて12字ずつ配る**。
-//   一巡 = ceil(59 / 12) = 5人。5人で候補をひととおり使い切る（端は先頭へ回り込む）。
-//   巡ごとに並べ替えの種を変えるので、同じ字がいつも同じ人に当たることはない。
-// これで集団全体では59字がほぼ均等に使われる（80人なら1字あたり16回前後）。
+// **候補（全68かな − 本命8字 − exclude）から、参加者ごとに独立にランダムな12字を選ぶ。**
+// 2026-08-25 に丸山判断で、それまでの「5人で候補を一巡する系統的な配り方」から変えた。
+//
+// ⚠ **Math.random() を使ってはいけない。** 理由は2つある。
+//   1. この関数はセッション中に5か所から呼ばれる（出題の組み立て・頻出20字の判定・
+//      確認問題の字選び・記録の decoy_chars 列）。呼ぶたびに違う12字が返ると、
+//      出題と記録がずれる。
+//   2. この実験は**途中再開に対応している**（resumeMeta・名簿の割り当てを返す仕組み）。
+//      再開のたびに12字が変わると、その参加者の頻度が20字でそろわなくなり、
+//      本命8字が浮き上がる。上の「決定的な小道具」の方針と揃えること。
+//   そこで**連番を種にした並べ替え**で選ぶ。参加者どうしは互いに独立で、
+//   統計的には純ランダムと同じだが、同じ人には何度呼んでも同じ12字が返る。
+//
+// 集団全体での候補の使われ方は多少ばらつく（80人なら1字あたり16±3.5回）。
+// **decoy の回答は解析に使わない**（is_decoy 列で外す）ので、ばらつきは影響しない。
 function decoyChars() {
   const k = Math.max(0, Math.round(Number(DECOY_CFG.per_participant) || 0));
   const pool = DECOY_POOL.slice();
   if (!k || !pool.length) return [];
   const n = Math.max(0, Math.round(ASSIGN) || 0);
-  const perCycle = Math.max(1, Math.ceil(pool.length / k));   // 何人で候補を一巡するか
-  const cycle = Math.floor(n / perCycle);
-  const slot = n % perCycle;
-  const order = seededShuffle(pool, (DECOY_CFG.seed_prefix || "decoy:") + cycle);
-  const out = [];
-  for (let j = 0; j < k; j++) out.push(order[(slot * k + j) % order.length]);
-  return out;
+  return seededShuffle(pool, (DECOY_CFG.seed_prefix || "decoy:") + n).slice(0, k);
 }
 
 // その参加者にとって「よく出る20字」= 本命8字 + decoy 12字。
@@ -2060,38 +2065,6 @@ function visionCheck() {
   document.getElementById("go3").onclick = start;
 }
 
-// 折りたたみ（「研究の説明を読む」）の中に足す3項目
-// ——データの保管期間・同意の撤回・問い合わせ先。
-// docs/informed_consent.md が「同意画面に載せること」と定めているのに、
-// prod_common.js の同意画面に入っていない項目である。値は transfer_config.js の
-// contact に置いてあり、**掲載前にユーザーが【要確認】を実際の値へ書き換える**。
-// 2026-08-24 から、この3項目は最初から見えている場所ではなく折りたたみの中に入る
-// （見えている側には問い合わせ先だけを1行で出す。理由は tidyConsentScreen の説明）。
-// 群C（transfer_comfort.js）にも同じ関数を写してある。片方だけ直さないこと。
-function consentExtraHTML() {
-  const c = CFG.contact || {};
-  const viaCs = c.via_crowdsourcing
-    ? "、または応募元の募集サイトのメッセージ機能" : "";
-  // 音声課題（G.mode === "audio"）のときだけ、使用している合成音声のクレジットを足す。
-  // transfer_comfort.js（群C）は音声を使わないので、この行は出ない。
-  // G が無い/未設定でも例外にならないよう typeof で守る（transfer_comfort.js には G 自体が無い）。
-  const isAudio = (typeof G !== "undefined") && G && G.mode === "audio";
-  const creditLi = isAudio
-    ? `<li><b>音声について</b>：この課題の音声には、COEIROINKの音声ライブラリ「あみたろ」を
-        利用しています（COEIROINK:あみたろ）。</li>`
-    : "";
-  return `
-    <li><b>データの保管</b>：${c.retention || "【要確認：保管期間】"}
-        保管するのは回答と技術情報だけで、個人を特定できる情報は含みません。</li>
-    <li><b>同意の撤回</b>：この調査は<b>無記名</b>で行うため、回答とあなたご本人を
-        結びつける情報を研究者は持っていません。参加をやめたい場合は、
-        完了コードが表示される前ならブラウザを閉じるだけで結構です（記録は分析に使いません）。
-        提出後に削除をご希望のときは、<b>お手元の完了コード</b>を添えて下記へご連絡ください。
-        そのコードで記録を特定できた場合にかぎり削除します。</li>
-    <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
-        （${c.institution || "津田塾大学 栗原研究室"}）／
-        ${mailLink(c.email)}${viaCs}へご連絡ください。</li>${creditLi}`;
-}
 
 // メールアドレスを、押せばメーラーが開くリンクにする。
 // 迷惑メールよけに「[at]」と崩す書き方は**採らない**（クラウドソーシングの参加者が
@@ -2104,71 +2077,51 @@ function mailLink(addr) {
   return `<a href="mailto:${a}">${a}</a>`;
 }
 
-// 同意画面を「最初に見えるのは要点だけ・くわしい説明は折りたたみの中」に組み替える。
+// 同意画面を**1画面に収まる最小限**にする。
 // **prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
 // ページの中だけで直す。
 //
-// **なぜ短くするのか（2026-08-24 の判断）。**
+// **なぜここまで削るのか（2026-08-24 の判断）。**
 // 参加者を募る Yahoo!クラウドソーシングは、タスク説明文に「回答の利用目的・データの
 // 管理方法・プライバシー保護」と「掲載者の問い合わせ先」を書くことを求めている。
 // つまり応募する前に、募集ページで説明を読んでもらう仕組みになっている。
-// それと同じ説明を課題の1画面目にもう一度**全文で**出すと（実測で視覚759字・
-// 聴覚906字あった）、読まずに離脱する人が増えるだけである。そこで見えている側は
-// 要点だけにして、全文は折りたたみに移した。**全文を消したわけではない**——
-// 募集ページを通さずURLを直接開いた人にも読めるようにしておく必要があるため。
+// **研究の説明はそちらが本体**であり、同じ説明を課題の1画面目で繰り返す意味がない
+// （実測で聴覚906字あった。読まずに離脱する人が増えるだけである）。
+// ここに残すのは「募集ページの内容に同意して始める」ことの確認だけにする。
 //
-// **組み替えの中身。**
-//   1. 見出し「研究へのご協力のお願い」を消す（本文から始める）
-//   2. 「途中再開」の項目を「記録するもの」の項目にたたむ
-//      （再開した回数と中断していた時間は"記録するもの"なので、そこに書くのが素直）
-//   3. 保管期間・撤回の方法・問い合わせ先の3項目を足す（倫理審査で要る項目）
-//   4. prod_common.js が書いた項目をまるごと <details>（折りたたみ）の中へ移す
-//   5. 折りたたみの外には、要点だけの4行を出す
+// **1画面に収めること。** 最初の画面でスクロールが要ると、それだけで離脱する人がいる。
+// スマートフォンの縦画面（375×667・360×640）でも、機器の選択とボタンまで含めて
+// 画面内に入るよう、transfer.css の .consent-min で余白と文字の大きさを詰めてある。
+//
+// 残すもの: リード文／「募集ページに記載した内容にご同意のうえ、開始してください」／
+//           問い合わせ先／実施主体／音の再生機器の選択（聴覚のみ）／同意して始める
 //
 // ⚠ **要素を消さずに組み替えること。** 「同意して始める」ボタン（#cstGo）と
 //   音の再生機器のラジオ（input[name="dev"]）には prod_common.js と transfer.js が
 //   リスナーを付けている。innerHTML で作り直すとリスナーが消え、ボタンを押しても
-//   何も起きなくなる。ここでは折りたたみを ul の直後に差し込むだけなので
-//   （ボタンと機器の選択はもともとその後ろにある）、順番を入れ替える必要は無い。
-//   もし今後この2つを動かすなら、必ず appendChild で**移す**こと。
+//   何も起きなくなる。**必ず appendChild で移すこと。**
 function tidyConsentScreen() {
   const h1 = screenEl.querySelector("h1");
   if (h1 && h1.textContent.indexOf("ご協力") >= 0) h1.remove();
-  const items = [...screenEl.querySelectorAll("li")];
-  const rec = items.find(li => li.textContent.indexOf("記録するもの") >= 0);
-  const resume = items.find(li => li.textContent.indexOf("途中再開") >= 0);
-  const age = items.find(li => li.textContent.indexOf("参加できる方") >= 0);
-  // 「中断して開き直した場合」の一文は、再開の項目そのものが出ない研究者モードでも足す。
-  // ここを `rec && resume` にしていたせいで、研究者モードだけこの65字が消え、
-  // 本番と表示が食い違っていた（2026-08-24 に修正）。
-  if (rec) {
-    rec.insertAdjacentHTML("beforeend",
-      "中断して開き直した場合は、再開した回数と中断していた時間も記録します" +
-      "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
-  }
-  if (resume) resume.remove();
-  // 年齢の条件は折りたたみの外（要点）に出すので、中からは消す（二重に出さない）。
-  if (age) age.remove();
-  const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
-  if (!ul) return;
+  // prod_common.js が書いた説明の箇条書きは**まるごと消す**（募集ページが本体）。
+  const ul = screenEl.querySelector("ul");
+  if (ul) ul.remove();
   const c = CFG.contact || {};
-  // 折りたたみを作り、prod_common.js が書いた項目をそのまま中へ移す。
-  // <details> は JavaScript なしで開閉するので、開閉の処理は書かなくてよい。
-  const det = document.createElement("details");
-  det.className = "consent-more";
-  det.innerHTML = '<summary>研究の説明を読む</summary><ul></ul>';
-  const full = det.querySelector("ul");
-  while (ul.firstChild) full.appendChild(ul.firstChild);
-  full.insertAdjacentHTML("beforeend", consentExtraHTML());
-  // 折りたたみの外に出す要点。ここに書いた以上のことは、すべて折りたたみの中にある。
-  ul.innerHTML = `
-    <li>18歳以上の方が参加いただけます。</li>
-    <li>回答と端末の情報（画面の大きさなど）を記録します。氏名やメールアドレスなど、
-        個人を特定できる情報は記録しません。</li>
-    <li>募集ページに記載した説明にご同意のうえ、開始してください。</li>
-    <li>お問い合わせ：${c.pi || "【要確認：研究責任者】"}
-        （${c.institution || "津田塾大学 栗原研究室"}）／${mailLink(c.email)}</li>`;
-  ul.insertAdjacentElement("afterend", det);
+  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す2行だけを足す。
+  const add = document.createElement("p");
+  add.innerHTML =
+    "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
+    `<span class="c-contact">お問い合わせ：${c.pi || "【要確認：研究責任者】"}` +
+    `　${mailLink(c.email)}</span>`;
+  const lead = screenEl.querySelector("p");
+  if (lead) lead.insertAdjacentElement("afterend", add);
+  else screenEl.insertBefore(add, screenEl.firstChild);
+  // 1画面に収めるための入れ物。**要素は移すだけにすること**——作り直すと
+  // ボタンと機器のラジオのリスナーが消えて、押しても何も起きなくなる。
+  const box = document.createElement("div");
+  box.className = "consent-min";
+  while (screenEl.firstChild) box.appendChild(screenEl.firstChild);
+  screenEl.appendChild(box);
 }
 
 // =========================================================================
@@ -2187,13 +2140,15 @@ function blockedScreen(reason, info) {
   // 接続できなかっただけの場合は、その場でもう一度試せるようにする。
   // 一過性の失敗で参加者を取りこぼさないため(2026-08-21 に実機で発生)。
   const canRetry = !already;
-  screenEl.innerHTML = `<h1>${already ? "この実験にはご参加いただけません" : "接続できませんでした"}</h1>
+  // 重複参加のときは**見出しを出さない**。「ご参加いただけません」と大きく出すより、
+  // 感謝から始めたほうが、弾かれた人が不快になりにくい（2026-08-24 ユーザー判断）。
+  // 接続できなかっただけのときは、これまでどおり見出しを出す。
+  screenEl.innerHTML = `${already ? "" : "<h1>接続できませんでした</h1>"}
     ${already ? `
-    <p>ありがとうございます。ただ、この実験は<b>以前の関連実験に参加していない方のみ</b>を対象としています。
-    記録を確認したところ、あなたはすでに関連する実験にご参加いただいているため、
-    今回はご協力いただけません。</p>
-    <p>この作業は<b>お受け取りいただかず（辞退して）ページを閉じてください</b>。
-    <b>以前ご参加いただいた分の報酬には影響しません</b>。重ねてお礼申し上げます。</p>`
+    <p>ご参加いただきありがとうございます。</p>
+    <p>確認したところ、以前の関連実験にご参加いただいていたため、今回は対象外となります。</p>
+    <p>恐れ入りますが、このままページを閉じていただけますと幸いです。<br>
+    以前の実験の報酬には影響ございません。</p>`
     : `<p>ただいまサーバに接続できませんでした。通信の一時的な不調のことが多いので、
     <b>下のボタンでもう一度お試しください</b>。</p>
     <p>何度試しても同じ場合は、お手数ですがこの作業は辞退してページを閉じてください。

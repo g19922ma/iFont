@@ -45,3 +45,12 @@ firebase-debug.log
 # experiment/tools/build_hosting.sh が作り直すだけのもので、中身はすべて
 # experiment/ からのコピーなので git には入れない(音声約7MBの二重管理を避ける)。
 hosting_dist/
+
+# 作り直しで置き換わった旧版の音声（ローカルにだけ残す。スクリプトで再生成できる）
+#   _rejected_acc0            … 全字 accent=0 版（却下。経緯は project/刺激作成_キャリアフレーズ.md §4.4）
+#   _superseded               … 由来を特定できなかった中間フォルダ
+#   _superseded_transfer_*_pa … 後続音「ぱ」版の544本（旧配信物）
+experiment/tts_candidates_carrier2/_rejected_acc0/
+experiment/tts_candidates_carrier2/_superseded/
+experiment/_superseded_transfer_stimuli_amitaro_pa/
+experiment/_superseded_transfer_audio_manifest_amitaro_pa.json

@@ -1,0 +1,236 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<title>アニメーション方式別プレビュー＋正答率(pilot2)</title>
+<style>
+  :root{ --bg:#f7f5f0; --panel:#fff; --ink:#2a2620; --muted:#7a756a; --line:#e3ddd0; --accent:#b5502f; --grid:#eee7d8; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Yu Gothic",system-ui,sans-serif;padding:28px 20px 60px}
+  h1{font-size:19px;margin:0 0 4px;font-weight:600}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 26px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;max-width:1180px;margin:0 auto}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .card h2{font-size:15px;margin:0 0 2px;display:flex;align-items:baseline;gap:8px}
+  .card h2 b{font-size:16px}
+  .card .desc{font-size:12px;color:var(--muted);margin:0 0 12px;line-height:1.5}
+  .row{display:flex;gap:16px;align-items:flex-start}
+  .stimwrap{flex:0 0 auto;text-align:center}
+  canvas{width:150px;height:150px;background:#fff;border:1px solid var(--line);border-radius:6px;display:block}
+  .pctlabel{font-size:12px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+  .charbtns{margin-top:8px;display:flex;gap:6px;justify-content:center}
+  .charbtns button{font-size:13px;padding:2px 9px;border-radius:5px;border:1px solid var(--line);background:#faf8f3;cursor:pointer;color:var(--ink)}
+  .charbtns button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .chartarea{flex:1;min-width:0}
+  svg{width:100%;height:150px;overflow:visible}
+  .axislabel{font-size:10px;fill:var(--muted)}
+  .n{font-size:9.5px;fill:var(--muted)}
+  .curve{fill:none;stroke:var(--accent);stroke-width:2}
+  .pt{fill:var(--accent)}
+  .gridline{stroke:var(--grid);stroke-width:1}
+  .controls{max-width:1180px;margin:0 auto 18px;font-size:12.5px;color:var(--muted)}
+  .controls label{margin-right:14px}
+</style></head><body>
+
+<h1>アニメーション方式別 見え方 ＋ 正答率</h1>
+<p class="sub">kurihara-pilot2（較正フェーズ・群A′・視覚、2026-08-24実測）のデータ。正答率は各方式のターゲット字（表示中の2字＋この方式に割り当たったその他の字を含む全ターゲット試行）を進み具合ごとに集計。n が小さい点（1人ぶんのパイロットのため）はブレを含む。</p>
+<div class="controls">
+  <label><input type="checkbox" id="playToggle" checked> 自動再生</label>
+  <label>速さ <input type="range" id="speed" min="400" max="4000" value="1800" step="100"> <span id="speedVal">1800ms</span>で1周</label>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const IMG_B64 = {"か": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAADtElEQVR42u2dSbKdMBAEKQX3v3J54Y0XDvsjJNFDcoD3RFLVE4Pkq/cxLgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICix73353Vdbg3gN4MrMIb70P+ExXA2BqgbAF0XWeDPw6RBAAAAAI0ACAWETwJYAAAAAEDrJHBUAcYCALjaToTCThnvdKefxwJaHgOl9RRG68ufCoC0hcTId/prCdx9xb9bAdpZB6qZBUwluE0CSQB4G4EsCnB6CzioCUaWzGWC4B7EeQC4vQK8RQIj8/VTYADKAjH3THABZjlAU+bpBbhGO6zpc5HrzAP0AwhW8RggHU+Fd/Gxf8YsoKMSGOEHoC3vDeqcBEb+CkclK0GdKohHgSpXNXsBnZHAqNDpqGg3qBMSuHd0bU/uii3J+S96Inn/pfPya72wLb6jjPtU6CmxqXOx3yhDFYKg2z8n6OuDEfmIdF7+4HHjEWpU6/MS4FnhK+kNwFUSGMGDu/IpQLkkQAwodC4KCcDBf3lEu2FrLHB2Qk4QzNzirZDA6PiyZGELqBkAh1OAMrwtW8kC78MgabDaCelTAOdDgFFAdwBvwyAKqFcFqJkCTBAMAyBKHaxmCjAWCAJAKUuB0ezDUVhgHwDlLIdHcwdggRHdAd7sgdHcAVhgRHOADucBFNA8BKwCoLSjQSzQ3AGLACjveHw0F0DhGOCD7wwtdMCiwaq/VYA/vuL22bfGlHlKfDe1/lYAH+UAa+af70IOMGnwEwBLP28lCqHT4QQLhHIAvUA+ANkFEO1rcljguJxGcwcQBEdzAcRSgLIBEHXAXgeYIBgbwOoQKNJgLgCiDtgcsxwbwHIBKLsC3MsCNSLASgU452hlNBfAOgW4FwBRCG1Pgo4MQGUcEEYBSgXghABMNxgXwAYBfJdV7mrb5hxQwFMB/GDTmA+zyii3b852C0xdrX874cuyYgTYPkmpFKBXuwW6gAVWJwV921reewWg63/7CiqXAnSk8nemZihtGzgFQPX22hjNBfAMQEEBvFWAW7XDFQXwBIAmFmsX+ri6pxb7EIEjW2D2HT5HjikPd5vT5GoVNqY+3m5Ps8tVzJwysd+gZperiDl1asNFTa9X4UqKuR0n9WbBClVRzW65qYXPBH5aTip/McutMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/O34BXTOrCU+S+frAAAAAElFTkSuQmCC", "つ": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAADCElEQVR42u3dOXLDMBBEUTQL979yO3RkV0nEMstn5ESy5qlBEigRI4/exzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAqx4z0YfT757HnOeUgFf99uByAvnmR8wPo9Ts4J4BWvpkzAWjP2zo+gDZnymEBNA4djgZwrPLlBG8Bzle+mOB7gIulryT4BiBA6esEPgOIU/oygg8A4lW/QiD9dFg1psP+vrqX17FPXq5b6dXGUXABwMuj7hwA3jfcHRvA+894PnMfoPsLGFr9rzYBnF9lcJDL4P4FJuvegojulv7/x/A9AMe4/fONyZAD3QAfBnC8KYAPnQRD7EK67FQoF5oGutV02GtuVfl9wKgUgWYJ8IoxwBAYzSNAAkatCLRPgJoBmAQA8HIMZAcwCQCgOYBfngRIAAAAAABA51uhggkQQwAAAAAAAAAAAAAAAAAAAAAAAKoDiASMN0tEDAEAAOj95CgJaH4RIAFP81MACXiqBcAkAIBGACIBr38t8DQPQLUEuBWAmp8ExVVgxQ+mnuYByAuw6vn5p/f3X+sc4EYA67bQeHoPgKQACzeRSQmg5tPhpfsoJQRYW3+sDhM3NrN6Gg//hABa/9TIrPD1u0cCttSfJwHa9NTU07z+JAnQvg0EZvJrn0d5gM0bmc7UNz4etQF0YD+5mfiu16MugI5tbTqzzng8igLo8Na2M+Vk1wVbburSzsYz3zKHSzVd1e19rWeu1S1XaLurUN0bZp4VTWdtvKzQvTtmjiVs92i9faOhwexdfngAp26+rvDVR07AqdYfW3uMKHr1IRNwuOvL7Fz8/jY7it++aHb95sMA3G70tLnTlKK37LqTgEjtvWbbyg81W1PQugt0mxs8LwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/B4/U7WGApjo3OMAAAAASUVORK5CYII=", "が": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAEQ0lEQVR42u2dyXLkMAxDBZb//5eR29Rk0pmyZMnc0NckHfsJBCVqA0fvjw0BEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEIAUH6A1AGCMeQIoslDyz5vPvs9V6u17esD3yEc/AHwkBzvZMnAhEMkD8PwBx2FfP5gFsLGdzv0rS2HVP2JrH9wrwQtPf+2MrM3LrB+mPOzKBFeT/k6FfgAmfA8VAfBIkqlaD4A7ACSRgGVKAjOBjn4hwAYecEACVqiV2S8L/NcH4QoAIasfjgqgw39ByRDYLQGrle3mJWCdS+JJAeyVgL3TLgwrAWvT5y08M/QoBmw0l4CNyhIgnQCc9sB730d2qQd8kgDJyiHAHY0/xiiyQOKfqSB2MEGGzgJwGQs3S4Pc1B9uv1DyalwRT64ALuQ8JwUw8pdboorwh1cnO3sAX11Thszl8sAKgDeFK8hojvt/NUcITEUDDoTNFWlUT4cmsCxbXv76GQoPhnBkT0CmfsDHOECr4TDGq45sGaY72awgcoMAaleE8GIQWMP50AQAXpTA9j1D9yvCmGpyHBLFaQBcbEiOlwh4h8BvU3gYSecFsMJgzQdRxwQXK3solAXo1h+0RPn7SBBYkIo420+O3mneExLQKTJhLIA+LmAZJ8UaL5dn5dEg7zQuUy2XZzcTRJB0qTTYa88QwgJgNwUgowSsRem3+p6hIKfJIaMFFNkzBPUDmgHYKAFrbgFl9gxBHtAMwDYJWHMLqLJnaF0C8oA6EYD0CoDH2FEhkHVGZJcNWuNqWPoQ2CIBSxsBoRXAPMdK2Wi+cdCaR8AZBTCRDaojVCwC0EwBDOkB9Pwah2t24DmcpUaD8QAwlQ1a9hwQ7wwR5sqE1vkMoS0AMGSC0WpBeBMAsu+1sIa7ZY8CYLYRkRWwQKor7AYAQecDkFABcIoBhUDUCOBLejKdKVrPAke/U2UftITVuCyGy8cRXNUigEVCgG/92VVJAGxsgsTbd47uHQfCrStgDddFaSywA8BhC2QzBSCdAqDhcA0LXAWAOruILVf5IgiAOg6wSwHsBWC3AFyHVdZcACsAKjmAxgILALafdelbWZEC4glAHhAawIQAkCKpmvcoH7kUMOcAQOe5QYw7N2PBu1tpx1NAcBmY7wVS7gKYC4Hlx/0tEtBofQDunhsbGMBjvX6HgBAj6+vtPisqmeD+5mJgAKhZNrHmArgPAEVPVbWepdB5AGh+rC6mH3f+7iBGVgAXHpeljtbm8RuknHBNrC7D2uMi+Mk7XOvccG+fyC9aJtcXYvGBETajYu1VuHMU5GqW8ytMsf7IiHjeAsfb13QiVG8SNTq0mhoTAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAH48PkCvXfmE86bl7oAAAAASUVORK5CYII=", "ま": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII=", "ぱ": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD5UlEQVR42u3d23bbIBCFYTaL93/l3Zu0q2ljWRIIz8DvmyS2W1ufBhgOEnLZ+1ELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALDyoy1yHPr6eXnNl7zOwZc7CPkB9MNz3gdAL573HgA6eM0btAK6/eIaAOp6OT+Aut+QG0BD3pIXQIPetEom+FXp63Ij15YIAP/1i8p2nSH79V96LgImpFCvk3wdZTzWjN6gfn8Jhyj8LwXenac26DT5UzXAjx98IQbqzFZpzvlnROi7i+YAOFwStEcEuPuE1GRlvmw1KmyGxQHIAmAiAAAAQo0L6WEALdM81rJoCJzVWrQOmN0ddrDOnnZqBXT8lNcE8JGAdlshogMPr1oEvh+Y9P9vJyuntshogLbLAzzoTbUsLOBZEeCYAl49D/CI01LLqgLeIQ9w/zK5mjzrtTtrpbbALFjXUtm2xkSgbrdIbY1E0AyKfhLAjAoDAEDhmqEZzYXGV0sMi1MHAAAAALuuECMCxgCYCAAAAAAAoDf4RAOh5xscigAAAAAAAAAAbDscQATUzYcDiAAAAAAAAAAAAAAAAMqmt5AgAgAAAAAAAAAAAAAAAAAAAAAo200NEgEAAAAAAAAAAAAAAAAAQFnponAiAICS4UZK+vzK0xb0ruBeGuDsVoFeE0Al0uhby9+QZQLQ5s2glsgDbtdM0t6JkPbOBAedfmUFUDDI2QCKF0tTARSyOM3LA3Rho4A7WypEB9CV/WLP9xWcvDfod69pDkH7TAD44u2Sn9v6uUUe8/AbghFB0HJfBdFPUKcHgGM1sTX9VTCdWUFd4CogBQZQ+J5WnXuMDgddF7kM7nYQ1FwlwMM/K9vUmD04CGq6EjA4CBJOjh4FwSazwyOLQc7p8YFBUJOe+mECNeuSmNdBcK0Y1BX3mtMmS2SGCNSZrbmm1YWL7DHSsbP66Yog+yqx7iCoU0upHij0nQI18KCHOuskBSwCmtkahNx2V0+81Q677a7vH9alAfVMO07qkcLiuyZ1framRyoLJ1otfiJJuTGj+E9F4CgAvkOg7o8Kv/P0EYE6ZtRLvNlh6/VZ9uBM4c9nnae4tchA1+DP9mk04Owq597jGhxvntsKaMJ0gK9khY7WDHrq/+CAecDcC6EcMBGyowLWDPOCXuJ6AccsQG1m0VTA+qMGmdL7WP3ZZs9lKFjzcW+9rbq+piK1nu0DlZvPGTj8hZPu+6cKkTnJ0fpBk7+Qkm8UxR0kAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDDxy+fFcMtoFeBawAAAABJRU5ErkJggg==", "ら": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD10lEQVR42u3d23LbMAxFUYGD///l04de06nT2CZAQNh+zMQec+nwIomQTdfs17oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAu748+PPtujQa4LtBYQVTfON/vTQzAR85NCoB9uDvGpqAilEITYD97x80NQGFJsnIBNhX/1FjE1BgSAhMgD37Bo1NwMkRIS4B9uL7NGEhVMjAlHMyVNbAlDbO1zQw5c525QxM+VN+KQPTmXVPGQPTsbVfDQLT0QXweQPT8bOAswSmCmdCBwlMRc4GT0WgxMmQXj9zuEcCvpYD3f10+EwOrNx1+uR50Iu1Pz0H5QCyDYreHpeyVoJ+FX1lxaDyBok/Y6CZO0SkedNg9m0Tr/89FToYbEuAld4HkjoLWCuFVey+EPsEuwJY3V1AJAAAAPIBNA3ASAAAAADQcQzcBGAkAAAAAGg5Bu4BMBIAAAAAANDzxsAaPgnQBQAAAIDRkwAJWMNnQRIAwMVzhCpMAnZsPvHKVQKWwOD1K2ViN135oVnQriLPFvAGZZOhBt6k9T/fq+YA9v4HqDiAohfNmwm8z8GPIchaCZoV3YjrzY7+9hCshLaZFTZdzcK/XcCrhF9Pv3FPrYcfb74++7OFC/hV+oGKn1cP7hB4+zPsYZNs23UDC7wC7WcO/3Nf/HHd2PsZ8APNf+FLPyR4W8DT2//iN46qHnxX8J+1QkF9NuTC4Up9CIQCTjStZuFkyIgd0Q1W1sp3TyG4tkfAcw6/Zt8Z2vgYgO0RWN2egqB2CVD851nh02ENvzus8p/pow//+wmwE4+A0c5BYI0+/JEAGl49ri5jy00qR42qMQom2Ct8BOAfg11G+yvdHv+boNfx39IFPhBo5FbZ3wSaulf4B4EGb5aWWrZ/5+lwx+azXR4AAFp+ayMBAAAAwJ41CAkYPgmQAABu0QNEAiYBGGPAzisRa3gAGAPWDQKgSQDGLLD5YuwaHoBmANajXqDR8e8FYBG3Y3z04e+UgKhChDW8/U26QFwZUgsAm/azu9E1mK0ALHpDgvcNv+7eBSxlQ4p3Hfh050HQEjckecs5TzedBu3AfjTvt9bRrRZCdno7ojdb3DZ8oKLVLsboc0EkaDNuo+rxmFI8n3z09z2SLXoU0OTrAcH78H1065O6wMt9YMTT5U8XoPjkxqd1gWf6gNr/wkSzqiuf2/TMLlD4EWM+6WgfTMDFNjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg/fUN/jvOG5lbKOEAAAAASUVORK5CYII=", "あ": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD/0lEQVR42u3d2a4aMRBFUY7V///LJ09RpIibAF2T8ebtDgJqudpj2y0/zn6tBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfO3rKvwsPR6PcbclyqXx/375yAwYmQxUggAA0PQyGXAYgLgEAAAAAADGjQbIAADO7gaQAQAAAMDR3QAyAAAAzu4HfbowMi4ecwkAAAAAAAAAAAAAAAAAAADMu01OQyfEyAAAADh7QowMAAAAAB4HLwySAQAAAAAAZ/eEyQAAAAAAgJOHAmQA5wfM+Bp96wbXnKif/sVfCaB3/9WbL41pcNsxpA54TdGbZoAm9yH2yYCkPEjPAA3vSiYDaHxvOhVAGwwo8gC0x5gqC0C7DCvXztOgmpoBCilJlSRBAoDiMlj5AuEACrx6K3IgGiCyzFRRFcZWgtLswXU2gHIDsxM+du3T9vlHAo0AiE7/52/3nEADABRcSemnt3lKoHaAn76B7fBub6jASo3/8+j1bsOnzhkh5c9b+K+fFNWjWTPjV9mMyKqtru/WgP/6jZoAVDB765d+pxYAhRd/7IAqG0AZA7RP30/1AIov/tfjd38GqPf+DwekwBo3Uala0RWcALXxB6TAmh5/dkuwZsV/+y1VB5ASv8qr1DVqoUb1n7nivmtG/E43XLvH7ymXQMbF6rl3imZMAGujW2WnVgAfOK65DYBLPnoNaa3VNahaI2+WHl4HqGIE4JP2CzTG/wlAeAJ0xh+RAVvH/41bZpQMoK9KgP4MaI7/fQAlrwFUbytcZ5f/fQDfCro//pIM8Nzyfx9A8/PflRngra//3kpwRvxtu8Y0ZVv96qkCAuNX5yXg3cu/qQ4YFH8LgDhAIbD8707PrBHh+fAzRHz4ISrurE9Wf8m5VXPtnf/a/xLw4QcpuXtFcfVuknV7j+o6Of27j9cfsaJw9fX9PWJIsb4qfg+sA/SYXP5vZ4Df/RbhGwqjK9Vry+IP3KmzMhOxNv5x/QAV31Nds3PUr5aF9oj/fgbIFZvp82YUr4STiNSxpcBlp8j8pwOq2i1lt9/5Kpzn9rRTKj5rBj/+rJHx1w2HM7u+rh0MuSF+KW1W0RUtkTPrGI+fEcqd92o5TE1j1j26zhNURfgq2arjmU1/2Ska8rjyUemkspyVodnNiwecKxw66lHPmsJ1r31T03rHqKO1Vb7U71n3CFUvcHnHp8+HpcDhD1jwpg9ZmTDo2T0DvPVjdiYdTblfBiSX0KwMaHjm2DCAPwI+62bpvo7VtAx48MBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIOr1C2RC8uTGLtsBAAAAAElFTkSuQmCC", "し": "iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAACnElEQVR42u3dwXbjIAwF0Igz///L6r5dzEyDCLKud934hMsDA1GdyNfsa70AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHjk9WfLXeLb3ykBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF5Xv1LzY1e8/frO/gmI8UMgYvwc8A7Bekb8Y/xT4NcheM5jMAYCxIYQPGohFFaCswB+dHhKAIBJAFtGgAQAGD4CJADA8BEgAWvmSeADE5AmwVEA4Smw69fN1vAAmAPWMwKQEjAbIGcBhATMBtg5BUpAQ4C9ASgCCAnoEoB2AHFnAj75S9OzyuTCHNAEII7dNicloKD9hsAaHoBdAHlgEggrwYr1xxq8BKgFiAP3y4sAsmf/Vw6BKL9ZzpkE69q/DyALIxBNF0JRep8csw4obf9GgCyKQHTeC0TZLfJCgKwQqG5/+RwQJf8LlncOgdwtEAeWneveTUxEuwOR3NmQOLPvWCf257G1+7Ph+wPiPz91nNt3Rp4a8bln1ti97448OOfl+3Nmtn6Fxl9feBHnz122J+BfZrxfrxkLzp0iG1VHZI/NUNXxYGaX3WC26f6qpXD2aX/RXiB7xL9wM7T5A2fDE6Hs0P01j8HNz8PseyaYt/d+dQLeD8GB8ru4+FvNI9WHkbd+s3+o+DLyyuKGc6WnkddVeJytu428qszlfNFx5FPq3ToBvBRKAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQfX0BCd9b+XsloSIAAAAASUVORK5CYII="};
+const ACC = {"blur": [{"pct": 3.0, "n": 8, "acc": 87.5}, {"pct": 6.0, "n": 2, "acc": 100.0}, {"pct": 13.0, "n": 3, "acc": 100.0}, {"pct": 22.0, "n": 2, "acc": 100.0}, {"pct": 34.0, "n": 2, "acc": 100.0}, {"pct": 50.0, "n": 3, "acc": 100.0}, {"pct": 70.0, "n": 3, "acc": 100.0}, {"pct": 100.0, "n": 2, "acc": 100.0}], "fade": [{"pct": 3.0, "n": 6, "acc": 33.3}, {"pct": 6.0, "n": 6, "acc": 100.0}, {"pct": 13.0, "n": 7, "acc": 100.0}, {"pct": 22.0, "n": 5, "acc": 100.0}, {"pct": 34.0, "n": 7, "acc": 100.0}, {"pct": 50.0, "n": 5, "acc": 100.0}, {"pct": 70.0, "n": 7, "acc": 100.0}, {"pct": 100.0, "n": 5, "acc": 100.0}], "reveal": [{"pct": 3.0, "n": 5, "acc": 40.0}, {"pct": 6.0, "n": 3, "acc": 100.0}, {"pct": 13.0, "n": 3, "acc": 100.0}, {"pct": 22.0, "n": 4, "acc": 100.0}, {"pct": 34.0, "n": 3, "acc": 100.0}, {"pct": 50.0, "n": 3, "acc": 100.0}, {"pct": 70.0, "n": 4, "acc": 100.0}, {"pct": 100.0, "n": 4, "acc": 100.0}], "wipe": [{"pct": 3.0, "n": 5, "acc": 60.0}, {"pct": 6.0, "n": 3, "acc": 66.7}, {"pct": 13.0, "n": 3, "acc": 100.0}, {"pct": 22.0, "n": 2, "acc": 100.0}, {"pct": 34.0, "n": 4, "acc": 100.0}, {"pct": 50.0, "n": 4, "acc": 75.0}, {"pct": 70.0, "n": 4, "acc": 100.0}, {"pct": 100.0, "n": 3, "acc": 100.0}]};
+const META = {"fade": {"label": "フェード", "desc": "不透明度を s（進み具合）でそのまま上げる", "chars": ["か", "つ"], "dir": null}, "reveal": {"label": "部分表示", "desc": "字ごとに固定したランダム順で、画素を1つずつ黒く塗り足す", "chars": ["が", "ま"], "dir": null}, "blur": {"label": "ぼかし解除", "desc": "ガウスぼかしの半径を s に応じて減らす（s=0で最大ぼかし、s=1で鮮明）", "chars": ["ぱ", "ら"], "dir": null}, "wipe": {"label": "ワイプ", "desc": "字のインクがある範囲だけを、左から右へ徐々に見せる", "chars": ["あ", "し"], "dir": "ltr"}};
+const SIZE = 256;
+
+// ---- 画像読み込み(data URIなのでcanvas読み出しもタイント無し) ----
+const imgs = {};
+function loadImg(ch){
+  return new Promise((res)=>{
+    const im = new Image();
+    im.onload = ()=>{ imgs[ch]=im; res(); };
+    im.src = "data:image/png;base64," + IMG_B64[ch];
+  });
+}
+
+// ---- transfer.js の4方式描画ロジックを移植(挙動は完全に同じ) ----
+function drawBlank(ctx){ ctx.fillStyle="#fff"; ctx.fillRect(0,0,SIZE,SIZE); }
+
+function hashSeed(str){ let h=2166136261; for(let i=0;i<str.length;i++){h^=str.charCodeAt(i); h=Math.imul(h,16777619);} return h>>>0; }
+function mulberry32(seed){ let a=seed>>>0; return function(){ a=(a+0x6D2B79F5)>>>0; let t=Math.imul(a^(a>>>15),1|a); t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; }; }
+const revealOrder = {};
+function revealPrepare(ch){
+  if(revealOrder[ch]) return revealOrder[ch];
+  const off=document.createElement("canvas"); off.width=SIZE; off.height=SIZE;
+  const octx=off.getContext("2d",{willReadFrequently:true});
+  octx.fillStyle="#fff"; octx.fillRect(0,0,SIZE,SIZE);
+  if(imgs[ch]) octx.drawImage(imgs[ch],0,0,SIZE,SIZE);
+  const px=octx.getImageData(0,0,SIZE,SIZE).data;
+  const th=128, idx=[];
+  for(let i=0;i<SIZE*SIZE;i++){
+    const lum=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
+    if(lum<=th) idx.push(i);
+  }
+  const rnd=mulberry32(hashSeed("stroke-mask:"+ch));
+  for(let i=idx.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=idx[i]; idx[i]=idx[j]; idx[j]=t; }
+  revealOrder[ch]=Uint32Array.from(idx);
+  return revealOrder[ch];
+}
+const revealState = {};
+function revealDraw(ctx, ch, s){
+  revealPrepare(ch);
+  if(!revealState[ch]){ revealState[ch]={shown:0, img:ctx.createImageData(SIZE,SIZE)}; revealState[ch].img.data.fill(255); }
+  const st = revealState[ch];
+  const order = revealOrder[ch];
+  const want = Math.round(order.length*Math.max(0,Math.min(1,s)));
+  const d = st.img.data;
+  if(want < st.shown){ d.fill(255); st.shown=0; }
+  for(let i=st.shown;i<want;i++){ const p=order[i]*4; d[p]=0; d[p+1]=0; d[p+2]=0; d[p+3]=255; }
+  st.shown = want;
+  ctx.putImageData(st.img,0,0);
+}
+
+const blurOffCache = {};
+function blurDraw(ctx, ch, s){
+  if(!blurOffCache[ch]){
+    const off=document.createElement("canvas"); off.width=SIZE; off.height=SIZE;
+    const octx=off.getContext("2d");
+    octx.fillStyle="#fff"; octx.fillRect(0,0,SIZE,SIZE);
+    if(imgs[ch]) octx.drawImage(imgs[ch],0,0,SIZE,SIZE);
+    blurOffCache[ch]=off;
+  }
+  const maxR=24;
+  const r = maxR*(1-Math.max(0,Math.min(1,s)));
+  drawBlank(ctx);
+  ctx.save();
+  ctx.filter = r>0.01 ? `blur(${r.toFixed(2)}px)` : "none";
+  ctx.drawImage(blurOffCache[ch],0,0,SIZE,SIZE);
+  ctx.restore();
+  ctx.filter="none";
+}
+
+const wipeBBox = {};
+function wipeBBoxPrepare(ch){
+  if(wipeBBox[ch]) return wipeBBox[ch];
+  const off=document.createElement("canvas"); off.width=SIZE; off.height=SIZE;
+  const octx=off.getContext("2d",{willReadFrequently:true});
+  octx.fillStyle="#fff"; octx.fillRect(0,0,SIZE,SIZE);
+  if(imgs[ch]) octx.drawImage(imgs[ch],0,0,SIZE,SIZE);
+  const px=octx.getImageData(0,0,SIZE,SIZE).data;
+  const th=128;
+  let xMin=SIZE,xMax=0,yMin=SIZE,yMax=0,found=false;
+  for(let y=0;y<SIZE;y++){ for(let x=0;x<SIZE;x++){
+    const i=y*SIZE+x;
+    const lum=0.299*px[i*4]+0.587*px[i*4+1]+0.114*px[i*4+2];
+    if(lum<=th){ found=true; if(x<xMin)xMin=x; if(x+1>xMax)xMax=x+1; if(y<yMin)yMin=y; if(y+1>yMax)yMax=y+1; }
+  }}
+  const bbox = found ? {xMin,xMax,yMin,yMax} : {xMin:0,xMax:SIZE,yMin:0,yMax:SIZE};
+  wipeBBox[ch]=bbox;
+  return bbox;
+}
+function wipeDraw(ctx, ch, s){
+  const p=Math.max(0,Math.min(1,s));
+  drawBlank(ctx);
+  if(!imgs[ch]) return;
+  const b=wipeBBoxPrepare(ch);
+  const w = b.xMin + (b.xMax-b.xMin)*p;
+  const rw=w, rh=SIZE, rx=0, ry=0;
+  if(rw<=0||rh<=0) return;
+  ctx.save(); ctx.beginPath(); ctx.rect(rx,ry,rw,rh); ctx.clip();
+  ctx.drawImage(imgs[ch],0,0,SIZE,SIZE);
+  ctx.restore();
+}
+
+function fadeDraw(ctx, ch, s){
+  drawBlank(ctx);
+  if(!imgs[ch]) return;
+  ctx.globalAlpha = Math.max(0,Math.min(1,s));
+  ctx.drawImage(imgs[ch],0,0,SIZE,SIZE);
+  ctx.globalAlpha=1;
+}
+
+const DRAW = { fade: fadeDraw, reveal: revealDraw, blur: blurDraw, wipe: wipeDraw };
+
+// ---- 折れ線グラフ(SVG、簡易) ----
+function buildChart(svg, points){
+  const W=320,H=140,padL=30,padR=10,padT=10,padB=20;
+  const xs = p => padL + (p.pct/100)*(W-padL-padR);
+  const ys = a => padT + (1-a.acc/100)*(H-padT-padB);
+  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">`;
+  // gridlines
+  [0,50,100].forEach(v=>{
+    const y = padT + (1-v/100)*(H-padT-padB);
+    s += `<line class="gridline" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
+    s += `<text class="axislabel" x="2" y="${y+3}">${v}</text>`;
+  });
+  s += `<line class="gridline" x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}"/>`;
+  const path = points.map((p,i)=> (i===0?"M":"L") + xs(p).toFixed(1) + "," + ys(p).toFixed(1)).join(" ");
+  s += `<path class="curve" d="${path}"/>`;
+  points.forEach(p=>{
+    s += `<circle class="pt" cx="${xs(p).toFixed(1)}" cy="${ys(p).toFixed(1)}" r="3"/>`;
+    s += `<text class="n" x="${xs(p).toFixed(1)}" y="${H-4}" text-anchor="middle">${p.pct}%</text>`;
+  });
+  s += `</svg>`;
+  svg.innerHTML = s;
+}
+
+// ---- 組み立て ----
+const grid = document.getElementById("grid");
+const families = ["fade","reveal","blur","wipe"];
+const state = {}; // family -> {ch, canvas, ctx, pctEl}
+
+Promise.all(Object.keys(IMG_B64).map(loadImg)).then(()=>{
+  families.forEach(fam=>{
+    const m = META[fam];
+    const card = document.createElement("div");
+    card.className = "card";
+    const chBtns = m.chars.map((c,i)=>`<button data-fam="${fam}" data-ch="${c}" class="${i===0?'active':''}">${c}</button>`).join("");
+    card.innerHTML = `
+      <h2><b>${m.label}</b><span style="font-size:11px;color:var(--muted)">(${fam})</span></h2>
+      <p class="desc">${m.desc}</p>
+      <div class="row">
+        <div class="stimwrap">
+          <canvas id="cv-${fam}" width="${SIZE}" height="${SIZE}"></canvas>
+          <div class="pctlabel" id="pct-${fam}">0%</div>
+          <div class="charbtns">${chBtns}</div>
+        </div>
+        <div class="chartarea"><div id="chart-${fam}"></div></div>
+      </div>`;
+    grid.appendChild(card);
+    const canvas = document.getElementById(`cv-${fam}`);
+    state[fam] = { ch: m.chars[0], canvas, ctx: canvas.getContext("2d"), pctEl: document.getElementById(`pct-${fam}`) };
+    buildChart(document.getElementById(`chart-${fam}`), ACC[fam]);
+    card.querySelectorAll(".charbtns button").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        card.querySelectorAll(".charbtns button").forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        state[fam].ch = b.dataset.ch;
+      });
+    });
+  });
+
+  // ---- アニメーションループ ----
+  let t0 = performance.now();
+  function frame(now){
+    const playing = document.getElementById("playToggle").checked;
+    const period = Number(document.getElementById("speed").value);
+    if(playing){
+      const el = (now - t0) % (period*1.4); // 1.4周ぶんで「満了→白紙に戻る間」を作る
+      const s = Math.max(0, Math.min(1, el/period));
+      families.forEach(fam=>{
+        const st = state[fam];
+        DRAW[fam](st.ctx, st.ch, s);
+        st.pctEl.textContent = Math.round(s*100) + "%";
+      });
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+});
+
+document.getElementById("speed").addEventListener("input", (e)=>{
+  document.getElementById("speedVal").textContent = e.target.value + "ms";
+});
+</script>
+</body></html>

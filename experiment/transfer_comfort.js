@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.10";
+const VERSION = "c1.11";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
@@ -1253,34 +1253,6 @@ function visionCheck() {
   document.getElementById("go3").onclick = () => { resuming ? showClip() : intro(); };
 }
 
-// 折りたたみ（「研究の説明を読む」）の中に足す3項目
-// ——データの保管期間・同意の撤回・問い合わせ先。
-// **transfer.js の同名の関数と同じ中身にしておくこと**（片方だけ直さない）。
-// 値は transfer_config.js の contact にあり、掲載前にユーザーが【要確認】を埋める。
-function consentExtraHTML() {
-  const c = CFG.contact || {};
-  const viaCs = c.via_crowdsourcing
-    ? "、または応募元の募集サイトのメッセージ機能" : "";
-  // 音声課題（G.mode === "audio"）のときだけ、使用している合成音声のクレジットを足す。
-  // transfer_comfort.js（群C）は音声を使わないので、この行は出ない。
-  // G が無い/未設定でも例外にならないよう typeof で守る（transfer_comfort.js には G 自体が無い）。
-  const isAudio = (typeof G !== "undefined") && G && G.mode === "audio";
-  const creditLi = isAudio
-    ? `<li><b>音声について</b>：この課題の音声には、COEIROINKの音声ライブラリ「あみたろ」を
-        利用しています（COEIROINK:あみたろ）。</li>`
-    : "";
-  return `
-    <li><b>データの保管</b>：${c.retention || "【要確認：保管期間】"}
-        保管するのは回答と技術情報だけで、個人を特定できる情報は含みません。</li>
-    <li><b>同意の撤回</b>：この調査は<b>無記名</b>で行うため、回答とあなたご本人を
-        結びつける情報を研究者は持っていません。参加をやめたい場合は、
-        完了コードが表示される前ならブラウザを閉じるだけで結構です（記録は分析に使いません）。
-        提出後に削除をご希望のときは、<b>お手元の完了コード</b>を添えて下記へご連絡ください。
-        そのコードで記録を特定できた場合にかぎり削除します。</li>
-    <li><b>問い合わせ先</b>：${c.pi || "【要確認：研究責任者】"}
-        （${c.institution || "津田塾大学 栗原研究室"}）／
-        ${mailLink(c.email)}${viaCs}へご連絡ください。</li>${creditLi}`;
-}
 
 // メールアドレスを、押せばメーラーが開くリンクにする。
 // 迷惑メールよけに「[at]」と崩す書き方は**採らない**（クラウドソーシングの参加者が
@@ -1293,47 +1265,51 @@ function mailLink(addr) {
   return `<a href="mailto:${a}">${a}</a>`;
 }
 
-// 同意画面を「最初に見えるのは要点だけ・くわしい説明は折りたたみの中」に組み替える
-// （transfer.js と同じ手当て。判断の理由と注意はそちらのコメントに詳しく書いてある）。
-// prod_common.js は実験1と共用なので触らず、描かれたあとにこのページの中だけで直す。
+// 同意画面を**1画面に収まる最小限**にする。
+// **prod_common.js は実験1と共用なので触らない**——描かれたあとに、この実験の
+// ページの中だけで直す。
+//
+// **なぜここまで削るのか（2026-08-24 の判断）。**
+// 参加者を募る Yahoo!クラウドソーシングは、タスク説明文に「回答の利用目的・データの
+// 管理方法・プライバシー保護」と「掲載者の問い合わせ先」を書くことを求めている。
+// つまり応募する前に、募集ページで説明を読んでもらう仕組みになっている。
+// **研究の説明はそちらが本体**であり、同じ説明を課題の1画面目で繰り返す意味がない
+// （実測で聴覚906字あった。読まずに離脱する人が増えるだけである）。
+// ここに残すのは「募集ページの内容に同意して始める」ことの確認だけにする。
+//
+// **1画面に収めること。** 最初の画面でスクロールが要ると、それだけで離脱する人がいる。
+// スマートフォンの縦画面（375×667・360×640）でも、機器の選択とボタンまで含めて
+// 画面内に入るよう、transfer.css の .consent-min で余白と文字の大きさを詰めてある。
+//
+// 残すもの: リード文／「募集ページに記載した内容にご同意のうえ、開始してください」／
+//           問い合わせ先／実施主体／音の再生機器の選択（聴覚のみ）／同意して始める
+//
+// ⚠ **要素を消さずに組み替えること。** 「同意して始める」ボタン（#cstGo）と
+//   音の再生機器のラジオ（input[name="dev"]）には prod_common.js と transfer.js が
+//   リスナーを付けている。innerHTML で作り直すとリスナーが消え、ボタンを押しても
+//   何も起きなくなる。**必ず appendChild で移すこと。**
 function tidyConsentScreen() {
   const h1 = screenEl.querySelector("h1");
   if (h1 && h1.textContent.indexOf("ご協力") >= 0) h1.remove();
-  const items = [...screenEl.querySelectorAll("li")];
-  const rec = items.find(li => li.textContent.indexOf("記録するもの") >= 0);
-  const resume = items.find(li => li.textContent.indexOf("途中再開") >= 0);
-  const age = items.find(li => li.textContent.indexOf("参加できる方") >= 0);
-  // 「中断して開き直した場合」の一文は、再開の項目そのものが出ない研究者モードでも足す。
-  // ここを `rec && resume` にしていたせいで、研究者モードだけこの65字が消え、
-  // 本番と表示が食い違っていた（2026-08-24 に修正）。
-  if (rec) {
-    rec.insertAdjacentHTML("beforeend",
-      "中断して開き直した場合は、再開した回数と中断していた時間も記録します" +
-      "（進行状況の控えは、お使いのブラウザの中にだけ保存されます）。");
-  }
-  if (resume) resume.remove();
-  // 年齢の条件は折りたたみの外（要点）に出すので、中からは消す（二重に出さない）。
-  if (age) age.remove();
-  const ul = rec ? rec.parentElement : screenEl.querySelector("ul");
-  if (!ul) return;
+  // prod_common.js が書いた説明の箇条書きは**まるごと消す**（募集ページが本体）。
+  const ul = screenEl.querySelector("ul");
+  if (ul) ul.remove();
   const c = CFG.contact || {};
-  // 折りたたみを作り、prod_common.js が書いた項目をそのまま中へ移す。
-  // <details> は JavaScript なしで開閉するので、開閉の処理は書かなくてよい。
-  const det = document.createElement("details");
-  det.className = "consent-more";
-  det.innerHTML = '<summary>研究の説明を読む</summary><ul></ul>';
-  const full = det.querySelector("ul");
-  while (ul.firstChild) full.appendChild(ul.firstChild);
-  full.insertAdjacentHTML("beforeend", consentExtraHTML());
-  // 折りたたみの外に出す要点。ここに書いた以上のことは、すべて折りたたみの中にある。
-  ul.innerHTML = `
-    <li>18歳以上の方が参加いただけます。</li>
-    <li>回答と端末の情報（画面の大きさなど）を記録します。氏名やメールアドレスなど、
-        個人を特定できる情報は記録しません。</li>
-    <li>募集ページに記載した説明にご同意のうえ、開始してください。</li>
-    <li>お問い合わせ：${c.pi || "【要確認：研究責任者】"}
-        （${c.institution || "津田塾大学 栗原研究室"}）／${mailLink(c.email)}</li>`;
-  ul.insertAdjacentElement("afterend", det);
+  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す2行だけを足す。
+  const add = document.createElement("p");
+  add.innerHTML =
+    "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
+    `<span class="c-contact">お問い合わせ：${c.pi || "【要確認：研究責任者】"}` +
+    `　${mailLink(c.email)}</span>`;
+  const lead = screenEl.querySelector("p");
+  if (lead) lead.insertAdjacentElement("afterend", add);
+  else screenEl.insertBefore(add, screenEl.firstChild);
+  // 1画面に収めるための入れ物。**要素は移すだけにすること**——作り直すと
+  // ボタンと機器のラジオのリスナーが消えて、押しても何も起きなくなる。
+  const box = document.createElement("div");
+  box.className = "consent-min";
+  while (screenEl.firstChild) box.appendChild(screenEl.firstChild);
+  screenEl.appendChild(box);
 }
 
 // =========================================================================
@@ -1343,13 +1319,15 @@ function blockedScreen(reason, info) {
   const already = (reason === "already_participated" || reason === "already_in_calib" ||
                    reason === "already_in_test" || reason === "already_in_other_phase");
   const canRetry = !already;
-  screenEl.innerHTML = `<h1>${already ? "この実験にはご参加いただけません" : "接続できませんでした"}</h1>
+  // 重複参加のときは**見出しを出さない**。「ご参加いただけません」と大きく出すより、
+  // 感謝から始めたほうが、弾かれた人が不快になりにくい（2026-08-24 ユーザー判断）。
+  // 接続できなかっただけのときは、これまでどおり見出しを出す。
+  screenEl.innerHTML = `${already ? "" : "<h1>接続できませんでした</h1>"}
     ${already ? `
-    <p>ありがとうございます。ただ、この実験は<b>以前の関連実験に参加していない方のみ</b>を対象としています。
-    記録を確認したところ、あなたはすでに関連する実験にご参加いただいているため、
-    今回はご協力いただけません。</p>
-    <p>この作業は<b>お受け取りいただかず（辞退して）ページを閉じてください</b>。
-    <b>以前ご参加いただいた分の報酬には影響しません</b>。重ねてお礼申し上げます。</p>`
+    <p>ご参加いただきありがとうございます。</p>
+    <p>確認したところ、以前の関連実験にご参加いただいていたため、今回は対象外となります。</p>
+    <p>恐れ入りますが、このままページを閉じていただけますと幸いです。<br>
+    以前の実験の報酬には影響ございません。</p>`
     : `<p>ただいまサーバに接続できませんでした。通信の一時的な不調のことが多いので、
     <b>下のボタンでもう一度お試しください</b>。</p>
     <p>何度試しても同じ場合は、お手数ですがこの作業は辞退してページを閉じてください。
