@@ -164,8 +164,7 @@ window.TRANSFER_CONFIG = {
   //   is_test の行を外すので、集計が 0 件になって初めて気づくことになる。
   //   掲載前チェックリストの最初の項目（0-1）で、**配信中のファイル**を見て
   //   false であることを確かめること。手元のファイルではなく実物を見る:
-  //     curl -s https://g19922ma.github.io/iFont/experiment/transfer_config.js \
-  //       | grep -n "pre_launch"
+  //     curl -s https://kana-task.web.app/transfer_config.js | grep -n "pre_launch"
   //     # → pre_launch: false,  でなければ掲載しない
   //
   // 逆に、掲載が終わって追加の動作確認をするときは true に戻してよい

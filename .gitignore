@@ -40,3 +40,8 @@ firebase/service-account*.json
 *-firebase-adminsdk-*.json
 .firebase/
 firebase-debug.log
+
+# Firebase Hosting に上げるファイルを集めた置き場。
+# experiment/tools/build_hosting.sh が作り直すだけのもので、中身はすべて
+# experiment/ からのコピーなので git には入れない(音声約7MBの二重管理を避ける)。
+hosting_dist/
