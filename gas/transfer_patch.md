@@ -121,7 +121,7 @@ function handleTransferWellbeing(sheetId, body) {
 //   GET <exec>?action=transfer_status&phase=calib&participant_id=xxx&worker_id=yyy
 //   → {"status":"ok","group":"acal","assign_index":12}
 //   → 既に前のフェーズに参加している人には {"status":"ok","blocked":true,"reason":"already_in_calib"}
-const TRANSFER_PHASE_GROUPS = { calib: ["acal", "aprime"], test: ["atest", "b"] };
+const TRANSFER_PHASE_GROUPS = { calib: ["acal", "aprime", "aprime"], test: ["b"] };  // 2026-08-24: atest 廃止／較正は1:2
 
 function doGet(e) {
   const p = (e && e.parameter) || {};

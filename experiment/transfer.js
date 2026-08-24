@@ -2,23 +2,27 @@
 // 転写検証実験 v3.0 (共通スクリプト。入口は transfer_calib.html / transfer_test.html)
 //   計画書: project/実験計画書_転写検証.md (第2稿。特に4章「実験の構成」と10章「実装(差分)」)
 //
-//   参加者の集団は5つある。**このファイルが受け持つのは、そのうち4つ**である。
+//   参加者の集団は4つある。**このファイルが受け持つのは、そのうち3つ**である。
 //     acal   … 較正(聴覚)。音声を打ち切って聞かせ、かな表から回答してもらう
 //     aprime … 較正(視覚)。4方式の基準アニメを、進み具合 s% で打ち切る
-//     atest  … 検証(聴覚)。acal と全く同じ課題を、別の人にもう一度
 //     b      … 検証(視覚)。生成した進み方 s(t) のアニメを t ms で打ち切る
 //              (**識別課題だけで終わる**。見え心地の評価は 2026-08-21 に切り離した)
 //     c      … 見え心地(独立の実験)。**このファイルではなく**
 //              experiment/transfer_comfort.html / transfer_comfort.js が受け持つ。
 //              群Bの末尾で聞く旧方式に戻したいときだけ、下の wellbeing を true にする
 //
-//   ただし**入口のURLは2つだけ**にしてある(同時期に走る集団を1つの掲載にまとめ、
-//   サイトの中で自動的に振り分ける)。クラウドソーシングでは別々の掲載どうしで
-//   「どちらか片方にしか参加できない」を強制できないため、同時期の集団は
-//   1つの入口に統合し、参加者IDごとに1つの集団へ割り当てる。
+//   ■ 2026-08-24: 検証用の音声集団(atest = acal と同じ聴覚課題を別の人にもう一度)を
+//     **廃止した**(丸山決定)。検証フェーズは群Bだけになり、検証の比較相手は
+//     群Acal の曲線(＝生成に与えた目標プロファイル)に一本化した。群Bの参加者は生成に
+//     一切関与していないので、この比較でも「生成に関わっていない集団での検証」として
+//     成立する。理由の全文は project/相談_Atestは必要か.md と計画書 4.1・Q1・Q15。
+//
+//   入口のURLは3つある。較正フェーズだけは2集団が同時期に走るので、1つの掲載に
+//   まとめてサイトの中で自動的に振り分ける。クラウドソーシングでは別々の掲載どうしで
+//   「どちらか片方にしか参加できない」を強制できないためである。
 //     transfer_calib.html … 較正フェーズ: acal と aprime に自動で振り分け
-//     transfer_test.html  … 検証フェーズ: atest と b に自動で振り分け
-//   フェーズ間(較正→検証)の重複は、サーバの参加者名簿と照合して断る(4集団は互いに独立)。
+//     transfer_test.html  … 検証フェーズ: b のみ(振り分けは起きない)
+//   フェーズ間の重複は、サーバの参加者名簿と照合して断る(4集団は互いに独立)。
 //   割り当ての決め方は resolveAssignment() を参照。
 //
 //   実験パラメータ(字・時点・水準・割付・比率)は experiment/transfer_config.js に
@@ -29,8 +33,8 @@
 //   完了コード・途中再開は prod_common.js の部品をそのまま使う。
 //   ただし土台は1人が聴覚と視覚の両方をやる統合セッションだったのに対し、この実験は
 //   1人が片方だけをやる。そのため**準備の画面は集団ごとに出し分ける**。
-//     聴覚(acal / atest): 同意(再生機器の申告あり) → 音量の確認 → 聴覚の説明と練習
-//     視覚(aprime / b)  : 同意(明るさの案内あり)   → 見え方の確認 → 視覚の説明と練習
+//     聴覚(acal)      : 同意(再生機器の申告あり) → 音量の確認 → 聴覚の説明と練習
+//     視覚(aprime / b): 同意(明るさの案内あり)   → 見え方の確認 → 視覚の説明と練習
 //   計画書10章の差分として変えたのは次の4点。
 //     1. 聴覚の打ち切りが「割合(frac%)」から「音の実体の開始からの絶対ms」になった。
 //        刺激は事前に打ち切って作った WAV を配信する(生成: tools/build_transfer_gates.py)。
@@ -45,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.9";
+const VERSION = "3.10";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -67,9 +71,11 @@ if (!(window.PROD && PROD.enabled)) {
 //             切り離した理由は transfer_comfort_config.js の冒頭にある。
 //             群Bの末尾で聞く形に戻したいときは transfer_config.js の
 //             wellbeing.in_group_b を true にする(この行は触らない)。
+//
+// 2026-08-24: 検証用の音声集団 atest を廃止したので、この表からも外した
+// （聴覚課題は較正フェーズの acal だけになった）。
 const GROUPS = {
   acal:   { mode: "audio",  label: "聴覚",   task_label: "かなの聞き取り" },
-  atest:  { mode: "audio",  label: "聴覚",   task_label: "かなの聞き取り" },
   aprime: { mode: "visual", label: "視覚", play: "calib", task_label: "かなの見分け" },
   b:      { mode: "visual", label: "視覚", play: "warp",  task_label: "かなの見分け", wellbeing: CFG.wellbeing.in_group_b === true },
 };
@@ -974,16 +980,41 @@ function buildAudioTrials() {
   return shuffle(cells);
 }
 
-// 視覚(群A′ / 群B)。1人の参加者は、1つの字を1つの方式(群B は1つの条件)でだけ見る。
-// どの字にどれを当てるかは参加者の連番から決める(釣り合いは集団全体で取る)。
-function comboForChar(charIndex) {
-  if (GROUP === "aprime") {
-    const fams = CFG.assignment.aprime_families;
-    return { family: fams[(charIndex + ASSIGN) % fams.length], condition: "calib" };
+// 視覚(群A′ / 群B)。1人の参加者が担当する「字 × 方式(群B は条件)」の一覧を返す。
+// どの字にどれを当てるかは参加者の連番から決める(乱数は使わない。同じ人が途中で
+// 閉じて開き直しても同じ割付に戻る)。釣り合いは集団全体で取る。
+//
+//   群B  : **8字すべて**。字ごとに条件を1つ。
+//   群A′ : **8字のうち4字**。1字につき1方式で、4方式がちょうど1つずつ当たる。
+//          2026-08-24 に「8字 × 1方式」からこの形に変えた。RQ4 の速さ2水準を
+//          4方式すべてに広げても、1人あたりの問題数が増えないようにするためである
+//          (詳しい算数は transfer_config.js の assignment の注記)。
+//
+// 戻り値の各要素: { index, char, family, condition }
+function assignedCombos() {
+  const n = Math.max(0, Math.round(ASSIGN) || 0);
+  if (GROUP !== "aprime") {
+    const conds = CFG.conditions;
+    const step = CFG.assignment.b_step || 1;
+    return TARGETS.map((ch, i) => {
+      const c = conds[(i * step + n) % conds.length];
+      return { index: i, char: ch, family: c.family, condition: c.condition };
+    });
   }
-  const conds = CFG.conditions;
-  const step = CFG.assignment.b_step || 1;
-  return conds[(charIndex * step + ASSIGN) % conds.length];
+  const fams = CFG.assignment.aprime_families;
+  const nf = fams.length;
+  // 字を方式の数だけの束に分ける。8字・4方式なら stride = 2 で、
+  // 連番が偶数の人は 0,2,4,6 番目の字、奇数の人は 1,3,5,7 番目の字を担当する。
+  const stride = Math.max(1, Math.floor(TARGETS.length / nf));
+  const offset = n % stride;                    // どの束を担当するか
+  const rot = Math.floor(n / stride) % nf;      // 方式の回し量
+  const out = [];
+  for (let k = 0; k < nf; k++) {
+    const i = k * stride + offset;
+    if (i >= TARGETS.length) break;
+    out.push({ index: i, char: TARGETS[i], family: fams[(k + rot) % nf], condition: "calib" });
+  }
+  return out;
 }
 
 // 聴覚で使う打ち切り時刻ms。下見のあいだだけ、設定で足した早い時点を混ぜる
@@ -997,7 +1028,7 @@ function audioGates(ch) {
 }
 
 // RQ4 の測定(transfer_config.js の visual.calib_speed_probe)。
-// 群A′の決められた方式(既定はフェード)にかぎり、基準アニメの速さを2通り出して
+// 群A′の決められた方式(2026-08-24 から**4方式すべて**)で、基準アニメの速さを2通り出して
 // 「同じ進み具合 s でも、そこへ着くまでの速さで正答率が変わるか」を測る。
 // 較正フェーズのあいだはずっと入れておく(下見は予備・本番の群A′が本答え)。
 // 生成(warp)に使う視覚の曲線は generation_level_ms の水準だけと事前に決めてあり、
@@ -1007,8 +1038,8 @@ function audioGates(ch) {
 // **参加者ごとに、薄い側の水準をまとめて少しずらす**(transfer_config.js の
 // visual.progress_pct_shift)。ずらし量は参加者の連番から決まるので、
 // 同じ人が途中で閉じて再開しても同じ並びになる(乱数は使わない)。
-// 全員が同じ8水準だと測れる s も8個しかないが、3通りにずらすと集団全体では
-// 1.0〜9.5% を 0.5% 刻みで埋められる。設定を切れば設定の並びがそのまま出る。
+// 全員が同じ5水準だと測れる s も5個しかないが、3通りにずらすと集団全体では
+// 1.0〜7.0% を 0.75% 刻みで埋められる。設定を切れば設定の並びがそのまま出る。
 function progressLevels() {
   const base = CFG.visual.progress_pct_levels.slice().sort((a, b) => a - b);
   const sh = CFG.visual.progress_pct_shift;
@@ -1016,37 +1047,43 @@ function progressLevels() {
   const k = ((Math.round(ASSIGN) % sh.count) + sh.count) % sh.count;   // 連番 → 0..count-1
   const d = k * sh.step_pct;
   const n = Math.max(0, Math.min(Number(sh.apply_to_lowest) || 0, base.length));
-  // 0.1% 単位に丸める(0.5 の足し算で 4.300000000000001 のような値が記録に残らないように)。
-  return base.map((v, i) => (i < n ? Math.round((v + d) * 10) / 10 : v));
+  // 0.01% 単位に丸める(0.75 の足し算で 4.750000000000001 のような値が記録に残らないように)。
+  // 0.1 単位だと 1.75 が 1.8 に化けて、狙った等間隔の格子が崩れる。
+  return base.map((v, i) => (i < n ? Math.round((v + d) * 100) / 100 : v));
 }
 
 function speedProbe() {
   const p = CFG.visual.calib_speed_probe;
   return (p && p.enabled && p.base_anim_ms_levels && p.base_anim_ms_levels.length > 1) ? p : null;
 }
+// この方式で速さを2通り出すか。設定の families に名前があれば出す
+// (families が空/未設定なら全方式で出す。1方式に絞りたいときは要素1つの配列にする)。
 function speedsFor(family) {
   const p = speedProbe();
-  if (!p || GROUP !== "aprime" || family !== p.family) return [CFG.visual.base_anim_ms];
+  if (!p || GROUP !== "aprime") return [CFG.visual.base_anim_ms];
+  const fams = p.families;
+  if (fams && fams.length && fams.indexOf(family) < 0) return [CFG.visual.base_anim_ms];
   return p.base_anim_ms_levels.slice();
 }
 
 function buildVisualTrials() {
+  // その参加者が担当する「字 × 方式(条件)」。群A′は4組、群Bは8組。
+  const combos = assignedCombos();
   let cells = [];
   for (let rep = 0; rep < CFG.design.reps; rep++) {
-    TARGETS.forEach((ch, i) => {
-      const c = comboForChar(i);
+    combos.forEach(c => {
       if (GROUP === "aprime") {
         // 速さの水準ぶんだけ繰り返す(RQ4 の測定を切ってあれば1通りだけ)。
         speedsFor(c.family).forEach(baseMs => {
           progressLevels().forEach(pct => {
-            cells.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
+            cells.push({ mod: "visual", play: "calib", char: c.char, family: c.family, condition: "calib",
                          progress_pct: pct, gate_ms: null, is_filler: false, check_kind: "",
                          base_anim_ms: baseMs });
           });
         });
       } else {
-        gatesFor(CFG.visual.gates_ms, ch).forEach(g => {
-          cells.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
+        gatesFor(CFG.visual.gates_ms, c.char).forEach(g => {
+          cells.push({ mod: "visual", play: "warp", char: c.char, family: c.family, condition: c.condition,
                        progress_pct: null, gate_ms: g, is_filler: false, check_kind: "" });
         });
       }
@@ -1057,7 +1094,6 @@ function buildVisualTrials() {
 
   // まぎれ字。方式・条件は、その参加者が担当している組合せから借りる
   // (まぎれ字だけ見え方が違うと「これは本命ではない」と気づかれるため)。
-  const combos = TARGETS.map((_, i) => comboForChar(i));
   const gateList = gatesFor(CFG.visual.gates_ms, "_default");
   const nFiller = Math.round(cells.length * CFG.design.filler_ratio);
   for (let i = 0; i < nFiller; i++) {
@@ -1078,9 +1114,10 @@ function buildVisualTrials() {
   const minGate = Math.min(...gateList);
   const minPct = Math.min(...progressLevels());
   const mk = (kind) => {
-    const i = Math.floor(Math.random() * TARGETS.length);
-    const c = comboForChar(i);
-    const base = { mod: "visual", char: TARGETS[i], family: c.family, condition: c.condition,
+    // 確認問題も、その参加者が担当している字・方式の中から出す
+    // (担当していない組合せを混ぜると、本命と見え方の違う問題になってしまう)。
+    const c = pick(combos);
+    const base = { mod: "visual", char: c.char, family: c.family, condition: c.condition,
                    is_filler: false, check_kind: kind };
     if (GROUP === "aprime") {
       // 確認問題は「いつもの速さ」に固定する(操作チェックの基準を1つに保つため)。
@@ -1100,13 +1137,12 @@ function buildTryout() {
   if (G.mode === "audio") {
     return { mod: "audio", char: pick(TARGETS), gate_ms: null, is_filler: false, check_kind: "", practice: true };
   }
-  const i = Math.floor(Math.random() * TARGETS.length);
-  const c = comboForChar(i);
+  const c = pick(assignedCombos());
   if (GROUP === "aprime") {
-    return { mod: "visual", play: "calib", char: TARGETS[i], family: c.family, condition: "calib",
+    return { mod: "visual", play: "calib", char: c.char, family: c.family, condition: "calib",
              progress_pct: 100, gate_ms: null, is_filler: false, check_kind: "", practice: true };
   }
-  return { mod: "visual", play: "warp", char: TARGETS[i], family: c.family, condition: c.condition,
+  return { mod: "visual", play: "warp", char: c.char, family: c.family, condition: c.condition,
            progress_pct: null, gate_ms: null, is_filler: false, check_kind: "", practice: true };
 }
 
@@ -1733,7 +1769,7 @@ async function playSample() {
     _nodes.push(s);
   });
 }
-// 音量の確認。**聴覚の集団(acal / atest)だけ**が通る画面。
+// 音量の確認。**聴覚の集団(acal)だけ**が通る画面。
 function volumeCheck() {
   const resuming = !!(resumeState && resumeState.trials);
   const mobileNote = ENV.touch
@@ -1907,7 +1943,7 @@ async function startSession() {
   await preload();
   // 研究者モード(?prod なし)でも本番と同じ流れ。送信と途中保存だけが無効。
   // 説明文・機器の申告・環境の案内は、割り当てられた集団に合うものだけを出す。
-  //   聴覚(acal/atest): 再生機器の申告あり → このあと「音量の確認」だけ
+  //   聴覚(acal)      : 再生機器の申告あり → このあと「音量の確認」だけ
   //   視覚(aprime/b)  : 機器の申告なし・明るさの案内あり → このあと「見え方の確認」だけ
   const isAudio = (G.mode === "audio");
   // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、

@@ -11,7 +11,7 @@
   50.0
  ],
  "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。各ファイルは onset の lead_ms 手前から始まるので、刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
- "config_version": "prov-2026-08-24",
+ "config_version": "prov-2026-08-24b",
  "salted": false,
  "count": 544,
  "items": {

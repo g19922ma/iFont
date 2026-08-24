@@ -113,10 +113,34 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
 
 // ---- 3. 設定の筋 ----------------------------------------------------------
 {
-  const known = { fade: 1, reveal: 1, blur: 1, wipe: 1 };
+  // "step"(ステップ表示)は 2026-08-24 に足した5つ目の見せ方。独立した描画器を持たず、
+  // フェードの描画器に進み具合0か1を渡すだけなので、visual.families に描画パラメータは無い。
+  // どの描画器を借りるかは transfer_comfort_config.js の family_renderer にある。
+  const known = { fade: 1, reveal: 1, blur: 1, wipe: 1, step: 1 };
+  const rendererMap = C.family_renderer || {};
   for (const f of C.families) {
     if (!known[f]) bad(`transfer_comfort_config.js の families に知らない方式 "${f}" がある`);
-    if (!CFG.visual.families[f]) bad(`transfer_config.js の visual.families に "${f}" の描画パラメータが無い`);
+    const drawnBy = rendererMap[f] || f;
+    if (!CFG.visual.families[drawnBy]) {
+      bad(`transfer_config.js の visual.families に "${drawnBy}" の描画パラメータが無い`
+          + (drawnBy === f ? "" : `（"${f}" が借りようとしている描画器）`));
+    }
+  }
+  // 方式ごとに提示のしかたを絞る表の筋を見る。
+  for (const [f, only] of Object.entries(C.presentations_by_family || {})) {
+    if (C.families.indexOf(f) < 0) {
+      bad(`presentations_by_family に、families に無い方式 "${f}" が書いてある`);
+    }
+    for (const p of (only || [])) {
+      if (C.presentations.indexOf(p) < 0) {
+        bad(`presentations_by_family["${f}"] の "${p}" が presentations に無い`);
+      }
+    }
+    if (!(only || []).length) bad(`presentations_by_family["${f}"] が空。1つ以上書くこと`);
+  }
+  // 最後の質問1は方式の数だけ選択肢が要る。
+  for (const f of C.families) {
+    if (!C.choice.family.labels[f]) bad(`choice.family.labels に "${f}" の説明が無い`);
   }
   const chars = [...new Set([C.single_char].concat(C.sequence))];
   for (const ch of chars) {
@@ -162,8 +186,17 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
   }
 
   // ---- 本数と所要のめやす --------------------------------------------------
-  const n = C.presentations.length * C.families.length;
-  ok(`提示は ${C.families.length}方式 × ${C.presentations.length}通りの出し方 = ${n}本` +
+  // 方式ごとに提示のしかたを絞れるので、掛け算ではなく1本ずつ数える。
+  const presFor = (f) => {
+    const only = (C.presentations_by_family || {})[f];
+    return (only && only.length) ? C.presentations.filter(p => only.indexOf(p) >= 0)
+                                 : C.presentations;
+  };
+  const clips = [];
+  for (const f of C.families) for (const p of presFor(f)) clips.push({ family: f, presentation: p });
+  const n = clips.length;
+  const breakdown = C.families.map(f => `${f}×${presFor(f).length}`).join(" ＋ ");
+  ok(`提示は ${n}本（${breakdown}）` +
      `（7件法${C.items.length}項目 → ${n * C.items.length}回の回答 ＋ 最後の2問）`);
   const cycSingle = anim + C.timing.single.hold_ms + C.timing.single.gap_ms;
   const cycSeq = C.sequence.length * soa + C.timing.sequence.hold_ms + C.timing.sequence.gap_ms;
@@ -171,9 +204,12 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
      `5字条件 ${(cycSeq / 1000).toFixed(1)}秒`);
   // 所要 = 前置き100秒 ＋ 1本目の慣れ15秒 ＋ 各本(1周見る時間 ＋ 回答12秒)
   //        ＋ 最後の2問70秒 ＋ 完了画面15秒。
-  const nSingle = (C.presentations.indexOf("single") >= 0) ? C.families.length : 0;
+  const nSingle = clips.filter(c => c.presentation === "single").length;
   const nSeq = n - nSingle;
-  const est = 100 + 15 + nSingle * (cycSingle / 1000 + 12) + nSeq * (cycSeq / 1000 + 12) + 70 + 15;
+  // 最後の2問: 現れ方の見くらべは選択肢の数に比例して伸びる（1つあたり約14秒）＋
+  // 出し方の見くらべ約14秒。以前は4択のときの実測から70秒と置いていた。
+  const lastQ = C.families.length * 14 + 14;
+  const est = 100 + 15 + nSingle * (cycSingle / 1000 + 12) + nSeq * (cycSeq / 1000 + 12) + lastQ + 15;
   ok(`所要のめやす: 約 ${Math.round(est / 60 * 10) / 10} 分（同意から完了コードまで）`);
 }
 

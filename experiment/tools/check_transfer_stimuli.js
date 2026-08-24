@@ -226,7 +226,7 @@ function countTrialsByRunningPage() {
   try { counts = countTrialsByRunningPage(); }
   catch (e) { bad(`transfer.js を読み込んで出題を数えられなかった: ${e.message}`); }
   if (counts) {
-    const label = { acal: "聴覚(acal/atest)", aprime: "視覚較正(aprime)", b: "視覚検証(b)" };
+    const label = { acal: "聴覚(acal)", aprime: "視覚較正(aprime)", b: "視覚検証(b)" };
     for (const g of ["acal", "aprime", "b"]) {
       const c = counts[g];
       ok(`${label[g]} は1人あたり ${c.total} 問`
@@ -240,16 +240,17 @@ function countTrialsByRunningPage() {
     } else {
       ok("「課題の進め方」画面の問題数は、実際に組み立てた出題を数えて出している");
     }
-    // 掲載は「フェーズごとに1本」なので、幅もフェーズごとに出す
-    //   較正フェーズの掲載 = acal と aprime のどちらかに割り当たる
-    //   検証フェーズの掲載 = atest（＝acal と同じ課題）と b のどちらか
+    // 掲載は「フェーズごとに1本」なので、フェーズごとに出す。
+    //   較正フェーズの掲載 = acal と aprime のどちらかに割り当たる（だから幅で書く）
+    //   検証フェーズの掲載 = b だけ（2026-08-24 に atest を廃止したので幅は要らない）
     const span = (gs) => {
       const v = gs.map(g => counts[g].total);
-      return `${Math.min(...v)}〜${Math.max(...v)}問`;
+      return (Math.min(...v) === Math.max(...v))
+        ? `${v[0]}問` : `${Math.min(...v)}〜${Math.max(...v)}問`;
     };
-    ok(`掲載文に書く問題数の幅: 較正フェーズ 約${span(["acal", "aprime"])} ／ `
-       + `検証フェーズ 約${span(["acal", "b"])}`
-       + "（集団によって違うので、掲載文は1本に幅で書く）");
+    ok(`掲載文に書く問題数: 較正フェーズ 約${span(["acal", "aprime"])}`
+       + "（集団によって違うので幅で書く） ／ "
+       + `検証フェーズ ${span(["b"])}（群Bだけなので幅は無い）`);
   }
 }
 

@@ -5,7 +5,7 @@
 > `gas/code.gs` 基準）の内容だった。完了コードの桁数・問題数・保存先・回答UIなど
 > ほぼすべての数値が転写検証実験とは異なるため、全面的に書き直した。**
 >
-> - 対象実験: 転写検証実験（`experiment/transfer_calib.html` / `transfer_test.html` = 群 acal・atest・aprime・b、
+> - 対象実験: 転写検証実験（`experiment/transfer_calib.html` / `transfer_test.html` = 群 acal・aprime・b、
 >   `experiment/transfer_comfort.html` = 群 C）
 > - 実装根拠: `experiment/prod_common.js`（完了コード生成・同意画面・完了画面の共通部品）、
 >   `experiment/transfer.js`・`experiment/transfer_comfort.js`（群ごとの記録・完走レコード）、
@@ -63,7 +63,7 @@ let completionCode = Array.from({ length: 12 },
 
 - ページ読み込み時にブラウザ側で **12文字のランダム完了コード** を生成(旧版は16文字)。
 - 文字種は30種(`ABCDEFGHJKMNPQRSTUVWXYZ23456789`)。読み間違いやすい I・L・O・0・1 を除外する方針は旧版と同じ。
-- **群(acal/aprime/atest/b/C)による接頭辞は付かない。** コードだけを見て集団は判別できない
+- **群(acal/aprime/b/C)による接頭辞は付かない。** コードだけを見て集団は判別できない
   （集団は `phase`/`group` 列など、コードとは別の列に記録される）。
 - 同時に `worker_id` を URL クエリ(`?worker_id=` / `?wid=` / `?worker=`)から取得。無い場合は
   `anon-xxxxxxxx` を自動採番(`prod_common.js:42-43`)。
@@ -91,9 +91,9 @@ let completionCode = Array.from({ length: 12 },
 > このファイルと一致しているか**は、`transfer_config.js` の `roster.status_url` / `logging.submit_url`
 > の `/exec` URL を直接確認しないと分からない。切り戻しを使う前に一度動作確認すること。
 
-送られるレコードには3種類ある(群 acal・atest・aprime・b と、群Cで扱いが少し異なる)。
+送られるレコードには3種類ある(群 acal・aprime・b と、群Cで扱いが少し異なる)。
 
-**acal・atest・aprime・b(識別課題そのものの群)**
+**acal・aprime・b(識別課題そのものの群)**
 
 | 種類 | `kind` | 保存先コレクション/シート | 内容 |
 |---|---|---|---|
@@ -127,7 +127,7 @@ let completionCode = Array.from({ length: 12 },
 
 | コレクション | 内容 | 1参加者あたりの行数 |
 |---|---|---|
-| `transfer_trials` | 1設問1行の回答(acal・atest・aprime・b) | 108〜134行(§5) |
+| `transfer_trials` | 1設問1行の回答(acal・aprime・b) | 68〜108行(§5) |
 | `transfer_wellbeing` | 群Bの見え心地評価(旧方式に戻した場合のみ)・群Cの評価・**全群共通の完走レコード** | 群による(§2-(3)参照) |
 | `transfer_roster` | 名簿。1参加者1件。ドキュメントIDは `"<フェーズ>_<参加者ID>"` | 1 |
 | `transfer_counters` | 集団ごとの通し番号の採番のみ | — |
@@ -179,7 +179,7 @@ let completionCode = Array.from({ length: 12 },
 
 | 列 | 意味 |
 |---|---|
-| `phase` / `group` | どのフェーズ・どの集団か(acal/atest/aprime/b/comfort など) |
+| `phase` / `group` | どのフェーズ・どの集団か(acal/aprime/b/comfort など) |
 | `n_trials` | 答えた設問数(練習を除く) |
 | `duration_s` | 同意画面から完了コードまでの所要秒 |
 | `send_failures` | 最後まで送れなかった1設問1行の記録の件数(0なら取りこぼし無し) |
@@ -207,10 +207,9 @@ let completionCode = Array.from({ length: 12 },
 | 集団 | 課題 | 1人あたりの問題数 | 内訳 |
 |---|---|---|---|
 | acal(較正・聴覚) | かなの聞き取り | **108問** | ターゲット64＋まぎれ字32＋確認問題12 |
-| atest(検証・聴覚) | acalと同じ課題 | **108問** | 同上 |
-| aprime(較正・視覚) | かなの見分け | **134問** | ターゲット80＋まぎれ字40＋確認問題14 |
+| aprime(較正・視覚) | かなの見分け | **68問** | ターゲット40(4方式×1字×5水準×2速度)＋まぎれ字20＋確認問題8 |
 | b(検証・視覚) | かなの見分け | **94問** | ターゲット56＋まぎれ字28＋確認問題10 |
-| C(見え心地評価) | 4方式×3通りの視聴＋評価 | **12本** | `experiment/transfer_comfort_config.js:12` |
+| C(見え心地評価) | 4方式×3通り＋ステップ表示(1字)の視聴＋評価 | **13本** | `experiment/transfer_comfort_config.js` の families / presentations_by_family |
 
 (`node experiment/tools/check_transfer_stimuli.js` で検算可。2026-08-22時点の出力で上記を確認済み)
 

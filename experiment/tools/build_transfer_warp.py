@@ -146,6 +146,35 @@ def series_from_s_of_t(t_ms, s_vals, dur_ms):
     return [round(float(v), 5) for v in ys]
 
 
+def step_mid_from_audio(t_ms, qa, q_half):
+    """ステップ表示（群Cの5つ目の見せ方）の切り替え時刻を出す。
+
+    定義: **目標の音声曲線で正答率が50%に達する最初の時刻**（計画書 4.5）。
+    曲線は q（床＝まぐれ当たりと天井の欠けを割り戻した進み具合）で持っているので、
+    正答率50%にあたる q の値 q_half を渡して、そこを横切る点を線形補間で求める。
+
+    端の扱い:
+      ・いちばん早い時点ですでに q_half を超えている → その最初の時点を返す
+      ・最後まで届かない                            → 最後の時点を返す
+    どちらも「その字ではこの対照が極端になる」ことを意味するので、
+    印（"below" / "above" / "interp"）も一緒に返して記録に残す。
+    """
+    t = np.asarray(t_ms, float)
+    q = monotone(np.asarray(qa, float))
+    if len(t) == 0:
+        return 0.0, "empty"
+    if q[0] >= q_half:
+        return float(t[0]), "below"      # 最初から半分以上分かっている字
+    if q[-1] < q_half:
+        return float(t[-1]), "above"     # 最後まで半分に届かない字
+    for i in range(1, len(t)):
+        if q[i] >= q_half:
+            dq = q[i] - q[i - 1]
+            f = 0.0 if dq <= 0 else (q_half - q[i - 1]) / dq
+            return float(t[i - 1] + f * (t[i] - t[i - 1])), "interp"
+    return float(t[-1]), "above"
+
+
 def best_affine(t_ms, qa, s_grid, qv, base_ms):
     """対照2: qV(a·t+b) が音声の曲線 qA(t) に最も近くなる (a,b) を探す。
 
@@ -500,6 +529,9 @@ def main():
 
     cfg = load_config(args.config)
     fit_log, loo = None, None
+    # 正答率50%にあたる q を出すための床・天井。--demo / --curves のときは
+    # 曲線がすでに q として与えられているので、素の 0.5 を使う。
+    step_gamma, step_lapse = 0.0, 0.0
     if args.trials:
         label_map = {}
         for pair in filter(None, args.label_map.split(",")):
@@ -519,6 +551,8 @@ def main():
         gamma = (1.0 / n_choice) if args.guess == "auto" else float(args.guess)
         curves = curves_from_trials(rows, cfg, gamma,
                                     args.lapse, audio_full_lengths(args.audio_manifest))
+        # ステップ表示の切り替え時刻を出すのに要る(正答率50% が q でいくつかを決める)。
+        step_gamma, step_lapse = gamma, float(curves["_fit"]["lapse"])
         fit_log = curves["_fit"]
         fit_log["n_choices"] = n_choice
         fit_log["n_rows"] = n_rows_in
@@ -550,6 +584,7 @@ def main():
     grid = np.arange(n) * FRAME_MS
 
     tables, clipped, affine_log, deviation = {}, [], {}, []
+    step_mid_ms, step_mid_kind = {}, {}
     for fam, per_char in curves["visual"].items():
         tables[fam] = {}
         for ch, v in per_char.items():
@@ -588,6 +623,16 @@ def main():
             base2 = [round(float(min(1.0, max(0.0, a * t + b))), 5) for t in grid]
             tables[fam][ch] = {"proposed": prop, "baseline1": base1, "baseline2": base2}
 
+            # ---- 群C(見え心地)のステップ表示に渡す切り替え時刻 -----------------------
+            # 中点まで何も出さず、そこで一気に完成形にする「従来型の字幕」を模した見せ方。
+            # 中点は目標の音声曲線で正答率50%に達する時刻。→ 計画書 4.5
+            # **群Bの条件ではない**(識別の測定はしない)ので、進み方の数値列は作らず、
+            # 時刻だけを字ごとに出す。群Cはこの1つの数字から自分で 0/1 を作る。
+            if ch not in step_mid_ms:
+                mid, kind = step_mid_from_audio(a_t, a_q, to_q(0.5, step_gamma, step_lapse))
+                step_mid_ms[ch] = round(float(mid), 2)
+                step_mid_kind[ch] = kind
+
             # ---- 提案と対照はどれだけ違うか(計画書 7.2 の距離Eに相当する乖離) ----
             # (1) 進み具合 s のうえでの差。群Bが実際に出題する時間帯だけで測る。
             tmax = max(a_t[-1], max(max(x) for x in cfg["visual"]["gates_ms"].values()))
@@ -616,6 +661,11 @@ def main():
         "base_anim_ms": base_ms,
         "config_version": cfg.get("config_version", ""),
         "affine": affine_log,
+        # ステップ表示の切り替え時刻ms。**群C**(experiment/transfer_comfort.js)が字ごとに読む。
+        # step_mid_kind は「補間で求めた(interp)／最初の時点で既に50%を超えていた(below)／
+        # 最後まで50%に届かなかった(above)」の印。
+        "step_mid_ms": step_mid_ms,
+        "step_mid_kind": step_mid_kind,
         "clipped": clipped,
         "deviation": deviation,
         "tables": tables,

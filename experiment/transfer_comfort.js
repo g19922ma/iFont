@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.7";
+const VERSION = "c1.9";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
@@ -613,10 +613,40 @@ function seriesAt(series, frameMs, tMs) {
   return series[i] * (1 - f) + series[i + 1] * f;
 }
 
+// 方式名 → 実際に絵を描く描画器。ステップ表示("step")は独立した描画器を持たず、
+// フェードの描画器に進み具合0か1を渡すだけである。対応は設定の family_renderer にある。
+// （RENDERERS の表そのものは transfer.js と1文字も違ってはいけないので触らない。
+//   experiment/tools/check_comfort_render.js が突き合わせている。）
+function rendererFor(family) {
+  const map = C.family_renderer || {};
+  return RENDERERS[map[family] || family] || RENDERERS.fade;
+}
+
+// ステップ表示の切り替え時刻ms(字ごと)。生成工程が出した表にあればそれを使い、
+// 無ければ設定の代用値(全字共通)を使う。表から取れたかどうかは記録の
+// progress_source に残る("step" か "step_fallback")。
+function stepMidMs(ch) {
+  const m = warpTables && warpTables.step_mid_ms;
+  const v = m && m[ch];
+  return (typeof v === "number" && isFinite(v) && v >= 0)
+    ? { ms: v, fromTable: true }
+    : { ms: Number(CFG.visual.warp.fallback_step_mid_ms) || 0, fromTable: false };
+}
+
 // 1本ぶんの「経過時間ms → 進み具合 s」と、その1本の長さ(ms)を作る。
-// 返り値: {fn, dur_ms, source}  source は記録用("table" / "linear")。
+// 返り値: {fn, dur_ms, source}  source は記録用("table" / "linear" / "step" / "step_fallback")。
 function progressFor(family, ch) {
   const base = CFG.visual.base_anim_ms;
+  // ステップ表示。中点までは何も出さず、そこで一気に完成形にする。
+  // 1本の長さは他の方式とそろえる(同じ間合いで流れないと見え心地を比べられない)。
+  if (family === "step") {
+    const mid = stepMidMs(ch);
+    return {
+      fn: (ms) => (ms < mid.ms ? 0 : 1),
+      dur_ms: Math.max(base, Math.ceil(mid.ms)),
+      source: mid.fromTable ? "step" : "step_fallback",
+    };
+  }
   if (C.condition !== "linear") {
     const series = warpSeries(family, ch, C.condition);
     if (series) {
@@ -676,12 +706,23 @@ async function preload() {
 
 // =========================================================================
 // 提示の組み立て
-//   4方式 × 3つの提示のしかた = 12本。**方式も提示のしかたも混ぜて**並べる。
+//   4方式 × 3つの提示のしかた ＋ ステップ表示 × 1字条件だけ = 13本。
+//   **方式も提示のしかたも混ぜて**並べる。
 //   何番目に出したかは order 列として記録に残す（順序の効果を後から見るため）。
+//
+//   方式ごとに提示のしかたを絞れる（設定の presentations_by_family）。
+//   ステップ表示だけ1字条件に絞ってあるのは、5方式×3通り=15本にすると
+//   所要が延びるためである（transfer_comfort_config.js の注記）。
 // =========================================================================
+function presentationsFor(family) {
+  const only = (C.presentations_by_family || {})[family];
+  if (!only || !only.length) return C.presentations;
+  return C.presentations.filter(p => only.indexOf(p) >= 0);
+}
 function buildClips() {
   const out = [];
-  C.presentations.forEach(pres => C.families.forEach(fam => out.push({ presentation: pres, family: fam })));
+  C.families.forEach(fam =>
+    presentationsFor(fam).forEach(pres => out.push({ presentation: pres, family: fam })));
   return shuffle(out).map((c, i) => Object.assign(c, { order: i + 1 }));
 }
 
@@ -750,7 +791,7 @@ function makePlayer(stage, family, opts) {
   const o = opts || {};
   const chars = stage.chars, ctxs = stage.ctxs;
   const single = (stage.presentation === "single");
-  const renderer = RENDERERS[family] || RENDERERS.fade;
+  const renderer = rendererFor(family);
   const progs = chars.map(ch => progressFor(family, ch));
   const t = C.timing;
   const animMax = Math.max(...progs.map(p => p.dur_ms));
@@ -1009,7 +1050,11 @@ function showChoiceFamily() {
 function showChoicePresentation() {
   stopAnim();
   const cfg = C.choice.presentation;
-  const fam = answers.choice_family || C.families[0];
+  // 2問目の見本は「1問目で選ばれた現れ方」で出す。ただしステップ表示を選んだ人には、
+  // 5字を続けて出す見本をステップ表示で出せない（ステップ表示は本編で1字条件しか
+  // 見せていないので、見たことのない絵を見せることになる）。その場合はフェードに置き換える。
+  const picked = answers.choice_family || C.families[0];
+  const fam = (presentationsFor(picked).length >= C.presentations.length) ? picked : "fade";
   const showSamples = !!cfg.show_samples;
   const opts = (answers.choice_pres_order && answers.choice_pres_order.length)
     ? answers.choice_pres_order.slice()

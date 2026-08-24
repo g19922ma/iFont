@@ -8,28 +8,35 @@
 <!--
   タブに出る名前。較正フェーズ（transfer_calib.html）と**同じ名前でよい**。
   参加者から見れば同じ課題であり、片方にしか参加しないためである。
+  （2026-08-24 に検証フェーズが視覚だけになったが、タブ名は較正フェーズと
+   そろえたままにしてある。名前を変えると、同じ研究の別の掲載どうしで
+   別々の課題に見えてしまうためである。）
   研究者向けの見分けは、?prod=1 が無いときに transfer.js が足す
   「［研究者確認：testフェーズ］」で行う。
 -->
 <title>ひらがなの聞き取り・見え方の課題</title>
-<link rel="stylesheet" href="transfer.css?v=3.9">
+<link rel="stylesheet" href="transfer.css?v=3.10">
 </head>
 <body>
 <div id="app"><div class="card" id="screen"></div></div>
 <!--
-  転写検証実験・検証フェーズの入口。
-  このページを開いた人は、サイトの中で自動的に次のどちらかの集団に割り当てられる。
-    atest … 音声を途中まで聞いて答える課題(聴覚の再測定・acal と同じ課題)
-    b     … 生成したアニメーションを途中まで見て答える課題(**識別課題だけで終わる**。
-            見え心地の質問は 2026-08-21 に群C・transfer_comfort.html へ切り出した)
+  転写検証実験・検証フェーズの入口。**集団は群Bだけ**である。
+    b … 生成したアニメーションを途中まで見て答える課題(**識別課題だけで終わる**。
+        見え心地の質問は 2026-08-21 に群C・transfer_comfort.html へ切り出した)
+
+  2026-08-24 に、ここにあった検証用の音声集団(atest)を廃止した。したがって
+  このページでの集団の振り分けは起きず、サーバは連番だけを配る。
+  検証の比較相手は群Acal の曲線(＝生成に与えた目標プロファイル)に一本化した。
+  理由は project/相談_Atestは必要か.md と計画書 4.1 を見ること。
+
   較正フェーズ(transfer_calib.html)と群C(transfer_comfort.html)に参加した人は、
-  サーバの名簿と照合してお断りする(5つの集団は互いに独立でなければならないため)。
+  サーバの名簿と照合してお断りする(4つの集団は互いに独立でなければならないため)。
   ?v= はJS側の VERSION と揃える(キャッシュ対策)。
 -->
 <script>window.TRANSFER_PAGE = { phase: "test" };</script>
-<script src="prod_common.js?v=3.9"></script>
-<script src="transfer_config.js?v=3.9"></script>
-<script src="transfer_firestore.js?v=3.9"></script>
-<script src="transfer.js?v=3.9"></script>
+<script src="prod_common.js?v=3.10"></script>
+<script src="transfer_config.js?v=3.10"></script>
+<script src="transfer_firestore.js?v=3.10"></script>
+<script src="transfer.js?v=3.10"></script>
 </body>
 </html>
