@@ -24,8 +24,8 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CFG = os.path.join(ROOT, "experiment", "transfer_config.js")
-CROP = os.path.join(ROOT, "experiment", "tts_candidates_carrier",
-                    "あみたろ_cut", "crop_report.json")
+CROP = os.path.join(ROOT, "experiment", "tts_candidates_carrier2",
+                    "cut", "crop_report.json")
 OUT = os.path.join(ROOT, "experiment", "tools", "check_gojuon_stimuli.html")
 STIM = os.path.join(ROOT, "experiment", "transfer_stimuli_amitaro")
 
@@ -71,12 +71,13 @@ def cell(kana, gates, crop):
     if not g:
         return f'<td class="miss">{kana}<br>設定なし</td>'
     longest = g[-1]
-    mora = crop.get(kana, {}).get("mora_ms")
-    removed = crop.get(kana, {}).get("removed_ms")
+    c = crop.get(kana, {})
+    mora = c.get("mora_ms")
+    depth = c.get("closure_depth_db")
     sub = ""
     if mora is not None:
         sub = (f'<div class="ms">モーラ {mora:.0f}ms'
-               f'<br>落とした「ん」 {removed:.0f}ms</div>')
+               + (f'<br>閉鎖の深さ {depth:.0f}dB' if depth else '') + '</div>')
     return (
         f'<td>'
         f'<div class="kana">{kana}</div>'
@@ -137,13 +138,18 @@ button.playing{{background:#2E7D8F!important;color:#fff!important;border-color:#
 </style>
 <h1>あみたろ 68字：耳で確かめる（五十音表）</h1>
 <p class="note">
-<b>「最長」を上から順に聞いてください。</b>「最長」は、参加者が実際に聞く中でいちばん長い刺激です
-（その字の打ち切り時点のうち最後のもの）。<br>
+<b>2026-08-24 に作り直した版です。</b>「字＋ん」で合成して《ん》を切り落とす作り方をやめ、
+<b>「字＋ぱ」で合成して、母音のあとに来る閉鎖（唇を閉じて音が消える区間）の手前で切る</b>
+作り方に変えました。閉鎖はただの無音なので、母音の種類によらず同じ物差しで切れます。<br>
+<b>「最長」を上から順に聞いてください。</b>「最長」は、参加者が実際に聞く中でいちばん長い刺激です。
 正しい状態は、たとえば「か」なら<b>「か」</b>とだけ聞こえること。
-<b class="warn">「かん」のように末尾に「ん」が付いて聞こえたら不合格</b>です。
-「全長」は打ち切る前の音そのもの（モーラ全体）で、「ん」が残っていれば全長のほうが分かりやすく聞こえます。<br>
-機械の検査は「ん」の残りを2回見逃しているので、<b>合否はこのページを聞いて決めます</b>。
-1字でも「ん」が付いていたら不合格として作り直します。
+<b class="warn">「かん」「かぱ」のように余分な音が付いて聞こえたら不合格</b>です。
+「全長」は打ち切る前のモーラ全体です。<br>
+機械の検査は前の版で「ん」の残りを2回見逃しています。<b>合否はこのページを聞いて決めてください。</b><br>
+<b>なお「し」「す」「ち」「つ」の4字は母音が無声化して、ささやくように聞こえます。</b>
+これは「した」「つかう」の母音が実際に無声化するのと同じ、日本語として自然な現象です
+（この4字だけ後続音の影響で必ずこうなり、話速を落としても止められませんでした）。
+不具合ではありませんが、<b>刺激として許容できるかはご判断ください</b>。
 </p>
 <div id="bar">
   <button id="allLong">▶ 68字の「最長」を続けて再生</button>
