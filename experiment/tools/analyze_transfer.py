@@ -147,7 +147,34 @@ def normalize(rows, label_map):
             # 視覚は進み具合%か方式が入る。聴覚は打ち切りmsだけが入る。
             r["group"] = "視覚" if (r["progress_pct"] is not None or r["family"]) else "聴覚"
         # 提示量: 聴覚は ms、視覚は %。図と表ではこの列を横軸にする。
-        r["level"] = r["gate_ms"] if r["group"] in ("聴覚", "acal", "atest") else r["progress_pct"]
+        #
+        # ⚠ **視覚は「指定した水準」ではなく「実際に見えた進み具合」を使う。**
+        #   実験1（v1）で先生が決めた方針である（project/実験計画書_1文字課題.md）:
+        #     > 60Hz端末では1フレーム16.7msの量子化により低fracの水準が実効的に潰れ…
+        #     > 記録済みの actual_ms を f(·) の入力とする。
+        #     > **名目fracはあくまで割付水準の記録とする。**
+        #
+        #   画面は1秒に60回しか書き換わらないので、指定した進み具合ちょうどでは止まれない。
+        #   たとえば基準アニメ300msで「17%」と指定しても、60Hzで実際に見えるのは 16.7% である。
+        #   端末によっても変わる（60Hzは5.6%刻み、120Hzは2.8%刻み）ので、
+        #   **名目値で束ねると、中身の違うものを同じ点として数えてしまう。**
+        #   逆に実測値で並べれば、端末が混ざるほど横軸が細かく埋まる。
+        #
+        #   ⚠ **生成（q̂V⁻¹ の逆引き）も必ずこの実測の軸で行うこと。**
+        #     名目で当てはめた曲線を逆引きすると、アニメの進み方がずれる。
+        #
+        #   actual_s は 0〜1 なので %（0〜100）に直してから使う。
+        #   記録が無い古いデータのときだけ、名目値に落とす（そのことを警告する）。
+        r["level_nominal"] = r["gate_ms"] if r["group"] in ("聴覚", "acal", "atest") else r["progress_pct"]
+        if r["group"] in ("聴覚", "acal", "atest"):
+            r["level"] = r["gate_ms"]
+            r["level_source"] = "gate_ms"
+        elif r["actual_s"] is not None:
+            r["level"] = round(r["actual_s"] * 100, 2)
+            r["level_source"] = "actual_s"
+        else:
+            r["level"] = r["progress_pct"]
+            r["level_source"] = "progress_pct(代用)"
         r["mod"] = "聴覚" if r["group"] in ("聴覚", "acal", "atest") else "視覚"
     return rows
 
@@ -198,6 +225,7 @@ def write_table(path, tab, levels_by_mod):
     with io.open(path, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(["modality", "char", "level", "n_correct", "n_trials", "accuracy"])
+        # level は視覚では**実際に見えた進み具合%**（actual_s×100）。名目値ではない。
         for (mod, ch, lv), (ok, n) in sorted(tab.items(), key=lambda kv: (kv[0][0], kv[0][1], kv[0][2])):
             w.writerow([mod, ch, lv, ok, n, round(ok / n, 4) if n else ""])
 
