@@ -47,6 +47,13 @@ button.primary:hover { filter: brightness(1.1); }
 .grid-hint { text-align: center; color: #6b7280; font-size: 12.5px;
   margin: 0 0 8px; line-height: 1.5; }
 @media (max-width: 420px) { .grid-hint { font-size: 12px; margin-bottom: 6px; } }
+/* 案内の上の行。視覚課題で「いまどの段階か」を出す
+   (提示中は「中央の ＋ に注目してください。」、終わったら「何の字でしたか？」)。
+   ⚠ **文字が入っていなくても高さを占める**ようにしてある(min-height)。
+     ここが伸び縮みすると表の大きさが変わり、字の出る位置までずれる。
+   ⚠ 下の行より少しだけ濃くする。合図として気づける程度で、
+     刺激より先に目が行かない程度に留める。 */
+.grid-state { min-height: 1.5em; color: #4b5563; font-weight: 600; }
 /* 本文中のリンク。いまは同意画面の問い合わせ先(mailto:)だけに出る。
    既定の青はこの画面の色(藍と青緑)から浮くので、見出しと同じ藍にそろえる。
    下線は残す——押せることが色だけで伝わらない人がいるため。 */

@@ -530,9 +530,24 @@ function sessionRecord(durS, nTrials) {
 }
 
 // ---- 回答のかな表 ---------------------------------------------------------
+// ⚠ **「出題される字」と「回答の選択肢」は別物**である（2026-08-25、v1 に合わせた）。
+//   ALL_KANA … 出題の候補。**両課題とも68字**（音源がこの68字ぶんしか無い）。
+//               まぎれ字（decoy）も見え方確認もここから選ぶ。
+//   answerGrid() … 画面に出す表。**聴覚68字・視覚72字**。
+//               視覚では を・ぢ・づ・ゔ を選べるようにする（出題はされない）。
+//               理由は transfer_config.js の answer_grid_visual を参照。
 const GRID = CFG.answer_grid;
 const ALL_KANA = GRID.flat().filter(c => c !== "");
-const N_CHOICES = ALL_KANA.length;
+// 回答の表。**G（集団）が決まったあとに呼ぶこと。**割り当て前は聴覚の表を返す。
+function answerGrid() {
+  return (G && G.mode === "visual" && CFG.answer_grid_visual) ? CFG.answer_grid_visual : GRID;
+}
+function answerSplitAt() {
+  return (G && G.mode === "visual" && CFG.answer_grid_visual)
+    ? CFG.answer_grid_visual_split_at : CFG.answer_grid_split_at;
+}
+// 選択肢の数。**記録に残す値なので、その試行で実際に出した表から数える。**
+function nChoices() { return answerGrid().flat().filter(c => c !== "").length; }
 const TARGETS = CFG.targets.slice();
 // decoy(偽のターゲット)の候補。本命8字と、設定で外した字(「ん」)を除いた残り。
 // 実際にその参加者へ出る12字は decoyChars() が連番から決める。
@@ -541,7 +556,22 @@ const DECOY_POOL = (DECOY_CFG.pool && DECOY_CFG.pool.length)
   ? DECOY_CFG.pool.slice()
   : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 &&
                          ((DECOY_CFG.exclude || []).indexOf(c) < 0));
-function kanaLabel(ch) { return (CFG.homophone_label && CFG.homophone_label[ch]) || ch; }
+// かな表のボタンに出す文字。
+//
+// ⚠ **併記（「お／を」など）は聴覚課題だけで行う。**
+//   「お」と「を」、「じ」と「ぢ」、「ず」と「づ」は**音では区別できない**ので、
+//   聞いた人がどちらを選んでも同じ答えとして扱うために1つのボタンにまとめている。
+//   ところが**見た目はまったく違う**ので、視覚課題で併記すると
+//     ・「を」が出題されるかのように読める（実際には出題されない）
+//     ・「を」だと思った人が「お／を」を押すと、正解が「お」なら正答として数えてしまう
+//   という2つの害がある。**2026-08-25、栗原先生のご指摘により視覚では併記をやめた。**
+//   ⚠ 選択肢の数は 68 のまま変えない（「を・ぢ・づ」をボタンとして足さない）。
+//     足すと当て推量の水準が聴覚と視覚でずれ、床の比較ができなくなる。
+//     この3字はどちらの課題でも**出題されない**ので、選べなくても支障はない。
+function kanaLabel(ch) {
+  if (!G || G.mode !== "audio") return ch;
+  return (CFG.homophone_label && CFG.homophone_label[ch]) || ch;
+}
 
 const screenEl = document.getElementById("screen");
 
@@ -1381,7 +1411,8 @@ function progressHeader(t) {
 
 // かな表(紙の五十音表式・右寄せ)。聴覚・視覚で同じ表を使う。
 function buildKanaGrid(done) {
-  const splitAt = CFG.answer_grid_split_at;
+  const AGRID = answerGrid();
+  const splitAt = answerSplitAt();
   const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
   // ⚠ **「分からなくても、いちばん近いと思う文字を選ぶ」を毎問見えるところに置く。**
   //   これは教示のいちばん大事な一文である。当て推量に近い水準の正答率（＝S字曲線の床）を
@@ -1391,11 +1422,28 @@ function buildKanaGrid(done) {
   //     **あれは最初に1回読むだけ**である。回答中の案内（#prompt）も
   //     **最初の1問にしか出ない**（2問目以降は introduced が true になり描かれない）。
   //     70問のあいだ効かせるには、かな表そのものに添えるのがいちばん確実である。
+  //
+  // ⚠ **2行にしてある**（2026-08-25、栗原先生のご指摘で足した）。
+  //   上の行 #gridState … いまどの段階かを示す。**視覚課題でだけ使う。**
+  //     視覚では、薄い水準だと画面に何も出ないまま提示が終わる。
+  //     聴覚には合図音があるが、視覚に振り分けられた人は音の関門を通らないので、
+  //     ビープは当てにできない（マナーモードのままの人がいる）。
+  //     ⚠ 字が出る場所（canvas）の**すぐ近くに何かを出すとマスクになり**、
+  //       測っているものが変わる。だから表の上、canvas より下に置く。
+  //   下の行 #gridHint … 常に同じ案内。両課題で出す。
+  //   ⚠ **どちらの行も常に場所を占める**ようにしてある。文字が入れ替わっても
+  //     高さが変わらないので、表の大きさも字の位置もずれない。
   const hint = document.createElement("div");
   hint.className = "grid-hint";
-  hint.textContent = "分からない場合でも、最も近いと思う文字を選んでください。";
+  const state = document.createElement("div");
+  state.id = "gridState"; state.className = "grid-state";
+  hint.appendChild(state);
+  const fixed = document.createElement("div");
+  fixed.id = "gridHint";
+  fixed.textContent = "分からない場合でも、最も近いと思う文字を選んでください。";
+  hint.appendChild(fixed);
   grid.appendChild(hint);
-  const blocks = [GRID.slice(0, splitAt), GRID.slice(splitAt)].filter(b => b.length);
+  const blocks = [AGRID.slice(0, splitAt), AGRID.slice(splitAt)].filter(b => b.length);
   const maxCols = Math.max(...blocks.map(b => b.length));
   for (const rowsBlock of blocks) {
     const cols = [...rowsBlock].reverse();
@@ -1490,7 +1538,7 @@ function makeRecord(t, picked, extra) {
     n_frequent: frequentChars().length,      // よく出る字の数(本命8＋decoy12＝20)
     trial_index: mainDone() + 1,             // 何問目か(学習の検出用・練習は数えない)
     assign_index: ASSIGN,
-    n_choices: N_CHOICES,
+    n_choices: nChoices(),
     replays: 0,                              // 1回だけ提示(聞き直し・見直しなし)
     version: VERSION,
     config_version: CFG.config_version,
@@ -1589,6 +1637,8 @@ function runVisualTrial(t) {
   // 群Bでは 30Hz のとき「166msまでの絵を200msまで見ていた」ということが起きる。
   // actual_ms だけだとこの2つが混ざるので、分けて残す。
   let lastDrawMs = null, blankMs = null, endpointClamped = false;
+  // 表の上の一行にいま出している文言。「選び直す」で表を作り直したときに戻すため。
+  let stateText = "";
   // 終端の実表示と、フレームの乱れ具合。事前登録した除外規則の判定に使う。
   let endpointFrames = null, endpointMs = null, maxGap = null;
   const prog = progressFn(t);
@@ -1642,13 +1692,27 @@ function runVisualTrial(t) {
       showConfirm();
     });
     answerArea.appendChild(grid);
-    if (tStim === null) grid.querySelectorAll("button.kana").forEach(b => { b.disabled = true; });
+    const st = grid.querySelector("#gridState");
+    if (st) st.textContent = stateText;
+    // 提示が終わるまでは押せない。**押せるようになることが終わりの合図**なので、
+    // 提示中に押せてしまうと合図の意味が無くなる。
+    if (presenting || tStim === null) {
+      grid.querySelectorAll("button.kana").forEach(b => { b.disabled = true; });
+    }
+  };
+
+  // 表の上の一行を書き換える。表がまだ無ければ、次に作るときに入る。
+  const setState = (txt) => {
+    stateText = txt;
+    const el = document.getElementById("gridState");
+    if (el) el.textContent = txt;
   };
 
   const present = () => {
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     if (presenting) return;
     presenting = true;
+    setState("中央の ＋ に注目してください。");
     const fixDur = CFG.visual.fix_ms + Math.floor(Math.random() * CFG.visual.fix_jitter_ms);
     // 打ち切りの決め方: 較正は「進み具合が s% に届いたら」、検証は「t ms 経ったら」。
     const sTarget = (t.play === "calib")
@@ -1679,11 +1743,12 @@ function runVisualTrial(t) {
     const _hz = Math.min(240, Math.max(24, Number(ENV.refreshHz) || 60));
     const holdFrames = Math.max(1, Math.round(CFG.visual.endpoint_hold_ms / (1000 / _hz)));
     let holdLeft = 0, prevNow = null;
+    // 提示が始まった時点。反応時間の起点はここ。
+    // ⚠ **ボタンを押せるようにするのはここではなく finish()** である。
+    //   ここで押せるようにすると、提示が終わる前に答えられてしまううえ、
+    //   「押せるようになった」ことが**終わりの合図にならない**。
     const unlock = () => {
       tStim = performance.now();
-      document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      const pr = document.getElementById("prompt");
-      if (pr) pr.textContent = "見えた文字を下の表から選んでください。";
       introduced = true;
     };
     const finish = (now) => {
@@ -1698,6 +1763,13 @@ function runVisualTrial(t) {
         endpointFrames = holdFrames;
       }
       presenting = false;
+      // **ここが「提示が終わった」合図である。**
+      // 薄い水準では画面に何も出ないまま終わるので、表の上の一行を書き換え、
+      // 同時にボタンを押せるようにする。字が出た場所（canvas）ではなく
+      // 表の上なので、マスクにはならない。
+      document.getElementById("grid")
+        ?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
+      setState("何の字でしたか？");
     };
     function frame(now) {
       if (phase === "fix") {
@@ -1924,7 +1996,8 @@ function awarenessChars() {
   const grid = buildKanaGrid((ch) => {});   // 押しても進まない表を作り、下で押し方を差し替える
   document.getElementById("awArea").appendChild(grid);
   grid.querySelectorAll("button.kana").forEach(b => {
-    const ch = ALL_KANA.find(c => kanaLabel(c) === b.textContent) || b.textContent;
+    const ch = answerGrid().flat().filter(c => c !== "")
+                 .find(c => kanaLabel(c) === b.textContent) || b.textContent;
     b.onclick = () => {
       const i = chosen.indexOf(ch);
       if (i >= 0) { chosen.splice(i, 1); b.style.background = ""; b.style.color = ""; }
@@ -1952,7 +2025,7 @@ function sendAwareness(answer, chars, text) {
     stimulus_id: "awareness|" + GROUP,
     target_char: "-", response_char: "-",
     modality: "transfer_awareness", q_set: "transfer", phase: PHASE, group: GROUP,
-    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: N_CHOICES,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: nChoices(),
     aware_repeated: answer,
     aware_chars: chars.join(""),
     aware_text: text,
@@ -2053,7 +2126,7 @@ function sendPostSurvey(picked) {
     stimulus_id: "post_survey|" + GROUP,
     target_char: "-", response_char: "-",
     modality: "transfer_post_survey", q_set: "transfer", phase: PHASE, group: GROUP,
-    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: N_CHOICES,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: nChoices(),
     version: VERSION, config_version: CFG.config_version,
   };
   // 答えなかった項目は空文字で残す（「聞かれたが答えなかった」と
