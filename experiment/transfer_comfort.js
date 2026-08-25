@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.11";
+const VERSION = "c1.12";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);

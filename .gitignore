@@ -58,3 +58,12 @@ experiment/_superseded_transfer_audio_manifest_amitaro_pa.json
 # 監視ツール（watch_transfer.py）が「前回どこまで見たか」を控えるファイル。
 # 実行するたびに変わるだけで、記録として残す意味がない。
 experiment/tools/.watch_transfer_state.json
+
+# 較正フェーズの生データ（参加者の回答そのもの）。
+# fork は公開リポジトリなので入れない。手元と、研究室の保管先にだけ置く。
+# ⚠ 集計した結果（analysis/ の CSV・HTML）は入れてよい。
+project/data_calib_20260825/transfer_trials.csv
+project/data_calib_20260825/transfer_wellbeing.csv
+project/data_calib_20260825/transfer_roster.csv
+project/data_calib_20260825/納品データ_0826.tsv
+project/data_calib_20260825/承認判定_0826.csv
