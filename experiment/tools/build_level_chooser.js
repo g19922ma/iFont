@@ -46,8 +46,8 @@ const FAMILY_JA = { fade: "うすい→濃い", reveal: "点が増える",
                     blur: "ぼやけ→はっきり", wipe: "端から現れる" };
 
 const NOW = CFG.visual.progress_pct_levels;                 // [1, 3.25, 5.5, 20, 100]
-const PROPOSED = [3, 6, 9, 12, 16, 22, 35, 100];            // 案
-const BLUR_RADII = [24, 32, 40, 48, 56, 64, 80];            // 24 がいまの値
+const PROPOSED = CFG.visual.progress_pct_levels;             // いま設定に入っている並び
+const BLUR_RADII = [24, 32, 40, 48, 56, 64, 80];            // 48 がいまの値
 
 const b64 = {};
 for (const ch of CHARS) {
@@ -56,10 +56,30 @@ for (const ch of CHARS) {
   b64[ch] = fs.readFileSync(p).toString("base64");
 }
 
+// 60Hz の端末で、その水準を指定したときに**実際に描かれる最大の進み具合**。
+// transfer.js の frame() と同じ規則（打ち切りは描く前に判定）で求める。
+function actualPct(target, base, hz) {
+  const frame = 1000 / hz, st = target / 100;
+  let k = 1, last = 0, n = 0;
+  while (k < 5000) {
+    const s = Math.min(1, k * frame / base);
+    if (s >= st) break;
+    last = s; n++; k++;
+  }
+  return { pct: last * 100, frames: n };
+}
+
 function cellsFor(levels, fam) {
-  return levels.map(p =>
-    `<td><canvas data-ch="{{CH}}" data-fam="${fam}" data-pct="${p}"></canvas>
-     <div class="cap">${p}%</div></td>`).join("");
+  const base = CFG.visual.base_anim_ms;
+  return levels.map(p => {
+    const a = actualPct(p, base, 60);
+    const shown = (p >= 100) ? "完成形" : `実際 ${a.pct.toFixed(1)}%`;
+    const warn = (p < 100 && a.frames === 0) ? '<div class="cap warn">60Hzでは何も出ない</div>' : "";
+    // 絵は**実際に見える値**で描く（指定した値で描くと嘘になる）
+    const drawPct = (p >= 100) ? 100 : a.pct;
+    return `<td><canvas data-ch="{{CH}}" data-fam="${fam}" data-pct="${drawPct}"></canvas>
+     <div class="cap"><b>${p}%</b><br>${shown}</div>${warn}</td>`;
+  }).join("");
 }
 
 function levelTable(levels, fam, id) {
@@ -97,6 +117,7 @@ th{background:#f2f4f8;font-size:12px;color:#59606e}
 canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-radius:4px;display:block}
 .cap{font-size:10px;color:#7a8090;margin-top:2px}
 .cap.now{color:#9a3412;font-weight:700}
+.cap.warn{color:#9a3412;background:#fff0e6;border-radius:3px}
 .box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:12px 16px;margin:12px 0;
      font-size:13.5px}
 .bad{background:#fff8f3;border-color:#f0c4a8}
@@ -115,9 +136,14 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 
 <h2>1. 水準をどこに置くか</h2>
 <div class="box bad">
-<b class="hl">見るところ:</b> 左端が「まったく分からない」、右端が「はっきり分かる」になっていて、
-<b>そのあいだが飛ばずに埋まっているか</b>。<br>
-いまの並びは <b>1〜5.5% と 20% のあいだが空いていて</b>、そこを跨いでいます。
+<b class="hl">絵は「実際に見える値」で描いてあります。</b><br>
+画面は1秒に60回しか書き換わらないので、指定した進み具合ちょうどで止まれるとは限りません。
+たとえば「6%」と指定しても、60Hzの端末で実際に見えるのは <b>5.6%</b> です。
+各マスの下段に、指定した値と実際の値の両方を書いてあります。<br><br>
+<b class="hl">見ていただきたいのは1点だけ:</b>
+<b>いちばん左（6% → 実際5.6%）で、その字が分からないこと。</b><br>
+ここが「分からない」でないと、曲線の左端（当て推量に近いところ）が取れません。
+逆にここで読めてしまうなら、水準をもっと薄い側に足す必要があります。
 </div>
 
 <div class="tabs" id="famTabs">
@@ -125,18 +151,18 @@ ${FAMILIES.map((f, i) => `<button data-fam="${f}"${i === 0 ? ' class="on"' : ""}
 </div>
 
 ${FAMILIES.map((f, i) => `<div class="pane" data-fam="${f}" style="display:${i === 0 ? "block" : "none"}">
-<h3>いまの5水準　<span class="k">[${NOW.join(", ")}]</span></h3>
-${levelTable(NOW, f, "now-" + f)}
-<h3>案の8水準　<span class="k">[${PROPOSED.join(", ")}]</span></h3>
+<h3>いまの設定　<span class="k">[${PROPOSED.join(", ")}]</span></h3>
 ${levelTable(PROPOSED, f, "prop-" + f)}
 </div>`).join("")}
 
 <h2>2. ぼかしの最大をいくつにするか</h2>
 <div class="box bad">
-<b class="hl">見るところ:</b> <b>その字が何か分からなくなる最小の値</b>を選んでください。<br>
-これは<b>進み具合0%（いちばんぼやけた状態）</b>の見た目です。ここで字が読めてしまうと、
+<b class="hl">見ていただきたいのは1点だけ:</b>
+<b>48px（いまの設定）で、その字が分からないこと。</b><br>
+これは<b>いちばんぼやけた状態</b>の見た目です。ここで読めてしまうと、
 「ぼやけ→はっきり」だけ床が無くなり、曲線を当てはめられません。<br>
-実測では <b>いまの24pxで、進み具合1.75%でも4問中4問正解</b>でした（＝読めている）。
+もとの24pxでは<b>進み具合1.75%でも4問中4問正解</b>でした（＝読めていた）ので倍にしました。
+48pxでもまだ読めるようなら、もっと大きい値にします。
 </div>
 ${blurTable()}
 

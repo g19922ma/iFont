@@ -1248,15 +1248,31 @@ function buildVisualTrials() {
     }
     return out;
   };
+  // 水準（群A′）／時点（群B）の回転量。
+  //
+  // ⚠ **群A′では、方式の割付と同じ数から作ってはいけない。**
+  //   方式は family = fams[(i + n) % 4] で決まるので、回転を (i + n) にすると
+  //   **方式を固定したとき (i + n) mod 4 も固定され**、水準の回転が2通りしか
+  //   取れなくなる（8 と 4 が公約数を持つため）。その結果、字×方式×速さの組ごとに
+  //   8水準のうち6水準しか出ず、セルが 512 → 192 に潰れる。
+  //   （水準が5つだったころは 5 と 4 が互いに素だったので表面化しなかった。
+  //     2026-08-25 に8水準へ増やしたときに検査で発覚。設定の
+  //     progress_pct_shift にある「8と互いに素」の注記と同じ落とし穴である。）
+  //
+  //   そこで **floor(n / 方式の数)** を使う。方式を固定したまま連番が方式の数だけ
+  //   進むとこの値が1つ増えるので、**方式を固定しても回転が全通り回る**。
+  const nf = (GROUP === "aprime" && CFG.assignment.aprime_families)
+    ? (CFG.assignment.aprime_families.length || 1) : 1;
+  const rotOf = (i) => (GROUP === "aprime") ? (i + Math.floor(n / nf)) : (n + i);
   let targetCells = [];
-  combos.forEach(c => { targetCells = targetCells.concat(mkCell(c, c.char, false, n + c.index)); });
+  combos.forEach(c => { targetCells = targetCells.concat(mkCell(c, c.char, false, rotOf(c.index))); });
   // decoy。**見え方(方式・条件・速さ)は本命の割付から借りる**
   // (decoy だけ見え方が違うと「これは本命ではない」と気づかれるため)。
   let decoyCells = [];
   decoyChars().forEach((ch, m) => {
     if (!imgs[ch]) return;                  // 画像が無い字は出さない
     const c = combos[m % combos.length];
-    decoyCells = decoyCells.concat(mkCell(c, ch, true, n + m));
+    decoyCells = decoyCells.concat(mkCell(c, ch, true, rotOf(m)));
   });
   if (MAX_TARGET_TRIALS > 0) {              // 研究者の動作確認用の短縮版
     targetCells = shuffle(targetCells).slice(0, MAX_TARGET_TRIALS);

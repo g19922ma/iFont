@@ -15,6 +15,7 @@ th{background:#f2f4f8;font-size:12px;color:#59606e}
 canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-radius:4px;display:block}
 .cap{font-size:10px;color:#7a8090;margin-top:2px}
 .cap.now{color:#9a3412;font-weight:700}
+.cap.warn{color:#9a3412;background:#fff0e6;border-radius:3px}
 .box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:12px 16px;margin:12px 0;
      font-size:13.5px}
 .bad{background:#fff8f3;border-color:#f0c4a8}
@@ -33,9 +34,14 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 
 <h2>1. 水準をどこに置くか</h2>
 <div class="box bad">
-<b class="hl">見るところ:</b> 左端が「まったく分からない」、右端が「はっきり分かる」になっていて、
-<b>そのあいだが飛ばずに埋まっているか</b>。<br>
-いまの並びは <b>1〜5.5% と 20% のあいだが空いていて</b>、そこを跨いでいます。
+<b class="hl">絵は「実際に見える値」で描いてあります。</b><br>
+画面は1秒に60回しか書き換わらないので、指定した進み具合ちょうどで止まれるとは限りません。
+たとえば「6%」と指定しても、60Hzの端末で実際に見えるのは <b>5.6%</b> です。
+各マスの下段に、指定した値と実際の値の両方を書いてあります。<br><br>
+<b class="hl">見ていただきたいのは1点だけ:</b>
+<b>いちばん左（6% → 実際5.6%）で、その字が分からないこと。</b><br>
+ここが「分からない」でないと、曲線の左端（当て推量に近いところ）が取れません。
+逆にここで読めてしまうなら、水準をもっと薄い側に足す必要があります。
 </div>
 
 <div class="tabs" id="famTabs">
@@ -43,268 +49,166 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 </div>
 
 <div class="pane" data-fam="fade" style="display:block">
-<h3>いまの5水準　<span class="k">[1, 3.25, 5.5, 20, 100]</span></h3>
-<table id="now-fade"><tr><th></th><th>1%</th><th>3.25%</th><th>5.5%</th><th>20%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="fade" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="fade" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="fade" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="fade" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
-<h3>案の8水準　<span class="k">[3, 6, 9, 12, 16, 22, 35, 100]</span></h3>
-<table id="prop-fade"><tr><th></th><th>3%</th><th>6%</th><th>9%</th><th>12%</th><th>16%</th><th>22%</th><th>35%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="fade" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="fade" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="fade" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="fade" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
+<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
+<table id="prop-fade"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="fade" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="fade" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="fade" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="fade" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
 </div><div class="pane" data-fam="reveal" style="display:none">
-<h3>いまの5水準　<span class="k">[1, 3.25, 5.5, 20, 100]</span></h3>
-<table id="now-reveal"><tr><th></th><th>1%</th><th>3.25%</th><th>5.5%</th><th>20%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="reveal" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="reveal" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="reveal" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
-<h3>案の8水準　<span class="k">[3, 6, 9, 12, 16, 22, 35, 100]</span></h3>
-<table id="prop-reveal"><tr><th></th><th>3%</th><th>6%</th><th>9%</th><th>12%</th><th>16%</th><th>22%</th><th>35%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="reveal" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="reveal" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="reveal" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
+<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
+<table id="prop-reveal"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="reveal" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="reveal" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="reveal" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
 </div><div class="pane" data-fam="blur" style="display:none">
-<h3>いまの5水準　<span class="k">[1, 3.25, 5.5, 20, 100]</span></h3>
-<table id="now-blur"><tr><th></th><th>1%</th><th>3.25%</th><th>5.5%</th><th>20%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="blur" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
-<h3>案の8水準　<span class="k">[3, 6, 9, 12, 16, 22, 35, 100]</span></h3>
-<table id="prop-blur"><tr><th></th><th>3%</th><th>6%</th><th>9%</th><th>12%</th><th>16%</th><th>22%</th><th>35%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="blur" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
+<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
+<table id="prop-blur"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="blur" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
 </div><div class="pane" data-fam="wipe" style="display:none">
-<h3>いまの5水準　<span class="k">[1, 3.25, 5.5, 20, 100]</span></h3>
-<table id="now-wipe"><tr><th></th><th>1%</th><th>3.25%</th><th>5.5%</th><th>20%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="wipe" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="wipe" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="wipe" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="1"></canvas>
-     <div class="cap">1%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="3.25"></canvas>
-     <div class="cap">3.25%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="5.5"></canvas>
-     <div class="cap">5.5%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="20"></canvas>
-     <div class="cap">20%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
-<h3>案の8水準　<span class="k">[3, 6, 9, 12, 16, 22, 35, 100]</span></h3>
-<table id="prop-wipe"><tr><th></th><th>3%</th><th>6%</th><th>9%</th><th>12%</th><th>16%</th><th>22%</th><th>35%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="wipe" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="wipe" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="wipe" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="3"></canvas>
-     <div class="cap">3%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="6"></canvas>
-     <div class="cap">6%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="9"></canvas>
-     <div class="cap">9%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="12"></canvas>
-     <div class="cap">12%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="16"></canvas>
-     <div class="cap">16%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="22"></canvas>
-     <div class="cap">22%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="35"></canvas>
-     <div class="cap">35%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap">100%</div></td></tr></table>
+<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
+<table id="prop-wipe"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="wipe" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="wipe" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="wipe" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="5.555555555555556"></canvas>
+     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="11.111111111111112"></canvas>
+     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="16.666666666666664"></canvas>
+     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="22.222222222222225"></canvas>
+     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="27.77777777777778"></canvas>
+     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="44.44444444444445"></canvas>
+     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="100"></canvas>
+     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
 </div>
 
 <h2>2. ぼかしの最大をいくつにするか</h2>
 <div class="box bad">
-<b class="hl">見るところ:</b> <b>その字が何か分からなくなる最小の値</b>を選んでください。<br>
-これは<b>進み具合0%（いちばんぼやけた状態）</b>の見た目です。ここで字が読めてしまうと、
+<b class="hl">見ていただきたいのは1点だけ:</b>
+<b>48px（いまの設定）で、その字が分からないこと。</b><br>
+これは<b>いちばんぼやけた状態</b>の見た目です。ここで読めてしまうと、
 「ぼやけ→はっきり」だけ床が無くなり、曲線を当てはめられません。<br>
-実測では <b>いまの24pxで、進み具合1.75%でも4問中4問正解</b>でした（＝読めている）。
+もとの24pxでは<b>進み具合1.75%でも4問中4問正解</b>でした（＝読めていた）ので倍にしました。
+48pxでもまだ読めるようなら、もっと大きい値にします。
 </div>
 <table><tr><th></th><th>24px</th><th>32px</th><th>40px</th><th>48px</th><th>56px</th><th>64px</th><th>80px</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="24"></canvas>
-       <div class="cap now">24px<br>いま</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
+       <div class="cap">24px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap">48px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="24"></canvas>
-       <div class="cap now">24px<br>いま</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="32"></canvas>
+       <div class="cap">24px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap">48px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="24"></canvas>
-       <div class="cap now">24px<br>いま</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="32"></canvas>
+       <div class="cap">24px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap">48px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="24"></canvas>
-       <div class="cap now">24px<br>いま</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
+       <div class="cap">24px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap">48px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr></table>
@@ -318,7 +222,7 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 
 <script>
 const IMG_B64 = {"あ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD/0lEQVR42u3d2a4aMRBFUY7V///LJ09RpIibAF2T8ebtDgJqudpj2y0/zn6tBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfO3rKvwsPR6PcbclyqXx/375yAwYmQxUggAA0PQyGXAYgLgEAAAAAADGjQbIAADO7gaQAQAAAMDR3QAyAAAAzu4HfbowMi4ecwkAAAAAAAAAAAAAAAAAAADMu01OQyfEyAAAADh7QowMAAAAAB4HLwySAQAAAAAAZ/eEyQAAAAAAgJOHAmQA5wfM+Bp96wbXnKif/sVfCaB3/9WbL41pcNsxpA54TdGbZoAm9yH2yYCkPEjPAA3vSiYDaHxvOhVAGwwo8gC0x5gqC0C7DCvXztOgmpoBCilJlSRBAoDiMlj5AuEACrx6K3IgGiCyzFRRFcZWgtLswXU2gHIDsxM+du3T9vlHAo0AiE7/52/3nEADABRcSemnt3lKoHaAn76B7fBub6jASo3/8+j1bsOnzhkh5c9b+K+fFNWjWTPjV9mMyKqtru/WgP/6jZoAVDB765d+pxYAhRd/7IAqG0AZA7RP30/1AIov/tfjd38GqPf+DwekwBo3Uala0RWcALXxB6TAmh5/dkuwZsV/+y1VB5ASv8qr1DVqoUb1n7nivmtG/E43XLvH7ymXQMbF6rl3imZMAGujW2WnVgAfOK65DYBLPnoNaa3VNahaI2+WHl4HqGIE4JP2CzTG/wlAeAJ0xh+RAVvH/41bZpQMoK9KgP4MaI7/fQAlrwFUbytcZ5f/fQDfCro//pIM8Nzyfx9A8/PflRngra//3kpwRvxtu8Y0ZVv96qkCAuNX5yXg3cu/qQ4YFH8LgDhAIbD8707PrBHh+fAzRHz4ISrurE9Wf8m5VXPtnf/a/xLw4QcpuXtFcfVuknV7j+o6Of27j9cfsaJw9fX9PWJIsb4qfg+sA/SYXP5vZ4Df/RbhGwqjK9Vry+IP3KmzMhOxNv5x/QAV31Nds3PUr5aF9oj/fgbIFZvp82YUr4STiNSxpcBlp8j8pwOq2i1lt9/5Kpzn9rRTKj5rBj/+rJHx1w2HM7u+rh0MuSF+KW1W0RUtkTPrGI+fEcqd92o5TE1j1j26zhNURfgq2arjmU1/2Ska8rjyUemkspyVodnNiwecKxw66lHPmsJ1r31T03rHqKO1Vb7U71n3CFUvcHnHp8+HpcDhD1jwpg9ZmTDo2T0DvPVjdiYdTblfBiSX0KwMaHjm2DCAPwI+62bpvo7VtAx48MBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIOr1C2RC8uTGLtsBAAAAAElFTkSuQmCC","く":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD8klEQVR42u2dARLjMAgDq0z//2XdC65zczEgGfUDHS3CiWMD4Gf37/kEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEgMAP2A0Ayx2ACgaPm/2xFQA+uxdBVJF4/FZ/7AOAwmz47s1+FwegFsljGX+sAfC3d18sAYD6v/hayueKFGjRr+uAH+7nhhToCb8sgK7wqwJoC7/oItipX9ABjfaXBNAafj0AzeGXA9AdfjEA/eHXAjAQfiUAI+EXAjATfhkAU+FXATAWfg0Ag+FXADArf34zNK1/2AHj8ocdIKB/0gEK8icdoKF/zAEi8sccIKN/xgE68mccoKR/wAFS8vsB/DrvHWlv+l0d/m4AevJ7F0FF/Y0OkJTfB0Bu8WsGIBr+LgCy4W8CoBv+FgDS8usBKLu/A4B4+KsByIe/FoCD/EoAcJBfB8Aj/GUAbOTXADCSX7IdttJ/3gFe8o8DcJN/GMDPChfRiU7f1eE/CsBS/jkAju4/CMBW/hkAxvJPAPhd3Cg/ze+7OvzvAbjLfwsA7vJfboYu0P/KAfCX/woALpD/BgBukP8CAK6Qf/6LkN0Y4+9u+f/vAFyi/2gKMB0lA2A3AKx3ABYB4C0EHvm+t6oAeEkaPA7NjzUB8A4ET8mLnxGCp+jVFyvWAF6wFIDLv4s/lTtABxeAy8/GnurPALjfAd4meBq+BUkvBYdehWmbB2DT1wDevxnyzAOw8ZMQr98OGy4FvUdjgnlw/IOImwnA9q74vP9gxCkPak6GjPIAnJkOwfvPBk3yoPBw1CMPSk+HHUxQezxuYAJwdlQO778gIZ4HDTdEtPOg5YqMsgl67ggJmwDUmBu2oJeYqAlAmeFxvP+eoKIJQKUJgrz/pqjcE7H9qqzaExGUm6S5oLO0kglAxXGqC7rLy5gAFJ2pu2DChIYJQN3BygumzAiYAJSers37i6amTTBfNfb73RgbyuZGr9tK1A1OmkCkcHLOBCqVo2Mm0CmdHTKBUO3wjAmkiqcnTKBVPT5gArXy+XYC0Lu/21uHJdhAodcEih0kWtdCyRYanWuhaA+RPgKQLelqWgt1u8g0mQDKRX0dJpDuI9RhAu1GSg0ExDtJsbxJg3wrLa7vJcZaNgbN1Mj13eRYmBwe7fS49D2gIw1sGiqy6Ong01GSNU9Ho5aaNWlg1VOUq7bDvwhwbVdZcn1bXR7eH/j1FebZ/ZFhY2Wms3QABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABMC//P4A/4PNTb5mcnMAAAAASUVORK5CYII=","ま":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII=","ぱ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD5UlEQVR42u3d23bbIBCFYTaL93/l3Zu0q2ljWRIIz8DvmyS2W1ufBhgOEnLZ+1ELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALDyoy1yHPr6eXnNl7zOwZc7CPkB9MNz3gdAL573HgA6eM0btAK6/eIaAOp6OT+Aut+QG0BD3pIXQIPetEom+FXp63Ij15YIAP/1i8p2nSH79V96LgImpFCvk3wdZTzWjN6gfn8Jhyj8LwXenac26DT5UzXAjx98IQbqzFZpzvlnROi7i+YAOFwStEcEuPuE1GRlvmw1KmyGxQHIAmAiAAAAQo0L6WEALdM81rJoCJzVWrQOmN0ddrDOnnZqBXT8lNcE8JGAdlshogMPr1oEvh+Y9P9vJyuntshogLbLAzzoTbUsLOBZEeCYAl49D/CI01LLqgLeIQ9w/zK5mjzrtTtrpbbALFjXUtm2xkSgbrdIbY1E0AyKfhLAjAoDAEDhmqEZzYXGV0sMi1MHAAAAALuuECMCxgCYCAAAAAAAoDf4RAOh5xscigAAAAAAAAAAbDscQATUzYcDiAAAAAAAAAAAAAAAAMqmt5AgAgAAAAAAAAAAAAAAAAAAAAAo200NEgEAAAAAAAAAAAAAAAAAQFnponAiAICS4UZK+vzK0xb0ruBeGuDsVoFeE0Al0uhby9+QZQLQ5s2glsgDbtdM0t6JkPbOBAedfmUFUDDI2QCKF0tTARSyOM3LA3Rho4A7WypEB9CV/WLP9xWcvDfod69pDkH7TAD44u2Sn9v6uUUe8/AbghFB0HJfBdFPUKcHgGM1sTX9VTCdWUFd4CogBQZQ+J5WnXuMDgddF7kM7nYQ1FwlwMM/K9vUmD04CGq6EjA4CBJOjh4FwSazwyOLQc7p8YFBUJOe+mECNeuSmNdBcK0Y1BX3mtMmS2SGCNSZrbmm1YWL7DHSsbP66Yog+yqx7iCoU0upHij0nQI18KCHOuskBSwCmtkahNx2V0+81Q677a7vH9alAfVMO07qkcLiuyZ1framRyoLJ1otfiJJuTGj+E9F4CgAvkOg7o8Kv/P0EYE6ZtRLvNlh6/VZ9uBM4c9nnae4tchA1+DP9mk04Owq597jGhxvntsKaMJ0gK9khY7WDHrq/+CAecDcC6EcMBGyowLWDPOCXuJ6AccsQG1m0VTA+qMGmdL7WP3ZZs9lKFjzcW+9rbq+piK1nu0DlZvPGTj8hZPu+6cKkTnJ0fpBk7+Qkm8UxR0kAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDDxy+fFcMtoFeBawAAAABJRU5ErkJggg=="};
-const CFG = {"visual":{"size_px":256,"base_dir":"base","fix_ms":400,"fix_jitter_ms":300,"base_anim_ms":300,"progress_pct_levels":[1,3.25,5.5,20,100],"progress_pct_shift":{"enabled":true,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220]},"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":24},"wipe":{"direction":"ltr","soft_edge_px":0}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}}};
+const CFG = {"visual":{"size_px":256,"base_dir":"base","fix_ms":400,"check":{"rounds":2,"n_choices":4},"fix_jitter_ms":300,"base_anim_ms":300,"progress_pct_levels":[6,12,17,25,30,50,100],"progress_pct_shift":{"enabled":false,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220]},"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":48},"wipe":{"direction":"ltr","soft_edge_px":0}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}}};
 const SIZE = CFG.visual.size_px;
 const imgs = {};           // かな → Image (base/<かな>.png)
 
