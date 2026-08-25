@@ -1982,7 +1982,90 @@ function afterTrials() {
   afterAwareness();
 }
 
+// ---- 課題のあとの3問（年齢層・読みの支障・聞き取りの支障）------------------
+//
+// **2026-08-25 追加。** 設定は design.post_survey。
+//
+// ⚠ **すべて任意。** 答えずに「次へ」で進める。答えを強制すると、正直に答えない人が
+//   出るか、完了コードの手前で離脱する。
+// ⚠ **除外には使わない。** 感度分析（その層を除いても結論が変わらないか）に使う。
+//   データを見てから除外条件にしてはいけない。
+// ⚠ **課題のあとに置く。** 課題の前だと「聞き取りに支障がある」と答えた人が
+//   身構えるおそれがある。
+let surveyAnswers = null;
+
+function postSurveyScreen() {
+  const cfg = (CFG.design && CFG.design.post_survey) || {};
+  const qs = cfg.questions || [];
+  const picked = {};
+  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後に：任意のアンケート</h2>
+    <p>回答は任意です。答えたくない項目はとばして「次へ」を押してください。
+    回答の内容が報酬に影響することはありません。</p>
+    <div id="qs"></div>
+    <p style="text-align:center;margin-top:20px">
+      <button class="primary" id="qDone">次へ</button></p>`;
+  const box = document.getElementById("qs");
+  qs.forEach((q, qi) => {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "margin-top:18px";
+    const t = document.createElement("div");
+    t.style.cssText = "font-size:15px;font-weight:700;margin-bottom:7px";
+    t.textContent = `Q${qi + 1}. ${q.label}`;
+    wrap.appendChild(t);
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:7px;flex-wrap:wrap";
+    (q.options || []).forEach(op => {
+      const b = document.createElement("button");
+      b.textContent = op;
+      b.style.cssText = "font-size:14px;padding:8px 14px;border-radius:8px;"
+        + "border:1px solid #b9c0cf;background:#fff;cursor:pointer;font-family:inherit";
+      b.onclick = () => {
+        // もう一度押したら選択を外せる（誤って押したときのため）
+        const off = picked[q.id] === op;
+        picked[q.id] = off ? undefined : op;
+        row.querySelectorAll("button").forEach(x => {
+          const on = !off && x === b;
+          x.style.background = on ? "#1E2A5E" : "#fff";
+          x.style.color = on ? "#fff" : "";
+          x.style.borderColor = on ? "#1E2A5E" : "#b9c0cf";
+        });
+      };
+      row.appendChild(b);
+    });
+    wrap.appendChild(row);
+    box.appendChild(wrap);
+  });
+  document.getElementById("qDone").onclick = () => sendPostSurvey(picked);
+}
+
+function sendPostSurvey(picked) {
+  surveyAnswers = picked || {};
+  const rec = {
+    kind: "transfer_post_survey",
+    stimulus_id: "post_survey|" + GROUP,
+    target_char: "-", response_char: "-",
+    modality: "transfer_post_survey", q_set: "transfer", phase: PHASE, group: GROUP,
+    assign_index: ASSIGN, assign_source: ASSIGN_SOURCE, n_choices: N_CHOICES,
+    version: VERSION, config_version: CFG.config_version,
+  };
+  // 答えなかった項目は空文字で残す（「聞かれたが答えなかった」と
+  // 「そもそも聞いていない」を区別できるようにするため）。
+  ((CFG.design.post_survey || {}).questions || []).forEach(q => {
+    rec[q.id] = surveyAnswers[q.id] || "";
+  });
+  if (window.PROD) PROD.saveFracTrial(rec);
+  sendRecord(rec);
+  saveProgress();
+  afterSurvey();
+}
+
 function afterAwareness() {
+  const ps = (CFG.design && CFG.design.post_survey) || {};
+  if (ps.enabled && !surveyAnswers) return postSurveyScreen();
+  afterSurvey();
+}
+
+function afterSurvey() {
   if (G.wellbeing) {
     if (!wellbeingAnswers) { wellbeingAnswers = { clips: [], choice: "" }; wbClips = buildWellbeingClips(); }
     if (!wbClips.length) wbClips = buildWellbeingClips();
@@ -2071,11 +2154,10 @@ function audioGuideHTML() {
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">聞こえた文字を表から選ぶ</text>
     </svg>
     <ul style="font-size:14px;line-height:1.9;color:#333">
-      <li>「ピッ」1回のあとに自動で始まります（終わると「ピッピッ」と2回鳴ります）。</li>
-      <li><b>読み上げは1問につき1回だけです（聞き直しはできません）。</b></li>
+      <li>「ピッ」と1回鳴ったあと、自動で読み上げが始まります。読み上げが終わると、「ピッピッ」と2回鳴ります。</li>
+      <li><b>読み上げは1問につき1回だけです。聞き直すことはできません。</b></li>
       <li>答える時間に制限はありません。</li>
-      <li><b>まったく聞こえない問題も混ざっています。</b>それも大切なデータです。</li>
-      <li>分からない場合でも、<b>最も近いと思う文字を選んでください。</b></li>
+      <li><b>ほとんど聞き取れない場合もあります。</b>その場合も、最も近いと思う文字を選んでください。</li>
     </ul>`;
 }
 function visualGuideHTML() {
@@ -2100,11 +2182,10 @@ function visualGuideHTML() {
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
     <ul style="font-size:14px;line-height:1.9;color:#333">
-      <li>中央の ＋ のあとに自動で始まります。</li>
-      <li><b>表示は1問につき1回だけです（見直しはできません）。</b></li>
+      <li>中央の ＋ が出たあと、自動で表示が始まります。</li>
+      <li><b>表示は1問につき1回だけです。見直すことはできません。</b></li>
       <li>答える時間に制限はありません。</li>
-      <li><b>まったく見えない問題も混ざっています。</b>それも大切なデータです。</li>
-      <li>分からない場合でも、<b>最も近いと思う文字を選んでください。</b></li>
+      <li><b>ほとんど見えない場合もあります。</b>その場合も、最も近いと思う文字を選んでください。</li>
     </ul>`;
 }
 

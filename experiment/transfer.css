@@ -64,7 +64,7 @@ a:hover { color: #2E7D8F; }
    独立した行にして、上に少し余白を取る。
    ⚠ 同意画面は1画面に収める制約があるので、余白は最小限にすること
       （スマホ縦 375×667・360×640 でスクロールが出ないこと）。 */
-.consent-min .c-contact { display: block; margin-top: 6px; line-height: 1.55;
+.consent-min .c-contact { display: block; margin-top: 14px; line-height: 1.55;
   font-size: 13.5px; color: #4b5563; }
 .consent-min p.muted { margin: 10px 0 0; font-size: 12px; }
 .consent-min #devBox { margin-top: 12px !important; padding: 10px 12px !important; }
@@ -73,7 +73,7 @@ a:hover { color: #2E7D8F; }
 .consent-min button.primary { font-size: 17px; padding: 13px 38px; }
 @media (max-height: 720px) {
   .consent-min p { margin: 6px 0; font-size: 14px; line-height: 1.6; }
-  .consent-min .c-contact { margin-top: 4px; font-size: 12.5px; }  /* 画面が低いときは詰める */
+  .consent-min .c-contact { margin-top: 10px; font-size: 12.5px; }  /* 画面が低いときは少し詰める */
   .consent-min #devBox { margin-top: 8px !important; padding: 8px 10px !important; }
   .consent-min #devBox p { font-size: 13.5px !important; }
   .consent-min #devBox label { margin: 2px 0 !important; font-size: 13.5px !important; }
