@@ -212,7 +212,7 @@
       ${headphone ? DEVICE_HTML : ""}
       <p style="margin-top:16px"><button class="primary" id="cstGo" disabled style="opacity:.5">同意して始める</button></p>
       ${o.noEnvNote ? "" : `<p class="muted">${envNote}</p>`}
-      <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
+`;   // 2026-08-25 丸山決定: 所属（大学名・研究室名）は画面に出さない。「実施：」の行を削除した。
     // 同意はボタン「同意して始める」に集約(チェックボックスは廃止・丸山判断 8/17)。
     // 聴覚課題は機器の申告(無線以外)をするまでボタンを押せない。
     const go = el.querySelector("#cstGo");

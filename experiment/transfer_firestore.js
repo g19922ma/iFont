@@ -279,12 +279,10 @@
   //   集団ごとに 0,1,2,… と続いていなければ割付が偏る。
   function gcd2(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
 
-  // 設定は自分で取りに行く。
   // ⚠ ここは以前 `CFG` を裸で参照していた。ブラウザでは transfer.js の
-  //   `const CFG` が偶然見えるので動いていたが、**このファイル単体では落ちる**
-  //   （読み込み順が変わる・道具から呼ぶ・試験にかけると壊れる）。
-  function cfg() { return global.TRANSFER_CONFIG || {}; }
-
+  //   `const CFG` が偶然見えるので動いていたが、**このファイル単体では落ちる**。
+  //   設定は、このファイルの先頭にある cfg() から取る
+  //   （ここで同名の関数をもう一つ作ると、先頭の cfg() を上書きして全体が壊れる）。
   function assignPattern(phase, groups) {
     var w = (cfg().phase_group_weights || {})[phase];
     if (!w) return null;                       // 重みが無ければ従来どおり順に配る

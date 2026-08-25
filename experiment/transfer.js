@@ -2243,7 +2243,7 @@ function intro() {
     <p style="font-size:15px">問題数：<span id="nq">${nQuestions}</span>問</p>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音が聞こえるかの確認" : "画面が見えるかの確認"}</button></p>
     ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>`}
-    <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "津田塾大学 栗原研究室" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
+    <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
   const shortRun = document.getElementById("shortRun");
   if (shortRun) shortRun.addEventListener("change", () => {
     MAX_TARGET_TRIALS = shortRun.checked ? CFG.design.short_run_trials : (Number(CFG.design.max_target_trials) || 0);
@@ -2520,7 +2520,7 @@ function blockedScreen(reason, info) {
     <p style="text-align:center;margin-top:18px">
       <button class="primary" id="retryBtn">もう一度試す</button></p>
     <p class="muted" id="retryNote" style="text-align:center"></p>`}
-    <p class="muted" style="text-align:right;margin-top:14px">実施：津田塾大学 栗原研究室</p>`;
+`;   // 2026-08-25 丸山決定: 所属（大学名・研究室名）は画面に出さない。「実施：」の行を削除した。
   if (!canRetry) return;
   const btn = document.getElementById("retryBtn");
   const note = document.getElementById("retryNote");
