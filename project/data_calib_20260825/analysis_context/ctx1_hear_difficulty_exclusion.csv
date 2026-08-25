@@ -1,0 +1,13 @@
+cut,modality,family,n_trials,n_participants,accuracy_overall,mu,lam,converged,note
+baseline_全員,audio,,1890,90,0.3974,30.73751,0.64514,True,
+baseline_全員,visual,fade,982,163,0.6507,1.64361,0.96483,True,
+baseline_全員,visual,reveal,978,162,0.4888,1.58596,0.91393,True,
+baseline_全員,visual,blur,980,163,0.6735,45.54566,1.0,True,
+baseline_全員,visual,wipe,979,162,0.2594,27.12743,0.95886,True,
+baseline_全員,visual,ALL,3919,163,0.5182,22.29711,1.0,True,
+多少ある人を除外,audio,,1491,71,0.3924,30.58238,0.63424,True,
+多少ある人を除外,visual,fade,892,148,0.6525,1.62384,0.96181,True,
+多少ある人を除外,visual,reveal,888,147,0.4854,1.53474,0.90032,True,
+多少ある人を除外,visual,blur,890,148,0.6674,46.38698,1.0,True,
+多少ある人を除外,visual,wipe,889,147,0.261,27.28676,0.96461,True,
+多少ある人を除外,visual,ALL,3559,148,0.5167,22.61133,1.0,True,

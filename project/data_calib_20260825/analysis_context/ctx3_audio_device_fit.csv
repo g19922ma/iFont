@@ -1,0 +1,4 @@
+audio_device,modality,family,n_trials,n_participants,accuracy_overall,mu,lam,converged,note
+スピーカー,audio,,1197,57,0.3918,33.59056,0.67217,True,
+有線ヘッドホン,audio,,483,23,0.383,26.49119,0.56819,True,
+無線,audio,,210,10,0.4619,27.72048,0.71306,True,参考(参加者10人<20)

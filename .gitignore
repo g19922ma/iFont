@@ -67,3 +67,5 @@ project/data_calib_20260825/transfer_wellbeing.csv
 project/data_calib_20260825/transfer_roster.csv
 project/data_calib_20260825/納品データ_0826.tsv
 project/data_calib_20260825/承認判定_0826.csv
+# 集計の中間ファイル（生データから再生成できる）
+project/data_calib_20260825/cube/

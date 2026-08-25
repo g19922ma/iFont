@@ -1,0 +1,41 @@
+modality,char,family,axis,gamma,lambda,mu,sigma,converged,n_trials,note,lambda_observed_full,n_full
+audio,あ,,gate_ms,0.01471,0.9645,19.41106,0.46077,True,237,,0.93939,33
+audio,か,,gate_ms,0.01471,1.0,34.56596,18.19507,True,236,,0.94118,34
+audio,が,,gate_ms,0.01471,0.00847,2.04597,0.075,True,236,sigmaが下限に張り付き(階段状の急変化、この値より鋭い可能性);推定λ(0.01)・full実測(0.03)とも低い: 刺激不良の疑い,0.02941,34
+audio,ぱ,,gate_ms,0.01471,0.42604,15.08731,0.20138,True,237,推定λ(0.43)だけ低い(full実測0.64): 当てはめの問題の疑い,0.63636,33
+audio,し,,gate_ms,0.01471,0.27381,23.84197,5.63112,True,235,推定λ(0.27)・full実測(0.43)とも低い: 刺激不良の疑い,0.42857,35
+audio,つ,,gate_ms,0.01471,0.67321,1.77094,19.28295,True,237,推定λとfull実測が0.18ポイント食い違う,0.84848,33
+audio,ま,,gate_ms,0.01471,0.90269,45.9237,2.82191,True,237,,0.84848,33
+audio,ら,,gate_ms,0.01471,0.41512,46.03874,5.15697,True,235,推定λ(0.42)だけ低い(full実測0.51): 当てはめの問題の疑い,0.51429,35
+visual,あ,blur,actual_s_pct,0.01389,1.0,45.41926,13.99266,True,123,,1.0,15
+visual,あ,fade,actual_s_pct,0.01389,1.0,1.31654,0.56012,True,120,,1.0,15
+visual,あ,reveal,actual_s_pct,0.01389,0.95743,1.18829,0.48373,True,126,,1.0,15
+visual,あ,wipe,actual_s_pct,0.01389,1.0,23.41955,11.94483,True,120,,1.0,14
+visual,か,blur,actual_s_pct,0.01389,1.0,45.56228,10.0969,True,126,,1.0,16
+visual,か,fade,actual_s_pct,0.01389,0.93467,1.39455,0.49001,True,121,,1.0,16
+visual,か,reveal,actual_s_pct,0.01389,1.0,1.69459,0.6725,True,120,,1.0,14
+visual,か,wipe,actual_s_pct,0.01389,0.93353,38.42291,8.09011,True,123,,0.93333,15
+visual,が,blur,actual_s_pct,0.01389,1.0,56.54411,14.80171,True,120,,0.9375,16
+visual,が,fade,actual_s_pct,0.01389,0.95157,1.84781,0.20823,True,124,,1.0,16
+visual,が,reveal,actual_s_pct,0.01389,0.92597,3.33637,0.97479,True,120,,0.93333,15
+visual,が,wipe,actual_s_pct,0.01389,1.0,55.34718,0.0995,True,126,sigmaが下限に張り付き(階段状の急変化、この値より鋭い可能性),1.0,16
+visual,ぱ,blur,actual_s_pct,0.01389,1.0,68.84793,15.86281,True,120,,0.92857,14
+visual,ぱ,fade,actual_s_pct,0.01389,0.96168,2.71828,0.74823,True,126,,1.0,16
+visual,ぱ,reveal,actual_s_pct,0.01389,0.87006,3.44473,0.95844,True,123,,0.86667,15
+visual,ぱ,wipe,actual_s_pct,0.01389,0.93334,99.45348,0.10398,True,120,,0.92857,14
+visual,し,blur,actual_s_pct,0.01389,0.95765,33.36534,5.07482,True,123,,0.9375,16
+visual,し,fade,actual_s_pct,0.01389,1.0,1.45557,0.49591,True,121,,1.0,16
+visual,し,reveal,actual_s_pct,0.01389,0.97666,1.24485,0.554,True,126,,1.0,16
+visual,し,wipe,actual_s_pct,0.01389,1.0,17.2001,7.8442,True,120,,1.0,16
+visual,つ,blur,actual_s_pct,0.01389,1.0,31.37188,10.41497,True,127,,1.0,15
+visual,つ,fade,actual_s_pct,0.01389,1.0,1.58399,1.52751,True,121,,1.0,15
+visual,つ,reveal,actual_s_pct,0.01389,1.0,1.61739,0.79209,True,120,,1.0,15
+visual,つ,wipe,actual_s_pct,0.01389,0.93266,30.38048,9.82507,True,123,,0.93333,15
+visual,ま,blur,actual_s_pct,0.01389,1.0,44.5377,10.36546,True,121,,1.0,14
+visual,ま,fade,actual_s_pct,0.01389,0.92972,1.39341,0.38795,True,123,,1.0,15
+visual,ま,reveal,actual_s_pct,0.01389,1.0,2.4149,1.0443,True,120,,1.0,15
+visual,ま,wipe,actual_s_pct,0.01389,0.95238,3.96602,0.0995,True,126,sigmaが下限に張り付き(階段状の急変化、この値より鋭い可能性),1.0,16
+visual,ら,blur,actual_s_pct,0.01389,1.0,47.6378,10.50252,True,120,,1.0,15
+visual,ら,fade,actual_s_pct,0.01389,1.0,1.68598,0.36383,True,126,,1.0,16
+visual,ら,reveal,actual_s_pct,0.01389,0.87649,0.9652,0.25799,True,123,,0.9375,16
+visual,ら,wipe,actual_s_pct,0.01389,0.875,24.78022,0.52459,True,121,,0.875,16

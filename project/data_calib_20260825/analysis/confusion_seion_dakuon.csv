@@ -1,0 +1,15 @@
+modality,target_char,response_char,target_type,response_type,direction,count,n_target_trials,rate
+audio,が,か,dakuon,seion,dakuon→seion,28,32,0.875
+audio,ぎ,き,dakuon,seion,dakuon→seion,6,8,0.75
+audio,ぐ,く,dakuon,seion,dakuon→seion,6,7,0.8571
+audio,げ,け,dakuon,seion,dakuon→seion,3,4,0.75
+audio,ざ,さ,dakuon,seion,dakuon→seion,1,6,0.1667
+audio,ぞ,そ,dakuon,seion,dakuon→seion,2,4,0.5
+audio,だ,た,dakuon,seion,dakuon→seion,9,10,0.9
+audio,で,て,dakuon,seion,dakuon→seion,2,6,0.3333
+audio,ど,と,dakuon,seion,dakuon→seion,4,6,0.6667
+audio,ば,ぱ,dakuon,handakuon,dakuon→handakuon,3,8,0.375
+audio,ぱ,ば,handakuon,dakuon,handakuon→dakuon,1,23,0.0435
+audio,ぷ,ぶ,handakuon,dakuon,handakuon→dakuon,1,5,0.2
+visual,じ,し,dakuon,seion,dakuon→seion,1,9,0.1111
+visual,ぺ,べ,handakuon,dakuon,handakuon→dakuon,1,16,0.0625
