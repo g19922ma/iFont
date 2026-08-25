@@ -220,7 +220,7 @@ window.TRANSFER_CONFIG = {
   //                           最短条件で「あ」と答えられて曲線の床が壊れる。谷ちょうどで切るよう
   //                           直し、−27.7dB（68字中45番目）に収まった。
   //                           **刺激を変えたら、いちばん長い条件だけでなく最短条件も確かめること。**
-  config_version: "prov-2026-08-25b",
+  config_version: "prov-2026-08-26a",
 
   // =======================================================================
   // ⚠⚠ 掲載前フラグ ⚠⚠  **募集サイトへ掲載申請する直前に false にする**
@@ -330,12 +330,69 @@ window.TRANSFER_CONFIG = {
   distributed_wids: {"calib":["znxa8x","6xt88w","jav5yw","5mk55k","dp8m84","jv7cuy","f93un7","wmqha6","byaecm","wx6xru","4wacpa","8tczuu","uyzjrv","ewumqe","pnqzzt","xmy87q","6x4tck","s7zuf5","wuk8ch","75a86d","yjzfjn","pc7z98","j9978y","89ke9n","xy6r3n","3f2h8t","8f3ez4","w9h9rb","wu85fb","rhamzs","8ed82z","c8b6m7","v89wqq","r8vtwa","d3njj2","x4se3h","y4mru5","gc93re","bkwdqn","zdqjkk","rmw3du","2vrc3s","w9nt9r","ds9kv4","p2mgd9","qk8f4m","qsc3hu","yjj2th","8b32hh","bn7cuk","u8gh9x","48nspu","zhdnmg","3j6g3v","5rue3f","knrp78","r7zmkx","rhvfqu","8rvfmc","qd5ryd","xyddwr","x9q6n8","u7wxm2","prjd7d","hq3ejg","6xdvt6","g4sjcn","qtpk66","as95xe","sqmhr5","tapugz","xsv5b9","u3nzyb","hkvvyw","jmekpv","9zsycx","5cbe5h","e6qnad","xy3ft6","hbbxeq","vfrz3y","stpnn6","stsvsb","4sevzn","4r2xz4","f7w3mj","hjkrzz","us7gp5","n93sbh","q4bd7u","xxpgbq","4cbcbt","f35era","79tbh8","pzuk5w","7z5aej","xf5bm3","95bmgh","52caav","62hmq8","4jtpbj","x6veqf","ekmjen","rmdh8u","e3kzzw","rh7qmb","ux3hkt","nmkmeb","zpdbua","2x7avj","knxs5x","nzhjha","5eqper","jbwvsd","9ztyjc","eb86cp","84n9ua","2zgfq6","8smmyb","p6jw45","wtg78p","6avefq","t4njfp","u7bqp9","6qrr66","c93a3f","chvqd3","3d5qw7","jpr258","vbpzrr","qqjdev","xwpvu7","56rctp","uaxyfq","au53mq","qduaw3","c9hg3s","s2gceg","vmqrps","fwdmdk","qmnmvu","t26s69","ddw23c","jpfj42","kknqsj","7r46cp","2svajw","k2nsvt","7fkd3f","engs37","nvauv9","8yeta4","hk7uhn","hd3vd2","jg5nrv","y8pp85","xd8tnb","ckzpvv","849zh8","53kee2","kyxtgp","b83gas","f92ss3","znzsar","uuc8qp","fhp9ka","6uzyh7","hm7acs","9f23es","34pk2a","fcyebr","kafz4v","3r75am","s79ufd","b97rk4","d6mkwc","d6a5m2","53bs9x","3vxx5c","qd5kya","22zvh6","4qvmg6","8yf73q","62wurq","weq9mp","q4qegr","g6m26m","nymbz3","nrtm2p","38a9qz","z2atcw","yfa8ss","97judq","rfut85","gu66cu","qnza2n","c2sgzy","mfyd2r","p32zj8","4g5j75","ssjpd2","e693f2","hajetz","a5qcj2","nzy2gx","wzhchf","9jqmjp","5wq2ku","4e28p4","4b3ute","y322v9","aetzbt","xjvrwa","wnudsp","a6qs9c","759u5k","wvfpha","ca2uap","zj39dp","746gmf","9sz9ff","jp3rmj","qy555z","zt5jxc","padjyj","a9d6cq","5gccuk","2yhsey","mg3gwq","k2ttdg","tcqe4q","w26tp5","vfr63t","fnwvgc","9cd7fm","mktztw","9k6dqu","cd42kj","z84tfr","ymqsup","tepma2","g43u6b","mh4c5m","k9xc6y","wrtbj8","apvegd","drfmr9","zn5fsy","7yk3p4","bycpjd","7smzpz","b5f668","sdafbg"]},
   // ---- 配布した作業者ID ここまで ----
 
+  // ---- フェーズごとの設定の上書き（2026-08-26 追加）------------------------
+  //
+  // ■ なぜ要るか
+  //   較正で分かったことに合わせて、フェーズごとに違う設定で回す必要が出た。
+  //     ・検証(群B)   … 転写に使えるのは **あ・か・ま の3字だけ**。
+  //                     残り5字は聴覚の曲線が使えない（床未達・天井未達・非単調・平坦）。
+  //     ・向きの実験  … 「端から(wipe)」だけを、**左上から**と**右上から**の
+  //                     2通りで測る。濁点が右上にあることが効いているのかを直接確かめる。
+  //
+  // ■ 上書きできるのは下の4項目だけ（transfer.js の applyPhaseOverrides を見ること）。
+  //     targets              対象の字
+  //     aprime_families      視覚集団に見せる方式
+  //     conditions           群Bの条件の並び
+  //     wipe_direction_assign 端からの向きの割り当て
+  //   何でも上書きできるようにすると「どの設定で取ったデータか」が追えなくなるため、
+  //   意図的に絞ってある。上書きが起きると **config_version の末尾に内容が足される**
+  //   ので、1問ごとの記録を見れば後から判別できる。
+  //
+  // ■ ここに書かないフェーズは、上書き無し＝従来どおりの挙動になる。
+  //   **calib は意図的に空にしてある**（較正のデータと同じ設定で再現できるように）。
+  // ---- 一覧を使わずに募集するフェーズ（2026-08-26 追加）--------------------
+  //
+  // 既定では「配布IDの一覧が無いフェーズ＝まだ誰にも配っていない＝試し打ち」と
+  // 判定する（transfer_firestore.js の isTestRun）。準備中の動作確認が本番データを
+  // 濁さないようにするためである。
+  //
+  // 1本のURLで募集する（設問ごとにIDを配らない）フェーズは、ここに名前を足すこと。
+  // 足すと従来どおり「前置き（uitest- / curltest-）だけで判定」に戻る。
+  // **足したまま掲載すると動作確認の記録が本番に混ざる**ので、必要なときだけ足す。
+  open_phases: [],
+
+  phase_overrides: {
+    // 検証フェーズ（群B）。
+    // 方式と条件は**まだ決めていない**ので、いまはコメントのまま置いてある。
+    // 決まったら conditions を有効にすること（WORKLOG 2026-08-26 の「6. まだ決まっていないこと」）。
+    test: {
+      targets: ["あ", "か", "ま"],
+      // 例）ぼやけ1方式で「提案 vs 中点合わせの直線」だけにする場合:
+      // conditions: [
+      //   { family: "blur", condition: "proposed",  tier: 1 },
+      //   { family: "blur", condition: "baseline2", tier: 1 },
+      // ],
+    },
+    // 「端から」の向きを反転する実験。
+    // wipe だけを、参加者の中で ltr（左上から）と rtl（右上から）の両方で出す。
+    // 濁点を持つ字と対応する清音字を測りたいので、targets は较正と同じ8字のままにする。
+    wipedir: {
+      aprime_families: ["wipe"],
+      wipe_direction_assign: { mode: "alternate", directions: ["ltr", "rtl"] },
+    },
+  },
+
   phases: {
     calib: ["acal", "aprime"],
     // 検証フェーズは群Bだけ。集団が1つなので振り分けは起きず、連番だけ配る。
     test: ["b"],
     // 群C(見え心地)も集団が1つしかないので、振り分けは起きない。連番だけ配る。
     comfort: ["c"],
+    // 「端から」の向きを反転する実験(2026-08-26 追加)。課題の形は群A′と同じ
+    // (アニメを止めて字を当てる)なので、集団名は aprime を使いまわす。
+    // フェーズ名が違うので名簿では別物として扱われ、較正の参加者とは重複しない
+    // (重複を断る規則は下の phase_blocks を見ること)。
+    wipedir: ["aprime"],
   },
 
   // ---- 重複参加を断る規則 --------------------------------------------------
@@ -356,10 +413,20 @@ window.TRANSFER_CONFIG = {
     test: [
       { phase: "calib", reason: "already_in_calib" },
       { phase: "comfort", reason: "already_in_comfort" },
+      { phase: "wipedir", reason: "already_in_other_phase" },
     ],
     comfort: [
       { phase: "calib", reason: "already_in_other_phase" },
       { phase: "test", reason: "already_in_other_phase" },
+      { phase: "wipedir", reason: "already_in_other_phase" },
+    ],
+    // 向きの実験は較正と同じ「アニメを止めて字を当てる」課題なので、
+    // 較正に出た人は**必ず断る**（同じ字を何度も見ていると読みやすくなるため）。
+    // 群B・群Cに出た人も同様に断る（4つの集団は互いに独立でなければならない）。
+    wipedir: [
+      { phase: "calib", reason: "already_in_calib" },
+      { phase: "test", reason: "already_in_other_phase" },
+      { phase: "comfort", reason: "already_in_other_phase" },
     ],
   },
 

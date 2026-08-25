@@ -106,6 +106,51 @@ const PHASE_GROUPS = FORCED_GROUP ? [FORCED_GROUP] : ((CFG.phases && CFG.phases[
 // 名簿が返しうる集団の全部（開き直しの人が別の集団で載っていることがある）。
 const PHASE_GROUPS_ALL = (CFG.phases && CFG.phases[PHASE]) || [];
 
+// ---- フェーズごとの設定の上書き（2026-08-26 追加）--------------------------
+//
+// ■ なぜ要るか
+//   較正フェーズは本命8字・4方式で回したが、**検証フェーズ(群B)で使えるのは
+//   あ・か・ま の3字だけ**と較正の結果で判明した（残り5字は聴覚の曲線が
+//   転写に使えない。詳しくは WORKLOG の 2026-08-26 の項）。
+//   また「端から」の向きを反転する実験は、**wipe だけ・向き2種類**で回したい。
+//   どちらも「フェーズごとに違う設定で同じコードを動かす」ことになる。
+//
+// ■ どうするか
+//   設定ファイルに phase_overrides を置き、**このページのフェーズに一致する分だけ**を
+//   起動時に CFG へ上書きする。上書きできる項目は下の4つだけに限る
+//   （何でも上書きできるようにすると、どの設定で取ったデータか分からなくなるため）。
+//   上書きが起きたときは、その内容を **config_version に追記して記録に残す**。
+//
+// ■ 上書きしない場合は、設定ファイルを触る前とまったく同じ挙動になる。
+function applyPhaseOverrides() {
+  const ov = (CFG.phase_overrides || {})[PHASE];
+  if (!ov) return "";
+  const done = [];
+  if (Array.isArray(ov.targets) && ov.targets.length) {
+    CFG.targets = ov.targets.slice();
+    done.push("targets=" + CFG.targets.join(""));
+  }
+  if (Array.isArray(ov.aprime_families) && ov.aprime_families.length) {
+    CFG.assignment.aprime_families = ov.aprime_families.slice();
+    done.push("families=" + CFG.assignment.aprime_families.join("/"));
+  }
+  if (Array.isArray(ov.conditions) && ov.conditions.length) {
+    CFG.conditions = ov.conditions.map((c) => Object.assign({}, c));
+    done.push("conditions=" + CFG.conditions.length);
+  }
+  if (ov.wipe_direction_assign) {
+    CFG.visual.families.wipe.direction_assign =
+      Object.assign({}, CFG.visual.families.wipe.direction_assign, ov.wipe_direction_assign);
+    done.push("wipe_dir=" + (CFG.visual.families.wipe.direction_assign.mode || "?"));
+  }
+  const note = done.join(",");
+  // どの設定で取ったデータかが1問ごとの記録から分かるように、版名の末尾に足す。
+  // これで既存の記録側（config_version を書いている4か所）を触らずに済む。
+  if (note) CFG.config_version = String(CFG.config_version || "") + "+" + PHASE + "[" + note + "]";
+  return note;
+}
+const PHASE_OVERRIDE_NOTE = applyPhaseOverrides();
+
 // 集団と割付は起動時に決まる(サーバの参加者名簿に問い合わせる)。
 let GROUP = "", G = null, ASSIGN = 0;
 let ASSIGN_SOURCE = "";     // "server" | "cache" | "local_hash" | "forced" (記録に残す)

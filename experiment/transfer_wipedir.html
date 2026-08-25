@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなの見え方の課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.16">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  「端から現れる」の向きを反転する実験の入口（2026-08-26 追加）。
+
+  ■ 何を確かめる実験か
+  較正で「濁点を持つ字は『端から』方式で特に不利（中点が1.82倍に伸びる）」という
+  結果が出た。濁点は字の**右上**にあることが多く、左上から出す向き（ltr）では
+  最後に現れるから、というのが観察に基づく推測である。
+  そこで**右上から出す向き（rtl）**を足し、濁点の不利さが消えるかを直接確かめる。
+  主仮説は「濁点の有無 × 向き」の交互作用**1本だけ**。
+
+  ■ 課題の形は群A′（較正の視覚）とまったく同じ
+  アニメーションを途中で止めて、見えた字を答える。違うのは
+    ・方式が「端から」だけになること（phase_overrides.wipedir.aprime_families）
+    ・向きが参加者の中で ltr と rtl の両方出ること（同 wipe_direction_assign）
+  の2点だけ。字は較正と同じ8字のまま（濁点を持つ字と清音字を比べたいため）。
+
+  ■ 集団名は aprime を使いまわすが、フェーズ名が違うので名簿では別物として扱う
+  較正・群B・群C に出た人は**必ず断る**（phase_blocks.wipedir）。
+  同じ字を何度も見ていると読みやすくなってしまうためである。
+
+  ■ 向きの割り当ては乱数ではない
+  「字の番号 + 参加者の連番」から決まるので、途中で再開しても割り当てが崩れない。
+  同じ参加者の中で同じ字が2つの向きで出ることはない（1字には1方向だけ当たる）。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+  **transfer_config.js を変えたときも、このページの ?v= を上げること**
+  (このページは共用の設定ファイルを自分の版番号で読んでいるため)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "wipedir", force_group: "aprime" };</script>
+<script src="prod_common.js?v=3.16"></script>
+<script src="transfer_config.js?v=3.16"></script>
+<script src="transfer_firestore.js?v=3.16"></script>
+<script src="transfer.js?v=3.16"></script>
+</body>
+</html>
