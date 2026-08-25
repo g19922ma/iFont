@@ -1194,8 +1194,26 @@ function audioGates(ch) {
 // 同じ人が途中で閉じて再開しても同じ並びになる(乱数は使わない)。
 // 全員が同じ5水準だと測れる s も5個しかないが、3通りにずらすと集団全体では
 // 1.0〜7.0% を 0.75% 刻みで埋められる。設定を切れば設定の並びがそのまま出る。
-function progressLevels() {
-  const base = CFG.visual.progress_pct_levels.slice().sort((a, b) => a - b);
+// **方式ごとに水準を変えられる**（2026-08-25 追加）。
+//
+// ■ なぜ要るのか
+//   4方式は同じ「進み具合 s」でも難しさが桁違いである。実測でも、同じ 1.75% で
+//   ぼかしだけ 4/4 正解・他の3方式は全滅だった。1つの並びを4方式で共用すると、
+//   ある方式では8水準のうち6つが床、別の方式では6つが天井、ということが起きる。
+//   設定ファイルの注記にも「方式ごとに帯をずらすかどうかは初見のデータを見て判断する」
+//   と最初から書いてあり、想定内の変更である。
+//
+// ■ ⚠ **水準の「個数」は全方式でそろえること。**
+//   割付（assignment.point_subsets）は個数しか見ていないので、個数さえ同じなら
+//   1人あたりの問題数もセルの数も変わらない。個数を方式ごとに変えると
+//   頻度差ゼロの設計（よく出る20字がどれも3回）が崩れる。
+//
+// ■ 書き方: visual.progress_pct_levels_by_family に方式名で並びを書く。
+//   書いていない方式は visual.progress_pct_levels（共通の並び）を使う。
+function progressLevels(family) {
+  const byFam = CFG.visual.progress_pct_levels_by_family || {};
+  const src = (family && byFam[family]) ? byFam[family] : CFG.visual.progress_pct_levels;
+  const base = src.slice().sort((a, b) => a - b);
   const sh = CFG.visual.progress_pct_shift;
   if (!(sh && sh.enabled && sh.count > 1 && sh.step_pct > 0)) return base;
   const k = ((Math.round(ASSIGN) % sh.count) + sh.count) % sh.count;   // 連番 → 0..count-1
@@ -1229,13 +1247,16 @@ function speedsFor(family) {
 function buildVisualTrials() {
   const n = Math.max(0, Math.round(ASSIGN) || 0);
   const combos = assignedCombos();          // 8字ぶん(群A′・群Bとも)
-  const levels = progressLevels();          // 群A′の水準(この人向けにずれている)
+  // 水準は**方式ごとに違いうる**ので、mkCell の中でその字の方式ぶんを引く。
+  // 確認問題の「いちばん薄い点」を決めるためだけ、共通の並びも取っておく。
+  const levels = progressLevels();
   const mkCell = (c, ch, isDecoy, rot) => {
     const out = [];
     if (GROUP === "aprime") {
-      pointSubset(levels.length, rot).forEach(pi => {
+      const lv = progressLevels(c.family);     // その方式の並び
+      pointSubset(lv.length, rot).forEach(pi => {
         out.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
-                   progress_pct: levels[pi], gate_ms: null, is_decoy: isDecoy, is_filler: isDecoy,
+                   progress_pct: lv[pi], gate_ms: null, is_decoy: isDecoy, is_filler: isDecoy,
                    check_kind: "", base_anim_ms: c.base_anim_ms });
       });
     } else {
@@ -1279,15 +1300,20 @@ function buildVisualTrials() {
     decoyCells = shuffle(decoyCells).slice(0, MAX_TARGET_TRIALS);
   }
   // 確認問題。full は打ち切りなし(進み具合が1に届くまで見せる)。floor は最小の点。
-  const minPct = Math.min.apply(null, levels);
+  // 確認問題C（いちばん情報の少ない点）は、その問題に使う方式の最小値を使う。
+  // 方式ごとに並びが違うので、共通の最小値だと方式によって意味が変わってしまう。
+  const minPctOf = (fam) => Math.min.apply(null, progressLevels(fam));
+  const minPct = Math.min.apply(null, levels);   // 方式が決まらない場面の代用
   const mk = (kind, ch) => {
     const c = pick(combos);                 // 見え方は担当している組合せから借りる
     const base = { mod: "visual", char: ch, family: c.family, condition: c.condition,
                    is_decoy: false, is_filler: false, check_kind: kind };
     if (GROUP === "aprime") {
       // 確認問題は「いつもの速さ」に固定する(操作チェックの基準を1つに保つため)。
+      // ⚠ 確認問題C（いちばん情報の少ない点）は、**その問題に使う方式の**最小値にする。
+      //   方式ごとに並びが違うので、共通の最小値だと方式によって意味が変わってしまう。
       return Object.assign(base, { play: "calib", condition: "calib", gate_ms: null,
-                                   progress_pct: kind === "full" ? 100 : minPct,
+                                   progress_pct: kind === "full" ? 100 : minPctOf(c.family),
                                    base_anim_ms: CFG.visual.base_anim_ms });
     }
     const g = gatesFor(CFG.visual.gates_ms, ch);
@@ -1537,6 +1563,12 @@ function runAudioTrial(t) {
 function runVisualTrial(t) {
   let tStim = null, picked = null, pickedRt = null, autoTimer = null;
   let actualMs = null, actualFrames = null, actualS = null, presenting = false;
+  // 2026-08-25 追加。「情報がどこまで進んだか」と「最後の絵を余分に見た時間」を分ける。
+  //   lastDrawMs … 最後に絵を描いた時刻（提示開始から）
+  //   blankMs    … 白紙にした時刻。この差が「最後の絵を見ていた時間」
+  // 群Bでは 30Hz のとき「166msまでの絵を200msまで見ていた」ということが起きる。
+  // actual_ms だけだとこの2つが混ざるので、分けて残す。
+  let lastDrawMs = null, blankMs = null, endpointClamped = false;
   const prog = progressFn(t);
   const renderer = RENDERERS[t.family] || RENDERERS.fade;
 
@@ -1557,6 +1589,9 @@ function runVisualTrial(t) {
     finalizeCommon(t, makeRecord(t, picked, {
       rt_ms: pickedRt, actual_ms: actualMs, actual_frames: actualFrames,
       actual_s: actualS === null ? "" : Math.round(actualS * 1000) / 1000,
+      last_draw_ms: lastDrawMs, blank_ms: blankMs,
+      final_hold_ms: (lastDrawMs === null || blankMs === null) ? "" : (blankMs - lastDrawMs),
+      endpoint_clamped: endpointClamped ? 1 : 0,
       // RQ4 の速さ2水準では試行ごとに違う。分析はこの列で2群に分ける
       // (生成に使うのは calib_speed_probe.generation_level_ms の側だけ)。
       progress_source: prog.source, base_anim_ms: baseAnimMs(t),
@@ -1594,8 +1629,14 @@ function runVisualTrial(t) {
     const sTarget = (t.play === "calib")
       ? Math.max(0, Math.min(1, (t.progress_pct === null ? 100 : t.progress_pct) / 100)) : null;
     const tCut = (t.play === "calib") ? null : t.gate_ms;   // null = 打ち切りなし(1に届くまで)
-    // 打ち切りのない問題(確認問題Aと練習)は、最後の姿を少しのあいだ見せてから消す。
-    const isFull = (sTarget !== null) ? (sTarget >= 1) : (tCut === null);
+    // 最後の姿をしばらく残すのは**確認問題Aと練習だけ**にする。
+    //
+    // ⚠ **2026-08-25 に変えた。** それまでは「水準100%」の問題も長く残していた。
+    //   ところが他の水準は最後の絵を1フレームしか見せないので、**100%だけ別の実験**に
+    //   なってしまい、曲線の当てはめに混ぜられない。水準としての100%は他と同じく
+    //   1フレームだけ見せ、長く残すのは「全長なら読めること」を確かめる確認問題Aに限る。
+    const holdAtEnd = (t.check_kind === "full") || !!t.practice ||
+                      (sTarget === null && tCut === null);
     renderer.begin(t.char, ctx);
     drawFix(ctx);
     const t0 = performance.now();
@@ -1609,7 +1650,8 @@ function runVisualTrial(t) {
     };
     const finish = (now) => {
       drawBlank(ctx);
-      actualMs = Math.round(now - tOn); actualFrames = frames; actualS = lastS;
+      blankMs = Math.round(now - tOn);
+      actualMs = blankMs; actualFrames = frames; actualS = lastS;
       presenting = false;
     };
     function frame(now) {
@@ -1619,21 +1661,52 @@ function runVisualTrial(t) {
       }
       const el = now - tOn;
       const s = prog.fn(el);
-      // 打ち切り判定は描画の前。時点 t (または水準 s%) を過ぎたフレームは1枚も描かない。
-      // したがって実際に見えた最大の進み具合は、狙った水準よりフレーム1枚ぶん
-      // (60Hz なら 16.7ms ぶん)だけ手前になる。分析ではこの実測値 actual_s を使うこと
-      // (名目の progress_pct / gate_ms も別の列に残してある)。
-      if ((tCut !== null && el >= tCut) || (sTarget !== null && s >= sTarget) ||
-          (tCut === null && sTarget === null && s >= 1)) {
-        if (isFull) {   // 全部見せ: 完成した姿を1枚描いて hold のあいだ残す
-          renderer.draw(ctx, t.char, 1); lastS = 1; frames++;
+      const reached = (tCut !== null && el >= tCut) ||
+                      (sTarget !== null && s >= sTarget) ||
+                      (tCut === null && sTarget === null && s >= 1);
+      if (reached) {
+        if (holdAtEnd) {   // 確認問題A・練習: 完成した姿を1枚描いて hold のあいだ残す
+          renderer.draw(ctx, t.char, 1);
+          lastS = 1; frames++; lastDrawMs = Math.round(el);
           setTimeout(() => finish(performance.now()), CFG.design.full_hold_ms);
           return;
         }
-        finish(now); return;   // 時点 t を過ぎたフレームは1枚も描かない
+        if (sTarget !== null) {
+          // ── 較正（群A′）: **指定した視覚状態 s を正確に提示する実験** ──
+          //
+          // **2026-08-25 に変えた。** それまでは「s を過ぎたフレームは1枚も描かない」
+          // だったので、**狙った s そのものが一度も画面に出なかった**。
+          // 進み具合は s = 経過ms ÷ base_anim_ms の等速で決まるため、
+          // 画面の書き換え周期より短い s は表示されようがない。実測では
+          // 「1.75% / 4% / 6.25% を指定した15問のうち11問が s=0（真っ白）」になり、
+          // **独立変数の操作そのものが失敗していた**（測定誤差ではない）。
+          // 30Hz に落ちる端末・フレーム落ちのある端末では、この失敗がさらに広がる。
+          //
+          // そこで **狙った s ちょうどにクランプして1枚描く**。これで
+          // **到達する視覚状態の端末依存性が消える**（60Hzでも30Hzでも同じ絵が出る）。
+          // ⚠ ただし**提示時間の端末差は残る**（その1枚を17ms見るか33ms見るか）。
+          //   そこは last_draw_ms / blank_ms に記録し、品質確認と感度分析で使う。
+          //   **主たる独立変数は名目の s（progress_pct）**とし、時間を横軸に混ぜない。
+          renderer.draw(ctx, t.char, sTarget);
+          lastS = sTarget; frames++; lastDrawMs = Math.round(el);
+          endpointClamped = true;
+          // ⚠ **同じコールバックで消してはいけない。** requestAnimationFrame は
+          //   描画の前に呼ばれるだけで、**実際に画面へ出る保証はない**（重いと1回ぶん
+          //   飛ばされる）。次のフレームまで待つ方式にしたところ、負荷が高いときに
+          //   「描いたのに一度も画面に出ない」ことが起きた（2%で表面化）。
+          //   **固定時間だけ待ってから消す。** これで確実に画面に出るうえ、
+          //   その1枚を見る時間が全端末でそろう（60Hz 17ms・30Hz 33ms のばらつきが消える）。
+          setTimeout(() => finish(performance.now()), CFG.visual.endpoint_hold_ms);
+          return;
+        }
+        // ── 検証（群B）: **時刻 t までの情報しか見せない実験** ──
+        // こちらの規則は**変えない**。時点 t を過ぎた絵は1枚も描かない。
+        // 「情報がどこまで進んだか」と「その絵を余分に見た時間」は
+        // last_draw_ms / blank_ms で分けて記録する。
+        finish(now); return;
       }
       renderer.draw(ctx, t.char, s);
-      lastS = s; frames++;
+      lastS = s; frames++; lastDrawMs = Math.round(el);
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

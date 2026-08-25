@@ -16,6 +16,20 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 .cap{font-size:10px;color:#7a8090;margin-top:2px}
 .cap.now{color:#9a3412;font-weight:700}
 .cap.warn{color:#9a3412;background:#fff0e6;border-radius:3px}
+.cap.meas{color:#2f7d4f;min-height:13px}
+.judge{display:flex;gap:2px;margin-top:3px}
+.judge button{flex:1;font-size:12px;padding:2px 0;border-radius:4px;border:1px solid #cdd3e6;
+     background:#fff;cursor:pointer;font-family:inherit;color:#8a90a0}
+.judge button.on[data-v="0"]{background:#eef1f6;color:#1b2030;border-color:#8a90a0;font-weight:700}
+.judge button.on[data-v="1"]{background:#fff8e6;color:#8a5a00;border-color:#e0c070;font-weight:700}
+.judge button.on[data-v="2"]{background:#e9f5ec;color:#245c37;border-color:#8ec39f;font-weight:700}
+.verdict{margin:10px 0;padding:11px 14px;border-radius:8px;font-size:13.5px;
+     background:#f2f4f8;border:1px solid #dde1ea}
+.verdict.ok{background:#f1f9f3;border-color:#a8d3b5}
+.verdict.ng{background:#fff8f3;border-color:#f0c4a8}
+button.play{width:100%;font-size:11px;padding:3px 0;margin-top:3px;border-radius:5px;
+     border:1px solid #2E7D8F;background:#eef6f8;color:#12414c;cursor:pointer;font-family:inherit}
+button.play.on{background:#1b2030;color:#fff;border-color:#1b2030}
 .box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:12px 16px;margin:12px 0;
      font-size:13.5px}
 .bad{background:#fff8f3;border-color:#f0c4a8}
@@ -34,14 +48,19 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 
 <h2>1. 水準をどこに置くか</h2>
 <div class="box bad">
-<b class="hl">絵は「実際に見える値」で描いてあります。</b><br>
-画面は1秒に60回しか書き換わらないので、指定した進み具合ちょうどで止まれるとは限りません。
-たとえば「6%」と指定しても、60Hzの端末で実際に見えるのは <b>5.6%</b> です。
-各マスの下段に、指定した値と実際の値の両方を書いてあります。<br><br>
+<b class="hl">「▶ 再生」を押すと、本番とまったく同じ規則・同じ時間で動きます。</b><br>
+注視点 ＋ が出たあと、字が 0% から伸びて<b>その水準の絵をちょうど1枚出して</b>消えます。
+<b>静止画では見ないでください。</b> その1枚は 60Hz なら<b>約17ms</b>しか映らないので、
+止まった絵をじっくり見るのとは難しさがまるで違います。<br>
+再生すると、実際に描かれた枚数・進み具合・表示時間が下に出ます。
+<b>進み具合は狙った値と一致するはず</b>です（2026-08-25 に提示規則を直したため）。<br><br>
 <b class="hl">見ていただきたいのは1点だけ:</b>
-<b>いちばん左（6% → 実際5.6%）で、その字が分からないこと。</b><br>
+<b>いちばん左（6%）を再生して、その字が分からないこと。</b><br>
 ここが「分からない」でないと、曲線の左端（当て推量に近いところ）が取れません。
-逆にここで読めてしまうなら、水準をもっと薄い側に足す必要があります。
+逆に分かってしまうなら、水準をもっと薄い側にずらす必要があります。
+<div style="margin-top:10px"><button id="playAll" style="font-size:14px;padding:7px 16px;border-radius:8px;
+border:1px solid #2E7D8F;background:#eef6f8;color:#12414c;cursor:pointer;font-family:inherit">
+▶ いちばん上の字で、薄いほうから順に再生</button></div>
 </div>
 
 <div class="tabs" id="famTabs">
@@ -49,129 +68,1045 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 </div>
 
 <div class="pane" data-fam="fade" style="display:block">
-<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
-<table id="prop-fade"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="fade" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="fade" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="fade" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="fade" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="fade" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
+<h3>うすい→濃い　<span class="k">[0.4, 0.8, 1.4, 2.2, 3.5, 6, 12, 100]</span> <span class="k">（この方式だけ別の並び）</span></h3>
+<table id="prop-fade"><tr><th></th><th>0.4%</th><th>0.8%</th><th>1.4%</th><th>2.2%</th><th>3.5%</th><th>6%</th><th>12%</th><th>100%</th></tr><tr><th>あ</th><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="0.4"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="0.4">▶ 再生</button>
+     <div class="cap"><b>0.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="0.8"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="0.8">▶ 再生</button>
+     <div class="cap"><b>0.8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="1.4"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="1.4">▶ 再生</button>
+     <div class="cap"><b>1.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="1.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="2.2"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="2.2">▶ 再生</button>
+     <div class="cap"><b>2.2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="2.2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="3.5"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="3.5">▶ 再生</button>
+     <div class="cap"><b>3.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="3.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="6"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="6">▶ 再生</button>
+     <div class="cap"><b>6%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="6">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="12"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="12">▶ 再生</button>
+     <div class="cap"><b>12%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="12">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="fade" data-pct="100"></canvas>
+     <button class="play" data-ch="あ" data-fam="fade" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>く</th><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="0.4"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="0.4">▶ 再生</button>
+     <div class="cap"><b>0.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="0.8"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="0.8">▶ 再生</button>
+     <div class="cap"><b>0.8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="1.4"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="1.4">▶ 再生</button>
+     <div class="cap"><b>1.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="1.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="2.2"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="2.2">▶ 再生</button>
+     <div class="cap"><b>2.2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="2.2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="3.5"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="3.5">▶ 再生</button>
+     <div class="cap"><b>3.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="3.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="6"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="6">▶ 再生</button>
+     <div class="cap"><b>6%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="6">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="12"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="12">▶ 再生</button>
+     <div class="cap"><b>12%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="12">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="fade" data-pct="100"></canvas>
+     <button class="play" data-ch="く" data-fam="fade" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ま</th><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="0.4"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="0.4">▶ 再生</button>
+     <div class="cap"><b>0.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="0.8"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="0.8">▶ 再生</button>
+     <div class="cap"><b>0.8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="1.4"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="1.4">▶ 再生</button>
+     <div class="cap"><b>1.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="1.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="2.2"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="2.2">▶ 再生</button>
+     <div class="cap"><b>2.2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="2.2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="3.5"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="3.5">▶ 再生</button>
+     <div class="cap"><b>3.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="3.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="6"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="6">▶ 再生</button>
+     <div class="cap"><b>6%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="6">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="12"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="12">▶ 再生</button>
+     <div class="cap"><b>12%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="12">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="fade" data-pct="100"></canvas>
+     <button class="play" data-ch="ま" data-fam="fade" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ぱ</th><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="0.4"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="0.4">▶ 再生</button>
+     <div class="cap"><b>0.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="0.8"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="0.8">▶ 再生</button>
+     <div class="cap"><b>0.8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="0.8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="1.4"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="1.4">▶ 再生</button>
+     <div class="cap"><b>1.4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="1.4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="2.2"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="2.2">▶ 再生</button>
+     <div class="cap"><b>2.2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="2.2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="3.5"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="3.5">▶ 再生</button>
+     <div class="cap"><b>3.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="3.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="6"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="6">▶ 再生</button>
+     <div class="cap"><b>6%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="6">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="12"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="12">▶ 再生</button>
+     <div class="cap"><b>12%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="12">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="fade" data-pct="100"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="fade" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="fade" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr></table>
+<div class="verdict" data-fam="fade"></div>
 </div><div class="pane" data-fam="reveal" style="display:none">
-<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
-<table id="prop-reveal"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="reveal" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="reveal" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="reveal" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="reveal" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
+<h3>点が増える　<span class="k">[0.1, 0.25, 0.5, 1, 2, 4, 9, 100]</span> <span class="k">（この方式だけ別の並び）</span></h3>
+<table id="prop-reveal"><tr><th></th><th>0.1%</th><th>0.25%</th><th>0.5%</th><th>1%</th><th>2%</th><th>4%</th><th>9%</th><th>100%</th></tr><tr><th>あ</th><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="0.1"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="0.1">▶ 再生</button>
+     <div class="cap"><b>0.1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="0.25"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="0.25">▶ 再生</button>
+     <div class="cap"><b>0.25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="0.5"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="1"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="2"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="4"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="9"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="9">▶ 再生</button>
+     <div class="cap"><b>9%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="9">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="reveal" data-pct="100"></canvas>
+     <button class="play" data-ch="あ" data-fam="reveal" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>く</th><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="0.1"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="0.1">▶ 再生</button>
+     <div class="cap"><b>0.1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="0.25"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="0.25">▶ 再生</button>
+     <div class="cap"><b>0.25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="0.5"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="1"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="2"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="4"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="9"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="9">▶ 再生</button>
+     <div class="cap"><b>9%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="9">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="reveal" data-pct="100"></canvas>
+     <button class="play" data-ch="く" data-fam="reveal" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ま</th><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="0.1"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="0.1">▶ 再生</button>
+     <div class="cap"><b>0.1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="0.25"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="0.25">▶ 再生</button>
+     <div class="cap"><b>0.25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="0.5"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="1"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="2"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="4"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="9"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="9">▶ 再生</button>
+     <div class="cap"><b>9%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="9">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="reveal" data-pct="100"></canvas>
+     <button class="play" data-ch="ま" data-fam="reveal" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ぱ</th><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="0.1"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="0.1">▶ 再生</button>
+     <div class="cap"><b>0.1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="0.25"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="0.25">▶ 再生</button>
+     <div class="cap"><b>0.25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="0.5"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="1"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="2"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="4"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="9"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="9">▶ 再生</button>
+     <div class="cap"><b>9%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="9">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="reveal" data-pct="100"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="reveal" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="reveal" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr></table>
+<div class="verdict" data-fam="reveal"></div>
 </div><div class="pane" data-fam="blur" style="display:none">
-<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
-<table id="prop-blur"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="blur" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
+<h3>ぼやけ→はっきり　<span class="k">[10, 18, 26, 34, 42, 52, 65, 100]</span> <span class="k">（この方式だけ別の並び）</span></h3>
+<table id="prop-blur"><tr><th></th><th>10%</th><th>18%</th><th>26%</th><th>34%</th><th>42%</th><th>52%</th><th>65%</th><th>100%</th></tr><tr><th>あ</th><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="10"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="10">▶ 再生</button>
+     <div class="cap"><b>10%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="10">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="18"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="18">▶ 再生</button>
+     <div class="cap"><b>18%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="18">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="26"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="26">▶ 再生</button>
+     <div class="cap"><b>26%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="26">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="34"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="34">▶ 再生</button>
+     <div class="cap"><b>34%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="34">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="42"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="42">▶ 再生</button>
+     <div class="cap"><b>42%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="42">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="52"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="52">▶ 再生</button>
+     <div class="cap"><b>52%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="52">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="65"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="65">▶ 再生</button>
+     <div class="cap"><b>65%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="65">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="blur" data-pct="100"></canvas>
+     <button class="play" data-ch="あ" data-fam="blur" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>く</th><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="10"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="10">▶ 再生</button>
+     <div class="cap"><b>10%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="10">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="18"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="18">▶ 再生</button>
+     <div class="cap"><b>18%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="18">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="26"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="26">▶ 再生</button>
+     <div class="cap"><b>26%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="26">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="34"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="34">▶ 再生</button>
+     <div class="cap"><b>34%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="34">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="42"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="42">▶ 再生</button>
+     <div class="cap"><b>42%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="42">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="52"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="52">▶ 再生</button>
+     <div class="cap"><b>52%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="52">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="65"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="65">▶ 再生</button>
+     <div class="cap"><b>65%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="65">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="blur" data-pct="100"></canvas>
+     <button class="play" data-ch="く" data-fam="blur" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ま</th><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="10"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="10">▶ 再生</button>
+     <div class="cap"><b>10%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="10">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="18"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="18">▶ 再生</button>
+     <div class="cap"><b>18%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="18">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="26"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="26">▶ 再生</button>
+     <div class="cap"><b>26%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="26">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="34"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="34">▶ 再生</button>
+     <div class="cap"><b>34%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="34">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="42"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="42">▶ 再生</button>
+     <div class="cap"><b>42%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="42">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="52"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="52">▶ 再生</button>
+     <div class="cap"><b>52%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="52">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="65"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="65">▶ 再生</button>
+     <div class="cap"><b>65%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="65">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="blur" data-pct="100"></canvas>
+     <button class="play" data-ch="ま" data-fam="blur" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ぱ</th><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="10"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="10">▶ 再生</button>
+     <div class="cap"><b>10%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="10">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="18"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="18">▶ 再生</button>
+     <div class="cap"><b>18%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="18">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="26"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="26">▶ 再生</button>
+     <div class="cap"><b>26%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="26">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="34"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="34">▶ 再生</button>
+     <div class="cap"><b>34%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="34">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="42"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="42">▶ 再生</button>
+     <div class="cap"><b>42%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="42">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="52"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="52">▶ 再生</button>
+     <div class="cap"><b>52%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="52">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="65"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="65">▶ 再生</button>
+     <div class="cap"><b>65%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="65">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="blur" data-pct="100"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="blur" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="blur" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr></table>
+<div class="verdict" data-fam="blur"></div>
 </div><div class="pane" data-fam="wipe" style="display:none">
-<h3>いまの設定　<span class="k">[6, 12, 17, 25, 30, 50, 100]</span></h3>
-<table id="prop-wipe"><tr><th></th><th>6%</th><th>12%</th><th>17%</th><th>25%</th><th>30%</th><th>50%</th><th>100%</th></tr><tr><th>あ</th><td><canvas data-ch="あ" data-fam="wipe" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="あ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="wipe" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="く" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="wipe" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ま" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="5.555555555555556"></canvas>
-     <div class="cap"><b>6%</b><br>実際 5.6%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="11.111111111111112"></canvas>
-     <div class="cap"><b>12%</b><br>実際 11.1%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="16.666666666666664"></canvas>
-     <div class="cap"><b>17%</b><br>実際 16.7%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="22.222222222222225"></canvas>
-     <div class="cap"><b>25%</b><br>実際 22.2%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="27.77777777777778"></canvas>
-     <div class="cap"><b>30%</b><br>実際 27.8%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="44.44444444444445"></canvas>
-     <div class="cap"><b>50%</b><br>実際 44.4%</div></td><td><canvas data-ch="ぱ" data-fam="wipe" data-pct="100"></canvas>
-     <div class="cap"><b>100%</b><br>完成形</div></td></tr></table>
+<h3>端から現れる　<span class="k">[0.5, 1, 2, 4, 8, 14, 25, 100]</span> <span class="k">（この方式だけ別の並び）</span></h3>
+<table id="prop-wipe"><tr><th></th><th>0.5%</th><th>1%</th><th>2%</th><th>4%</th><th>8%</th><th>14%</th><th>25%</th><th>100%</th></tr><tr><th>あ</th><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="0.5"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="1"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="2"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="4"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="8"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="8">▶ 再生</button>
+     <div class="cap"><b>8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="14"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="14">▶ 再生</button>
+     <div class="cap"><b>14%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="14">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="25"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="25">▶ 再生</button>
+     <div class="cap"><b>25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="あ" data-fam="wipe" data-pct="100"></canvas>
+     <button class="play" data-ch="あ" data-fam="wipe" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>く</th><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="0.5"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="1"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="2"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="4"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="8"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="8">▶ 再生</button>
+     <div class="cap"><b>8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="14"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="14">▶ 再生</button>
+     <div class="cap"><b>14%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="14">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="25"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="25">▶ 再生</button>
+     <div class="cap"><b>25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="く" data-fam="wipe" data-pct="100"></canvas>
+     <button class="play" data-ch="く" data-fam="wipe" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ま</th><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="0.5"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="1"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="2"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="4"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="8"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="8">▶ 再生</button>
+     <div class="cap"><b>8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="14"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="14">▶ 再生</button>
+     <div class="cap"><b>14%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="14">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="25"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="25">▶ 再生</button>
+     <div class="cap"><b>25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ま" data-fam="wipe" data-pct="100"></canvas>
+     <button class="play" data-ch="ま" data-fam="wipe" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr><tr><th>ぱ</th><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="0.5"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="0.5">▶ 再生</button>
+     <div class="cap"><b>0.5%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="0.5">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="1"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="1">▶ 再生</button>
+     <div class="cap"><b>1%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="1">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="2"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="2">▶ 再生</button>
+     <div class="cap"><b>2%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="2">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="4"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="4">▶ 再生</button>
+     <div class="cap"><b>4%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="4">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="8"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="8">▶ 再生</button>
+     <div class="cap"><b>8%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="8">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="14"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="14">▶ 再生</button>
+     <div class="cap"><b>14%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="14">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="25"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="25">▶ 再生</button>
+     <div class="cap"><b>25%</b><br>60Hzで約17ms表示</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="25">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td><td><canvas class="anim" data-ch="ぱ" data-fam="wipe" data-pct="100"></canvas>
+     <button class="play" data-ch="ぱ" data-fam="wipe" data-pct="100">▶ 再生</button>
+     <div class="cap"><b>100%</b><br>完成形</div>
+     <div class="cap meas"></div>
+     <div class="judge" data-fam="wipe" data-pct="100">
+       <button data-v="0" title="まったく分からない">×</button>
+       <button data-v="1" title="どちらとも言えない">△</button>
+       <button data-v="2" title="はっきり分かる">○</button>
+     </div></td></tr></table>
+<div class="verdict" data-fam="wipe"></div>
 </div>
 
 <h2>2. ぼかしの最大をいくつにするか</h2>
@@ -187,28 +1122,28 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
        <div class="cap">24px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap">48px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="あ" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>く</th><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="24"></canvas>
        <div class="cap">24px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap">48px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="く" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>ま</th><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="24"></canvas>
        <div class="cap">24px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap">48px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="ま" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr><tr><th>ぱ</th><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="24"></canvas>
        <div class="cap">24px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="32"></canvas>
        <div class="cap">32px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="40"></canvas>
        <div class="cap">40px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="48"></canvas>
-       <div class="cap now">48px<br>いま</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
+       <div class="cap">48px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="56"></canvas>
        <div class="cap">56px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="64"></canvas>
        <div class="cap">64px</div></td><td><canvas data-ch="ぱ" data-fam="blur" data-pct="0" data-radius="80"></canvas>
        <div class="cap">80px</div></td></tr></table>
@@ -222,7 +1157,8 @@ canvas{width:84px;height:84px;background:#fff;border:1px solid #eceef2;border-ra
 
 <script>
 const IMG_B64 = {"あ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD/0lEQVR42u3d2a4aMRBFUY7V///LJ09RpIibAF2T8ebtDgJqudpj2y0/zn6tBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfO3rKvwsPR6PcbclyqXx/375yAwYmQxUggAA0PQyGXAYgLgEAAAAAADGjQbIAADO7gaQAQAAAMDR3QAyAAAAzu4HfbowMi4ecwkAAAAAAAAAAAAAAAAAAADMu01OQyfEyAAAADh7QowMAAAAAB4HLwySAQAAAAAAZ/eEyQAAAAAAgJOHAmQA5wfM+Bp96wbXnKif/sVfCaB3/9WbL41pcNsxpA54TdGbZoAm9yH2yYCkPEjPAA3vSiYDaHxvOhVAGwwo8gC0x5gqC0C7DCvXztOgmpoBCilJlSRBAoDiMlj5AuEACrx6K3IgGiCyzFRRFcZWgtLswXU2gHIDsxM+du3T9vlHAo0AiE7/52/3nEADABRcSemnt3lKoHaAn76B7fBub6jASo3/8+j1bsOnzhkh5c9b+K+fFNWjWTPjV9mMyKqtru/WgP/6jZoAVDB765d+pxYAhRd/7IAqG0AZA7RP30/1AIov/tfjd38GqPf+DwekwBo3Uala0RWcALXxB6TAmh5/dkuwZsV/+y1VB5ASv8qr1DVqoUb1n7nivmtG/E43XLvH7ymXQMbF6rl3imZMAGujW2WnVgAfOK65DYBLPnoNaa3VNahaI2+WHl4HqGIE4JP2CzTG/wlAeAJ0xh+RAVvH/41bZpQMoK9KgP4MaI7/fQAlrwFUbytcZ5f/fQDfCro//pIM8Nzyfx9A8/PflRngra//3kpwRvxtu8Y0ZVv96qkCAuNX5yXg3cu/qQ4YFH8LgDhAIbD8707PrBHh+fAzRHz4ISrurE9Wf8m5VXPtnf/a/xLw4QcpuXtFcfVuknV7j+o6Of27j9cfsaJw9fX9PWJIsb4qfg+sA/SYXP5vZ4Df/RbhGwqjK9Vry+IP3KmzMhOxNv5x/QAV31Nds3PUr5aF9oj/fgbIFZvp82YUr4STiNSxpcBlp8j8pwOq2i1lt9/5Kpzn9rRTKj5rBj/+rJHx1w2HM7u+rh0MuSF+KW1W0RUtkTPrGI+fEcqd92o5TE1j1j26zhNURfgq2arjmU1/2Ska8rjyUemkspyVodnNiwecKxw66lHPmsJ1r31T03rHqKO1Vb7U71n3CFUvcHnHp8+HpcDhD1jwpg9ZmTDo2T0DvPVjdiYdTblfBiSX0KwMaHjm2DCAPwI+62bpvo7VtAx48MBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIOr1C2RC8uTGLtsBAAAAAElFTkSuQmCC","く":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD8klEQVR42u2dARLjMAgDq0z//2XdC65zczEgGfUDHS3CiWMD4Gf37/kEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEgMAP2A0Ayx2ACgaPm/2xFQA+uxdBVJF4/FZ/7AOAwmz47s1+FwegFsljGX+sAfC3d18sAYD6v/hayueKFGjRr+uAH+7nhhToCb8sgK7wqwJoC7/oItipX9ABjfaXBNAafj0AzeGXA9AdfjEA/eHXAjAQfiUAI+EXAjATfhkAU+FXATAWfg0Ag+FXADArf34zNK1/2AHj8ocdIKB/0gEK8icdoKF/zAEi8sccIKN/xgE68mccoKR/wAFS8vsB/DrvHWlv+l0d/m4AevJ7F0FF/Y0OkJTfB0Bu8WsGIBr+LgCy4W8CoBv+FgDS8usBKLu/A4B4+KsByIe/FoCD/EoAcJBfB8Aj/GUAbOTXADCSX7IdttJ/3gFe8o8DcJN/GMDPChfRiU7f1eE/CsBS/jkAju4/CMBW/hkAxvJPAPhd3Cg/ze+7OvzvAbjLfwsA7vJfboYu0P/KAfCX/woALpD/BgBukP8CAK6Qf/6LkN0Y4+9u+f/vAFyi/2gKMB0lA2A3AKx3ABYB4C0EHvm+t6oAeEkaPA7NjzUB8A4ET8mLnxGCp+jVFyvWAF6wFIDLv4s/lTtABxeAy8/GnurPALjfAd4meBq+BUkvBYdehWmbB2DT1wDevxnyzAOw8ZMQr98OGy4FvUdjgnlw/IOImwnA9q74vP9gxCkPak6GjPIAnJkOwfvPBk3yoPBw1CMPSk+HHUxQezxuYAJwdlQO778gIZ4HDTdEtPOg5YqMsgl67ggJmwDUmBu2oJeYqAlAmeFxvP+eoKIJQKUJgrz/pqjcE7H9qqzaExGUm6S5oLO0kglAxXGqC7rLy5gAFJ2pu2DChIYJQN3BygumzAiYAJSers37i6amTTBfNfb73RgbyuZGr9tK1A1OmkCkcHLOBCqVo2Mm0CmdHTKBUO3wjAmkiqcnTKBVPT5gArXy+XYC0Lu/21uHJdhAodcEih0kWtdCyRYanWuhaA+RPgKQLelqWgt1u8g0mQDKRX0dJpDuI9RhAu1GSg0ExDtJsbxJg3wrLa7vJcZaNgbN1Mj13eRYmBwe7fS49D2gIw1sGiqy6Ong01GSNU9Ho5aaNWlg1VOUq7bDvwhwbVdZcn1bXR7eH/j1FebZ/ZFhY2Wms3QABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABMC//P4A/4PNTb5mcnMAAAAASUVORK5CYII=","ま":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII=","ぱ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD5UlEQVR42u3d23bbIBCFYTaL93/l3Zu0q2ljWRIIz8DvmyS2W1ufBhgOEnLZ+1ELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALDyoy1yHPr6eXnNl7zOwZc7CPkB9MNz3gdAL573HgA6eM0btAK6/eIaAOp6OT+Aut+QG0BD3pIXQIPetEom+FXp63Ij15YIAP/1i8p2nSH79V96LgImpFCvk3wdZTzWjN6gfn8Jhyj8LwXenac26DT5UzXAjx98IQbqzFZpzvlnROi7i+YAOFwStEcEuPuE1GRlvmw1KmyGxQHIAmAiAAAAQo0L6WEALdM81rJoCJzVWrQOmN0ddrDOnnZqBXT8lNcE8JGAdlshogMPr1oEvh+Y9P9vJyuntshogLbLAzzoTbUsLOBZEeCYAl49D/CI01LLqgLeIQ9w/zK5mjzrtTtrpbbALFjXUtm2xkSgbrdIbY1E0AyKfhLAjAoDAEDhmqEZzYXGV0sMi1MHAAAAALuuECMCxgCYCAAAAAAAoDf4RAOh5xscigAAAAAAAAAAbDscQATUzYcDiAAAAAAAAAAAAAAAAMqmt5AgAgAAAAAAAAAAAAAAAAAAAAAo200NEgEAAAAAAAAAAAAAAAAAQFnponAiAICS4UZK+vzK0xb0ruBeGuDsVoFeE0Al0uhby9+QZQLQ5s2glsgDbtdM0t6JkPbOBAedfmUFUDDI2QCKF0tTARSyOM3LA3Rho4A7WypEB9CV/WLP9xWcvDfod69pDkH7TAD44u2Sn9v6uUUe8/AbghFB0HJfBdFPUKcHgGM1sTX9VTCdWUFd4CogBQZQ+J5WnXuMDgddF7kM7nYQ1FwlwMM/K9vUmD04CGq6EjA4CBJOjh4FwSazwyOLQc7p8YFBUJOe+mECNeuSmNdBcK0Y1BX3mtMmS2SGCNSZrbmm1YWL7DHSsbP66Yog+yqx7iCoU0upHij0nQI18KCHOuskBSwCmtkahNx2V0+81Q677a7vH9alAfVMO07qkcLiuyZ1framRyoLJ1otfiJJuTGj+E9F4CgAvkOg7o8Kv/P0EYE6ZtRLvNlh6/VZ9uBM4c9nnae4tchA1+DP9mk04Owq597jGhxvntsKaMJ0gK9khY7WDHrq/+CAecDcC6EcMBGyowLWDPOCXuJ6AccsQG1m0VTA+qMGmdL7WP3ZZs9lKFjzcW+9rbq+piK1nu0DlZvPGTj8hZPu+6cKkTnJ0fpBk7+Qkm8UxR0kAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDDxy+fFcMtoFeBawAAAABJRU5ErkJggg=="};
-const CFG = {"visual":{"size_px":256,"base_dir":"base","fix_ms":400,"check":{"rounds":2,"n_choices":4},"fix_jitter_ms":300,"base_anim_ms":300,"progress_pct_levels":[6,12,17,25,30,50,100],"progress_pct_shift":{"enabled":false,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220]},"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":48},"wipe":{"direction":"ltr","soft_edge_px":0}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}}};
+const CFG = {"visual":{"size_px":256,"base_dir":"base","fix_ms":400,"check":{"rounds":2,"n_choices":4},"fix_jitter_ms":300,"base_anim_ms":300,"progress_pct_levels":[2,4,7,11,16,25,40,100],"endpoint_hold_ms":34,"progress_pct_levels_by_family":{"fade":[0.4,0.8,1.4,2.2,3.5,6,12,100],"blur":[10,18,26,34,42,52,65,100],"reveal":[0.1,0.25,0.5,1,2,4,9,100],"wipe":[0.5,1,2,4,8,14,25,100]},"progress_pct_shift":{"enabled":false,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220]},"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":72},"wipe":{"direction":"ltr","soft_edge_px":0}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}}};
+const LEVELS = {"fade":[0.4,0.8,1.4,2.2,3.5,6,12,100],"reveal":[0.1,0.25,0.5,1,2,4,9,100],"blur":[10,18,26,34,42,52,65,100],"wipe":[0.5,1,2,4,8,14,25,100]};
 const SIZE = CFG.visual.size_px;
 const imgs = {};           // かな → Image (base/<かな>.png)
 
@@ -438,34 +1374,174 @@ const RENDERERS = {
     im.src = 'data:image/png;base64,' + IMG_B64[ch];
   })));
 
-  function paint(cv) {
-    if (cv.dataset.done) return;
-    cv.dataset.done = '1';
+  const BASE = CFG.visual.base_anim_ms;
+  const FIX_MS = CFG.visual.fix_ms;
+  const HOLD_END_MS = CFG.visual.endpoint_hold_ms;
+  const HOLD_MS = 260;   // 全部見せのときに完成形を残す時間（本番の design.full_hold_ms 相当）
+
+  // ⚠ **transfer.js の runVisualTrial の frame() と同じ規則にすること。**
+  //   ・進み具合は s = 経過ms ÷ base_anim_ms の等速
+  //   ・打ち切りは**描く前**に判定する（s を過ぎたフレームは1枚も描かない）
+  //   ここを変えると、このページの見え方が本番と食い違う。
+  function play(cv, btn, meas) {
+    return new Promise(resolve => {
+      const ch = cv.dataset.ch, fam = cv.dataset.fam;
+      const target = Number(cv.dataset.pct);
+      const sTarget = Math.max(0, Math.min(1, target / 100));
+      const isFull = sTarget >= 1;
+      const R = RENDERERS[fam] || RENDERERS.fade;
+      cv.width = SIZE; cv.height = SIZE;
+      const ctx = cv.getContext('2d');
+      try { R.begin(ch, ctx); } catch (e) {}
+      if (btn) btn.classList.add('on');
+      if (meas) meas.textContent = '';
+      // 注視点 ＋（本番と同じ）
+      drawBlank(ctx);
+      ctx.fillStyle = '#333'; ctx.font = '40px system-ui';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('+', SIZE / 2, SIZE / 2);
+      const t0 = performance.now();
+      let phase = 'fix', tOn = 0, frames = 0, lastS = 0, lastDraw = 0;
+      const done = (now) => {
+        drawBlank(ctx);
+        if (btn) btn.classList.remove('on');
+        if (meas) meas.textContent = frames
+          ? '実測 ' + (lastS * 100).toFixed(1) + '% / ' + frames + '枚 / 最後の1枚を'
+            + Math.round(now - tOn - lastDraw) + 'ms'
+          : '実測 0% / 0枚（何も出ない）';
+        resolve();
+      };
+      // ⚠ **transfer.js の runVisualTrial と同じ規則にすること。**
+      //   2026-08-25 に「狙った s ちょうどを必ず1枚描き、**次の**フレームで消す」に変えた。
+      //   同じコールバックで消すと、実画面に描かれる前に白紙で上書きされる。
+      function frame(now) {
+        if (phase === 'fix') {
+          if (now - t0 < FIX_MS) { requestAnimationFrame(frame); return; }
+          phase = 'char'; tOn = now; frames = 0;
+        }
+        const el = now - tOn;
+        const s = Math.max(0, Math.min(1, el / BASE));
+        if (s >= sTarget) {
+          if (isFull) {
+            R.draw(ctx, ch, 1); lastS = 1; frames++; lastDraw = el;
+            setTimeout(() => done(performance.now()), HOLD_MS);
+            return;
+          }
+          R.draw(ctx, ch, sTarget);            // 狙った値にクランプ
+          lastS = sTarget; frames++; lastDraw = el;
+          // 固定時間だけ残してから消す（transfer.js と同じ規則）。
+          setTimeout(() => done(performance.now()), HOLD_END_MS);
+          return;
+        }
+        R.draw(ctx, ch, s); lastS = s; frames++; lastDraw = el;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('button.play');
+    if (!b) return;
+    const td = b.closest('td');
+    await play(td.querySelector('canvas.anim'), b, td.querySelector('.meas'));
+  });
+
+  // 薄いほうから順に、いま開いている方式のいちばん上の字で再生する
+  document.getElementById('playAll').addEventListener('click', async () => {
+    const pane = [...document.querySelectorAll('.pane')].find(p => p.style.display !== 'none');
+    if (!pane) return;
+    const row = pane.querySelector('tr:nth-child(2)');   // 見出し行の次＝いちばん上の字
+    for (const td of row.querySelectorAll('td')) {
+      await play(td.querySelector('canvas.anim'), td.querySelector('button.play'),
+                 td.querySelector('.meas'));
+      await new Promise(r => setTimeout(r, 700));
+    }
+  });
+
+  // 2節（ぼかしの強さくらべ）は静止画のままでよい。
+  // ここは「いちばんぼやけた状態で読めるか」を見るところで、時間は関係しないため。
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (!e.isIntersecting) return;
+      const cv = e.target;
+      io.unobserve(cv);
+      if (cv.dataset.done) return;
+      cv.dataset.done = '1';
+      cv.width = SIZE; cv.height = SIZE;
+      const c2 = cv.getContext('2d');
+      const keep = CFG.visual.families.blur.max_radius_px;
+      if (cv.dataset.radius) CFG.visual.families.blur.max_radius_px = Number(cv.dataset.radius);
+      const R = RENDERERS[cv.dataset.fam] || RENDERERS.fade;
+      try { R.begin(cv.dataset.ch, c2); R.draw(c2, cv.dataset.ch, Number(cv.dataset.pct) / 100); }
+      catch (err) { c2.fillStyle = '#fee'; c2.fillRect(0, 0, SIZE, SIZE); }
+      CFG.visual.families.blur.max_radius_px = keep;
+    });
+  }, { rootMargin: '300px' });
+  document.querySelectorAll('canvas[data-radius]').forEach(cv => io.observe(cv));
+
+  // 再生前のキャンバスは白紙にしておく（静止画で判断させないため）
+  document.querySelectorAll('canvas.anim').forEach(cv => {
     cv.width = SIZE; cv.height = SIZE;
     const c2 = cv.getContext('2d');
-    const ch = cv.dataset.ch, fam = cv.dataset.fam;
-    const s = Math.max(0, Math.min(1, Number(cv.dataset.pct) / 100));
-    // ぼかしの強さを変えて見るとき（2節）は、設定を一時的に差し替えて描く。
-    const keep = CFG.visual.families.blur.max_radius_px;
-    if (cv.dataset.radius) CFG.visual.families.blur.max_radius_px = Number(cv.dataset.radius);
-    const R = RENDERERS[fam] || RENDERERS.fade;
-    try { R.begin(ch, c2); R.draw(c2, ch, s); }
-    catch (e) { c2.fillStyle = '#fee'; c2.fillRect(0, 0, SIZE, SIZE); }
-    CFG.visual.families.blur.max_radius_px = keep;
+    c2.fillStyle = '#fff'; c2.fillRect(0, 0, SIZE, SIZE);
+    c2.fillStyle = '#c8ccd4'; c2.font = '20px system-ui';
+    c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillText('▶', SIZE / 2, SIZE / 2);
+  });
+
+  // ---- 判定（曲線が描けるかをその場で見る）--------------------------------
+  // 曲線を当てはめるには **床・立ち上がり・天井の3つ**が要る。
+  // 床だけ／天井だけでは、傾きも中点も決まらない。
+  const marks = {};   // 方式 → { 水準: 0|1|2 }
+  function verdict(fam) {
+    const lv = LEVELS[fam];
+    const m = marks[fam] || {};
+    const got = lv.filter(p => m[p] !== undefined);
+    const el = document.querySelector('.verdict[data-fam="' + fam + '"]');
+    if (!el) return;
+    if (got.length < lv.length) {
+      el.className = 'verdict';
+      el.innerHTML = '<b>判定中…</b> ' + got.length + ' / ' + lv.length +
+        ' 個つけました。全部つけると、この並びで曲線が描けるか判定します。';
+      return;
+    }
+    const floor = lv.filter(p => m[p] === 0);
+    const mid   = lv.filter(p => m[p] === 1);
+    const ceil  = lv.filter(p => m[p] === 2);
+    const ng = [];
+    if (!floor.length) ng.push('<b>床がありません</b>（いちばん薄い水準でも分かってしまう）。もっと薄い側へずらす必要があります');
+    if (!ceil.length)  ng.push('<b>天井がありません</b>（いちばん濃い水準でも分からない）。もっと濃い側へずらす必要があります');
+    if (mid.length < 2) ng.push('<b>立ち上がりの点が' + mid.length + '個しかありません</b>（2個以上ほしい）。床と天井のあいだを細かくする必要があります');
+    if (floor.length > 3) ng.push('床が' + floor.length + '個あって多すぎます（点の無駄）。薄い側を減らして中間へ回せます');
+    if (ceil.length > 3)  ng.push('天井が' + ceil.length + '個あって多すぎます（点の無駄）。濃い側を減らして中間へ回せます');
+    const line = '× ' + floor.length + '個 ／ △ ' + mid.length + '個 ／ ○ ' + ceil.length + '個';
+    if (!ng.length) {
+      el.className = 'verdict ok';
+      el.innerHTML = '<b>この並びで曲線が描けます。</b> ' + line +
+        '<br><span style="color:#8a90a0">床・立ち上がり・天井がそろっています。</span>';
+    } else {
+      el.className = 'verdict ng';
+      el.innerHTML = '<b>このままでは曲線が描けません。</b> ' + line + '<ul style="margin:6px 0 0">' +
+        ng.map(x => '<li>' + x + '</li>').join('') + '</ul>';
+    }
   }
-  // 見えているものだけ描く（全部を一度に描くと重い）
-  const io = new IntersectionObserver(es => {
-    es.forEach(e => { if (e.isIntersecting) { paint(e.target); io.unobserve(e.target); } });
-  }, { rootMargin: '400px' });
-  const watch = () => document.querySelectorAll('canvas:not([data-done])').forEach(cv => io.observe(cv));
-  watch();
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.judge button');
+    if (!b) return;
+    const box = b.parentElement;
+    const fam = box.dataset.fam, pct = Number(box.dataset.pct);
+    box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    (marks[fam] = marks[fam] || {})[pct] = Number(b.dataset.v);
+    verdict(fam);
+  });
+  Object.keys(LEVELS).forEach(verdict);
 
   document.querySelectorAll('#famTabs button').forEach(b => b.addEventListener('click', () => {
     document.querySelectorAll('#famTabs button').forEach(x => x.classList.toggle('on', x === b));
     document.querySelectorAll('.pane').forEach(p => {
       p.style.display = (p.dataset.fam === b.dataset.fam) ? 'block' : 'none';
     });
-    watch();
   }));
 })();
 </script>

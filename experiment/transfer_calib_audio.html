@@ -36,5 +36,21 @@
 <script src="transfer_config.js?v=3.14"></script>
 <script src="transfer_firestore.js?v=3.14"></script>
 <script src="transfer.js?v=3.14"></script>
+<!--
+  使用許諾クレジット表示（COEIROINK本体の規約でクレジット表記が必須。→ transfer_config.js の
+  audio.credit のコメント）。**transfer.js は触らず、この静かな固定表示だけで完結させる**
+  （2026-08-25 追加）。同意画面をスマホ1画面に収める制約を崩さないよう、画面を押し広げない
+  小さな固定表示にしてある（見た目は transfer.css の .credit-footer）。
+-->
+<div id="credit-footer" class="credit-footer"></div>
+<script>
+(function () {
+  try {
+    var el = document.getElementById("credit-footer");
+    var credit = window.TRANSFER_CONFIG && window.TRANSFER_CONFIG.audio && window.TRANSFER_CONFIG.audio.credit;
+    if (el && credit) el.textContent = credit;
+  } catch (e) { /* 表示できなくても課題の進行は止めない */ }
+})();
+</script>
 </body>
 </html>

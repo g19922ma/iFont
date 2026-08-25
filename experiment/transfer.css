@@ -77,3 +77,20 @@ table { border-collapse: collapse; width: 100%; font-size: 14px; }
 td, th { border: 1px solid #e3e6ee; padding: 6px 8px; text-align: center; }
 /* 見え心地の評価(7件法)の目盛り。 */
 input[type="radio"] { width: 18px; height: 18px; }
+/* ---- 使用許諾クレジット表示（transfer_calib_audio.html だけで使う。2026-08-25追加） ----
+   COEIROINK本体の規約でクレジット表記が必須なので、画面のどこかに常に出しておく。
+   同意画面はスマホ1画面に収める制約があるので、レイアウトの流れに参加させず
+   (position: fixed)、画面を押し広げない・ボタン操作も邪魔しない(pointer-events: none)
+   ごく小さな表記にしてある。 */
+.credit-footer {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  padding: 2px 8px calc(2px + env(safe-area-inset-bottom, 0px));
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #9aa0ab;
+  background: rgba(246, 244, 239, .82);
+  pointer-events: none;
+  z-index: 5;
+}

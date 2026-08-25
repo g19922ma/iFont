@@ -1,0 +1,401 @@
+<!doctype html><meta charset="utf-8">
+<title>gamma 1 と 2 の見比べ</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font-family:-apple-system,"Hiragino Sans",sans-serif;margin:18px;background:#faf9f6;
+     color:#1b2030;max-width:820px;line-height:1.8}
+h1{font-size:20px;margin:0 0 6px}
+h2{font-size:16px;margin:24px 0 8px;padding-bottom:5px;border-bottom:2px solid #dde1ea}
+p,li,td,th{font-size:14px}
+table{border-collapse:collapse;margin:10px 0}
+th,td{border:1px solid #dde1ea;padding:6px;background:#fff;text-align:center;vertical-align:top}
+th{background:#f2f4f8;font-size:12.5px}
+canvas{width:130px;height:130px;background:#fff;border:1px solid #eceef2;border-radius:6px;display:block}
+button.play{width:100%;font-size:12px;padding:5px 0;margin-top:4px;border-radius:6px;
+     border:1px solid #2E7D8F;background:#eef6f8;color:#12414c;cursor:pointer;font-family:inherit}
+button.play.on{background:#1b2030;color:#fff;border-color:#1b2030}
+.meas{font-size:11px;color:#2f7d4f;min-height:14px;margin-top:2px}
+.box{background:#fff;border:1px solid #dde1ea;border-radius:8px;padding:12px 16px;margin:12px 0;
+     font-size:13.5px}
+.bad{background:#fff8f3;border-color:#f0c4a8}
+.hl{background:#fff3bf;padding:0 3px;border-radius:3px}
+.k{color:#8a90a0;font-size:12.5px}
+#bar{position:sticky;top:0;background:#fff9db;border:1px solid #e0d090;border-radius:8px;
+     padding:10px 14px;margin:10px 0;z-index:5}
+#bar button{font-size:14px;padding:6px 14px;border-radius:8px;border:1px solid #99a;
+     background:#fff;cursor:pointer;font-family:inherit;margin-right:6px}
+</style>
+
+<h1>gamma 1 と 2 の見比べ（いちばん薄い水準）</h1>
+<p class="k">出せるいちばん薄い状態＝アニメの<b>最初の1フレーム</b>です。
+いまの設定（基準アニメ 300ms・60Hz）では、水準 <b>2%</b> を指定すると
+実際には <b>0.0%</b> まで進んだところで消えます（0枚・約0ms）。</p>
+
+<div class="box bad">
+<b class="hl">見ていただきたいこと:</b>
+<b>「うっすら何かあるのは分かるが、どの字かは分からない」のはどれか。</b><br>
+それが理想の床です。<br>
+・<b>読める</b> → 床にならない（曲線の左端が取れない）<br>
+・<b>まったく何も出ない</b> → 床にはなるが「無」なので、そこから次の水準まで間が空く<br>
+・<b>何かあるが読めない</b> → <b>これがいちばん良い</b><br><br>
+<span class="k">すでに分かっていること: gamma=1.0（濃さ5.56%）は読めた。
+gamma=2.0（濃さ0.31%）は何も出なかった。だから中間の 1.5 を加えました。</span><br><br>
+<b>⚠ 丸山さんは答えの字を知っているので、判定は片側にしか効きません。</b><br>
+・<b>読めなかった</b> → 初見の参加者はもっと読めない。<b>床だと言えます</b><br>
+・<b>読めた</b> → 知っているから読めただけかもしれず、<b>判断できません</b><br>
+<span class="k">だから「gamma=2 で読めない」ことが確認できれば十分です。</span>
+</div>
+
+<div id="bar">
+  <button id="playAll">▶ 4字ぶん、gamma1 → gamma2 の順に再生</button>
+  <span class="k" id="now"></span>
+</div>
+
+<table>
+<tr><th></th><th>gamma = 1.0<br><span class="k">濃さ 0.00%</span></th><th>gamma = 1.5<br><span class="k">濃さ 0.00%</span></th><th>gamma = 2.0<br><span class="k">濃さ 0.00%</span></th></tr>
+<tr><th style="font-size:20px">あ</th><td><canvas data-ch="あ" data-gamma="1"></canvas>
+   <button class="play" data-ch="あ" data-gamma="1">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="あ" data-gamma="1.5"></canvas>
+   <button class="play" data-ch="あ" data-gamma="1.5">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="あ" data-gamma="2"></canvas>
+   <button class="play" data-ch="あ" data-gamma="2">▶ 再生</button>
+   <div class="meas"></div></td></tr><tr><th style="font-size:20px">く</th><td><canvas data-ch="く" data-gamma="1"></canvas>
+   <button class="play" data-ch="く" data-gamma="1">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="く" data-gamma="1.5"></canvas>
+   <button class="play" data-ch="く" data-gamma="1.5">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="く" data-gamma="2"></canvas>
+   <button class="play" data-ch="く" data-gamma="2">▶ 再生</button>
+   <div class="meas"></div></td></tr><tr><th style="font-size:20px">ま</th><td><canvas data-ch="ま" data-gamma="1"></canvas>
+   <button class="play" data-ch="ま" data-gamma="1">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="ま" data-gamma="1.5"></canvas>
+   <button class="play" data-ch="ま" data-gamma="1.5">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="ま" data-gamma="2"></canvas>
+   <button class="play" data-ch="ま" data-gamma="2">▶ 再生</button>
+   <div class="meas"></div></td></tr><tr><th style="font-size:20px">ぱ</th><td><canvas data-ch="ぱ" data-gamma="1"></canvas>
+   <button class="play" data-ch="ぱ" data-gamma="1">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="ぱ" data-gamma="1.5"></canvas>
+   <button class="play" data-ch="ぱ" data-gamma="1.5">▶ 再生</button>
+   <div class="meas"></div></td><td><canvas data-ch="ぱ" data-gamma="2"></canvas>
+   <button class="play" data-ch="ぱ" data-gamma="2">▶ 再生</button>
+   <div class="meas"></div></td></tr>
+</table>
+
+<h2>参考: これまでの実測（fade・gamma は当時 1.0）</h2>
+<table>
+<tr><th>濃さ</th><th>先生 600ms</th><th>丸山さん 300ms</th></tr>
+<tr><td>2.5〜2.8%</td><td>3/7（43%）</td><td class="k">データなし</td></tr>
+<tr><td><b>5.3〜5.9%</b></td><td><b>9/9（100%）</b></td><td class="k">データなし</td></tr>
+<tr><td>12.5%</td><td>11/11</td><td>1/1</td></tr>
+<tr><td>100%</td><td>12/12</td><td>2/2</td></tr>
+</table>
+<p class="k">600ms では濃さ5.6%が完全に読めています。300ms（見ている時間が半分）での
+データはまだありません。だからこのページで確かめます。</p>
+
+<script>
+const IMG_B64 = {"あ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD/0lEQVR42u3d2a4aMRBFUY7V///LJ09RpIibAF2T8ebtDgJqudpj2y0/zn6tBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfO3rKvwsPR6PcbclyqXx/375yAwYmQxUggAA0PQyGXAYgLgEAAAAAADGjQbIAADO7gaQAQAAAMDR3QAyAAAAzu4HfbowMi4ecwkAAAAAAAAAAAAAAAAAAADMu01OQyfEyAAAADh7QowMAAAAAB4HLwySAQAAAAAAZ/eEyQAAAAAAgJOHAmQA5wfM+Bp96wbXnKif/sVfCaB3/9WbL41pcNsxpA54TdGbZoAm9yH2yYCkPEjPAA3vSiYDaHxvOhVAGwwo8gC0x5gqC0C7DCvXztOgmpoBCilJlSRBAoDiMlj5AuEACrx6K3IgGiCyzFRRFcZWgtLswXU2gHIDsxM+du3T9vlHAo0AiE7/52/3nEADABRcSemnt3lKoHaAn76B7fBub6jASo3/8+j1bsOnzhkh5c9b+K+fFNWjWTPjV9mMyKqtru/WgP/6jZoAVDB765d+pxYAhRd/7IAqG0AZA7RP30/1AIov/tfjd38GqPf+DwekwBo3Uala0RWcALXxB6TAmh5/dkuwZsV/+y1VB5ASv8qr1DVqoUb1n7nivmtG/E43XLvH7ymXQMbF6rl3imZMAGujW2WnVgAfOK65DYBLPnoNaa3VNahaI2+WHl4HqGIE4JP2CzTG/wlAeAJ0xh+RAVvH/41bZpQMoK9KgP4MaI7/fQAlrwFUbytcZ5f/fQDfCro//pIM8Nzyfx9A8/PflRngra//3kpwRvxtu8Y0ZVv96qkCAuNX5yXg3cu/qQ4YFH8LgDhAIbD8707PrBHh+fAzRHz4ISrurE9Wf8m5VXPtnf/a/xLw4QcpuXtFcfVuknV7j+o6Of27j9cfsaJw9fX9PWJIsb4qfg+sA/SYXP5vZ4Df/RbhGwqjK9Vry+IP3KmzMhOxNv5x/QAV31Nds3PUr5aF9oj/fgbIFZvp82YUr4STiNSxpcBlp8j8pwOq2i1lt9/5Kpzn9rRTKj5rBj/+rJHx1w2HM7u+rh0MuSF+KW1W0RUtkTPrGI+fEcqd92o5TE1j1j26zhNURfgq2arjmU1/2Ska8rjyUemkspyVodnNiwecKxw66lHPmsJ1r31T03rHqKO1Vb7U71n3CFUvcHnHp8+HpcDhD1jwpg9ZmTDo2T0DvPVjdiYdTblfBiSX0KwMaHjm2DCAPwI+62bpvo7VtAx48MBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIOr1C2RC8uTGLtsBAAAAAElFTkSuQmCC","く":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD8klEQVR42u2dARLjMAgDq0z//2XdC65zczEgGfUDHS3CiWMD4Gf37/kEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEgMAP2A0Ayx2ACgaPm/2xFQA+uxdBVJF4/FZ/7AOAwmz47s1+FwegFsljGX+sAfC3d18sAYD6v/hayueKFGjRr+uAH+7nhhToCb8sgK7wqwJoC7/oItipX9ABjfaXBNAafj0AzeGXA9AdfjEA/eHXAjAQfiUAI+EXAjATfhkAU+FXATAWfg0Ag+FXADArf34zNK1/2AHj8ocdIKB/0gEK8icdoKF/zAEi8sccIKN/xgE68mccoKR/wAFS8vsB/DrvHWlv+l0d/m4AevJ7F0FF/Y0OkJTfB0Bu8WsGIBr+LgCy4W8CoBv+FgDS8usBKLu/A4B4+KsByIe/FoCD/EoAcJBfB8Aj/GUAbOTXADCSX7IdttJ/3gFe8o8DcJN/GMDPChfRiU7f1eE/CsBS/jkAju4/CMBW/hkAxvJPAPhd3Cg/ze+7OvzvAbjLfwsA7vJfboYu0P/KAfCX/woALpD/BgBukP8CAK6Qf/6LkN0Y4+9u+f/vAFyi/2gKMB0lA2A3AKx3ABYB4C0EHvm+t6oAeEkaPA7NjzUB8A4ET8mLnxGCp+jVFyvWAF6wFIDLv4s/lTtABxeAy8/GnurPALjfAd4meBq+BUkvBYdehWmbB2DT1wDevxnyzAOw8ZMQr98OGy4FvUdjgnlw/IOImwnA9q74vP9gxCkPak6GjPIAnJkOwfvPBk3yoPBw1CMPSk+HHUxQezxuYAJwdlQO778gIZ4HDTdEtPOg5YqMsgl67ggJmwDUmBu2oJeYqAlAmeFxvP+eoKIJQKUJgrz/pqjcE7H9qqzaExGUm6S5oLO0kglAxXGqC7rLy5gAFJ2pu2DChIYJQN3BygumzAiYAJSers37i6amTTBfNfb73RgbyuZGr9tK1A1OmkCkcHLOBCqVo2Mm0CmdHTKBUO3wjAmkiqcnTKBVPT5gArXy+XYC0Lu/21uHJdhAodcEih0kWtdCyRYanWuhaA+RPgKQLelqWgt1u8g0mQDKRX0dJpDuI9RhAu1GSg0ExDtJsbxJg3wrLa7vJcZaNgbN1Mj13eRYmBwe7fS49D2gIw1sGiqy6Ong01GSNU9Ho5aaNWlg1VOUq7bDvwhwbVdZcn1bXR7eH/j1FebZ/ZFhY2Wms3QABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABMC//P4A/4PNTb5mcnMAAAAASUVORK5CYII=","ま":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII=","ぱ":"iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD5UlEQVR42u3d23bbIBCFYTaL93/l3Zu0q2ljWRIIz8DvmyS2W1ufBhgOEnLZ+1ELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALDyoy1yHPr6eXnNl7zOwZc7CPkB9MNz3gdAL573HgA6eM0btAK6/eIaAOp6OT+Aut+QG0BD3pIXQIPetEom+FXp63Ij15YIAP/1i8p2nSH79V96LgImpFCvk3wdZTzWjN6gfn8Jhyj8LwXenac26DT5UzXAjx98IQbqzFZpzvlnROi7i+YAOFwStEcEuPuE1GRlvmw1KmyGxQHIAmAiAAAAQo0L6WEALdM81rJoCJzVWrQOmN0ddrDOnnZqBXT8lNcE8JGAdlshogMPr1oEvh+Y9P9vJyuntshogLbLAzzoTbUsLOBZEeCYAl49D/CI01LLqgLeIQ9w/zK5mjzrtTtrpbbALFjXUtm2xkSgbrdIbY1E0AyKfhLAjAoDAEDhmqEZzYXGV0sMi1MHAAAAALuuECMCxgCYCAAAAAAAoDf4RAOh5xscigAAAAAAAAAAbDscQATUzYcDiAAAAAAAAAAAAAAAAMqmt5AgAgAAAAAAAAAAAAAAAAAAAAAo200NEgEAAAAAAAAAAAAAAAAAQFnponAiAICS4UZK+vzK0xb0ruBeGuDsVoFeE0Al0uhby9+QZQLQ5s2glsgDbtdM0t6JkPbOBAedfmUFUDDI2QCKF0tTARSyOM3LA3Rho4A7WypEB9CV/WLP9xWcvDfod69pDkH7TAD44u2Sn9v6uUUe8/AbghFB0HJfBdFPUKcHgGM1sTX9VTCdWUFd4CogBQZQ+J5WnXuMDgddF7kM7nYQ1FwlwMM/K9vUmD04CGq6EjA4CBJOjh4FwSazwyOLQc7p8YFBUJOe+mECNeuSmNdBcK0Y1BX3mtMmS2SGCNSZrbmm1YWL7DHSsbP66Yog+yqx7iCoU0upHij0nQI18KCHOuskBSwCmtkahNx2V0+81Q677a7vH9alAfVMO07qkcLiuyZ1framRyoLJ1otfiJJuTGj+E9F4CgAvkOg7o8Kv/P0EYE6ZtRLvNlh6/VZ9uBM4c9nnae4tchA1+DP9mk04Owq597jGhxvntsKaMJ0gK9khY7WDHrq/+CAecDcC6EcMBGyowLWDPOCXuJ6AccsQG1m0VTA+qMGmdL7WP3ZZs9lKFjzcW+9rbq+piK1nu0DlZvPGTj8hZPu+6cKkTnJ0fpBk7+Qkm8UxR0kAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDDxy+fFcMtoFeBawAAAABJRU5ErkJggg=="};
+const CFG = {"visual":{"size_px":256,"base_dir":"base","fix_ms":400,"check":{"rounds":2,"n_choices":4},"fix_jitter_ms":300,"base_anim_ms":300,"progress_pct_levels":[2,4,7,11,16,25,40,100],"endpoint_hold_ms":34,"progress_pct_levels_by_family":{"blur":[10,18,26,34,42,52,65,100]},"progress_pct_shift":{"enabled":false,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220]},"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":72},"wipe":{"direction":"ltr","soft_edge_px":0}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}}};
+const SIZE = CFG.visual.size_px;
+const imgs = {};           // かな → Image (base/<かな>.png)
+
+function newCanvas() {
+  const c = document.createElement("canvas");
+  c.id = "stim"; c.width = SIZE; c.height = SIZE;
+  c.style.background = "#fff"; c.style.border = "1px solid #ddd";
+  c.style.display = "block"; c.style.margin = "0 auto";
+  return c;
+}
+function drawBlank(ctx) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, SIZE, SIZE); }
+function drawFix(ctx) {
+  drawBlank(ctx);
+  ctx.fillStyle = "#333"; ctx.font = "40px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 部分表示(reveal)用: 字ごとに固定した乱数順のストローク画素の並び。
+// 既存資産(generate.py / README.md「マスキング手法」)と同じ考え方だが、
+// 101段階の画像には依存せず、その場で並びを作って任意の s を描けるようにした。
+// 乱数の並びは Python の random.Random とは別物になるが、**字ごとに固定**であれば
+// 実験の要件(同じ字はいつも同じ順で現れる)は満たす。
+function hashSeed(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const revealOrder = {};    // かな → Uint32Array (画素の並び。値は画素の通し番号)
+function revealPrepare(ch) {
+  if (revealOrder[ch]) return revealOrder[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = CFG.visual.families.reveal.ink_threshold;
+  const idx = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    // 輝度 ≤ しきい値 の画素を「ストローク画素」とみなす(既存資産と同じ判定)。
+    const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+    if (lum <= th) idx.push(i);
+  }
+  const rnd = mulberry32(hashSeed(CFG.visual.families.reveal.seed_prefix + ch));
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1)); const t = idx[i]; idx[i] = idx[j]; idx[j] = t;
+  }
+  revealOrder[ch] = Uint32Array.from(idx);
+  return revealOrder[ch];
+}
+
+// 描画のたびに全画素を書き直すと重いので、1試行のあいだは同じ ImageData を使い、
+// 増えたぶんの画素だけ黒く塗る(s は試行内で単調に増えるため)。
+const revealState = { ch: null, shown: 0, img: null };
+function revealBegin(ch, ctx) {
+  revealPrepare(ch);
+  revealState.ch = ch; revealState.shown = 0;
+  revealState.img = ctx.createImageData(SIZE, SIZE);
+  revealState.img.data.fill(255);
+}
+function revealDraw(ctx, ch, s) {
+  if (revealState.ch !== ch || revealState.img === null) revealBegin(ch, ctx);
+  const order = revealOrder[ch];
+  const want = Math.round(order.length * Math.max(0, Math.min(1, s)));
+  const d = revealState.img.data;
+  if (want < revealState.shown) {           // 戻る場合(練習の再生など)は塗り直す
+    d.fill(255); revealState.shown = 0;
+  }
+  for (let i = revealState.shown; i < want; i++) {
+    const p = order[i] * 4;
+    d[p] = 0; d[p + 1] = 0; d[p + 2] = 0; d[p + 3] = 255;
+  }
+  revealState.shown = want;
+  ctx.putImageData(revealState.img, 0, 0);
+}
+
+// ぼかし解除(blur): ガウスぼかしの半径を単調に減らす。s=0 で最大、s=1 で鮮明。
+let blurOff = null, blurOffCtx = null;
+function blurBegin(ch) {
+  if (!blurOff) {
+    blurOff = document.createElement("canvas"); blurOff.width = SIZE; blurOff.height = SIZE;
+    blurOffCtx = blurOff.getContext("2d");
+  }
+  blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+}
+function blurDraw(ctx, ch, s) {
+  if (!blurOff) blurBegin(ch);
+  const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
+  drawBlank(ctx);
+  ctx.save();
+  ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
+  ctx.drawImage(blurOff, 0, 0, SIZE, SIZE);
+  ctx.restore();
+  ctx.filter = "none";
+}
+
+// ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられる。
+//
+// 進み具合 s は「画面の端(0)から端(SIZE)まで」ではなく、**字のインクが実際にある
+// 範囲(bbox)の中だけ**で動かす。そのままだと、字によっては書き出しの位置が
+// 画像の端から離れている(左右・上下に余白がある)ため、s の前半ぶんが余白を
+// なぞるだけの「何も起きない区間」になってしまう(丸山・2026-08-22の下見で発覚)。
+// bbox の外側は s によらずつねに欠けたまま/つねに映ったままなので、
+// s=0 でちょうど「インクが何も見えない」、s=1 でちょうど「インクが全部見える」に
+// そろう。字ごとに余白の量が違う(字形しだい)ので、そろえないと同じ s でも
+// 字によって実質の情報量が変わってしまう(較正データの字間比較を歪める)。
+const wipeBBox = {};   // かな → {xMin, xMax, yMin, yMax}(xMax/yMaxは「最後のインク列/行+1」)
+function wipeInkThreshold() {
+  const w = CFG.visual.families.wipe;
+  return (w && typeof w.ink_threshold === "number") ? w.ink_threshold
+    : CFG.visual.families.reveal.ink_threshold;
+}
+function wipeBBoxPrepare(ch) {
+  if (wipeBBox[ch]) return wipeBBox[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = wipeInkThreshold();
+  let xMin = SIZE, xMax = 0, yMin = SIZE, yMax = 0, found = false;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const i = y * SIZE + x;
+      const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+      if (lum <= th) {
+        found = true;
+        if (x < xMin) xMin = x; if (x + 1 > xMax) xMax = x + 1;
+        if (y < yMin) yMin = y; if (y + 1 > yMax) yMax = y + 1;
+      }
+    }
+  }
+  // インク画素が1つも無い(白紙の画像など)ときは、bboxを使わず元の挙動(0..SIZE)に落とす。
+  const bbox = found ? { xMin, xMax, yMin, yMax } : { xMin: 0, xMax: SIZE, yMin: 0, yMax: SIZE };
+  wipeBBox[ch] = bbox;
+  return bbox;
+}
+function wipeBegin(ch) { wipeBBoxPrepare(ch); }
+function wipeDraw(ctx, ch, s) {
+  const p = Math.max(0, Math.min(1, s));
+  drawBlank(ctx);
+  if (!imgs[ch]) return;
+  const dir = CFG.visual.families.wipe.direction || "ltr";
+  const b = wipeBBoxPrepare(ch);
+  let rx = 0, ry = 0, rw = 0, rh = SIZE;
+  // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
+  // ltr/ttb は0側(左/上)を固定してインク側の遠い端へ伸ばす → w/hはxMin→xMaxで増える。
+  // rtl/btt はSIZE側(右/下)を固定してインク側の遠い端へ伸ばす → w/hは(SIZE-xMax)→(SIZE-xMin)で増える。
+  if (dir === "ltr" || dir === "rtl") {
+    const w = (dir === "ltr")
+      ? b.xMin + (b.xMax - b.xMin) * p        // 0:xMin(何も新しく見えない) → 1:xMax(インク全部)
+      : (SIZE - b.xMax) + (b.xMax - b.xMin) * p;
+    rw = w; rh = SIZE;
+    rx = (dir === "ltr") ? 0 : SIZE - w;
+    ry = 0;
+  } else {
+    const h = (dir === "ttb")
+      ? b.yMin + (b.yMax - b.yMin) * p
+      : (SIZE - b.yMax) + (b.yMax - b.yMin) * p;
+    rw = SIZE; rh = h;
+    rx = 0;
+    ry = (dir === "ttb") ? 0 : SIZE - h;
+  }
+  if (rw <= 0 || rh <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rx, ry, rw, rh);
+  ctx.clip();
+  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.restore();
+}
+
+// フェード(fade): 不透明度 = s^gamma。
+// gamma は「進み具合を画面の濃さにどう配るか」のつまみ(transfer_config.js の
+// visual.families.fade.gamma)。**既定の 1.0 では濃さ = s** となり、
+// 既存の1文字課題と同じ挙動になる。1.0 より大きくすると序盤を薄めに通せる。
+function fadeAlpha(s) {
+  const g = (CFG.visual.families.fade && CFG.visual.families.fade.gamma);
+  const t = Math.max(0, Math.min(1, s));
+  // gamma が無い/1.0 のときは、余計な計算を挟まず s をそのまま使う。
+  if (!(typeof g === "number") || g === 1) return t;
+  return Math.pow(t, g);
+}
+function fadeDraw(ctx, ch, s) {
+  drawBlank(ctx);
+  if (!imgs[ch]) return;
+  ctx.globalAlpha = fadeAlpha(s);
+  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.globalAlpha = 1;
+}
+
+const RENDERERS = {
+  fade:   { begin: () => {},                     draw: fadeDraw },
+  reveal: { begin: (ch, ctx) => revealBegin(ch, ctx), draw: revealDraw },
+  blur:   { begin: (ch) => blurBegin(ch),        draw: blurDraw },
+  wipe:   { begin: (ch) => wipeBegin(ch),        draw: wipeDraw },
+};
+
+const BASE = 300;
+const FIX_MS = CFG.visual.fix_ms;
+const HOLD_END_MS = CFG.visual.endpoint_hold_ms;
+const TARGET = 2 / 100;
+
+(async function () {
+  await Promise.all(Object.keys(IMG_B64).map(ch => new Promise(res => {
+    const im = new Image();
+    im.onload = () => { imgs[ch] = im; res(); };
+    im.onerror = () => res();
+    im.src = 'data:image/png;base64,' + IMG_B64[ch];
+  })));
+
+  // ⚠ transfer.js の runVisualTrial の frame() と同じ規則にすること。
+  //   進み具合は s = 経過ms ÷ base_anim_ms の等速。打ち切りは**描く前**に判定する。
+  function play(cv, btn, meas) {
+    return new Promise(resolve => {
+      const ch = cv.dataset.ch;
+      const keep = CFG.visual.families.fade.gamma;
+      CFG.visual.families.fade.gamma = Number(cv.dataset.gamma);
+      cv.width = SIZE; cv.height = SIZE;
+      const ctx = cv.getContext('2d');
+      if (btn) btn.classList.add('on');
+      if (meas) meas.textContent = '';
+      drawBlank(ctx);
+      ctx.fillStyle = '#333'; ctx.font = '40px system-ui';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('+', SIZE / 2, SIZE / 2);
+      const t0 = performance.now();
+      let phase = 'fix', tOn = 0, frames = 0, lastS = 0;
+      const done = (now) => {
+        drawBlank(ctx);
+        CFG.visual.families.fade.gamma = keep;
+        if (btn) btn.classList.remove('on');
+        if (meas) meas.textContent = frames
+          ? '進み ' + (lastS * 100).toFixed(1) + '% / ' + frames + '枚 / '
+            + Math.round(now - tOn) + 'ms'
+          : '1枚も出ませんでした';
+        resolve();
+      };
+      // ⚠ transfer.js の runVisualTrial と同じ規則にすること（2026-08-25 の変更後）。
+      //   較正は「狙った s ちょうどを必ず1枚描き、次のフレームで消す」。
+      function frame(now) {
+        if (phase === 'fix') {
+          if (now - t0 < FIX_MS) { requestAnimationFrame(frame); return; }
+          phase = 'char'; tOn = now; frames = 0;
+        }
+        const el = now - tOn;
+        const s = Math.max(0, Math.min(1, el / BASE));
+        if (s >= TARGET) {
+          RENDERERS.fade.draw(ctx, ch, TARGET);     // 狙った値にクランプ
+          lastS = TARGET; frames++;
+          setTimeout(() => done(performance.now()), HOLD_END_MS);
+          return;
+        }
+        RENDERERS.fade.draw(ctx, ch, s);
+        lastS = s; frames++;
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('button.play');
+    if (!b) return;
+    const td = b.closest('td');
+    await play(td.querySelector('canvas'), b, td.querySelector('.meas'));
+  });
+
+  document.getElementById('playAll').addEventListener('click', async () => {
+    const now = document.getElementById('now');
+    for (const tr of document.querySelectorAll('table tr')) {
+      const tds = tr.querySelectorAll('td');
+      if (!tds.length) continue;
+      for (const td of tds) {
+        const cv = td.querySelector('canvas');
+        if (!cv) continue;
+        now.textContent = cv.dataset.ch + ' … gamma ' + cv.dataset.gamma;
+        await play(cv, td.querySelector('button.play'), td.querySelector('.meas'));
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+    now.textContent = '';
+  });
+
+  // 再生前は白紙にしておく（静止画で判断させないため）
+  document.querySelectorAll('canvas').forEach(cv => {
+    cv.width = SIZE; cv.height = SIZE;
+    const c2 = cv.getContext('2d');
+    c2.fillStyle = '#fff'; c2.fillRect(0, 0, SIZE, SIZE);
+    c2.fillStyle = '#c8ccd4'; c2.font = '26px system-ui';
+    c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillText('▶', SIZE / 2, SIZE / 2);
+  });
+})();
+</script>
