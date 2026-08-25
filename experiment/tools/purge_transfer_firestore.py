@@ -65,7 +65,11 @@ Firestore の「試し打ちの行」を消す／あとから印を付ける
 ⚠ 名簿（transfer_roster）の行に `is_test` の印を付けても、削除しても、この採番カウンタは
 **連動して減らない**。`bumpCounter`（`transfer_firestore.js`）はカウンタドキュメントの
 `n` を increment 変換で増やすだけで、名簿の行数や中身を読んでいないためである。
-連番を0から出直したいときは、印付け／削除のあとで**必ず別途** `--reset-counters` を使うこと。
+連番を0から出直したいときは、印付け／削除のあとで**必ず別途**戻すこと。
+
+⚠ `--reset-counters` は**「試し打ちの一括削除」に付随するオプション**で、単独では動かない。
+  付けると `is_test` の付いた行が**全部消える**。試し打ちのデータを残したまま連番だけ
+  戻したいときは **`--counters-only`** を使うこと（行には一切触らない）。
 
 鍵について
 ----------
@@ -250,6 +254,8 @@ def main():
     ap.add_argument("--delete", action="store_true",
                     help="--participants/--ts-from/--ts-to で絞った行を、印を付けるかわりに"
                          "削除する（単独では何もしない）")
+    ap.add_argument("--counters-only", action="store_true",
+                    help="**採番カウンタだけ**を0に戻す。行は1つも消さない・触らない")
     args = ap.parse_args()
 
     bulk_select = bool(args.participants or args.ts_from or args.ts_to)
@@ -275,6 +281,30 @@ def main():
 
     creds = service_account.Credentials.from_service_account_file(key_path)
     db = firestore.Client(project=args.project, credentials=creds)
+
+    # ---- 採番カウンタだけを戻す。行には一切触らない --------------------------
+    #
+    # ⚠ **なぜ別のモードが要るのか。**
+    #   `--reset-counters` は「試し打ちの一括削除」に付随するオプションで、
+    #   単独では動かない（付けると is_test の付いた行が**全部消える**）。
+    #   ところが試し打ちのデータは、実験そのものの検証（提示の枚数・タイミング・
+    #   曲線の形）に使うので**残したい**。印を付けて解析から外しつつ、
+    #   連番だけ0に戻したい、という場面がある。そのためのモードである。
+    #
+    # ⚠ **掲載が始まったあとに使わないこと。** 既に配った番号と重なる。
+    if args.counters_only:
+        cols = list(db.collection("transfer_counters").stream())
+        print("採番カウンタの現状")
+        for d in cols:
+            print(f"  {d.id:16} n = {(d.to_dict() or {}).get('n')}")
+        print("\n  " + str(len(cols)) + " 件を 0 に戻します。**行は1つも消しません。**")
+        if not args.yes:
+            print("  実際に戻すには --yes を足してください。")
+            return
+        for d in cols:
+            d.reference.set({"n": 0}, merge=True)
+        print("  0 に戻しました。")
+        return
 
     # ---- 印を後付けするだけの用途。消す処理には進まない ----------------------
     if args.mark_test:
