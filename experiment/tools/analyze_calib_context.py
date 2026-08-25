@@ -809,20 +809,20 @@ def main():
     # 丸めで説明がつく(0.003*100-0.25=+0.05)。よって「フレーム量子化による水準のずれ」を
     # actual_s から検出することはこのデータではできなかった、という limitation として書くのが正確。
     dev_nonzero = [r for r in dev_rows if r["progress_pct_level"] != "ALL" and r["mean_dev_pt"] != 0]
-    if not dev_nonzero:
-        dev_finding = ("狙った水準(progress_pct)と実測(actual_s×100)のずれは、集計した全水準・全方式で"
-                       "平均0.000ポイント・sd 0.000だった。60Hz環境ではフレーム量子化で数%のずれが"
-                       "出ると想定していたが、この <code>actual_s</code> 列からはそれが検出できなかった。"
-                       "⚠ <code>actual_ms</code>/<code>actual_frames</code>(実際の描画コマ数)は水準・端末で"
-                       "ばらついているのに対し、<code>actual_s</code> は progress_pct/100 をほぼそのまま"
-                       "(小数点3桁に丸めて)格納しているように見え、フレーム量子化を反映した"
-                       "『真の実測値』にはなっていない疑いがある。論文の限界として、"
-                       "『actual_s は名目値の丸め値に近く、フレーム単位の実測ずれの検証には使えなかった』"
-                       "と書くのが正確。")
-    else:
-        parts_dev = "; ".join(f"{r['family']}@{r['progress_pct_level']}: {r['mean_dev_pt']:+.3f}pt(n={r['n']})"
-                              for r in dev_nonzero)
-        dev_finding = f"狙った水準と実測のずれが0でない箇所: {parts_dev}"
+    exc_txt = ("例外は無かった。" if not dev_nonzero else
+              "例外: " + "; ".join(f"{r['family']}@{r['progress_pct_level']}: {r['mean_dev_pt']:+.3f}pt(n={r['n']}、"
+                                    "0.0025→0.003への丸めで説明がつく系統誤差)"
+                                    for r in dev_nonzero) + "。")
+    dev_finding = (f"狙った水準(progress_pct)と実測(actual_s×100)のずれは、集計した{len(dev_rows)}区分"
+                  f"(方式×水準)のうち{len(dev_nonzero)}区分を除き平均0.000ポイント・sd 0.000だった。"
+                  f"60Hz環境ではフレーム量子化で数%のずれが出ると想定していたが、この "
+                  f"<code>actual_s</code> 列からはそれがほぼ検出できなかった。{exc_txt} "
+                  f"⚠ <code>actual_ms</code>/<code>actual_frames</code>(実際の描画コマ数)は水準・端末で"
+                  f"ばらついているのに対し、<code>actual_s</code> は progress_pct/100 をほぼそのまま"
+                  f"(小数点3桁に丸めて)格納しているように見え、フレーム量子化を反映した"
+                  f"『真の実測値』にはなっていない疑いがある。論文の限界として、"
+                  f"『actual_s は名目値の丸め値に近く、フレーム単位の実測ずれの検証にはこのデータでは"
+                  f"使えなかった』と書くのが正確。")
 
     fig_trend = fig_line_trend(trend_rows, "decile", "accuracy", "modality",
                                 "セッション内の位置ごとの正答率(字・水準プール)", "正答率(%)", jp_font)
