@@ -241,15 +241,32 @@
   }
 
   // 完了画面のHTML(本番モードのみ)。完了コードを大きく表示。
-  function completionHTML(seconds) {
+  //
+  // opts.codeNote: 完了コードの上に出す案内文（HTML）。省略時は従来の一文。
+  //   ⚠ **「参加したサービス」では、どこへ戻るのか伝わらない**（2026-08-25 丸山指摘）。
+  //     募集サイト側の入力欄には「課題の最後に表示される『完了コード』を入力してください」と
+  //     出ているので、**その画面へ戻って貼る**と分かる言い方にする。
+  //     ⚠ 呼び方は**「タスクの画面」**にそろえる。募集サイト側が「タスク」と呼んでおり、
+  //       「募集サイト」では参加者の頭の中の呼び名と合わない（2026-08-25 丸山指摘）。
+  // opts.hideMeta: 末尾の「参加者ID ／ 所要 ◯秒」を出さない。
+  //   ⚠ **転写検証の課題では出さない**（2026-08-25 丸山判断）。理由は2つ。
+  //     ① 参加者IDが完了コードと紛らわしい。**貼るものが2つあるように見え**、
+  //        間違ってIDを貼ると「記録に無いコード」として非承認の元になる。
+  //        参加者IDを知っていて参加者側が得することは無い（問い合わせも完了コードで受ける）。
+  //     ② 所要秒は同意画面からの通算で、**中断した時間もそのまま入る**。
+  //        実際、途中で手を止めた回は 1044秒（17分）と出た。参加者の実感と食い違い、
+  //        「そんなにかかっていない」と受け取られる。
+  //   既定は従来どおり出す（他の実験ページの見た目を変えないため）。
+  function completionHTML(seconds, opts) {
     return `<div style="text-align:center;padding:24px 10px">
       <h1>全ての実験が終了しました</h1>
       <p>ご協力ありがとうございました。</p>
-      <p><b>完了コード</b>は以下です。参加したサービスの入力欄に貼り付けてください。</p>
+      ${(opts && opts.codeNote) || `<p><b>完了コード</b>は以下です。参加したサービスの入力欄に貼り付けてください。</p>`}
       <p style="font-size:30px;font-weight:800;letter-spacing:3px;color:#1E2A5E;
         background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:14px 8px;margin:14px auto;max-width:360px">${completionCode}</p>
       <p><button class="primary" onclick="navigator.clipboard.writeText('${completionCode}').then(()=>{this.textContent='コピーしました ✓'},()=>{this.textContent='コピーできませんでした。上のコードを手動で選択してください'})">完了コードをコピー</button></p>
-      <p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p></div>`;
+      ${(opts && opts.hideMeta) ? "" :
+        `<p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p>`}</div>`;
   }
 
   global.PROD = {

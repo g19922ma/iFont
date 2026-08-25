@@ -11,7 +11,7 @@
   50.0
  ],
  "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。各ファイルは onset の lead_ms 手前から始まるので、刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
- "config_version": "prov-2026-08-25a",
+ "config_version": "prov-2026-08-25b",
  "salted": false,
  "count": 544,
  "items": {
@@ -6543,5 +6543,6 @@
    "sr": 44100,
    "truncated": false
   }
- }
+ },
+ "config_version_note": "2026-08-25: 視覚の水準（blur）だけを置き直したため設定版を a→b に上げた。聴覚の打ち切り時点・合成条件は変えていないので、WAV 544本は作り直していない。"
 }

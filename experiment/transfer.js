@@ -2357,7 +2357,7 @@ async function showResults() {
 // 研究者モードの完了コードは、送信もされず照合もできない使い捨ての6文字で、
 // 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
 function finishHTML(durS) {
-  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS);
+  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS, { hideMeta: true, codeNote: `<p>下の<b>完了コード</b>をコピーして、<b>このページを開いたタスクの画面に戻り</b>、「完了コードを入力してください」の欄に貼り付けてください。</p><p class="muted" style="font-size:13px">貼り付けて提出するまで、報酬のお支払い手続きが始まりません。</p>` });
   return `<div style="text-align:center;padding:24px 10px">
     <h1>動作確認が終わりました</h1>
     <p class="muted">研究者向け動作確認モード（URL に <code>?prod=1</code> が無い）です。</p>
@@ -2904,7 +2904,7 @@ async function startSession() {
       }
       if (resumeState && !resumeState.completed && resumeState.session_v !== SESSION_V) resumeState = null;
       if (resumeState && resumeState.completed) {
-        screenEl.innerHTML = PROD.completionHTML(resumeState.duration_s || 0);
+        screenEl.innerHTML = PROD.completionHTML(resumeState.duration_s || 0, { hideMeta: true, codeNote: `<p>下の<b>完了コード</b>をコピーして、<b>このページを開いたタスクの画面に戻り</b>、「完了コードを入力してください」の欄に貼り付けてください。</p><p class="muted" style="font-size:13px">貼り付けて提出するまで、報酬のお支払い手続きが始まりません。</p>` });
         return;
       }
     }

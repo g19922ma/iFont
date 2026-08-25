@@ -54,3 +54,7 @@ experiment/tts_candidates_carrier2/_rejected_acc0/
 experiment/tts_candidates_carrier2/_superseded/
 experiment/_superseded_transfer_stimuli_amitaro_pa/
 experiment/_superseded_transfer_audio_manifest_amitaro_pa.json
+
+# 監視ツール（watch_transfer.py）が「前回どこまで見たか」を控えるファイル。
+# 実行するたびに変わるだけで、記録として残す意味がない。
+experiment/tools/.watch_transfer_state.json
