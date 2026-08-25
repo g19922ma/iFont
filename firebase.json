@@ -11,41 +11,75 @@
       "**/.*"
     ],
     "rewrites": [
-      { "source": "/listen", "destination": "/transfer_calib_audio.html" },
-      { "source": "/look", "destination": "/transfer_calib_visual.html" },
-      { "source": "/read", "destination": "/transfer_test.html" },
-      { "source": "/survey", "destination": "/transfer_comfort.html" },
-      { "source": "/check", "destination": "/transfer_calib.html" }
+      {
+        "source": "/calib",
+        "destination": "/transfer_calib.html"
+      },
+      {
+        "source": "/listen",
+        "destination": "/transfer_calib_audio.html"
+      },
+      {
+        "source": "/look",
+        "destination": "/transfer_calib_visual.html"
+      },
+      {
+        "source": "/read",
+        "destination": "/transfer_test.html"
+      },
+      {
+        "source": "/survey",
+        "destination": "/transfer_comfort.html"
+      },
+      {
+        "source": "/check",
+        "destination": "/transfer_calib.html"
+      }
     ],
     "headers": [
       {
         "source": "**/*.html",
         "headers": [
-          { "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
         ]
       },
       {
         "source": "/@(listen|look|read|survey|check)",
         "headers": [
-          { "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
         ]
       },
       {
         "source": "**/*.@(js|css|json)",
         "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=3600" }
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=3600"
+          }
         ]
       },
       {
         "source": "**/*.@(wav|mp3|png)",
         "headers": [
-          { "key": "Cache-Control", "value": "public, max-age=604800" }
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=604800"
+          }
         ]
       },
       {
         "source": "**",
         "headers": [
-          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow"
+          }
         ]
       }
     ]

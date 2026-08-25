@@ -260,6 +260,65 @@
    *      本番の連番は動かない。
    *   4. 名簿に載せる（is_test の目印を付けて載せる）
    * --------------------------------------------------------------------- */
+  // ---- 集団の割り当て（重みつき）--------------------------------------------
+  //
+  // **2026-08-25 追加。** それまでは groups を順に配るだけ（1:1）だった。
+  // 較正フェーズを1つの掲載にまとめたので、**人数の比に合わせて配る**必要が出た
+  // （聴覚80人・視覚150人 ＝ 8:15）。
+  //
+  // ⚠ **乱数を使わない。** 連番から決めることで、同じ人が途中で閉じて開き直しても
+  //   同じ集団に戻る（名簿にも残るが、名簿が引けないときの保険として決定的にしておく）。
+  //
+  // ⚠ **比は「並び」に展開して使う。** 単純に「35%の確率で聴覚」とすると、
+  //   途中で募集を止めたときに比が崩れる。ここでは重みを約分した長さの並びを作り、
+  //   各集団を**均等にばらけさせて**配る。こうすると**どこで止めても比がほぼ保たれる**。
+  //   例: 8:15 なら 23人で1巡し、その中で聴覚8人・視覚15人が散らばる。
+  //
+  // ⚠ **assign_index は集団ごとの通し番号**である（全体の通し番号ではない）。
+  //   出題の割付（方式・速さ・水準の回転）がこの番号を使うので、
+  //   集団ごとに 0,1,2,… と続いていなければ割付が偏る。
+  function gcd2(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
+
+  // 設定は自分で取りに行く。
+  // ⚠ ここは以前 `CFG` を裸で参照していた。ブラウザでは transfer.js の
+  //   `const CFG` が偶然見えるので動いていたが、**このファイル単体では落ちる**
+  //   （読み込み順が変わる・道具から呼ぶ・試験にかけると壊れる）。
+  function cfg() { return global.TRANSFER_CONFIG || {}; }
+
+  function assignPattern(phase, groups) {
+    var w = (cfg().phase_group_weights || {})[phase];
+    if (!w) return null;                       // 重みが無ければ従来どおり順に配る
+    var ws = groups.map(function (g) { return Math.max(0, Math.round(Number(w[g]) || 0)); });
+    if (ws.some(function (x) { return x <= 0; })) return null;   // 0や欠けがあれば従来どおり
+    var g0 = ws.reduce(function (a, b) { return gcd2(a, b); });
+    ws = ws.map(function (x) { return x / g0; });               // 8:15 のように約分する
+    var slots = [];
+    groups.forEach(function (g, gi) {
+      for (var k = 0; k < ws[gi]; k++) {
+        // 0〜1 の位置に等間隔で置く。集団どうしが均等に混ざる。
+        slots.push({ g: g, key: (k + 0.5) / ws[gi], gi: gi });
+      }
+    });
+    slots.sort(function (x, y) { return (x.key - y.key) || (x.gi - y.gi); });
+    return { order: slots.map(function (x) { return x.g; }), per: ws, groups: groups };
+  }
+
+  function assignFor(phase, groups, i0) {
+    var pat = assignPattern(phase, groups);
+    if (!pat) {   // 従来どおり（1:1で順に配る）
+      return { group: groups[i0 % groups.length],
+               assignIndex: Math.floor(i0 / groups.length) };
+    }
+    var L = pat.order.length;
+    var cycle = Math.floor(i0 / L);
+    var pos = i0 % L;
+    var group = pat.order[pos];
+    var perCycle = pat.per[groups.indexOf(group)];
+    var before = 0;
+    for (var i = 0; i < pos; i++) if (pat.order[i] === group) before++;
+    return { group: group, assignIndex: cycle * perCycle + before };
+  }
+
   function resolveAssignment(opts) {
     var phase = String(opts.phase || "");
     var pid = String(opts.pid || "");
@@ -302,8 +361,9 @@
         return bumpCounter(counterIdFor(phase, testRun)).then(function (c) {
           if (c.kind !== "ok") return { kind: "fail", why: c.why };
           var i0 = c.n - 1;                                    // n は1始まり → 0始まりに
-          var group = groups[i0 % groups.length];
-          var assignIndex = Math.floor(i0 / groups.length);
+          var a = assignFor(phase, groups, i0);
+          var group = a.group;
+          var assignIndex = a.assignIndex;
 
           // 4. 名簿に載せる
           return createRoster(ownId, {
@@ -393,6 +453,10 @@
     // 試験と道具から使う下回り
     _internal: {
       counterIdFor: counterIdFor,
+      // サーバが答えないときの予備経路(transfer.js の local_hash)でも
+      // **同じ振り分け規則**を使うために外へ出す。
+      // これが無いと、名簿が落ちた分だけ 1:1 に戻ってしまい比が崩れる。
+      assignFor: assignFor,
       getRoster: getRoster, bumpCounter: bumpCounter, createRoster: createRoster,
       toFields: toFields, fromFields: fromFields, docSafe: docSafe, httpJson: httpJson,
     },

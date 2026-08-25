@@ -369,7 +369,15 @@ async function resolveAssignment() {
     }
   }
   const h = hashIndexFrom(pid);
-  const a = { group: PHASE_GROUPS[h % PHASE_GROUPS.length], assign_index: Math.floor(h / PHASE_GROUPS.length) };
+  // 名簿が使えないときの予備。参加者IDのハッシュを通し番号の代わりに使う。
+  // 振り分けの規則は名簿と同じものを共有する（重みを掛けた比を保つため）。
+  // 共有できないとき（古い基盤ファイル）だけ、従来どおり順に配る。
+  const _af = (window.TRANSFER_FIRESTORE && window.TRANSFER_FIRESTORE._internal
+               && window.TRANSFER_FIRESTORE._internal.assignFor) || null;
+  const _r = _af ? _af(PHASE, PHASE_GROUPS, h) : null;
+  const a = _r
+    ? { group: _r.group, assign_index: _r.assignIndex }
+    : { group: PHASE_GROUPS[h % PHASE_GROUPS.length], assign_index: Math.floor(h / PHASE_GROUPS.length) };
   writeAssignCache(pid, a);
   return Object.assign(a, { source: "local_hash" });
 }
@@ -1999,8 +2007,8 @@ function postSurveyScreen() {
   const qs = cfg.questions || [];
   const picked = {};
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後に：任意のアンケート</h2>
-    <p>回答は任意です。答えたくない項目はとばして「次へ」を押してください。
-    回答の内容が報酬に影響することはありません。</p>
+    <p>回答は任意です。答えたくない項目は回答せず、そのまま「次へ」を押してください。
+    回答内容によって報酬が変わることはありません。</p>
     <div id="qs"></div>
     <p style="text-align:center;margin-top:20px">
       <button class="primary" id="qDone">次へ</button></p>`;

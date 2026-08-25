@@ -51,21 +51,26 @@ Firebase Hosting に移すと、URL は `https://kana-task.web.app/listen` の�
 サイト名は **`kana-task`**。「iFont」という研究名を URL から消すために選んだ
 （2026-08-24 に丸山が決定。Firebase 上で作成済み）。
 
+**2026-08-25**: 較正（群Acal・A′）の掲載を2本→1本にまとめた。掲載に貼るのは
+`/calib` の1本だけで、サイト側が重み80:150で聴覚・視覚に自動振り分けする。
+`/listen`・`/look` は研究者の動作確認用として残すが、掲載には使わない。
+
 | 掲載 | 集団 | 新しい URL | 中身のファイル |
 |---|---|---|---|
-| 較正・聞き取り（250円） | 群Acal | `https://kana-task.web.app/listen?prod=1&wid=<作業者ID>` | `transfer_calib_audio.html` |
-| 較正・見え方（130円） | 群A′ | `https://kana-task.web.app/look?prod=1&wid=<作業者ID>` | `transfer_calib_visual.html` |
+| 較正（聴覚・視覚） | 群Acal・A′ | `https://kana-task.web.app/calib?prod=1&wid=<作業者ID>` | `transfer_calib.html` |
 | 検証 | 群B | `https://kana-task.web.app/read?prod=1&wid=<作業者ID>` | `transfer_test.html` |
 | 見え心地のアンケート | 群C | `https://kana-task.web.app/survey?prod=1&wid=<作業者ID>` | `transfer_comfort.html` |
+| （掲載しない・研究者の動作確認用・聴覚単独） | 群Acal | `https://kana-task.web.app/listen?prod=1&wid=<作業者ID>` | `transfer_calib_audio.html` |
+| （掲載しない・研究者の動作確認用・視覚単独） | 群A′ | `https://kana-task.web.app/look?prod=1&wid=<作業者ID>` | `transfer_calib_visual.html` |
 | （掲載しない・研究者の確認用） | 振り分け版 | `https://kana-task.web.app/check?prod=1&wid=uitest-...` | `transfer_calib.html` |
 
-短い名前（`/listen` など）は `firebase.json` の `rewrites` で本当のファイル名に読み替えている。
-**ファイル名そのままの URL も動く**（`https://kana-task.web.app/transfer_calib_audio.html`）。
+短い名前（`/calib` など）は `firebase.json` の `rewrites` で本当のファイル名に読み替えている。
+**ファイル名そのままの URL も動く**（`https://kana-task.web.app/transfer_calib.html`）。
 掲載に貼るのは短いほうでよいが、貼り間違えると別の集団の課題を出すことになるので、
 掲載前に下の「4. 掲載前の確認」で中身を必ず照合すること。
 
-> ⚠ `/look`（群A′・視覚の較正）と `/read`（群B・視覚の検証）は**どちらも見る課題**で紛らわしい。
-> 貼るときは表の行をそのままコピーし、目視で1回照合する。
+> ⚠ `/look`（研究者の動作確認用・視覚較正）と `/read`（群B・視覚の検証）は**どちらも見る課題**で紛らわしい。
+> 使うときは表の行をそのままコピーし、目視で1回照合する。
 
 サイトの入口（`https://kana-task.web.app/`）は **わざと 404 にしてある**。
 一覧ページを置くと、そこから他の課題へたどれてしまうためである。
@@ -100,8 +105,8 @@ experiment/  ──[ build_hosting.sh が必要なものだけコピー ]──�
 
 | もの | 中身 |
 |---|---|
-| `transfer_calib_audio.html` `transfer_calib_visual.html` `transfer_test.html` `transfer_comfort.html` | 参加者が開く4つの入口 |
-| `transfer_calib.html` | 研究者の確認用（掲載しない） |
+| `transfer_calib.html` `transfer_test.html` `transfer_comfort.html` | 参加者が開く3つの入口（較正・検証・見え心地） |
+| `transfer_calib_audio.html` `transfer_calib_visual.html` | 研究者の動作確認用（聴覚単独・視覚単独。掲載しない） |
 | `transfer.css` | 見た目 |
 | `prod_common.js` `transfer_config.js` `transfer_firestore.js` `transfer.js` `transfer_comfort_config.js` `transfer_comfort.js` | 動かすための JavaScript |
 | `transfer_audio_manifest_amitaro.json` | 音声刺激の索引 |
@@ -223,8 +228,8 @@ firebase deploy --only hosting:kana-task
 ```bash
 B=https://kana-task.web.app
 
-# (1) 4つの入口が開くか、そして「どの集団のページか」が合っているか
-for p in listen look read survey; do
+# (1) 参加者用3入口＋研究者確認用2本が開くか、そして「どの集団のページか」が合っているか
+for p in calib read survey listen look; do
   echo "--- /$p ---"
   curl -s "$B/$p" | grep -oE "<title>[^<]*</title>|TRANSFER_PAGE = \{[^}]*\}"
 done
@@ -234,10 +239,11 @@ done
 
 | URL | title | 集団の指定 |
 |---|---|---|
-| `/listen` | ひらがなの聞き取りの課題 | `phase: "calib", force_group: "acal"` |
-| `/look` | ひらがなの見え方の課題 | `phase: "calib", force_group: "aprime"` |
-| `/read` | ひらがなの聞き取り・見え方の課題 | `phase: "test"` |
-| `/survey` | 文字の見え心地についてのアンケート | （指定なし。群Cは1集団だけ） |
+| `/calib`（参加者用・較正） | ひらがなの聞き取り・見え方の課題 | `phase: "calib"`（重み80:150で聴覚・視覚に自動振り分け） |
+| `/read`（参加者用・検証） | ひらがなの聞き取り・見え方の課題 | `phase: "test"` |
+| `/survey`（参加者用・見え心地） | 文字の見え心地についてのアンケート | （指定なし。群Cは1集団だけ） |
+| `/listen`（研究者の動作確認用・掲載しない） | ひらがなの聞き取りの課題 | `phase: "calib", force_group: "acal"` |
+| `/look`（研究者の動作確認用・掲載しない） | ひらがなの見え方の課題 | `phase: "calib", force_group: "aprime"` |
 
 ```bash
 # (2) 配信中のファイルで掲載前フラグが false か(手元ではなく実物を見る)
@@ -259,7 +265,7 @@ done
 
 **(5) ブラウザで最後まで通す（手作業。これだけは自動化できない）**
 
-`https://kana-task.web.app/listen?prod=1&wid=uitest-fb1` のように、
+`https://kana-task.web.app/calib?prod=1&wid=uitest-fb1` のように、
 **作業者IDの頭を `uitest-` にして**開く。この頭の名前が付いた回は
 `is_test` の印が付き、本番の連番とは別のカウンタから番号が配られるので、
 **本番のデータにも連番にも混ざらない**（`experiment/transfer_firestore.js` の `isTestPid`）。
@@ -269,7 +275,8 @@ done
 - 最後まで進んで完了コードが出るか（＝Firestore への保存が通っているか）
 - ブラウザの開発者ツールの Console に赤いエラーが無いか
 
-4つの入口すべてで1回ずつ通すこと。
+参加者用3入口（`/calib` `/read` `/survey`）＋研究者確認用2本（`/listen` `/look`）、
+計5本すべてで1回ずつ通すこと。
 
 ---
 
@@ -371,7 +378,7 @@ firebase hosting:disable --site kana-task     # 公開を止める(サイトは�
 | ~~移行前~~ | ~~Firebase に `kana-task` サイトを作る~~ | ✓ 2026-08-24 に作成済み |
 | ~~移行前~~ | ~~デプロイする~~ | ✓ 2026-08-24 に実施済み |
 | ~~移行後~~ | ~~`project/` の URL を書き換える~~ | ✓ 2026-08-24 に実施済み（上の「5.」） |
-| **いま** | **ブラウザで4つの入口を最後まで1回ずつ通す**（下の 7-1） | 音が鳴るか・アニメが出るか・完了コードが出るかは、実際に人が見ないと分からない |
+| **いま** | **ブラウザで参加者用3入口＋確認用2本を最後まで1回ずつ通す**（下の 7-1） | 音が鳴るか・アニメが出るか・完了コードが出るかは、実際に人が見ないと分からない |
 | 刺激の作り直し後 | 再ビルドして再デプロイ | 「ん」が残る版のまま配信している |
 | 掲載直前 | `pre_launch` を `false` に戻し、`?v=` を上げて再デプロイ | 実験の設定を変える判断そのもの |
 | 掲載直前 | 掲載サイトの作業URL を貼り替える | 掲載サイトの管理画面での作業 |
@@ -384,6 +391,7 @@ firebase hosting:disable --site kana-task     # 公開を止める(サイトは�
 （いまは `pre_launch` も `true` なので二重に守られている）。
 
 ```
+https://kana-task.web.app/calib?prod=1&wid=uitest-check0
 https://kana-task.web.app/listen?prod=1&wid=uitest-check1
 https://kana-task.web.app/look?prod=1&wid=uitest-check2
 https://kana-task.web.app/read?prod=1&wid=uitest-check3
