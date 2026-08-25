@@ -143,6 +143,15 @@ function applyPhaseOverrides() {
       Object.assign({}, CFG.visual.families.wipe.direction_assign, ov.wipe_direction_assign);
     done.push("wipe_dir=" + (CFG.visual.families.wipe.direction_assign.mode || "?"));
   }
+  if (ov.progress_pct_levels_by_family) {
+    Object.keys(ov.progress_pct_levels_by_family).forEach((fam) => {
+      const lv = ov.progress_pct_levels_by_family[fam];
+      if (Array.isArray(lv) && lv.length) {
+        CFG.visual.progress_pct_levels_by_family[fam] = lv.slice();
+        done.push("levels:" + fam + "=" + lv.join("/"));
+      }
+    });
+  }
   const note = done.join(",");
   // どの設定で取ったデータかが1問ごとの記録から分かるように、版名の末尾に足す。
   // これで既存の記録側（config_version を書いている4か所）を触らずに済む。
