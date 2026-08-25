@@ -41,9 +41,17 @@
   // participantId / completionCode は途中再開のとき保存時の値へ引き継ぐため let。
   const workerId = P.get("worker_id") || P.get("wid") || P.get("worker") || "";
   let participantId = workerId || ("anon-" + Math.random().toString(36).slice(2, 10));
-  // 12桁の完了コード。報酬照合のためサーバにも各試行とともに記録される。
+  // 完了コード。報酬照合のためサーバにも各試行とともに記録される。
+  // 使う文字は31種（紛らわしい I・L・O・0・1 を除いてある）。
+  //
+  // ■ 2026-08-25、**12文字から6文字へ短くした**（丸山判断）。
+  //   スマートフォンで貼り付けそこねる・打ち直すときの負担を減らすため。
+  //   当てずっぽうで通される心配は無い。6文字なら 31^6 ＝ 8.9億通りあり、
+  //   正しいコードは募集人数ぶん（253本）しか存在しない。しかも**1人1回しか
+  //   回答できない**設定なので、試行は1回きりで、当たる確率は約350万分の1である。
   const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  let completionCode = Array.from({ length: 12 },
+  const CODE_LEN = 6;
+  let completionCode = Array.from({ length: CODE_LEN },
     () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 
   let sentTrials = 0;

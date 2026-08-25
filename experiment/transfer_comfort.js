@@ -1219,7 +1219,7 @@ function showSendFailure(rec, durS, tries) {
 }
 
 // 最後の画面。**研究者モードでは完了コードを出さない**。
-// 研究者モードの完了コードは、送信もされず照合もできない使い捨ての12桁で、
+// 研究者モードの完了コードは、送信もされず照合もできない使い捨ての6文字で、
 // 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
 function finishHTML(durS) {
   if (window.PROD && PROD.enabled) return PROD.completionHTML(durS);
