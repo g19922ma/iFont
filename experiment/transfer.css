@@ -41,6 +41,12 @@ button.primary:hover { filter: brightness(1.1); }
 /* 刺激を出す枠のまわりの余白も、画面が低いときは詰める。 */
 .vbox { text-align: center; margin: clamp(4px, 1vh, 10px) 0 clamp(2px, 0.6vh, 6px); }
 .muted { color: #6b7280; font-size: 13px; }
+/* かな表の上に常設する案内。教示のいちばん大事な一文（分からなくても選ぶ）を
+   70問のあいだ見えるところに置くためのもの。**目立たせすぎない**——
+   刺激より先にここへ目が行くと課題の妨げになるので、淡色・小さめにする。 */
+.grid-hint { text-align: center; color: #6b7280; font-size: 12.5px;
+  margin: 0 0 8px; line-height: 1.5; }
+@media (max-width: 420px) { .grid-hint { font-size: 12px; margin-bottom: 6px; } }
 /* 本文中のリンク。いまは同意画面の問い合わせ先(mailto:)だけに出る。
    既定の青はこの画面の色(藍と青緑)から浮くので、見出しと同じ藍にそろえる。
    下線は残す——押せることが色だけで伝わらない人がいるため。 */
@@ -53,7 +59,13 @@ a:hover { color: #2E7D8F; }
    ここには同意の確認だけを残してある）。
    高さの余裕がない端末（スマートフォンの縦画面）では、余白と文字をさらに詰める。 */
 .consent-min p { margin: 8px 0; font-size: 15px; line-height: 1.7; }
-.consent-min .c-contact { font-size: 13.5px; color: #4b5563; }
+/* 問い合わせ先。前の行と同じ段落の中に <br> で入っているので、そのままだと
+   大きい文字の行送りが小さい文字に適用されて窮屈に見える。
+   独立した行にして、上に少し余白を取る。
+   ⚠ 同意画面は1画面に収める制約があるので、余白は最小限にすること
+      （スマホ縦 375×667・360×640 でスクロールが出ないこと）。 */
+.consent-min .c-contact { display: block; margin-top: 6px; line-height: 1.55;
+  font-size: 13.5px; color: #4b5563; }
 .consent-min p.muted { margin: 10px 0 0; font-size: 12px; }
 .consent-min #devBox { margin-top: 12px !important; padding: 10px 12px !important; }
 .consent-min #devBox p { margin: 0 0 4px !important; font-size: 14px !important; }
@@ -61,7 +73,7 @@ a:hover { color: #2E7D8F; }
 .consent-min button.primary { font-size: 17px; padding: 13px 38px; }
 @media (max-height: 720px) {
   .consent-min p { margin: 6px 0; font-size: 14px; line-height: 1.6; }
-  .consent-min .c-contact { font-size: 12.5px; }
+  .consent-min .c-contact { margin-top: 4px; font-size: 12.5px; }  /* 画面が低いときは詰める */
   .consent-min #devBox { margin-top: 8px !important; padding: 8px 10px !important; }
   .consent-min #devBox p { font-size: 13.5px !important; }
   .consent-min #devBox label { margin: 2px 0 !important; font-size: 13.5px !important; }

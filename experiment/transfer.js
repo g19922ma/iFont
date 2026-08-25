@@ -1375,6 +1375,18 @@ function progressHeader(t) {
 function buildKanaGrid(done) {
   const splitAt = CFG.answer_grid_split_at;
   const grid = document.createElement("div"); grid.id = "grid"; grid.style.display = "block";
+  // ⚠ **「分からなくても、いちばん近いと思う文字を選ぶ」を毎問見えるところに置く。**
+  //   これは教示のいちばん大事な一文である。当て推量に近い水準の正答率（＝S字曲線の床）を
+  //   測るために要るもので、ここが伝わっていないと薄い条件で回答が止まったり、
+  //   適当に同じ字を押し続けたりする。
+  //   ⚠ 説明画面（audioGuideHTML / visualGuideHTML）にも書いてあるが、
+  //     **あれは最初に1回読むだけ**である。回答中の案内（#prompt）も
+  //     **最初の1問にしか出ない**（2問目以降は introduced が true になり描かれない）。
+  //     70問のあいだ効かせるには、かな表そのものに添えるのがいちばん確実である。
+  const hint = document.createElement("div");
+  hint.className = "grid-hint";
+  hint.textContent = "分からない場合でも、最も近いと思う文字を選んでください。";
+  grid.appendChild(hint);
   const blocks = [GRID.slice(0, splitAt), GRID.slice(splitAt)].filter(b => b.length);
   const maxCols = Math.max(...blocks.map(b => b.length));
   for (const rowsBlock of blocks) {
@@ -2063,7 +2075,7 @@ function audioGuideHTML() {
       <li><b>読み上げは1問につき1回だけです（聞き直しはできません）。</b></li>
       <li>答える時間に制限はありません。</li>
       <li><b>まったく聞こえない問題も混ざっています。</b>それも大切なデータです。</li>
-      <li>聞こえなくても、<b>もっとも近いと思う文字を選んでください。</b></li>
+      <li>分からない場合でも、<b>最も近いと思う文字を選んでください。</b></li>
     </ul>`;
 }
 function visualGuideHTML() {
@@ -2092,7 +2104,7 @@ function visualGuideHTML() {
       <li><b>表示は1問につき1回だけです（見直しはできません）。</b></li>
       <li>答える時間に制限はありません。</li>
       <li><b>まったく見えない問題も混ざっています。</b>それも大切なデータです。</li>
-      <li>見えなくても、<b>もっとも近いと思う文字を選んでください。</b></li>
+      <li>分からない場合でも、<b>最も近いと思う文字を選んでください。</b></li>
     </ul>`;
 }
 
