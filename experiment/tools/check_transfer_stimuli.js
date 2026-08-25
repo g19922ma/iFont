@@ -104,9 +104,19 @@ if (CFG.audio.fallback && CFG.audio.fallback.enabled) {
 
 // ---- 実験ページと同じ導出 -------------------------------------------------
 const ALL_KANA = CFG.answer_grid.flat().filter(c => c !== "");
+// ⚠ **課題によって出題する字も回答の選択肢も違う**（2026-08-25）。
+//   聴覚 68字 / 視覚 72字（を・ぢ・づ・ゔ が増える）。
+//   詳しくは transfer_config.js の answer_grid_visual を参照。
+const VIS_KANA = (CFG.answer_grid_visual || CFG.answer_grid).flat().filter(c => c !== "");
+function poolFor(group) { return group === "acal" ? ALL_KANA : VIS_KANA; }
 const TARGETS = CFG.targets.slice();
 // decoy(偽のターゲット)の候補。実際に誰へどの字が出るかは transfer.js が連番から決める。
 const DECOY_CFG = CFG.decoys || {};
+function decoyPoolFor(group) {
+  if (DECOY_CFG.pool && DECOY_CFG.pool.length) return DECOY_CFG.pool.slice();
+  return poolFor(group).filter(c => TARGETS.indexOf(c) < 0 &&
+                                    ((DECOY_CFG.exclude || []).indexOf(c) < 0));
+}
 const DECOY_POOL = (DECOY_CFG.pool && DECOY_CFG.pool.length)
   ? DECOY_CFG.pool.slice()
   : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 && ((DECOY_CFG.exclude || []).indexOf(c) < 0));
@@ -126,7 +136,9 @@ for (const ch of CFG.wellbeing.chars) {
   if (TARGETS.indexOf(ch) < 0) bad(`見え心地の代表字 ${ch} がターゲット8字に入っていない`);
 }
 ok(`ターゲット ${TARGETS.join("・")} ／ decoy の候補 ${DECOY_POOL.length} 字`
-   + `（除外 ${(DECOY_CFG.exclude || []).join("・") || "なし"}）／ 回答は ${ALL_KANA.length} 択`);
+   + `（除外 ${(DECOY_CFG.exclude || []).join("・") || "なし"}）`
+   + ` ／ 回答は 聴覚 ${ALL_KANA.length} 択・視覚 ${VIS_KANA.length} 択`
+   + ` ／ 視覚の decoy 候補は ${decoyPoolFor("aprime").length} 字`);
 if (DECOY_POOL.length < 30) bad(`decoy の候補が ${DECOY_POOL.length} 字しかない（30字以上必要）`);
 ok(`見え心地の代表字 ${CFG.wellbeing.chars.join("・")}（ターゲット内から事前固定）`);
 
@@ -242,7 +254,11 @@ function countTrialsByRunningPage() {
       + `\n;globalThis.__build = function (g, n) {
              GROUP = g; G = GROUPS[g]; ASSIGN = n; ASSIGN_SOURCE = "harness";
              _freqCache = null;
-             ALL_KANA.forEach(c => { imgs[c] = imgs[c] || {}; });
+             // ⚠ **その集団で出しうる字ぶん**を用意する（聴覚68・視覚72）。
+             //   ここを ALL_KANA（68字）に固定していたため、視覚に増やした
+             //   を・ぢ・づ・ゔ が「画像が無い字」として黙って落ち、
+             //   1人あたりの問題数が 70→66 に減って見えた（2026-08-25）。
+             stimPool().forEach(c => { imgs[c] = imgs[c] || {}; });
              const t = (G.mode === "audio") ? buildAudioTrials() : buildVisualTrials();
              return { trials: t.map(x => ({ char: x.char, gate_ms: x.gate_ms === null ? "full" : x.gate_ms,
                                             progress_pct: x.progress_pct, family: x.family || "",
@@ -439,8 +455,9 @@ function checkDesignBalance(counts) {
     runs.forEach(r => r.decoys.forEach(ch => { use[ch] = (use[ch] || 0) + 1; }));
     const uv = Object.values(use);
     const nUsed = Object.keys(use).length;
-    if (nUsed !== DECOY_POOL.length) {
-      bad(`${label[g]}: decoy に使われた字が ${nUsed} 字（候補 ${DECOY_POOL.length} 字を使い切っていない）`);
+    const poolN = decoyPoolFor(g).length;
+    if (nUsed !== poolN) {
+      bad(`${label[g]}: decoy に使われた字が ${nUsed} 字（候補 ${poolN} 字を使い切っていない）`);
     } else {
       ok(`${label[g]}: decoy は候補 ${nUsed} 字すべてに配られ、1字あたり `
          + `${Math.min(...uv)}〜${Math.max(...uv)}人（${c.nPeople}人ぶん）`);

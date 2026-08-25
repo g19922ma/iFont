@@ -530,12 +530,15 @@ function sessionRecord(durS, nTrials) {
 }
 
 // ---- 回答のかな表 ---------------------------------------------------------
-// ⚠ **「出題される字」と「回答の選択肢」は別物**である（2026-08-25、v1 に合わせた）。
-//   ALL_KANA … 出題の候補。**両課題とも68字**（音源がこの68字ぶんしか無い）。
-//               まぎれ字（decoy）も見え方確認もここから選ぶ。
-//   answerGrid() … 画面に出す表。**聴覚68字・視覚72字**。
-//               視覚では を・ぢ・づ・ゔ を選べるようにする（出題はされない）。
-//               理由は transfer_config.js の answer_grid_visual を参照。
+// ⚠ **課題によって、出題する字も回答の選択肢も違う**（2026-08-25、v1 に合わせた）。
+//   聴覚 68字 … を・ぢ・づ・ゔ は お・じ・ず・ぶ と同音で**音として作れない**ので、
+//               出題からも回答からも外す。残した お・じ・ず には「お／を」と併記する。
+//   視覚 72字 … 字形はまったく違うので、**出題も回答も4字ぶん多い**。
+//
+//   answerGrid() … 画面に出す表。 stimPool() … 出題されうる字（表と同じ）。
+//   ALL_KANA … 聴覚の68字。音源の索引と突き合わせるときに使う。
+//   ⚠ **本命8字は両課題で同じ**なので、増えるのはまぎれ字の候補だけである。
+//     測っている曲線 V(s) には影響しない。
 const GRID = CFG.answer_grid;
 const ALL_KANA = GRID.flat().filter(c => c !== "");
 // 回答の表。**G（集団）が決まったあとに呼ぶこと。**割り当て前は聴覚の表を返す。
@@ -549,13 +552,34 @@ function answerSplitAt() {
 // 選択肢の数。**記録に残す値なので、その試行で実際に出した表から数える。**
 function nChoices() { return answerGrid().flat().filter(c => c !== "").length; }
 const TARGETS = CFG.targets.slice();
+
+// 出題されうる字。
+//
+// ⚠ **回答できる字は出題もされる**ようにする（2026-08-25 丸山判断）。
+//   選べるのに絶対に出てこない字があると、「なぜ省いたのか」という疑問が残るし、
+//   参加者から見ても不自然である。**v1（先生の視覚実験）も72字すべてを出題していた**
+//   （pilot_soa_visual2.js:61 の CHARS）。
+//
+//   聴覚は68字。を・ぢ・づ・ゔ は お・じ・ず・ぶ と同音で、
+//   **音として作れない**ので出題も回答もできない（v1 と同じ）。
+//   視覚は72字。字形はまったく違うので、出題も回答もできる。
+//
+//   ⚠ **本命8字（あ・か・が・ぱ・し・つ・ま・ら）は両課題で同じ**である。
+//     増えるのは、本命を隠すためのまぎれ字（decoy）の候補だけなので、
+//     測っている曲線 V(s) には影響しない。
+function stimPool() {
+  return answerGrid().flat().filter(c => c !== "");
+}
+
 // decoy(偽のターゲット)の候補。本命8字と、設定で外した字(「ん」)を除いた残り。
 // 実際にその参加者へ出る12字は decoyChars() が連番から決める。
+// ⚠ **課題によって候補の数が違う**（聴覚59字・視覚63字）。
 const DECOY_CFG = CFG.decoys || {};
-const DECOY_POOL = (DECOY_CFG.pool && DECOY_CFG.pool.length)
-  ? DECOY_CFG.pool.slice()
-  : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 &&
-                         ((DECOY_CFG.exclude || []).indexOf(c) < 0));
+function decoyPool() {
+  if (DECOY_CFG.pool && DECOY_CFG.pool.length) return DECOY_CFG.pool.slice();
+  return stimPool().filter(c => TARGETS.indexOf(c) < 0 &&
+                                ((DECOY_CFG.exclude || []).indexOf(c) < 0));
+}
 // かな表のボタンに出す文字。
 //
 // ⚠ **併記（「お／を」など）は聴覚課題だけで行う。**
@@ -1005,7 +1029,9 @@ async function preload() {
     return;
   }
   // 視覚: 画面に出しうる字の画像を全部読む(まぎれ字を含む)。
-  const chars = ALL_KANA;
+  // ⚠ **ALL_KANA(68字)ではなく stimPool()(視覚は72字)**を使う。
+  //   を・ぢ・づ・ゔ もまぎれ字として出るので、画像が要る。
+  const chars = stimPool();
   let done = 0;
   await Promise.all(chars.map(async ch => {
     try { imgs[ch] = await loadImage(ch); } catch (e) { /* 無い字はまぎれ字から外れるだけ */ }
@@ -1066,7 +1092,7 @@ function seededShuffle(arr, seedStr) {
 // **decoy の回答は解析に使わない**（is_decoy 列で外す）ので、ばらつきは影響しない。
 function decoyChars() {
   const k = Math.max(0, Math.round(Number(DECOY_CFG.per_participant) || 0));
-  const pool = DECOY_POOL.slice();
+  const pool = decoyPool();
   if (!k || !pool.length) return [];
   const n = Math.max(0, Math.round(ASSIGN) || 0);
   return seededShuffle(pool, (DECOY_CFG.seed_prefix || "decoy:") + n).slice(0, k);
@@ -2442,10 +2468,10 @@ function visionCheck() {
   const need = Math.max(1, Math.round(Number(cfg.rounds) || 1));
   const nch = Math.max(2, Math.round(Number(cfg.n_choices) || 4));
   const avoid = TARGETS.concat(decoyChars()).concat(["ん"]);
-  const pool = ALL_KANA.filter(c => avoid.indexOf(c) < 0 && imgs[c]);
+  const pool = stimPool().filter(c => avoid.indexOf(c) < 0 && imgs[c]);
   // 使える字が足りないときは、本命だけ避けて広げる（画像が揃っていない環境の保険）。
   const usable = pool.length >= nch ? pool
-    : ALL_KANA.filter(c => TARGETS.indexOf(c) < 0 && imgs[c]);
+    : stimPool().filter(c => TARGETS.indexOf(c) < 0 && imgs[c]);
   let streak = 0, current = null, choices = [];
 
   function pick1() {
