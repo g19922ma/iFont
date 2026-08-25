@@ -1569,6 +1569,8 @@ function runVisualTrial(t) {
   // 群Bでは 30Hz のとき「166msまでの絵を200msまで見ていた」ということが起きる。
   // actual_ms だけだとこの2つが混ざるので、分けて残す。
   let lastDrawMs = null, blankMs = null, endpointClamped = false;
+  // 終端の実表示と、フレームの乱れ具合。事前登録した除外規則の判定に使う。
+  let endpointFrames = null, endpointMs = null, maxGap = null;
   const prog = progressFn(t);
   const renderer = RENDERERS[t.family] || RENDERERS.fade;
 
@@ -1592,6 +1594,9 @@ function runVisualTrial(t) {
       last_draw_ms: lastDrawMs, blank_ms: blankMs,
       final_hold_ms: (lastDrawMs === null || blankMs === null) ? "" : (blankMs - lastDrawMs),
       endpoint_clamped: endpointClamped ? 1 : 0,
+      endpoint_frames: endpointFrames,       // 終端を何フレーム残したか
+      endpoint_actual_ms: endpointMs,        // 終端が実際に映っていた時間
+      max_frame_gap_ms: maxGap,              // その試行でいちばん開いたフレーム間隔
       // RQ4 の速さ2水準では試行ごとに違う。分析はこの列で2群に分ける
       // (生成に使うのは calib_speed_probe.generation_level_ms の側だけ)。
       progress_source: prog.source, base_anim_ms: baseAnimMs(t),
@@ -1641,6 +1646,19 @@ function runVisualTrial(t) {
     drawFix(ctx);
     const t0 = performance.now();
     let phase = "fix", tOn = 0, frames = 0, lastS = 0;
+    // 終端を「何フレーム」残すか。
+    //
+    // ⚠ **時間（setTimeout）で待ってはいけない。** requestAnimationFrame は
+    //   次の描画の前に呼ばれるだけで、**実際に画面から消えるのは次の repaint** である。
+    //   34ms 待ってから白紙を描いても、実際の表示時間は
+    //   30Hz で約67ms・60Hz で約50ms・120Hz で約42ms とばらつく（揃わない）。
+    //   **フレーム数で数えれば、実際の表示時間がそろう**:
+    //     30Hz 1枚=33.3ms ／ 60Hz 2枚=33.3ms ／ 120Hz 4枚=33.3ms ／ 144Hz 5枚=34.7ms
+    //   端末のリフレッシュレートは起動時に実測してある（ENV.refreshHz）。
+    //   外れ値で壊れないよう 24〜240Hz に丸めて使う。
+    const _hz = Math.min(240, Math.max(24, Number(ENV.refreshHz) || 60));
+    const holdFrames = Math.max(1, Math.round(CFG.visual.endpoint_hold_ms / (1000 / _hz)));
+    let holdLeft = 0, prevNow = null;
     const unlock = () => {
       tStim = performance.now();
       document.getElementById("grid")?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
@@ -1652,12 +1670,32 @@ function runVisualTrial(t) {
       drawBlank(ctx);
       blankMs = Math.round(now - tOn);
       actualMs = blankMs; actualFrames = frames; actualS = lastS;
+      // 終端が実際に映っていた時間＝白紙にした時刻 − 終端を描いた時刻。
+      // フレーム数で数えているので端末によらずそろうはずだが、フレーム落ちが
+      // あるとここが伸びる。**事前登録した除外規則の判定に使う**ので必ず残す。
+      if (lastDrawMs !== null && endpointClamped) {
+        endpointMs = blankMs - lastDrawMs;
+        endpointFrames = holdFrames;
+      }
       presenting = false;
     };
     function frame(now) {
       if (phase === "fix") {
         if (now - t0 < fixDur) { requestAnimationFrame(frame); return; }
         phase = "char"; tOn = now; frames = 0; unlock();
+      }
+      // その試行でいちばん開いたフレーム間隔を測る。**提示が乱れた試行を
+      // あとから見分けるため**（事前登録した除外規則で使う）。
+      if (prevNow !== null) {
+        const gap = now - prevNow;
+        if (maxGap === null || gap > maxGap) maxGap = Math.round(gap);
+      }
+      prevNow = now;
+      // 終端を描いたあとは、決めた枚数ぶん待ってから消す。
+      if (holdLeft > 0) {
+        holdLeft--;
+        if (holdLeft === 0) { finish(now); return; }
+        requestAnimationFrame(frame); return;
       }
       const el = now - tOn;
       const s = prog.fn(el);
@@ -1690,13 +1728,11 @@ function runVisualTrial(t) {
           renderer.draw(ctx, t.char, sTarget);
           lastS = sTarget; frames++; lastDrawMs = Math.round(el);
           endpointClamped = true;
-          // ⚠ **同じコールバックで消してはいけない。** requestAnimationFrame は
-          //   描画の前に呼ばれるだけで、**実際に画面へ出る保証はない**（重いと1回ぶん
-          //   飛ばされる）。次のフレームまで待つ方式にしたところ、負荷が高いときに
-          //   「描いたのに一度も画面に出ない」ことが起きた（2%で表面化）。
-          //   **固定時間だけ待ってから消す。** これで確実に画面に出るうえ、
-          //   その1枚を見る時間が全端末でそろう（60Hz 17ms・30Hz 33ms のばらつきが消える）。
-          setTimeout(() => finish(performance.now()), CFG.visual.endpoint_hold_ms);
+          // ⚠ **同じコールバックで消してはいけない**（実画面に出る前に上書きされる）。
+          //   **時間で待つのでもいけない**（消えるのは次の repaint なので実表示時間が
+          //   端末でばらつく）。**フレーム数で数える**（上の holdFrames の注記）。
+          holdLeft = holdFrames;
+          requestAnimationFrame(frame);
           return;
         }
         // ── 検証（群B）: **時刻 t までの情報しか見せない実験** ──
