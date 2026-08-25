@@ -230,7 +230,33 @@
   function preLaunch() { return cfg().pre_launch === true; }
 
   // この回の記録に is_test を立てるか。**目印の判定はここ1か所に集める**。
-  function isTestRun(pid) { return preLaunch() || isTestPid(pid); }
+  // 配布した作業者IDの一覧（フェーズごと）。設問ファイルと同じ253個が入る。
+  //   → tools/build_yahoo_task_tsv.py が transfer_config.js に書き出す
+  function distributedIds(phase) {
+    var m = cfg().distributed_wids || {};
+    return m[phase] || null;
+  }
+
+  // この回を試し打ちとして扱うか。
+  //
+  // ⚠ **2026-08-25 に「配布したIDでなければ試し打ち」を足した**（丸山判断
+  //   「本番のカウンタだけ特別扱いできない？」）。
+  //   それまでは `uitest-` / `curltest-` で始まるIDだけが試し打ち扱いで、
+  //   `test01` のような分かりやすいIDで動作確認すると**本番の通し番号を消費**し、
+  //   2集団の振り分けがずれていた。前置きを覚えていないと事故る作りだった。
+  //
+  //   本番の参加者は、募集サイトの設問ごとに違うURLから来るので
+  //   **必ず配布した一覧のどれかのID**になる。だから
+  //   **一覧に無いID＝動作確認**と見なしてよい。前置きを覚える必要がなくなる。
+  //
+  // ⚠ 一覧が設定に無いフェーズ（検証・群C。まだ設問を配っていない）は、
+  //   これまでどおり前置きだけで判定する。
+  function isTestRun(pid, phase) {
+    if (preLaunch() || isTestPid(pid)) return true;
+    var ids = distributedIds(phase);
+    if (!ids || !ids.length) return false;
+    return ids.indexOf(String(pid || "")) < 0;
+  }
 
   // 採番カウンタのドキュメントID。試し打ちは本番と**別のカウンタ**から配るので、
   // 動作確認をしても本番の連番を食いつぶさない（＝2集団の交互の振り分けがずれない）。
@@ -355,7 +381,7 @@
         if (stop) return stop;
 
         // 3. 採番（試し打ちは本番と別のカウンタから配る）
-        var testRun = isTestRun(pid);
+        var testRun = isTestRun(pid, phase);
         return bumpCounter(counterIdFor(phase, testRun)).then(function (c) {
           if (c.kind !== "ok") return { kind: "fail", why: c.why };
           var i0 = c.n - 1;                                    // n は1始まり → 0始まりに
@@ -424,7 +450,7 @@
     if (col === "transfer_trials") {
       body.correct = (body.response_char === body.target_char);
     }
-    body.is_test = isTestRun(body.participant_id);
+    body.is_test = isTestRun(body.participant_id, body.phase);
     // GAS 側の分岐にしか使わない値。Firestore では列を増やすだけなので落とす。
     delete body.kind;
 

@@ -149,7 +149,7 @@ const FSTORE = window.TRANSFER_FIRESTORE || null;
 // ページ側からも同じ判定を引けるようにしてある。
 function isTestRun() {
   const pid = (window.PROD && PROD.participantId) || "";
-  return FSTORE ? FSTORE.isTestRun(pid) : (CFG.pre_launch === true);
+  return FSTORE ? FSTORE.isTestRun(pid, PHASE) : (CFG.pre_launch === true);
 }
 
 // 掲載前フラグが立っているあいだ、画面の隅に小さく出す帯。
@@ -455,7 +455,67 @@ function sendOnce(backend, envelope) {
     .catch(e => ({ ok: false, why: (e && e.message) || "送信できない" }));
 }
 
-async function deliverRecord(envelope) {
+// ---- 送れなかった記録を貯めて、あとで送り直す ------------------------------
+//
+// ⚠ **2026-08-25 に足した。** それまでは3回試して駄目なら**その1問を捨てていた**。
+//   実際に、視覚のテスト（test02・16:41）で**70問のうち1〜60問目が丸ごと消えた**。
+//   61問目以降は通っているので、途中で通信が戻っている。**戻ったのに、
+//   先の60問は捨てたあと**だった。電車・地下・混んだ Wi-Fi でふつうに起きる。
+//
+//   参加者の画面は普通に進み、完了コードも出るので**本人は気づかない**。
+//   報酬は払える（完走レコードは別に送っており、失敗件数も残る）が、
+//   **データは戻らない**。
+//
+//   そこで、送れなかった封筒を手元に貯めておき、
+//     ・次の問題を送るとき
+//     ・最後の完走レコードを送るとき
+//   に、貯まっているぶんも一緒に送り直す。
+//
+// ⚠ **localStorage にも書く。** 途中でブラウザを閉じて開き直しても取り戻せる。
+//   進行状況と同じ仕組み（prod_common.js の途中再開）に合わせてある。
+//   ⚠ 中身は回答の記録なので、**参加者の端末から外へ出ることはない**
+//     （送信先はこの研究のサーバだけ。localStorage は端末の中だけ）。
+const PENDING_MAX = 200;          // 貯める上限。これを超えたら古いものから捨てる
+let pendingRecords = [];
+function pendingKey() {
+  return "ifont_pending_" + PHASE + "_" + ((window.PROD && PROD.participantId) || "anon");
+}
+function loadPending() {
+  try {
+    const raw = localStorage.getItem(pendingKey());
+    if (raw) pendingRecords = JSON.parse(raw) || [];
+  } catch (e) { pendingRecords = []; }
+}
+function savePending() {
+  try {
+    if (pendingRecords.length) localStorage.setItem(pendingKey(), JSON.stringify(pendingRecords));
+    else localStorage.removeItem(pendingKey());
+  } catch (e) { /* 保存できない端末でも、その回のあいだは記憶に残る */ }
+}
+function queuePending(envelope) {
+  pendingRecords.push(envelope);
+  if (pendingRecords.length > PENDING_MAX) pendingRecords.splice(0, pendingRecords.length - PENDING_MAX);
+  savePending();
+}
+// 貯まっているぶんを送り直す。**通ったものだけ取り除く**。
+// 1回の呼び出しで送る数を絞る（一度に全部投げると、通信が細いときに
+// かえって時間がかかり、次の問題の送信まで待たせてしまう）。
+async function flushPending(limit) {
+  if (!pendingRecords.length) return;
+  const n = Math.min(pendingRecords.length, Math.max(1, limit || 5));
+  const batch = pendingRecords.slice(0, n);
+  const left = pendingRecords.slice(n);
+  const stillBad = [];
+  for (const env of batch) {
+    const ok = await deliverRecord(env, true);   // true = 失敗しても貯め直さない
+    if (ok) { sendFailures = Math.max(0, sendFailures - 1); sendRetries++; }
+    else stillBad.push(env);
+  }
+  pendingRecords = stillBad.concat(left);
+  savePending();
+}
+
+async function deliverRecord(envelope, isRetryOfPending) {
   const plan = backendPlan("logging", b => (b === "firestore") ? firestoreReady() : gasLoggingReady());
   if (!plan.length) {
     console.warn("[transfer] 記録の送信先が1つも設定されていないので記録が残りません");
@@ -487,7 +547,10 @@ async function deliverRecord(envelope) {
     }
   }
   sendFailures++;
-  console.error(`[transfer] 記録を ${tries} 回試して送れませんでした(この1問は失われます)`);
+  // ⚠ **捨てない。** 手元に貯めて、あとで送り直す（→ queuePending）。
+  if (!isRetryOfPending) queuePending(envelope);
+  console.warn(`[transfer] 記録を ${tries} 回試して送れませんでした`
+             + `(手元に貯めて、あとで送り直します。待ち ${pendingRecords.length} 件)`);
   return false;
 }
 
@@ -497,6 +560,8 @@ async function deliverRecord(envelope) {
 // 呼び出しがあるので、必ず Promise を返す形にしてある。
 function sendRecord(body) {
   if (!(window.PROD && PROD.enabled)) return Promise.resolve(true);
+  // 送るついでに、貯まっているぶんも少しずつ送り直す。
+  flushPending(3);
   return deliverRecord(serverBody(body));
 }
 
@@ -746,9 +811,25 @@ function newCanvas() {
   return c;
 }
 function drawBlank(ctx) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, SIZE, SIZE); }
-function drawFix(ctx) {
+// 注視点。strong = true のときは**練習用に大きく濃く**描く。
+// ⚠ 本番（strong なし）の見え方は変えないこと。注視点が目立ちすぎると
+//   そのあとに出る薄い字が相対的に見えにくくなり、測る値が動く。
+function drawFix(ctx, strong) {
   drawBlank(ctx);
-  ctx.fillStyle = "#333"; ctx.font = "40px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = strong ? "#1E2A5E" : "#333";
+  ctx.font = (strong ? 72 : 40) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 練習の注視点。大きさをゆっくり上下させて目を引く。**練習でしか呼ばない。**
+// 周期 900ms。行き過ぎないよう 0.85〜1.15 倍の範囲に収める。
+function drawFixPulse(ctx, elapsedMs) {
+  const k = 1 + 0.15 * Math.sin((elapsedMs / 900) * 2 * Math.PI);
+  drawBlank(ctx);
+  ctx.fillStyle = "#1E2A5E";
+  ctx.font = Math.round(72 * k) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillText("+", SIZE / 2, SIZE / 2);
 }
 
@@ -1436,6 +1517,10 @@ function progressHeader(t) {
 }
 
 // かな表(紙の五十音表式・右寄せ)。聴覚・視覚で同じ表を使う。
+// 回答のときに毎回出す案内。**教示のいちばん大事な一文**である。
+// 当て推量に近い水準の正答率（＝S字曲線の床）を測るために要る。
+const HINT_CHOOSE = "分からない場合でも、最も近いと思う文字を選んでください。";
+
 function buildKanaGrid(done) {
   const AGRID = answerGrid();
   const splitAt = answerSplitAt();
@@ -1449,25 +1534,26 @@ function buildKanaGrid(done) {
   //     **最初の1問にしか出ない**（2問目以降は introduced が true になり描かれない）。
   //     70問のあいだ効かせるには、かな表そのものに添えるのがいちばん確実である。
   //
-  // ⚠ **2行にしてある**（2026-08-25、栗原先生のご指摘で足した）。
-  //   上の行 #gridState … いまどの段階かを示す。**視覚課題でだけ使う。**
-  //     視覚では、薄い水準だと画面に何も出ないまま提示が終わる。
-  //     聴覚には合図音があるが、視覚に振り分けられた人は音の関門を通らないので、
-  //     ビープは当てにできない（マナーモードのままの人がいる）。
-  //     ⚠ 字が出る場所（canvas）の**すぐ近くに何かを出すとマスクになり**、
-  //       測っているものが変わる。だから表の上、canvas より下に置く。
-  //   下の行 #gridHint … 常に同じ案内。両課題で出す。
-  //   ⚠ **どちらの行も常に場所を占める**ようにしてある。文字が入れ替わっても
-  //     高さが変わらないので、表の大きさも字の位置もずれない。
+  // ⚠ **視覚課題では、この案内が「提示が終わった」合図も兼ねる**
+  //   （2026-08-25、栗原先生のご指摘で足した）。
+  //   視覚では薄い水準だと画面に何も出ないまま提示が終わる。聴覚には合図音があるが、
+  //   視覚に振り分けられた人は音の関門を通らないので、ビープは当てにできない
+  //   （マナーモードのままの人がいる）。そこで提示中は空にしておき、
+  //   終わったら「表示された文字を回答して下さい。」を先頭に付けて出す。
+  //   ⚠ 字が出る場所（canvas）の**すぐ近くに何かを出すとマスクになり**、
+  //     測っているものが変わる。だから表の上、canvas より下に置く。
+  // show が付いているあいだだけ文字が見える（CSS の opacity）。
+  // **聴覚と見え方確認は常に出す**ので、既定で付けておく。
+  //
+  // ⚠ **1行にまとめてある**（2026-08-25 丸山指摘）。
+  //   一度「いまどの段階か」と「分からない場合でも〜」を2行に分けたが、
+  //   そのぶん表の上が高くなり、**画面にスクロールが出た**。
+  //   ⚠ 高さは空でも確保する（CSS の min-height）。消えたり出たりで
+  //     表の大きさが変わると、字の出る位置までずれる。
   const hint = document.createElement("div");
-  hint.className = "grid-hint";
-  const state = document.createElement("div");
-  state.id = "gridState"; state.className = "grid-state";
-  hint.appendChild(state);
-  const fixed = document.createElement("div");
-  fixed.id = "gridHint";
-  fixed.textContent = "分からない場合でも、最も近いと思う文字を選んでください。";
-  hint.appendChild(fixed);
+  hint.className = "grid-hint show";
+  hint.id = "gridHint";
+  hint.textContent = HINT_CHOOSE;
   grid.appendChild(hint);
   const blocks = [AGRID.slice(0, splitAt), AGRID.slice(splitAt)].filter(b => b.length);
   const maxCols = Math.max(...blocks.map(b => b.length));
@@ -1507,7 +1593,11 @@ function fitKanaGrid(grid) {
   if (!blocks) return;
   const rows = blocks * KANA_ROWS_PER_BLOCK;
   const rowGaps = blocks * (KANA_ROWS_PER_BLOCK - 1);
-  const avail = window.innerHeight - grid.getBoundingClientRect().top - 8;  // 8px=下端に残す余白
+  // ⚠ **表の上に置いた案内のぶんを引く**（2026-08-25。引き忘れてスクロールが出た）。
+  //   grid の中に案内が入っているので、grid の上端からでは案内の高さが計算に入らない。
+  const hintEl = grid.querySelector("#gridHint");
+  const hintH = hintEl ? Math.ceil(hintEl.getBoundingClientRect().height) : 0;
+  const avail = window.innerHeight - grid.getBoundingClientRect().top - hintH - 8;  // 8px=下端に残す余白
   const solve = (gap, blockGap) => Math.floor((avail - blocks * blockGap - rowGaps * gap) / rows);
   // すき間もマスの大きさに応じて詰める(狭い画面ほど小さく)。
   const rough = solve(6, 14);
@@ -1581,12 +1671,16 @@ function finalizeCommon(t, rec, picked) {
     ti++; saveProgress(); runTrial(); return;
   }
   results.push(Object.assign({ practice: true }, rec));
-  const ok = picked === t.char;
+  // ⚠ **答え合わせにしない**（2026-08-25 丸山判断）。
+  //   もとは「正解／あなたの答え」と ◯× を出していた。試験の採点に見えるので、
+  //   **間違えると報酬が減るのでは**と受け取られかねない。
+  //   実際には練習は記録に残らず、本番も正誤で報酬は変わらない。
+  //   ⚠ **正解も出さない。** 練習の目的は流れ（＋ → 提示 → 回答）を覚えることであって、
+  //     字を当てられたかを知ることではない。字を見せると、それ自体が採点に見える。
   screenEl.innerHTML = `<div style="text-align:center;padding:30px">
-    <p style="font-size:17px">正解「<b style="font-size:24px">${kanaLabel(t.char)}</b>」 ／ あなたの答え「<b style="font-size:24px">${picked ? kanaLabel(picked) : "（未選択）"}</b>」
-      <span style="color:${ok ? "#2E7D8F" : "#C25B4E"}">${ok ? "◯" : "×"}</span></p>
-    <p class="muted">これは練習です。</p></div>`;
-  setTimeout(() => { if (tryReturn) tryReturn(); }, 1600);
+    <p style="font-size:18px">回答できました。</p>
+    <p class="muted" style="margin-top:10px">※これは練習です。</p></div>`;
+  setTimeout(() => { if (tryReturn) tryReturn(); }, 1400);
 }
 
 function runTrial() {
@@ -1664,7 +1758,7 @@ function runVisualTrial(t) {
   // actual_ms だけだとこの2つが混ざるので、分けて残す。
   let lastDrawMs = null, blankMs = null, endpointClamped = false;
   // 表の上の一行にいま出している文言。「選び直す」で表を作り直したときに戻すため。
-  let stateText = "";
+  let hintText = "";
   // 終端の実表示と、フレームの乱れ具合。事前登録した除外規則の判定に使う。
   let endpointFrames = null, endpointMs = null, maxGap = null;
   const prog = progressFn(t);
@@ -1673,14 +1767,22 @@ function runVisualTrial(t) {
   screenEl.innerHTML = `${progressHeader(t)}
     <div id="stage">
       <div id="vbox" class="vbox"></div>
-      ${introduced ? "" : `<div class="muted" id="prompt" style="text-align:center">中央の ＋ に注目してください。</div>`}
+      <!-- ⚠ ここに1問目だけ「中央の ＋ に注目してください。」を出していたが、
+           **2026-08-25 にやめた**（丸山指示）。字が出る場所のすぐ下に文字があると
+           そちらへ目が行き、薄い水準では画面のわずかな変化を見落とす。
+           注視点の説明は**練習の画面（showTryGate の visualGuideHTML）**で済ませてある。
+           （2026-08-25 に「課題の進め方」の画面は廃止し、同意画面に取り込んだ。） -->
       <div id="answerArea"></div>
     </div>`;
   const answerArea = document.getElementById("answerArea");
   const canvas = newCanvas();
   document.getElementById("vbox").appendChild(canvas);
   const ctx = canvas.getContext("2d");
-  drawFix(ctx);
+  // ⚠ **ここで ＋ を描かない**（2026-08-25 丸山指摘「本番画面の＋がちょっと動く」）。
+  //   このあと showGrid() で表を足すと、画面の高さが変わって canvas の位置がずれる。
+  //   先に ＋ を描くと、表が入った瞬間に ＋ が動いて見える。
+  //   **白紙で始め、位置が落ち着いてから present() で ＋ を出す。**
+  drawBlank(ctx);
 
   const finalize = () => {
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
@@ -1718,8 +1820,8 @@ function runVisualTrial(t) {
       showConfirm();
     });
     answerArea.appendChild(grid);
-    const st = grid.querySelector("#gridState");
-    if (st) st.textContent = stateText;
+    const hn = grid.querySelector("#gridHint");
+    if (hn) { hn.textContent = hintText; hn.classList.toggle("show", !!hintText); }
     // 提示が終わるまでは押せない。**押せるようになることが終わりの合図**なので、
     // 提示中に押せてしまうと合図の意味が無くなる。
     if (presenting || tStim === null) {
@@ -1727,19 +1829,37 @@ function runVisualTrial(t) {
     }
   };
 
-  // 表の上の一行を書き換える。表がまだ無ければ、次に作るときに入る。
-  const setState = (txt) => {
-    stateText = txt;
-    const el = document.getElementById("gridState");
-    if (el) el.textContent = txt;
+  // 表の上の2行を書き換える。表がまだ無ければ、次に作るときに入る。
+  //
+  // ⚠ **提示している間は2行とも空にする**（2026-08-25 丸山指示）。
+  //   字が出る場所のすぐ下に文字があると、そちらへ目が行く。
+  //   薄い水準では画面の変化がごくわずかなので、これが効く。
+  //   ⚠ 高さは空でも確保してある（CSS の min-height）。
+  //     消えたり出たりで表の大きさが変わると、字の位置までずれる。
+  const setLines = (txt) => {
+    hintText = txt;
+    const el = document.getElementById("gridHint");
+    if (el) { el.textContent = txt; el.classList.toggle("show", !!txt); }
   };
 
   const present = () => {
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
     if (presenting) return;
     presenting = true;
-    setState("中央の ＋ に注目してください。");
-    const fixDur = CFG.visual.fix_ms + Math.floor(Math.random() * CFG.visual.fix_jitter_ms);
+    // 練習は注視点のあいだだけ案内を出す。提示が始まったら消す（unlock）。
+    setLines(t.practice ? "ここにあるプラスを見てください" : "");
+    // 注視点を出す時間。本番はゆらぎを入れて短くする（いつ始まるか読ませないため）。
+    const normalFix = CFG.visual.fix_ms + Math.floor(Math.random() * CFG.visual.fix_jitter_ms);
+    // 練習は**2段**にする（丸山判断・2026-08-25）。
+    //   ① 教える時間 … 大きい ＋ を脈打たせ「ここにあるプラスを見てください」と出す
+    //   ② 本番と同じ ＋ … 通常の大きさ・静止・案内なしで normalFix だけ出す
+    // ⚠ **①のまま問題に入ってはいけない。** 大きく濃い ＋ を見た直後は目の状態が違い、
+    //   そのあとに出る薄い字の見え方が本番と変わる。②を挟んで本番と同じ形にそろえる。
+    const teachMs = t.practice ? (Number(CFG.visual.practice_fix_ms) || 1400) : 0;
+    const fixDur = teachMs + normalFix;
+    // 注視点が消えてから字が出るまでの間（白紙）。練習も本番も同じ長さにする。
+    const gapMs = Math.max(0, Number(CFG.visual.fix_gap_ms) || 0);
+    let normalFixStarted = false;
     // 打ち切りの決め方: 較正は「進み具合が s% に届いたら」、検証は「t ms 経ったら」。
     const sTarget = (t.play === "calib")
       ? Math.max(0, Math.min(1, (t.progress_pct === null ? 100 : t.progress_pct) / 100)) : null;
@@ -1753,7 +1873,7 @@ function runVisualTrial(t) {
     const holdAtEnd = (t.check_kind === "full") || !!t.practice ||
                       (sTarget === null && tCut === null);
     renderer.begin(t.char, ctx);
-    drawFix(ctx);
+    drawFix(ctx, !!t.practice);
     const t0 = performance.now();
     let phase = "fix", tOn = 0, frames = 0, lastS = 0;
     // 終端を「何フレーム」残すか。
@@ -1775,6 +1895,7 @@ function runVisualTrial(t) {
     //   「押せるようになった」ことが**終わりの合図にならない**。
     const unlock = () => {
       tStim = performance.now();
+      if (t.practice) setLines("");         // 提示が始まったら案内を消す
       introduced = true;
     };
     const finish = (now) => {
@@ -1795,11 +1916,31 @@ function runVisualTrial(t) {
       // 表の上なので、マスクにはならない。
       document.getElementById("grid")
         ?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
-      setState("何の字でしたか？");
+      // ⚠ **すぐには出さない**（2026-08-25 丸山指摘「出るのがちょっと早い。視点を動かしてしまう」）。
+      //   字が消えた直後は、まだ見えた形を思い出している最中である。
+      //   そこへ下から文字が飛び込むと目がそちらへ動き、思い出しが途切れる。
+      //   少し置いてから、**じわっと**出す（CSS の transition）。
+      setTimeout(() => setLines("表示された文字を回答して下さい。" + HINT_CHOOSE),
+                 Number(CFG.visual.cue_delay_ms) || 350);
     };
     function frame(now) {
       if (phase === "fix") {
-        if (now - t0 < fixDur) { requestAnimationFrame(frame); return; }
+        const elFix = now - t0;
+        // ① 教える時間（練習だけ）。大きい ＋ を脈打たせる。
+        if (elFix < teachMs) { drawFixPulse(ctx, elFix); requestAnimationFrame(frame); return; }
+        // ② 本番と同じ ＋ に切り替える。案内も消す。**ここから先は本番と同じ**。
+        if (!normalFixStarted) {
+          normalFixStarted = true;
+          drawFix(ctx, false);
+          if (t.practice) setLines("", "");
+        }
+        if (elFix < fixDur) { requestAnimationFrame(frame); return; }
+        // ＋ を消して白紙にする。**ここではまだ字を出さない。**
+        phase = "gap"; drawBlank(ctx);
+      }
+      if (phase === "gap") {
+        // ⚠ 間を空けないと、消えた ＋ の残像が直後の薄い字に重なる（前向きマスク）。
+        if (now - t0 < fixDur + gapMs) { requestAnimationFrame(frame); return; }
         phase = "char"; tOn = now; frames = 0; unlock();
       }
       // その試行でいちばん開いたフレーム間隔を測る。**提示が乱れた試行を
@@ -2195,6 +2336,14 @@ async function showResults() {
   screenEl.innerHTML = `<div style="min-height:40vh;display:flex;flex-direction:column;justify-content:center;align-items:center">
     <h1 style="border:none">回答を送っています…</h1>
     <p class="muted">この画面のままお待ちください。閉じないでください。</p></div>`;
+  // ⚠ **最後に、貯まっているぶんを全部送り切る。**
+  //   ここが取り戻しの最後の機会である（このあと参加者は画面を閉じる）。
+  //   完走レコードより先に流すこと。send_failures の件数を確定させてから送るため。
+  while (pendingRecords.length) {
+    const before = pendingRecords.length;
+    await flushPending(pendingRecords.length);
+    if (pendingRecords.length >= before) break;   // 1件も減らないなら諦める
+  }
   await sendRecord(sessionRecord(durS, mainDone()));
   screenEl.innerHTML = finishHTML(durS);
 }
@@ -2270,7 +2419,7 @@ function audioGuideHTML() {
 function visualGuideHTML() {
   return `
     <p>ひらがな<b>1文字</b>が、見えにくい状態から<b>だんだんはっきりしていき、途中で消えます</b>。
-    現れ方は問題によって違います（うすい→濃い／点が増える／ぼやけ→はっきり／端から現れる）。
+    現れ方は問題によって違います。
     <b>見えた文字を、かなの表から選んでください。</b></p>
     <svg viewBox="0 0 640 150" style="width:100%;max-width:560px;display:block;margin:4px auto 8px" role="img" aria-label="視覚課題の流れの図">
       <rect x="14" y="22" width="54" height="66" rx="8" fill="#fff" stroke="#1E2A5E"/>
@@ -2289,7 +2438,8 @@ function visualGuideHTML() {
       <text x="381" y="118" font-size="13" text-anchor="middle" fill="#1b2030">見えた文字を表から選ぶ</text>
     </svg>
     <ul style="font-size:14px;line-height:1.9;color:#333">
-      <li>中央の ＋ が出たあと、自動で表示が始まります。</li>
+      <li>はじめに画面の中央に <b>＋</b> が出ます。<b>文字はこの ＋ と同じ場所に出ます</b>ので、
+          目を離さずに見ていてください。しばらくすると自動で表示が始まります。</li>
       <li><b>表示は1問につき1回だけです。見直すことはできません。</b></li>
       <li>答える時間に制限はありません。</li>
       <li><b>ほとんど見えない場合もあります。</b>その場合も、最も近いと思う文字を選んでください。</li>
@@ -2302,7 +2452,7 @@ function showTryGate() {
   const enough = tried >= CFG.design.practice_min;
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">${G.task_label}の課題</h2>
     ${G.mode === "audio" ? audioGuideHTML() : visualGuideHTML()}
-    <div style="text-align:center;margin-top:16px">
+    <div style="text-align:center;margin-top:16px" class="btn-stack">
       <p><button id="tryBtn" class="playbtn" style="background:${accent}">${tried ? "もう一度練習する" : "1問練習する"}</button></p>
       <p><button class="primary" id="goMain" ${enough ? "" : 'disabled style="opacity:.5"'}>本番を始める</button></p>
       ${enough ? "" : `<p class="muted">${CFG.design.practice_min}回以上練習すると本番に進めます。</p>`}
@@ -2318,39 +2468,50 @@ function showTryGate() {
   };
 }
 
-// ---- 導入・音量・見え方の確認 ---------------------------------------------
-function intro() {
-  const resumeNote = (resumeState && resumeState.trials)
-    ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
-       <b>前回の続きから再開します</b>。
-       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はとばします。${G.mode === "audio" ? "音が聞こえるかの確認だけ" : "画面が見えるかの確認だけ"}もう一度お願いします。</span></p>` : "";
+// ---- 導入（同意画面に差し込む）・音量・見え方の確認 ------------------------
+//
+// ⚠ **もとは「課題の進め方」という独立した画面だった**（2026-08-25 に廃止）。
+//   中身は課題の一文と問題数だけで、見出しの「進め方」に見合わなかった。
+//   進め方そのものは練習の画面（showTryGate）が図つきで説明しているので、
+//   一文と問題数だけを**同意画面の下に移し、画面を1枚減らした**。
+// 目的の一文の**続き**に足す、課題の中身と問題数。
+// ⚠ 「本実験は、〜を目的としています。」の直後に入るので、**文の途中から書く**。
+//   別々の段落にすると、同じことを2回説明しているように読める
+//   （2026-08-25 丸山指摘）。
+function taskSentence() {
   // 問題数は**実際に組み立てた出題の配列を数えて**出す。
   // 2026-08-21 まではここで推定式を立てていたが、実装と3か所ずれていて、
   // 画面には「約91問」と出るのに本当は 108/134/94 問だった（最大43問のずれ）。
   //   ① 聴覚の「全長」の1点（audio.include_full_gate）を数えていなかった
-  //   ② 群A′は progress_pct_levels（8水準）で出すのに visual.gates_ms（7点）を見ていた
-  //   ③ 確認問題の割合を「ターゲットのみ」に掛けていたが、
-  //      実装は「ターゲット＋まぎれ字」に掛けている
   // **式を直すのではなく、数える対象を実物にした。** 式は必ずまた実装から遅れる。
-  const nQuestions = (resumeState && resumeState.trials)
+  const n = (resumeState && resumeState.trials)
     ? resumeState.trials.filter(t => !t.practice).length
     : buildTrialsNow().length;
-  screenEl.innerHTML = `<h1>課題の進め方</h1>
-    ${resumeNote}
-    <p>ひらがな1文字の${G.mode === "audio" ? "読み上げを聞いて" : "表示を見て"}、
-    どの文字かを<b>かなの表から選ぶ</b>課題です。</p>
-    <p style="font-size:15px">問題数：<span id="nq">${nQuestions}</span>問</p>
-    <p style="text-align:center;margin-top:18px"><button class="primary" id="go">次へ：${G.mode === "audio" ? "音が聞こえるかの確認" : "画面が見えるかの確認"}</button></p>
-    ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>`}
-    <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled) ? "" : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}`}</p>`;
+  return `ひらがな1文字の${G.mode === "audio" ? "読み上げを聞いて" : "表示を見て"}、`
+       + `どの文字かを<b>かなの表から選ぶ</b>課題です。`
+       + `問題数は<b><span id="nq">${n}</span>問</b>です。`;
+}
+
+function introBlockHTML() {
+  const resumeNote = (resumeState && resumeState.trials)
+    ? `<p style="background:#eef7ee;border:1px solid #bcd9bc;border-radius:8px;padding:10px 12px">
+       <b>前回の続きから再開します</b>。
+       <span class="muted" style="display:block;margin-top:4px;font-size:12.5px">練習はスキップします。${G.mode === "audio" ? "音" : "画面"}のチェックを再度お願いします。</span></p>` : "";
+  return `${resumeNote}
+    ${(window.PROD && PROD.enabled) ? "" : `<p class="muted" style="text-align:center"><label style="cursor:pointer"><input type="checkbox" id="shortRun"> 短縮版（${CFG.design.short_run_trials}問・動作確認用）</label></p>
+    <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ → 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${audioManifest === null && G.mode === "audio" ? " ／ <b>音声は代用モード</b>" : ""}</p>`}`;
+}
+
+// 研究者向けの「短縮版」の切り替え。**本番モードでは出ないので何もしない。**
+function bindShortRun() {
   const shortRun = document.getElementById("shortRun");
-  if (shortRun) shortRun.addEventListener("change", () => {
+  if (!shortRun) return;
+  shortRun.addEventListener("change", () => {
     MAX_TARGET_TRIALS = shortRun.checked ? CFG.design.short_run_trials : (Number(CFG.design.max_target_trials) || 0);
     // 上限を変えたら出題を組み直し、画面の問題数もその場で合わせる
     // （組み立て済みのものを使い回すと、表示と実際がまた食い違う）。
     document.getElementById("nq").textContent = buildTrialsNow().length;
   });
-  document.getElementById("go").onclick = (G.mode === "audio") ? volumeCheck : visionCheck;
 }
 
 // 音量確認のサンプル(あ・い・う・え・お を打ち切りなしで続けて鳴らす)。
@@ -2397,7 +2558,7 @@ function volumeCheck() {
         + "マナーモードのままだと、この課題の音は鳴りません。</li>"
         + "<li>端末の音量を上げてください。静かな場所でお願いします。</li>"
       : "<li>パソコンとスピーカー／イヤホンの両方の音量を確かめてください。</li>";
-    screenEl.innerHTML = `<h2 style="color:#1E2A5E">音が聞こえるか確かめます</h2>
+    screenEl.innerHTML = `<h2 style="color:#1E2A5E">音チェック</h2>
       <p>数字を1つ読み上げます。<b>聞こえた数字を選んでください。</b>
       ここで<b>${need}回続けて正解</b>すると課題に進めます。何度でもやり直せます。</p>
       ${ENV.touch ? `<p style="background:#fff8f3;border:1px solid #f0c4a8;border-radius:8px;
@@ -2481,10 +2642,9 @@ function visionCheck() {
   }
 
   function draw(msg) {
-    screenEl.innerHTML = `<h2 style="color:#1E2A5E">画面が見えるか確かめます</h2>
+    screenEl.innerHTML = `<h2 style="color:#1E2A5E">画面チェック</h2>
       <p>本番と同じ枠・同じ大きさで字を1つ出します。<b>出ている字を選んでください。</b>
-      ここで<b>${need}回続けて正解</b>すると課題に進めます。<br>
-      <span class="muted">見えにくい場合は画面の明るさを上げ、ふだん画面を見る距離でご覧ください。</span></p>
+      ここで<b>${need}回続けて正解</b>すると課題に進めます。</p>
       <div id="vcheck" style="text-align:center"></div>
       <div id="choices" style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"></div>
       <p id="msg" style="text-align:center;margin-top:14px;font-size:15px">${msg || ""}</p>
@@ -2525,7 +2685,7 @@ function visionCheck() {
     }
   }
   pick1();
-  draw(resuming ? "（再開のまえに、画面が見えるかだけ確かめます）" : "");
+  draw(resuming ? "（再開のまえに、画面チェックだけ行います）" : "");
 }
 
 
@@ -2569,13 +2729,15 @@ function tidyConsentScreen() {
   // prod_common.js が書いた説明の箇条書きは**まるごと消す**（募集ページが本体）。
   const ul = screenEl.querySelector("ul");
   if (ul) ul.remove();
-  const c = CFG.contact || {};
-  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す2行だけを足す。
+  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す1行だけを足す。
+  //
+  // ⚠ **問い合わせ先は 2026-08-25 に外した**（丸山判断。「募集サイトに書いてあれば十分」）。
+  //   募集サイトのタスク説明文に、研究責任者・宛先・取り消しの案内を書いてある。
+  //   ⚠ 外部サイトに移ったあとで困った人（音が出ない・送信が失敗した等）は、
+  //     募集サイトの画面に戻らないと宛先が分からない。承知のうえでの判断である。
+  //     戻せるように mailLink() と CFG.contact はそのまま残してある。
   const add = document.createElement("p");
-  add.innerHTML =
-    "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
-    `<span class="c-contact">お問い合わせ：${c.contact_name || c.institution || "【要確認：問い合わせ先】"}` +
-    `　${mailLink(c.email)}</span>`;
+  add.innerHTML = "募集ページに記載した内容にご同意のうえ、開始してください。";
   const lead = screenEl.querySelector("p");
   if (lead) lead.insertAdjacentElement("afterend", add);
   else screenEl.insertBefore(add, screenEl.firstChild);
@@ -2665,12 +2827,29 @@ async function startSession() {
   // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、
   // 出すようになったときに嘘にならないよう、集団ごとの見込みを渡す。
   // 聴覚108問≒11.5分／視覚134問≒8.5分。一般の方はさらに1〜2分延びる）。
-  PROD.consentScreen(screenEl, G.task_label, isAudio ? 12 : 9, intro, isAudio,
+  // ⚠ **同意したら、そのままチェック画面へ行く**（2026-08-25 丸山判断）。
+  //   もとは「課題の進め方」という画面を1枚挟んでいたが、中身は課題の一文と
+  //   問題数だけで、見出しの「進め方」に見合わなかった。**進め方の説明は
+  //   練習の画面（showTryGate）が図つきで担っている**ので、二重でもあった。
+  //   一文と問題数は同意画面の下に移し（introBlockHTML）、画面を1枚減らした。
+  PROD.consentScreen(screenEl, G.task_label, isAudio ? 12 : 9,
+    (G.mode === "audio") ? volumeCheck : visionCheck, isAudio,
     { noEnvNote: true, allowWireless: true,
+      // ⚠ 文末は prod_common.js が「本実験は、○○。」の形に組み立てる。
+      //   2026-08-25、丸山指示で「〜を調べる研究です」→「〜を目的としています」に改めた。
       desc: isAudio
-        ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べる研究です"
-        : "日本語のかな1文字が、どこまで表示されれば分かるかを調べる研究です" });
+        ? "日本語のかな1文字が、どこまで聞こえれば分かるかを調べることを目的としています"
+        : "日本語のかな1文字が、どこまで表示されれば分かるかを調べることを目的としています" });
   tidyConsentScreen();
+  // 「何をする課題か」「何問か」「再開かどうか」を同意画面の下に足す。
+  // ⚠ **同意のボタンより前に置く**（何をするか分からないまま同意させない）。
+  const introBlock = document.createElement("div");
+  introBlock.innerHTML = introBlockHTML();
+  const okBtn = screenEl.querySelector("button.primary");
+  const anchor = okBtn && okBtn.closest("p") ? okBtn.closest("p") : null;
+  if (anchor) anchor.parentNode.insertBefore(introBlock, anchor);
+  else screenEl.appendChild(introBlock);
+  bindShortRun();
   // 同意画面で申告された再生機器を控える(prod_common.js は自分の送信にしか使わず、
   // 外に見せていないため)。無線のイヤホンは音の頭が欠けるので、解析で要る列。
   screenEl.querySelectorAll('input[name="dev"]').forEach(r =>

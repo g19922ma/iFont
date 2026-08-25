@@ -117,12 +117,45 @@ def load(path):
     return out
 
 
-def drop_test_rows(rows):
-    """動作確認で作った行（is_test が真）を外す。戻り値は (残した行, 外した数)。
+def load_id_list(path):
+    """配布した設問ファイル（TSV）か対応表（CSV）から、作業者IDの一覧を読む。
 
-    `is_test` 列が無い入力（下見用の短縮CSVなど）は、全行が本番として残る。
+    **本番の参加者は、必ずこの一覧のどれかのIDになる**（設問ごとに違うURLを
+    配っているため）。研究者や指導教員の試し打ちは別のID（test01 / uitest- /
+    anon- など）になるので、この一覧で絞れば自動的に外れる。
+    """
+    raw = open(path, "rb").read()
+    for enc in ("utf-8-sig", "utf-8", "cp932"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+    else:
+        raise SystemExit(f"エラー: {path} の文字コードが読めない")
+    ids = set()
+    for i, line in enumerate(text.replace("\r\n", "\n").split("\n")):
+        if not line.strip() or i == 0:      # 1行目は見出し
+            continue
+        cell = line.split("\t")[0] if "\t" in line else line.split(",")[0]
+        cell = cell.strip().strip('"')
+        if cell:
+            ids.add(cell)
+    return ids
+
+
+def drop_test_rows(rows, only_ids=None):
+    """分析に使わない行を外す。戻り値は (残した行, 外した数)。
+
+    ① `is_test` が真の行（動作確認）。`is_test` 列が無い入力は全行が本番として残る。
+    ② `only_ids` を渡したときは、**その一覧に無い参加者IDの行**も外す。
+       配布した設問ファイルのIDを渡すのが本来の使い方である（→ load_id_list）。
+       ⚠ **本番の参加者が1人も残らないときは、URL に wid が渡っていない**
+         恐れがある（参加者IDが anon- で始まる）。そのときは掲載側の設定を疑うこと。
     """
     kept = [r for r in rows if not truthy(r.get("is_test"))]
+    if only_ids:
+        kept = [r for r in kept if str(r.get("participant_id", "")) in only_ids]
     return kept, len(rows) - len(kept)
 
 
@@ -269,6 +302,10 @@ def main():
     ap.add_argument("--in", dest="inp", required=True, help="dump JSON か CSV")
     ap.add_argument("--out", default="analysis_out", help="出力先ディレクトリ")
     ap.add_argument("--label-map", default="", help='短縮IDの読み替え。"A=anon-xxx,B=anon-yyy"')
+    ap.add_argument("--only-ids", default=None, metavar="設問ファイル か 対応表",
+                    help="配布した設問ファイル(TSV)か対応表(CSV)を指定すると、"
+                         "**その一覧にある作業者IDの行だけ**を残す。"
+                         "研究者や指導教員の試し打ちは別のIDになるので自動的に外れる。")
     ap.add_argument("--include-test", action="store_true",
                     help="動作確認の行（is_test）も混ぜて集計する（既定は外す）")
     args = ap.parse_args()
@@ -280,10 +317,16 @@ def main():
 
     raw_rows = load(args.inp)
     dropped = 0
+    only_ids = load_id_list(args.only_ids) if args.only_ids else None
+    if only_ids:
+        print(f"  配布した作業者ID {len(only_ids)} 件だけを残します（{args.only_ids}）")
     if not args.include_test:
-        raw_rows, dropped = drop_test_rows(raw_rows)
+        raw_rows, dropped = drop_test_rows(raw_rows, only_ids)
         if dropped:
-            print(f"  試し打ちの行 {dropped} 件を外しました（混ぜるなら --include-test）")
+            print(f"  分析に使わない行 {dropped} 件を外しました（混ぜるなら --include-test）")
+        if only_ids and not raw_rows:
+            print("  ⚠ 本番の参加者が1行も残りませんでした。"
+                  "URL に wid が渡っていない恐れがあります（参加者IDが anon- になる）。")
     elif any(truthy(r.get("is_test")) for r in raw_rows):
         print("  ⚠ --include-test なので、試し打ちの行も集計に入っています")
     rows = normalize(raw_rows, label_map)

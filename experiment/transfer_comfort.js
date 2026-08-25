@@ -93,7 +93,7 @@ const FSTORE = window.TRANSFER_FIRESTORE || null;
 // 本番とは別のカウンタから配る。判定の本体は transfer_firestore.js にある。
 function isTestRun() {
   const pid = (window.PROD && PROD.participantId) || "";
-  return FSTORE ? FSTORE.isTestRun(pid) : (CFG.pre_launch === true);
+  return FSTORE ? FSTORE.isTestRun(pid, PHASE) : (CFG.pre_launch === true);
 }
 
 // 掲載前フラグが立っているあいだ、画面の隅に小さく出す帯。
@@ -1294,13 +1294,11 @@ function tidyConsentScreen() {
   // prod_common.js が書いた説明の箇条書きは**まるごと消す**（募集ページが本体）。
   const ul = screenEl.querySelector("ul");
   if (ul) ul.remove();
-  const c = CFG.contact || {};
-  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す2行だけを足す。
+  // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す1行だけを足す。
+  // ⚠ **問い合わせ先は 2026-08-25 に外した**（丸山判断。「募集サイトに書いてあれば十分」）。
+  //   transfer.js の同じ場所と扱いをそろえてある。
   const add = document.createElement("p");
-  add.innerHTML =
-    "募集ページに記載した内容にご同意のうえ、開始してください。<br>" +
-    `<span class="c-contact">お問い合わせ：${c.contact_name || c.institution || "【要確認：問い合わせ先】"}` +
-    `　${mailLink(c.email)}</span>`;
+  add.innerHTML = "募集ページに記載した内容にご同意のうえ、開始してください。";
   const lead = screenEl.querySelector("p");
   if (lead) lead.insertAdjacentElement("afterend", add);
   else screenEl.insertBefore(add, screenEl.firstChild);
@@ -1375,7 +1373,8 @@ async function startSession() {
   // 出すようになったときに嘘にならないよう、実測見込みの7分を渡しておく）。
   PROD.consentScreen(screenEl, "文字の見え心地", 7, visionCheck, false,
     { noEnvNote: true,
-      desc: "日本語のかな1文字が現れる様子について、続けて見ていられるかを調べる研究です" });
+      // 文末の形は transfer.js とそろえる（2026-08-25 丸山指示）。
+      desc: "日本語のかな1文字が現れる様子について、続けて見ていられるかを調べることを目的としています" });
   tidyConsentScreen();
   return true;
 }

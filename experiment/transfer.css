@@ -51,9 +51,16 @@ button.primary:hover { filter: brightness(1.1); }
    (提示中は「中央の ＋ に注目してください。」、終わったら「何の字でしたか？」)。
    ⚠ **文字が入っていなくても高さを占める**ようにしてある(min-height)。
      ここが伸び縮みすると表の大きさが変わり、字の出る位置までずれる。
-   ⚠ 下の行より少しだけ濃くする。合図として気づける程度で、
-     刺激より先に目が行かない程度に留める。 */
-.grid-state { min-height: 1.5em; color: #4b5563; font-weight: 600; }
+   ⚠ **1行にまとめてある**。「表示された文字を回答して下さい。」と
+     「分からない場合でも〜」を2行に分けたら、表の上が高くなって
+     画面にスクロールが出た（2026-08-25 丸山指摘）。
+   ⚠ **急に現れないようにする**。提示が終わった直後は、まだ見えた形を
+     思い出している最中である。そこへ文字がぱっと出ると目がそちらへ動いて
+     思い出しが途切れる。じわっと出す（高さは opacity では変わらない）。 */
+.grid-hint { opacity: 0; transition: opacity .3s ease; min-height: 1.5em; }
+.grid-hint.show { opacity: 1; }
+/* 狭い画面では折り返すので、そのぶん確保する。 */
+@media (max-width: 420px) { .grid-hint { min-height: 3em; } }
 /* 本文中のリンク。いまは同意画面の問い合わせ先(mailto:)だけに出る。
    既定の青はこの画面の色(藍と青緑)から浮くので、見出しと同じ藍にそろえる。
    下線は残す——押せることが色だけで伝わらない人がいるため。 */
@@ -88,10 +95,20 @@ a:hover { color: #2E7D8F; }
   .consent-min p.muted { margin-top: 8px; }
 }
 .ask { font-weight: 700; color: #2E7D8F; }
-.playbtn { font-size: 18px; padding: 16px 36px; border-radius: 999px; border: 0;
+/* 再生・練習のボタン。**大きさは button.primary とそろえる**
+   （2026-08-25。「1問練習する」と「本番を始める」が縦に並ぶ場面で、
+   余白が 16px 36px と 15px 44px で食い違って見えた）。
+   影が付くぶんだけ手前に見えるが、寸法は同じにする。 */
+.playbtn { font-size: 18px; padding: 15px 44px; border-radius: 999px; border: 0;
            background: #2E7D8F; color: #fff; cursor: pointer; letter-spacing: .02em;
            box-shadow: 0 4px 14px rgba(46,125,143,.25); transition: filter .15s; }
 .playbtn:hover { filter: brightness(1.1); }
+/* 練習と本番のボタンが縦に並ぶ場面。**幅をそろえる**。
+   文字数が違う（「1問練習する」6字／「もう一度練習する」8字／「本番を始める」6字）ので、
+   余白だけそろえても押すたびに幅が変わって落ち着かない。
+   いちばん長い文字列が収まる幅を最小幅にして、常に同じ大きさで見せる。 */
+.btn-stack button { min-width: 15em; }
+@media (max-width: 420px) { .btn-stack button { min-width: 0; width: 100%; max-width: 320px; } }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 td, th { border: 1px solid #e3e6ee; padding: 6px 8px; text-align: center; }
 /* 見え心地の評価(7件法)の目盛り。 */

@@ -269,7 +269,7 @@ window.TRANSFER_CONFIG = {
   //     experiment/tools/build_hosting.sh は、true のままだと**その場で止まる**
   //     ようにしてある（動作確認のときだけ ALLOW_PRELAUNCH=1 を付けて迂回する）。
   //     false に戻したら ?v= を上げて配信し直すこと。
-  pre_launch: true,
+  pre_launch: false,
 
   // ---- 入口のページと集団の振り分け --------------------------------------
   // 参加者の集団は4つ(acal・aprime・b・c)で、入口URLは3つある。
@@ -317,6 +317,18 @@ window.TRANSFER_CONFIG = {
   phase_group_weights: {
     calib: { acal: 80, aprime: 150 },     // 8:15。23人で1巡する
   },
+
+  // ---- 配布した作業者ID（ここは自動生成）
+  //
+  // ⚠ **手で書かないこと。** experiment/tools/write_distributed_ids.py が入れる。
+  //   設問ファイルを作り直したら必ず走らせ直すこと。食い違うと、本物の参加者が
+  //   テスト扱いになる（記録は残るが、分析の既定から外れる）。
+  //
+  // ここに載っているIDだけが**本番の通し番号**を使う。載っていないIDは
+  // 自動的に試し打ち扱いになり、テスト用のカウンタから配られる。
+  // これで、動作確認のたびに前置き（uitest- など）を覚える必要がなくなる。
+  distributed_wids: {"calib":["znxa8x","6xt88w","jav5yw","5mk55k","dp8m84","jv7cuy","f93un7","wmqha6","byaecm","wx6xru","4wacpa","8tczuu","uyzjrv","ewumqe","pnqzzt","xmy87q","6x4tck","s7zuf5","wuk8ch","75a86d","yjzfjn","pc7z98","j9978y","89ke9n","xy6r3n","3f2h8t","8f3ez4","w9h9rb","wu85fb","rhamzs","8ed82z","c8b6m7","v89wqq","r8vtwa","d3njj2","x4se3h","y4mru5","gc93re","bkwdqn","zdqjkk","rmw3du","2vrc3s","w9nt9r","ds9kv4","p2mgd9","qk8f4m","qsc3hu","yjj2th","8b32hh","bn7cuk","u8gh9x","48nspu","zhdnmg","3j6g3v","5rue3f","knrp78","r7zmkx","rhvfqu","8rvfmc","qd5ryd","xyddwr","x9q6n8","u7wxm2","prjd7d","hq3ejg","6xdvt6","g4sjcn","qtpk66","as95xe","sqmhr5","tapugz","xsv5b9","u3nzyb","hkvvyw","jmekpv","9zsycx","5cbe5h","e6qnad","xy3ft6","hbbxeq","vfrz3y","stpnn6","stsvsb","4sevzn","4r2xz4","f7w3mj","hjkrzz","us7gp5","n93sbh","q4bd7u","xxpgbq","4cbcbt","f35era","79tbh8","pzuk5w","7z5aej","xf5bm3","95bmgh","52caav","62hmq8","4jtpbj","x6veqf","ekmjen","rmdh8u","e3kzzw","rh7qmb","ux3hkt","nmkmeb","zpdbua","2x7avj","knxs5x","nzhjha","5eqper","jbwvsd","9ztyjc","eb86cp","84n9ua","2zgfq6","8smmyb","p6jw45","wtg78p","6avefq","t4njfp","u7bqp9","6qrr66","c93a3f","chvqd3","3d5qw7","jpr258","vbpzrr","qqjdev","xwpvu7","56rctp","uaxyfq","au53mq","qduaw3","c9hg3s","s2gceg","vmqrps","fwdmdk","qmnmvu","t26s69","ddw23c","jpfj42","kknqsj","7r46cp","2svajw","k2nsvt","7fkd3f","engs37","nvauv9","8yeta4","hk7uhn","hd3vd2","jg5nrv","y8pp85","xd8tnb","ckzpvv","849zh8","53kee2","kyxtgp","b83gas","f92ss3","znzsar","uuc8qp","fhp9ka","6uzyh7","hm7acs","9f23es","34pk2a","fcyebr","kafz4v","3r75am","s79ufd","b97rk4","d6mkwc","d6a5m2","53bs9x","3vxx5c","qd5kya","22zvh6","4qvmg6","8yf73q","62wurq","weq9mp","q4qegr","g6m26m","nymbz3","nrtm2p","38a9qz","z2atcw","yfa8ss","97judq","rfut85","gu66cu","qnza2n","c2sgzy","mfyd2r","p32zj8","4g5j75","ssjpd2","e693f2","hajetz","a5qcj2","nzy2gx","wzhchf","9jqmjp","5wq2ku","4e28p4","4b3ute","y322v9","aetzbt","xjvrwa","wnudsp","a6qs9c","759u5k","wvfpha","ca2uap","zj39dp","746gmf","9sz9ff","jp3rmj","qy555z","zt5jxc","padjyj","a9d6cq","5gccuk","2yhsey","mg3gwq","k2ttdg","tcqe4q","w26tp5","vfr63t","fnwvgc","9cd7fm","mktztw","9k6dqu","cd42kj","z84tfr","ymqsup","tepma2","g43u6b","mh4c5m","k9xc6y","wrtbj8","apvegd","drfmr9","zn5fsy","7yk3p4","bycpjd","7smzpz","b5f668","sdafbg"]},
+  // ---- 配布した作業者ID ここまで ----
 
   phases: {
     calib: ["acal", "aprime"],
@@ -781,7 +793,33 @@ window.TRANSFER_CONFIG = {
   visual: {
     size_px: 256,            // 提示キャンバスの一辺
     base_dir: "base",        // <かな>.png (256px・黒文字白背景)
-    fix_ms: 400,             // 注視点 ＋ の時間
+    // 注視点 ＋ の時間。**全問おなじ 1000ms 固定**。
+    //
+    // ■ 2026-08-25 の変更（丸山判断）。
+    //   400ms → 700ms に延ばし（「＋ を見つける前に字が出てしまう」）、
+    //   同日、**ゆらぎをやめて固定にした**（「一緒の方が条件統一できるのでは」）。
+    //
+    //   ゆらぎ（旧 fix_jitter_ms）は「いつ来るか読ませない」ためのものだったが、
+    //   この実験では固定のほうが利点が大きいと判断した。
+    //     ・較正（群A′）と検証（群B）で同じ設定を使うので、転写の成否には影響しない
+    //     ・ゆらぎは偏りを生まないが**ばらつきは増やす**（1問ごとに構え方が変わる）
+    //     ・時刻が読めれば、**その瞬間にまばたきしないよう調整できる**。
+    //       ゆらぎがあると、瞬きと重なって「何も見えなかった」問題が混ざる
+    //   ⚠ 残るリスク: 回を重ねるほどタイミング合わせが上手くなり、後半の成績が上がりうる。
+    //     ただし水準は参加者ごとに順番を回して配ってあるので、特定の水準に偏っては効かない。
+    //     ばらつきとしては乗るが、曲線がゆがむ方向には働かない。
+    //   ⚠ 事前登録（計画書）には注視点の時間もゆらぎも書いていないので、矛盾は生じない。
+    fix_ms: 1000,            // 注視点 ＋ の時間（固定）
+    // 練習のときだけ注視点を長く出す。**練習は分析に使わない**ので、
+    // 本番の時間（fix_ms + ゆらぎ）とそろえる必要がない。
+    // ⚠ 「＋ を見ておく」ことをここで体で覚えてもらうための時間である。
+    //   本番は先読みを防ぐためゆらぎを入れて短くしてあり、
+    //   説明を読んだだけでは間に合わない人がいる（2026-08-25 丸山判断）。
+    practice_fix_ms: 1400,
+    // 提示が終わってから、回答の案内を出すまでの間。
+    // ⚠ すぐ出すと、字が消えた直後の「思い出している最中」に目を下へ引いてしまう
+    //   （2026-08-25 丸山指摘）。CSS の transition と合わせて、そっと出す。
+    cue_delay_ms: 350,
 
     // ---- 見え方確認（課題に入る前の関門）------------------------------------
     // **2026-08-25 に追加（丸山判断）。聞き取り確認（audio.check）の視覚版。**
@@ -805,7 +843,23 @@ window.TRANSFER_CONFIG = {
       rounds: 2,               // 何回続けて正解したら通すか
       n_choices: 4,            // 選択肢の数
     },
-    fix_jitter_ms: 300,      // 注視点の追加ゆらぎ上限(先読み防止)
+    // ⚠ **0 にした（＝ゆらぎなし）。** 上の fix_ms の注記を参照。
+    //   仕組みは残してあるので、戻したいときはここに値を入れるだけでよい。
+    fix_jitter_ms: 0,        // 注視点の追加ゆらぎ上限(0 = 全問おなじ長さ)
+    // 注視点が消えてから字が出るまでの間（白紙）。
+    //
+    // ⚠ **2026-08-25 に足した。** それまでは間が無く、＋ が字に直接置き換わっていた
+    //   （丸山指摘「＋が消えてから文字が出るまでの時間が短いのが気になる」）。
+    //   間が無いと、消えた ＋ の残像が直後の薄い字に重なる（前向きマスク）。
+    //   薄い水準ほど効くので、床の測り方が歪む恐れがある。
+    //   全問・全水準で同じ長さなので、水準どうしの比較には影響しない。
+    //
+    // ⚠ **250 → 400ms にした**（2026-08-25 丸山判断）。残像は文献の一般則で
+    //   100〜200ms でほぼ消えるとされるが、**この課題で確かめた値ではない**。
+    //   短すぎると薄い水準ほど不利に働き、いちばん測りたい立ち上がりが歪む。
+    //   長くする副作用は所要時間だけなので、目安より長めを取る。
+    //   ⚠ 2026-08-25、丸山判断で 400 → 500ms にした（70問で35秒）。
+    fix_gap_ms: 500,
     // 基準アニメの長さ。等速モード(群A′)で進み具合 s が 0→1 になるまでの時間。
     // 旧製品由来の200msではなく、下見で決める設計項目(計画書 Q4)。
     //
