@@ -1307,7 +1307,37 @@ window.TRANSFER_CONFIG = {
       //     床の条件も変わる）。確かめ方は experiment/tools/level_chooser.html。
       blur: { max_radius_px: 72 },
       // 見せる領域を単調に広げる。direction: "ltr" | "rtl" | "ttb" | "btt"
-      wipe: { direction: "ltr", soft_edge_px: 0 },
+      // ここに書いた direction は「向きの割り当て規則を使わない/使えない場面」の既定値
+      // (下の direction_assign が mode:"fixed" のときに使う値)。
+      wipe: {
+        direction: "ltr", soft_edge_px: 0,
+        // 向きの割り当て規則(2026-08-26 追加)。
+        //
+        // ■ なぜ要るか(丸山・prov-2026-08-26)
+        //   較正実験で「濁点を持つ字は wipe で特に不利(中点が1.82倍に伸びる)」という
+        //   結果が出た。濁点は字の右上にあることが多く、左上から出す wipe(ltr)では
+        //   最後に現れるから、というのが観察に基づく推測。これを確かめるには、
+        //   **向きを反転(右から出す)した条件を追加**し、濁点の不利さが消えるかを見る。
+        //   主仮説は「濁点の有無 × 向き」の交互作用1本。
+        //
+        // ■ mode
+        //   "fixed"     … 既定。全試行が上の direction("ltr")になる。
+        //                  この設定ファイルを触る前とまったく同じ挙動。
+        //   "alternate" … 反転実験用。**参加者の中で ltr と rtl を両方出す**。
+        //                  字ごとにどちらの向きにするかは
+        //                  「字の番号 i + 参加者の連番 n」の偶奇で決める
+        //                  (乱数は使わない。family/condition の割付
+        //                  ―― fams[(i+n)%nf] や conds[(i*step+n)%len] ――
+        //                  と同じ「連番から決まる決定的なパターン」の流儀)。
+        //                  そのため**同じ参加者の中で同じ字が2つの向きで
+        //                  出ることはない**(1字には常に1方向だけが当たる)。
+        //                  decoy はターゲットの割付から見え方(方式・条件・速さ)を
+        //                  借りているので、向きも同様に借りる(既存の流儀と合わせる)。
+        // directions: alternate のときに使う2値。[0]が偶数側(i+n が偶数)、
+        //   [1]が奇数側。将来 ttb/btt を混ぜたくなったら3値以上に増やしてよい
+        //   (割り当ては (i+n) % directions.length で決まる)。
+        direction_assign: { mode: "fixed", directions: ["ltr", "rtl"] },
+      },
     },
 
     // 転写(warp)の進み方 s(t)。生成工程の出力を JSON で置き、ここから読む。

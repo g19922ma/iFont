@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.15";
+const VERSION = "3.16";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -921,7 +921,8 @@ function blurDraw(ctx, ch, s) {
   ctx.filter = "none";
 }
 
-// ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられる。
+// ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられ、
+// (2026-08-26〜)試行ごとにも変えられる(下の wipeDirFor と t.wipe_dir を見ること)。
 //
 // 進み具合 s は「画面の端(0)から端(SIZE)まで」ではなく、**字のインクが実際にある
 // 範囲(bbox)の中だけ**で動かす。そのままだと、字によっては書き出しの位置が
@@ -963,11 +964,14 @@ function wipeBBoxPrepare(ch) {
   return bbox;
 }
 function wipeBegin(ch) { wipeBBoxPrepare(ch); }
-function wipeDraw(ctx, ch, s) {
+// dirArg: この試行の向き(t.wipe_dir)。呼び出し元が渡さない(undefined/空文字)ときは
+// 従来どおり設定の既定(CFG.visual.families.wipe.direction || "ltr")を使う。
+// **bbox(wipeBBoxPrepare)は向きによらず共通**なので、ここでは向きの選び方だけが変わる。
+function wipeDraw(ctx, ch, s, dirArg) {
   const p = Math.max(0, Math.min(1, s));
   drawBlank(ctx);
   if (!imgs[ch]) return;
-  const dir = CFG.visual.families.wipe.direction || "ltr";
+  const dir = dirArg || CFG.visual.families.wipe.direction || "ltr";
   const b = wipeBBoxPrepare(ch);
   let rx = 0, ry = 0, rw = 0, rh = SIZE;
   // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
@@ -1299,7 +1303,23 @@ function buildAudioTrials() {
 //          1人あたりの点を減らして参加者間で分担する作り直しに合わせたものである
 //          (詳しい算数は transfer_config.js の assignment の注記)。
 //
-// 戻り値の各要素: { index, char, family, condition, base_anim_ms }
+// wipe(端から現れる)の向きを、字の番号 i と参加者の連番 n から決定的に決める。
+// transfer_config.js の visual.families.wipe.direction_assign を見ること。
+//   mode:"fixed"     … 常に設定の direction("ltr"が既定)。既定のまま何も変わらない。
+//   mode:"alternate" … (i+n) の剰余で directions の中から選ぶ。乱数は使わない
+//                       (family割付 fams[(i+n)%nf] と同じ流儀)ので、同じ参加者・
+//                       同じ字なら常に同じ向きに決まる(再開しても割付が崩れない)。
+// wipe 以外の方式には向きの意味が無いので、呼び出し側で family==="wipe" のときだけ使う。
+function wipeDirFor(i, n) {
+  const w = CFG.visual.families.wipe || {};
+  const da = w.direction_assign;
+  if (!da || da.mode !== "alternate") return w.direction || "ltr";
+  const dirs = (da.directions && da.directions.length) ? da.directions : ["ltr", "rtl"];
+  const k = (((i + n) % dirs.length) + dirs.length) % dirs.length;
+  return dirs[k];
+}
+
+// 戻り値の各要素: { index, char, family, condition, base_anim_ms, wipe_dir }
 function assignedCombos() {
   const n = Math.max(0, Math.round(ASSIGN) || 0);
   if (GROUP !== "aprime") {
@@ -1308,7 +1328,8 @@ function assignedCombos() {
     return TARGETS.map((ch, i) => {
       const c = conds[(i * step + n) % conds.length];
       return { index: i, char: ch, family: c.family, condition: c.condition,
-               base_anim_ms: CFG.visual.base_anim_ms };
+               base_anim_ms: CFG.visual.base_anim_ms,
+               wipe_dir: c.family === "wipe" ? wipeDirFor(i, n) : "" };
     });
   }
   const fams = CFG.assignment.aprime_families;
@@ -1319,7 +1340,8 @@ function assignedCombos() {
     // 速さは「字の番号 + 連番を方式の数で割った商」で決める。
     // 1人の中で速さが半々になり、集団では 字 × 方式 × 速さ が8人で1周する。
     const base = speeds[(i + Math.floor(n / nf)) % speeds.length];
-    return { index: i, char: ch, family, condition: "calib", base_anim_ms: base };
+    return { index: i, char: ch, family, condition: "calib", base_anim_ms: base,
+             wipe_dir: family === "wipe" ? wipeDirFor(i, n) : "" };
   });
 }
 
@@ -1402,14 +1424,14 @@ function buildVisualTrials() {
       pointSubset(lv.length, rot).forEach(pi => {
         out.push({ mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
                    progress_pct: lv[pi], gate_ms: null, is_decoy: isDecoy, is_filler: isDecoy,
-                   check_kind: "", base_anim_ms: c.base_anim_ms });
+                   check_kind: "", base_anim_ms: c.base_anim_ms, wipe_dir: c.wipe_dir || "" });
       });
     } else {
       const g = gatesFor(CFG.visual.gates_ms, ch);
       pointSubset(g.length, rot).forEach(pi => {
         out.push({ mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
                    progress_pct: null, gate_ms: g[pi], is_decoy: isDecoy, is_filler: isDecoy,
-                   check_kind: "" });
+                   check_kind: "", wipe_dir: c.wipe_dir || "" });
       });
     }
     return out;
@@ -1452,7 +1474,8 @@ function buildVisualTrials() {
   const mk = (kind, ch) => {
     const c = pick(combos);                 // 見え方は担当している組合せから借りる
     const base = { mod: "visual", char: ch, family: c.family, condition: c.condition,
-                   is_decoy: false, is_filler: false, check_kind: kind };
+                   is_decoy: false, is_filler: false, check_kind: kind,
+                   wipe_dir: c.wipe_dir || "" };
     if (GROUP === "aprime") {
       // 確認問題は「いつもの速さ」に固定する(操作チェックの基準を1つに保つため)。
       // ⚠ 確認問題C（いちばん情報の少ない点）は、**その問題に使う方式の**最小値にする。
@@ -1485,11 +1508,12 @@ function buildTryout() {
   if (GROUP === "aprime") {
     return { mod: "visual", play: "calib", char: ch, family: c.family, condition: "calib",
              progress_pct: 100, gate_ms: null, is_decoy: false, is_filler: false,
-             check_kind: "", practice: true, base_anim_ms: CFG.visual.base_anim_ms };
+             check_kind: "", practice: true, base_anim_ms: CFG.visual.base_anim_ms,
+             wipe_dir: c.wipe_dir || "" };
   }
   return { mod: "visual", play: "warp", char: ch, family: c.family, condition: c.condition,
            progress_pct: null, gate_ms: null, is_decoy: false, is_filler: false,
-           check_kind: "", practice: true };
+           check_kind: "", practice: true, wipe_dir: c.wipe_dir || "" };
 }
 
 // =========================================================================
@@ -1658,6 +1682,9 @@ function makeRecord(t, picked, extra) {
     replays: 0,                              // 1回だけ提示(聞き直し・見直しなし)
     version: VERSION,
     config_version: CFG.config_version,
+    // wipe(端から現れる)の向き。"ltr"/"rtl"(将来"ttb"/"btt"も)。
+    // wipe以外の方式の試行では空文字(既存の列を崩さないよう末尾に追加・2026-08-26)。
+    wipe_dir: t.wipe_dir || "",
   }, extra);
 }
 
@@ -1963,7 +1990,7 @@ function runVisualTrial(t) {
                       (tCut === null && sTarget === null && s >= 1);
       if (reached) {
         if (holdAtEnd) {   // 確認問題A・練習: 完成した姿を1枚描いて hold のあいだ残す
-          renderer.draw(ctx, t.char, 1);
+          renderer.draw(ctx, t.char, 1, t.wipe_dir);
           lastS = 1; frames++; lastDrawMs = Math.round(el);
           setTimeout(() => finish(performance.now()), CFG.design.full_hold_ms);
           return;
@@ -1984,7 +2011,7 @@ function runVisualTrial(t) {
           // ⚠ ただし**提示時間の端末差は残る**（その1枚を17ms見るか33ms見るか）。
           //   そこは last_draw_ms / blank_ms に記録し、品質確認と感度分析で使う。
           //   **主たる独立変数は名目の s（progress_pct）**とし、時間を横軸に混ぜない。
-          renderer.draw(ctx, t.char, sTarget);
+          renderer.draw(ctx, t.char, sTarget, t.wipe_dir);
           lastS = sTarget; frames++; lastDrawMs = Math.round(el);
           endpointClamped = true;
           // ⚠ **同じコールバックで消してはいけない**（実画面に出る前に上書きされる）。
@@ -2000,7 +2027,7 @@ function runVisualTrial(t) {
         // last_draw_ms / blank_ms で分けて記録する。
         finish(now); return;
       }
-      renderer.draw(ctx, t.char, s);
+      renderer.draw(ctx, t.char, s, t.wipe_dir);
       lastS = s; frames++; lastDrawMs = Math.round(el);
       requestAnimationFrame(frame);
     }
@@ -2057,7 +2084,7 @@ function wellbeingClip() {
     function frame(now) {
       const el = now - t0;
       const s = prog.fn(el);
-      renderer.draw(ctx, clip.char, s);
+      renderer.draw(ctx, clip.char, s, clip.wipe_dir);
       if (s < 1) requestAnimationFrame(frame);        // 最後の姿はそのまま残す(打ち切らない)
     }
     requestAnimationFrame(frame);
