@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.16";
+const VERSION = "3.17";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -964,15 +964,20 @@ function blurBegin(ch) {
   blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
   if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
 }
-function blurDraw(ctx, ch, s) {
-  if (!blurOff) blurBegin(ch);
+// ぼかしのフィルタ適用部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+blur / reveal+blur)からもそのまま呼べる。挙動は元の blurDraw と同じ)。
+function blurApplyFilter(ctx, src, s) {
   const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
   drawBlank(ctx);
   ctx.save();
   ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
-  ctx.drawImage(blurOff, 0, 0, SIZE, SIZE);
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
   ctx.restore();
   ctx.filter = "none";
+}
+function blurDraw(ctx, ch, s) {
+  if (!blurOff) blurBegin(ch);
+  blurApplyFilter(ctx, blurOff, s);
 }
 
 // ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられ、
@@ -1021,10 +1026,9 @@ function wipeBegin(ch) { wipeBBoxPrepare(ch); }
 // dirArg: この試行の向き(t.wipe_dir)。呼び出し元が渡さない(undefined/空文字)ときは
 // 従来どおり設定の既定(CFG.visual.families.wipe.direction || "ltr")を使う。
 // **bbox(wipeBBoxPrepare)は向きによらず共通**なので、ここでは向きの選び方だけが変わる。
-function wipeDraw(ctx, ch, s, dirArg) {
+// クリップ矩形の計算だけを切り出したもの(向きの選び方は元の wipeDraw と同じ)。
+function wipeClipRect(ch, s, dirArg) {
   const p = Math.max(0, Math.min(1, s));
-  drawBlank(ctx);
-  if (!imgs[ch]) return;
   const dir = dirArg || CFG.visual.families.wipe.direction || "ltr";
   const b = wipeBBoxPrepare(ch);
   let rx = 0, ry = 0, rw = 0, rh = SIZE;
@@ -1046,13 +1050,24 @@ function wipeDraw(ctx, ch, s, dirArg) {
     rx = 0;
     ry = (dir === "ttb") ? 0 : SIZE - h;
   }
+  return { rx, ry, rw, rh };
+}
+// クリップして描く部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+wipe / reveal+wipe)からもそのまま呼べる。挙動は元の wipeDraw と同じ)。
+function wipeApplyClip(ctx, src, ch, s, dirArg) {
+  drawBlank(ctx);
+  if (!src) return;
+  const { rx, ry, rw, rh } = wipeClipRect(ch, s, dirArg);
   if (rw <= 0 || rh <= 0) return;
   ctx.save();
   ctx.beginPath();
   ctx.rect(rx, ry, rw, rh);
   ctx.clip();
-  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
   ctx.restore();
+}
+function wipeDraw(ctx, ch, s, dirArg) {
+  wipeApplyClip(ctx, imgs[ch], ch, s, dirArg);
 }
 
 // フェード(fade): 不透明度 = s^gamma。
@@ -1079,6 +1094,102 @@ const RENDERERS = {
   reveal: { begin: (ch, ctx) => revealBegin(ch, ctx), draw: revealDraw },
   blur:   { begin: (ch) => blurBegin(ch),        draw: blurDraw },
   wipe:   { begin: (ch) => wipeBegin(ch),        draw: wipeDraw },
+};
+
+// =========================================================================
+// 組み合わせアニメ(2026-08-26 追加): 一様(fade/reveal) × 空間(blur/wipe) の
+// 総当たり4通り。較正で「一様2つは進み具合0〜5%に全変化が詰まる」
+// 「ぼやけは床が高く『まだ誰も分からない』状態を作れない」ことが分かったため、
+// 互いの弱点を埋め合う狙いで足す。
+//
+// 描画ロジックは新しく書かない。fadeDraw / revealDraw と、blur/wipe から
+// 切り出した blurApplyFilter / wipeApplyClip を「一様側をオフスクリーンに描き、
+// その結果へ空間側をかけて本番canvasへ転写する」形でそのまま呼ぶだけ。
+let compositeOff = null, compositeOffCtx = null;
+function compositeOffCanvas() {
+  if (!compositeOff) {
+    compositeOff = document.createElement("canvas");
+    compositeOff.width = SIZE; compositeOff.height = SIZE;
+    compositeOffCtx = compositeOff.getContext("2d");
+  }
+  return compositeOffCtx;
+}
+
+// 組み合わせ全体の進み具合 s(0..1)を、各方式が実際に働く区間
+// (transfer_warp.json の composite_ranges[pairName][ch] = {a:[lo,hi]%, b:[lo,hi]%})
+// に写し直す。a は一様側(fade/reveal)、b は空間側(blur/wipe)。
+// 区間が取れないとき(warp表が未読込・その字が無い等)は、
+// 両方に s をそのまま渡す(動作は鈍るが壊れない)。
+// 組み合わせの進み具合 s を、2つの方式それぞれの進み具合へ写す。
+//
+// ⚠ **区間 [lo, hi] へ線形に写す作りは使えない**（2026-08-26 に実装して判明）。
+//   fade の働く区間は「か」で 0〜3.65% しかないので、s=100% でも不透明度が
+//   3.65% にしかならず、**文字が最後まで完成しない**。
+//   確認問題（全部見せて正答率を見る）が成立しなくなる。
+//
+// ■ いまの作り：**表を引く**
+//   transfer_warp.json の composite_map に、u を 0〜1 で 101 点刻みにした
+//   「その方式の進み具合(%)」の列が入っている（生成は build_warp_b.py）。
+//   表は s_x(u) = 100·u^k（k は u=0.5 でその方式の中間点 μ を通るように決めた）
+//   で作ってあるので、
+//     s=0   → 何も見えない
+//     s=0.5 → 両方式が同時に自分の中間点
+//     s=1   → 完全に出る
+//   の3点が自然にそろう。
+//
+//   表が無い（読込前・その字が無い等）ときは両方に s をそのまま渡す。
+//   壊れはしないが、遅い方に飲み込まれて組み合わせの意味が薄れるので、
+//   **本番では必ず表が読めていること**を確かめること。
+function compositeSplit(pairName, ch, s) {
+  const p = Math.max(0, Math.min(1, s));
+  const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
+  const m = table && table[ch];
+  if (!m || !Array.isArray(m.a) || !Array.isArray(m.b) || m.a.length < 2) {
+    return { sa: p, sb: p };
+  }
+  const n = m.a.length;
+  const x = p * (n - 1);
+  const i = Math.min(n - 1, Math.floor(x));
+  const j = Math.min(n - 1, i + 1);
+  const f = x - i;
+  const pick = (arr) => (arr[i] * (1 - f) + arr[j] * f) / 100;
+  return { sa: Math.max(0, Math.min(1, pick(m.a))),
+           sb: Math.max(0, Math.min(1, pick(m.b))) };
+}
+
+// begin: 両方の begin を呼ぶ(reveal は点描の並びを、wipe は字の範囲を先に作る必要があるため)。
+function compositeBegin(uniformName, spatialName) {
+  return function (ch, ctx) {
+    RENDERERS[uniformName].begin(ch, ctx);
+    RENDERERS[spatialName].begin(ch, ctx);
+  };
+}
+// draw: 一様側(uniformDraw)をオフスクリーンに描き、その結果(compositeOff)へ
+// 空間側(spatialApply)をかけて本番の ctx へ転写する。
+function compositeDraw(pairName, uniformDraw, spatialApply) {
+  return function (ctx, ch, s, dirArg) {
+    const { sa, sb } = compositeSplit(pairName, ch, s);
+    const off = compositeOffCanvas();
+    uniformDraw(off, ch, sa);
+    spatialApply(ctx, compositeOff, ch, sb, dirArg);
+  };
+}
+
+RENDERERS["fade+blur"] = {
+  begin: compositeBegin("fade", "blur"),
+  draw: compositeDraw("fade+blur", fadeDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["fade+wipe"] = {
+  begin: compositeBegin("fade", "wipe"),
+  draw: compositeDraw("fade+wipe", fadeDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
+};
+RENDERERS["reveal+blur"] = {
+  begin: compositeBegin("reveal", "blur"),
+  draw: compositeDraw("reveal+blur", revealDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["reveal+wipe"] = {
+  begin: compositeBegin("reveal", "wipe"),
+  draw: compositeDraw("reveal+wipe", revealDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
 };
 
 // =========================================================================
