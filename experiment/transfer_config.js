@@ -1472,7 +1472,7 @@ window.TRANSFER_CONFIG = {
     // 数値列は 60Hz(16.667ms 刻み)。t ms での s は線形補間で求める。
     warp: {
       tables_url: "transfer_warp.json",
-      frozen_commit: "b2c42374e",        // 凍結したコミット番号(検証データを取る前に書く)
+      frozen_commit: "4ea9b5178",        // 凍結したコミット番号(検証データを取る前に書く)
       // 表が無い/その組合せが無いときの代用(研究者の動作確認用)。
       // baseline1: 等速   s = t / base_anim_ms
       // baseline2: 1次変換 s = a·t + b (下の affine を使う)
