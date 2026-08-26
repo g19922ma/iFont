@@ -32,13 +32,45 @@ def read_ids(path: Path) -> list:
             continue
     else:
         raise SystemExit(f"エラー: {path} の文字コードが読めない")
+    lines = [l for l in text.replace("\r\n", "\n").rstrip("\n").split("\n") if l.strip()]
+    if not lines:
+        raise SystemExit(f"エラー: {path} が空")
+    sep = "\t" if "\t" in lines[0] else ","
+    head = [c.strip().strip('"').lstrip("\ufeff") for c in lines[0].split(sep)]
+
+    # ⚠ **列は見出しで選ぶ**（2026-08-26 修正）。
+    #   それまでは常に1列目を取っていた。設問データTSVでは1列目が設問ID(＝作業者ID)
+    #   なので動いていたが、URL一覧CSVでは1列目が**設問番号(1,2,3…)**なので、
+    #   連番がそのまま作業者IDとして登録されてしまう。
+    #   そうなると本物の参加者のIDが一覧に無いことになり、
+    #   **全員がテスト扱い**になる（記録は残るが分析から外れる）。
+    col = None
+    for want in ("作業者ID", "設問ID(半角英数字20文字以内)", "設問ID", "wid"):
+        for j, h in enumerate(head):
+            if h == want or h.startswith(want):
+                col = j
+                break
+        if col is not None:
+            break
+    if col is None:
+        col = 0   # 見出しが分からなければ従来どおり1列目
+
     ids = []
-    for i, line in enumerate(text.replace("\r\n", "\n").rstrip("\n").split("\n")):
-        if i == 0 or not line.strip():
+    for line in lines[1:]:
+        cells = line.split(sep)
+        if col >= len(cells):
             continue
-        cell = (line.split("\t")[0] if "\t" in line else line.split(",")[0]).strip().strip('"')
+        cell = cells[col].strip().strip('"')
         if cell:
             ids.append(cell)
+
+    # 連番を拾ってしまっていないかの検査。
+    if ids and all(x.isdigit() for x in ids[:10]):
+        raise SystemExit(
+            f"エラー: {path} の {col+1}列目（{head[col] if col < len(head) else '?'}）から\n"
+            f"       数字だけの値を拾った（{', '.join(ids[:5])}…）。\n"
+            f"       設問番号を作業者IDと取り違えている可能性が高い。\n"
+            f"       見出し: {head}")
     return ids
 
 
