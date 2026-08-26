@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなの見え方の課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.17">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  統合フォローアップの入口（2026-08-27）。
+
+  ■ ひとつの実験で2つを測る
+    ・ぼやけの薄い水準（3〜22%。較正は26%より薄い側を測っていない）
+    ・「端から現れる」の向き（左上から／右上から。濁点の不利さが位置のせいかを確かめる）
+
+  ■ なぜ1本にまとめたか
+  方式を1つに絞った実験だと、参加者は同じ方式だけを70問見続けることになり、
+  較正（4方式が混ざる）と見る文脈が変わる。その方式に慣れて結果がずれる恐れがある。
+  4方式を較正と同じように混ぜれば、この影響は起きない。
+  うすい→濃い・点が増える は較正と同じ水準のまま出すので、そのまま較正の再現になる。
+
+  ■ 字は清音4つ（か・し・た・は）と、それに濁点が付くだけの4つ（が・じ・だ・ば）
+  違いが濁点の有無だけになるので、差が出たら濁点のせいだと言える。
+
+  ■ 割付（すべて連番から決まる。乱数なし）
+    方式   fams[(字+連番)%4]
+    向き   dirs[floor((字+連番)/4)%2]   ← 方式と同じ式にすると全部同じ向きになる
+                                          （2026-08-27 に発見して修正。wipeDirFor を見ること）
+    速さ   1本に固定（speed_probe:false）
+  220人で 4方式×1320試行ずつ、wipeの清濁×向きは336/324/324/336。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "followup", force_group: "aprime" };</script>
+<script src="prod_common.js?v=3.17"></script>
+<script src="transfer_config.js?v=3.17"></script>
+<script src="transfer_firestore.js?v=3.17"></script>
+<script src="transfer.js?v=3.17"></script>
+</body>
+</html>

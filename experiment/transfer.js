@@ -1490,7 +1490,17 @@ function wipeDirFor(i, n) {
   const da = w.direction_assign;
   if (!da || da.mode !== "alternate") return w.direction || "ltr";
   const dirs = (da.directions && da.directions.length) ? da.directions : ["ltr", "rtl"];
-  const k = (((i + n) % dirs.length) + dirs.length) % dirs.length;
+  // ⚠ (i+n) をそのまま使ってはいけない（2026-08-27 に修正）。
+  //   方式の割付が fams[(i+n)%nf] なので、方式が4つあるフェーズでは
+  //   「wipe に当たる (i+n)」は 4 の倍数＋定数に限られ、(i+n)%2 が**固定**になる。
+  //   つまり wipe の試行が全部同じ向きになる（シミュレーションで確認）。
+  //   方式の数 nf で割った商を使えば、wipe を固定したまま商が1ずつ進むので、
+  //   向きが交互に全通り回る（水準の回転 rotOf と同じ理屈）。
+  //   nf=1（wipe だけのフェーズ）では商＝(i+n) となり、従来の挙動と一致する。
+  const nf = (GROUP === "aprime" && CFG.assignment.aprime_families)
+    ? (CFG.assignment.aprime_families.length || 1) : 1;
+  const q = Math.floor((i + n) / nf);
+  const k = ((q % dirs.length) + dirs.length) % dirs.length;
   return dirs[k];
 }
 
