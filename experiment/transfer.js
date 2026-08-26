@@ -49,7 +49,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "3.17";
+const VERSION = "3.18";
 const CFG = window.TRANSFER_CONFIG;
 const P = new URLSearchParams(location.search);
 
@@ -1152,6 +1152,15 @@ function compositeOffCanvas() {
 //   **本番では必ず表が読めていること**を確かめること。
 function compositeSplit(pairName, ch, s) {
   const p = Math.max(0, Math.min(1, s));
+  // ① 設定の固定指数（2026-08-27 追加）。**較正で組み合わせを測るときはこちら**。
+  //    warp表は較正データから作るものなので、較正の最中には読めない（読まない）。
+  //    字によらない固定の写し方にしておけば、紛れ字でも正しく動く。
+  //    形: s_x(u) = 100 · u^k（u=0.5 で各方式の中央の中点を通るよう k を決めてある）
+  const ax = (CFG.visual.composite_axis || {})[pairName];
+  if (ax && ax.uniform_k > 0 && ax.spatial_k > 0) {
+    return { sa: Math.pow(p, ax.uniform_k), sb: Math.pow(p, ax.spatial_k) };
+  }
+  // ② warp表の字ごとの写し（群Bの転写用）。
   const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
   const m = table && table[ch];
   if (!m || !Array.isArray(m.a) || !Array.isArray(m.b) || m.a.length < 2) {

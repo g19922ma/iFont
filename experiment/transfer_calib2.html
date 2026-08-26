@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなの見え方の課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.18">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  較正の追加バッチの入口（2026-08-27）。**実験としては較正1回目の続き**。
+
+  ■ 1回目と同じところ
+  字（8字）・課題の形・1人あたりの構成（本命24問＋紛れ36問＋確認問題）・
+  うすい→濃い／点が増える の水準と速さ2水準。
+
+  ■ 変えたところ（すべて1回目の結果にもとづく水準調整＋方式1つの追加）
+    ・ぼやけ   … 薄い側へ（3〜48%。1回目は26%より薄い側が未測定で、床が決められなかった）
+    ・端から   … 25〜100%の空白を埋める並びへ（「ぱ」の中点99.5%が外挿だった）
+    ・うすい×ぼやけ … 新規。組み合わせの識別曲線を直接測る。
+      進み具合の写し方は transfer_config.js の composite_axis に固定してある
+      （字によらない指数。刺激の定義の一部）。速さは1本。
+
+  ■ 1回目・他のどの実験に出た人も断る（phase_blocks.calib2）。
+    掲載側でも回答不可リスト（会員ID 253名）を入れること。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "calib2", force_group: "aprime" };</script>
+<script src="prod_common.js?v=3.18"></script>
+<script src="transfer_config.js?v=3.18"></script>
+<script src="transfer_firestore.js?v=3.18"></script>
+<script src="transfer.js?v=3.18"></script>
+</body>
+</html>
