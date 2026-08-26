@@ -22,7 +22,7 @@ s は 0〜1。添字 i は時刻 i*frame_ms に対応する。
 import csv, io, json, math, os, sys
 from collections import defaultdict
 
-CHARS = ["あ", "か", "ま"]
+CHARS = ["あ", "か", "が", "ぱ", "し", "つ", "ま", "ら"]   # 8字ぜんぶ（2026-08-26 丸山判断）
 FAMS  = ["fade", "reveal", "blur", "wipe"]
 FRAME_MS = 1000.0 / 60.0
 
@@ -70,6 +70,11 @@ def build(F, gates, space, base_anim_ms):
     for fam in FAMS:
         for ch in CHARS:
             pa = dict(F[("audio", ch, "")])
+            # 聴覚側の天井も実測を下回らせない。
+            # 「が」は当てはめ λ=0.008 が γ=0.015 を下回り、そのままだと逆引きが退化する。
+            # 実測（全部聞かせたとき 0.029）を使えば λ>γ になり、**ほとんど動かない曲線**として
+            # 転写できる。「音が最後まで分からないなら、文字も最後まで読めない」を再現する。
+            pa["lam"] = max(pa["lam"], pa["obs"] or 0.0)
             pv = dict(F[("visual", ch, fam)])
             pv["lam"] = max(pv["lam"], pv["obs"] or 0.0)   # 天井は実測を下回らせない
             tmax = max(gates[ch])

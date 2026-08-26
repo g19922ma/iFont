@@ -327,7 +327,7 @@ window.TRANSFER_CONFIG = {
   // ここに載っているIDだけが**本番の通し番号**を使う。載っていないIDは
   // 自動的に試し打ち扱いになり、テスト用のカウンタから配られる。
   // これで、動作確認のたびに前置き（uitest- など）を覚える必要がなくなる。
-  distributed_wids: {"calib":["znxa8x","6xt88w","jav5yw","5mk55k","dp8m84","jv7cuy","f93un7","wmqha6","byaecm","wx6xru","4wacpa","8tczuu","uyzjrv","ewumqe","pnqzzt","xmy87q","6x4tck","s7zuf5","wuk8ch","75a86d","yjzfjn","pc7z98","j9978y","89ke9n","xy6r3n","3f2h8t","8f3ez4","w9h9rb","wu85fb","rhamzs","8ed82z","c8b6m7","v89wqq","r8vtwa","d3njj2","x4se3h","y4mru5","gc93re","bkwdqn","zdqjkk","rmw3du","2vrc3s","w9nt9r","ds9kv4","p2mgd9","qk8f4m","qsc3hu","yjj2th","8b32hh","bn7cuk","u8gh9x","48nspu","zhdnmg","3j6g3v","5rue3f","knrp78","r7zmkx","rhvfqu","8rvfmc","qd5ryd","xyddwr","x9q6n8","u7wxm2","prjd7d","hq3ejg","6xdvt6","g4sjcn","qtpk66","as95xe","sqmhr5","tapugz","xsv5b9","u3nzyb","hkvvyw","jmekpv","9zsycx","5cbe5h","e6qnad","xy3ft6","hbbxeq","vfrz3y","stpnn6","stsvsb","4sevzn","4r2xz4","f7w3mj","hjkrzz","us7gp5","n93sbh","q4bd7u","xxpgbq","4cbcbt","f35era","79tbh8","pzuk5w","7z5aej","xf5bm3","95bmgh","52caav","62hmq8","4jtpbj","x6veqf","ekmjen","rmdh8u","e3kzzw","rh7qmb","ux3hkt","nmkmeb","zpdbua","2x7avj","knxs5x","nzhjha","5eqper","jbwvsd","9ztyjc","eb86cp","84n9ua","2zgfq6","8smmyb","p6jw45","wtg78p","6avefq","t4njfp","u7bqp9","6qrr66","c93a3f","chvqd3","3d5qw7","jpr258","vbpzrr","qqjdev","xwpvu7","56rctp","uaxyfq","au53mq","qduaw3","c9hg3s","s2gceg","vmqrps","fwdmdk","qmnmvu","t26s69","ddw23c","jpfj42","kknqsj","7r46cp","2svajw","k2nsvt","7fkd3f","engs37","nvauv9","8yeta4","hk7uhn","hd3vd2","jg5nrv","y8pp85","xd8tnb","ckzpvv","849zh8","53kee2","kyxtgp","b83gas","f92ss3","znzsar","uuc8qp","fhp9ka","6uzyh7","hm7acs","9f23es","34pk2a","fcyebr","kafz4v","3r75am","s79ufd","b97rk4","d6mkwc","d6a5m2","53bs9x","3vxx5c","qd5kya","22zvh6","4qvmg6","8yf73q","62wurq","weq9mp","q4qegr","g6m26m","nymbz3","nrtm2p","38a9qz","z2atcw","yfa8ss","97judq","rfut85","gu66cu","qnza2n","c2sgzy","mfyd2r","p32zj8","4g5j75","ssjpd2","e693f2","hajetz","a5qcj2","nzy2gx","wzhchf","9jqmjp","5wq2ku","4e28p4","4b3ute","y322v9","aetzbt","xjvrwa","wnudsp","a6qs9c","759u5k","wvfpha","ca2uap","zj39dp","746gmf","9sz9ff","jp3rmj","qy555z","zt5jxc","padjyj","a9d6cq","5gccuk","2yhsey","mg3gwq","k2ttdg","tcqe4q","w26tp5","vfr63t","fnwvgc","9cd7fm","mktztw","9k6dqu","cd42kj","z84tfr","ymqsup","tepma2","g43u6b","mh4c5m","k9xc6y","wrtbj8","apvegd","drfmr9","zn5fsy","7yk3p4","bycpjd","7smzpz","b5f668","sdafbg"]},
+  distributed_wids: {"calib":["znxa8x","6xt88w","jav5yw","5mk55k","dp8m84","jv7cuy","f93un7","wmqha6","byaecm","wx6xru","4wacpa","8tczuu","uyzjrv","ewumqe","pnqzzt","xmy87q","6x4tck","s7zuf5","wuk8ch","75a86d","yjzfjn","pc7z98","j9978y","89ke9n","xy6r3n","3f2h8t","8f3ez4","w9h9rb","wu85fb","rhamzs","8ed82z","c8b6m7","v89wqq","r8vtwa","d3njj2","x4se3h","y4mru5","gc93re","bkwdqn","zdqjkk","rmw3du","2vrc3s","w9nt9r","ds9kv4","p2mgd9","qk8f4m","qsc3hu","yjj2th","8b32hh","bn7cuk","u8gh9x","48nspu","zhdnmg","3j6g3v","5rue3f","knrp78","r7zmkx","rhvfqu","8rvfmc","qd5ryd","xyddwr","x9q6n8","u7wxm2","prjd7d","hq3ejg","6xdvt6","g4sjcn","qtpk66","as95xe","sqmhr5","tapugz","xsv5b9","u3nzyb","hkvvyw","jmekpv","9zsycx","5cbe5h","e6qnad","xy3ft6","hbbxeq","vfrz3y","stpnn6","stsvsb","4sevzn","4r2xz4","f7w3mj","hjkrzz","us7gp5","n93sbh","q4bd7u","xxpgbq","4cbcbt","f35era","79tbh8","pzuk5w","7z5aej","xf5bm3","95bmgh","52caav","62hmq8","4jtpbj","x6veqf","ekmjen","rmdh8u","e3kzzw","rh7qmb","ux3hkt","nmkmeb","zpdbua","2x7avj","knxs5x","nzhjha","5eqper","jbwvsd","9ztyjc","eb86cp","84n9ua","2zgfq6","8smmyb","p6jw45","wtg78p","6avefq","t4njfp","u7bqp9","6qrr66","c93a3f","chvqd3","3d5qw7","jpr258","vbpzrr","qqjdev","xwpvu7","56rctp","uaxyfq","au53mq","qduaw3","c9hg3s","s2gceg","vmqrps","fwdmdk","qmnmvu","t26s69","ddw23c","jpfj42","kknqsj","7r46cp","2svajw","k2nsvt","7fkd3f","engs37","nvauv9","8yeta4","hk7uhn","hd3vd2","jg5nrv","y8pp85","xd8tnb","ckzpvv","849zh8","53kee2","kyxtgp","b83gas","f92ss3","znzsar","uuc8qp","fhp9ka","6uzyh7","hm7acs","9f23es","34pk2a","fcyebr","kafz4v","3r75am","s79ufd","b97rk4","d6mkwc","d6a5m2","53bs9x","3vxx5c","qd5kya","22zvh6","4qvmg6","8yf73q","62wurq","weq9mp","q4qegr","g6m26m","nymbz3","nrtm2p","38a9qz","z2atcw","yfa8ss","97judq","rfut85","gu66cu","qnza2n","c2sgzy","mfyd2r","p32zj8","4g5j75","ssjpd2","e693f2","hajetz","a5qcj2","nzy2gx","wzhchf","9jqmjp","5wq2ku","4e28p4","4b3ute","y322v9","aetzbt","xjvrwa","wnudsp","a6qs9c","759u5k","wvfpha","ca2uap","zj39dp","746gmf","9sz9ff","jp3rmj","qy555z","zt5jxc","padjyj","a9d6cq","5gccuk","2yhsey","mg3gwq","k2ttdg","tcqe4q","w26tp5","vfr63t","fnwvgc","9cd7fm","mktztw","9k6dqu","cd42kj","z84tfr","ymqsup","tepma2","g43u6b","mh4c5m","k9xc6y","wrtbj8","apvegd","drfmr9","zn5fsy","7yk3p4","bycpjd","7smzpz","b5f668","sdafbg"],"wipedir":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59","60","61","62","63","64","65","66","67","68","69","70","71","72","73","74","75","76","77","78","79","80","81","82","83","84","85","86","87","88","89","90","91","92","93","94","95","96","97","98","99","100","101","102","103","104","105","106","107","108","109","110","111","112","113","114","115","116","117","118","119","120","121","122","123","124","125","126","127","128","129","130","131","132"]},
   // ---- 配布した作業者ID ここまで ----
 
   // ---- フェーズごとの設定の上書き（2026-08-26 追加）------------------------
@@ -366,7 +366,18 @@ window.TRANSFER_CONFIG = {
     // 方式と条件は**まだ決めていない**ので、いまはコメントのまま置いてある。
     // 決まったら conditions を有効にすること（WORKLOG 2026-08-26 の「6. まだ決まっていないこと」）。
     test: {
-      targets: ["あ", "か", "ま"],
+      // ■ 字を絞らない（2026-08-26 丸山判断）。
+      //   もとは「聴覚の曲線がきれいな あ・か・ま の3字」に絞る案だったが、
+      //   **検証すべきは「測った曲線 A(t) を視覚で再現できるか」**であって、
+      //   A(t) が正しい聴覚特性かどうかは別の話である。
+      //   A(t) は生成に渡す目標として与えられているだけで、群Bは同じ A(t) と突き合わせる。
+      //   したがって「が」が刺激不良かもしれないことも、非単調なことも、検証には効かない。
+      //
+      //   むしろ8字すべてを入れることで、
+      //   **どんな目標なら再現でき、どんな目標では破綻するか**を端から端まで測れる。
+      //   各セルの予測ラベル（表せる／値域外／時間分解能で飛ぶ）は
+      //   project/data_calib_20260825/groupB_cell_predictions.csv に凍結してある。
+      targets: ["あ", "か", "が", "ぱ", "し", "つ", "ま", "ら"],
       // 例）ぼやけ1方式で「提案 vs 中点合わせの直線」だけにする場合:
       // conditions: [
       //   { family: "blur", condition: "proposed",  tier: 1 },
@@ -377,6 +388,25 @@ window.TRANSFER_CONFIG = {
     // wipe だけを、参加者の中で ltr（左上から）と rtl（右上から）の両方で出す。
     // 濁点を持つ字と対応する清音字を測りたいので、targets は较正と同じ8字のままにする。
     wipedir: {
+      // ■ 字を「清音4字 → 濁音4字」の**対**に置き換えた（2026-08-26）。
+      //
+      //   較正の8字（あ・か・が・ぱ・し・つ・ま・ら）は濁点をもつのが が・ぱ の2字だけで、
+      //   しかも対になる清音が か しかない。これでは「濁点があるから遅い」のか
+      //   「その字だから遅い」のかを分けられない。
+      //   **同じ字形に濁点が付くだけの対**にすれば、違いは濁点の有無だけになる。
+      //
+      //   ⚠ **並び順が重要。** 向きは (字の番号 i + 参加者の連番 n) % 2 で決まるので、
+      //     対を隣どうし（か・が・し・じ…）に並べると、対の2字が必ず逆向きになり、
+      //     1人の中で「清音は全部ltr、濁音は全部rtl」という完全な交絡が起きる
+      //     （集団では均されるが、参加者内で4通りを比べられない）。
+      //     **清音4字を先に、濁音4字を後に**並べると、1人が
+      //     清ltr2・清rtl2・濁ltr2・濁rtl2 の4通りすべてを見る。
+      //
+      //   120人での密度：1字1向きあたり180試行（8水準に散って1セル22.5試行）。
+      //   濁音4字をまとめると1向きあたり720試行。
+      //   （較正で紛れ字が1字1方式24試行しかなく偽の結果を作った失敗の反省。
+      //    濁点の字を**紛れ字の副産物にしない**。）
+      targets: ["か", "し", "た", "は", "が", "じ", "だ", "ば"],
       aprime_families: ["wipe"],
       wipe_direction_assign: { mode: "alternate", directions: ["ltr", "rtl"] },
       // ■ 水準を並べ直した理由（2026-08-26）

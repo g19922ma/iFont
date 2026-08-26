@@ -44,7 +44,7 @@ def read_ids(path: Path) -> list:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--phase", required=True, choices=["calib", "test", "comfort"])
+    ap.add_argument("--phase", required=True, choices=["calib", "test", "comfort", "wipedir"])
     ap.add_argument("--tsv", help="配布した設問ファイル（TSV）か対応表（CSV）")
     ap.add_argument("--clear", action="store_true", help="そのフェーズの一覧を消す")
     a = ap.parse_args()
