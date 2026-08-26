@@ -143,6 +143,16 @@ function applyPhaseOverrides() {
       Object.assign({}, CFG.visual.families.wipe.direction_assign, ov.wipe_direction_assign);
     done.push("wipe_dir=" + (CFG.visual.families.wipe.direction_assign.mode || "?"));
   }
+  if (ov.speed_probe === false) {
+    // 速さ2水準を止めて、既定の1本(base_anim_ms)にする。
+    // ■ なぜ要るか(2026-08-27): 方式を1つに絞ったフェーズでは nf=1 になり、
+    //   速さ speeds[(i+floor(n/1))%2] と 向き dirs[(i+n)%2] が**同じ式**になる。
+    //   その結果、左から=300ms・右から=500ms という完全な交絡が起きる
+    //   (シミュレーションで確認。存在しないセルが半分になる)。
+    //   機構の検証(向き)に速さは要らないので、止めるのが最も安全。
+    CFG.visual.calib_speed_probe = Object.assign({}, CFG.visual.calib_speed_probe, { enabled: false });
+    done.push("speed_probe=off");
+  }
   if (ov.progress_pct_levels_by_family) {
     Object.keys(ov.progress_pct_levels_by_family).forEach((fam) => {
       const lv = ov.progress_pct_levels_by_family[fam];

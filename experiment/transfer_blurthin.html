@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<!-- 倫理審査の承認・本番デプロイ前は検索インデックスを禁止 (他ページと同様)。 -->
+<meta name="robots" content="noindex,nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ひらがなの見え方の課題</title>
+<link rel="stylesheet" href="transfer.css?v=3.17">
+</head>
+<body>
+<div id="app"><div class="card" id="screen"></div></div>
+<!--
+  ぼやけの薄い水準の追加較正の入口（2026-08-27 追加）。
+
+  ■ 何を確かめる実験か
+  較正の「ぼやけ」は 26%より薄い側を一度も測っていない。実測の床（26%で正答率24.4%）が
+    (a) もっと薄くすれば当てずっぽう(1/72)まで下がる ＝ 床は水準配置の産物
+    (b) 墨の量などの手がかりで下げ止まる ＝「情報を残す方式は床を作れない」が本物
+  のどちらかを決める。(a)なら ぼやけが頑健性の全軸で勝ち、(b)ならトレードオフが確定する。
+
+  ■ 課題の形は群A′（較正の視覚）とまったく同じ
+  違いは、方式がぼやけだけになることと、水準が薄い側に寄ること
+  （3/7/12/17/22/26/48/100。26と48は較正と同じ点＝つなぎ）。
+  速さ2水準（300/500ms）もそのまま生かす。「点が増える」で時間の影響が出たのは
+  薄い領域だったので、薄いぼやけでも時間が効かないかを同時に測る。
+
+  ■ 他のどの実験に出た人も断る（phase_blocks.blurthin）
+  ⚠ ただし名簿の照合はこのページのIDでしか行えないため、**別の掲載に出た同じ人**は
+    サーバでは見分けられない。掲載側の回答不可リスト（会員ID）で防ぐこと。
+    同時掲載する場合は、納品の会員IDで後から重複を判定し、後の方を除外する
+    （この規則は掲載前に文書で固定しておく）。
+
+  ?v= はJS側の VERSION と揃える(キャッシュ対策)。
+-->
+<script>window.TRANSFER_PAGE = { phase: "blurthin", force_group: "aprime" };</script>
+<script src="prod_common.js?v=3.17"></script>
+<script src="transfer_config.js?v=3.17"></script>
+<script src="transfer_firestore.js?v=3.17"></script>
+<script src="transfer.js?v=3.17"></script>
+</body>
+</html>
