@@ -304,28 +304,22 @@
         `<p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p>`}</div>`;
   }
 
-  // チェック設問（ヒント：A〜J）の答えの対応表（2026-08-27・丸山案）。
-  // ■ ねらい: チェック設問には「（ヒント：A）」としか書かず、答えの対応表を
-  //   **実験を終えた人しか見られないこの画面**に置く。これで掲載側の自動採点が
-  //   「実験を最後までやったか」の検査になる（答えは実験の外からは分からない）。
-  // ■ 番号は codeFromWid("hint-" + 文字) で決める。設問データ側
-  //   （project/設問データ_…tsv の生成スクリプト）も同じ式なので、表の二重管理がない。
+  // 完了コードの表示（2026-08-27・全員共通に確定）。
+  // ■ 経緯: 個人別コード → ヒント表 と試したが、参加者に分かりにくいため
+  //   **全員同じ3桁**に落ち着いた（丸山判断）。掲載は数分で埋まるので、
+  //   コードが出回る前に募集が終わる。実験を本当にやったかの確認は、
+  //   設問URLのIDとサーバの完了記録の照合で行う（コードは支払いの入口の確認だけ）。
+  // ■ この値は設問データ（チェック設問の解答）と一致させること。
+  //   project/設問データ_見え方の課題2_0827.tsv の生成時に同じ値を使う。
+  const SHARED_CODE = "949";
   function hintTableHTML() {
-    const letters = "ABCDEFGHIJ".split("");
-    const rows = letters.map((L) => {
-      const d = codeFromWid("hint-" + L);
-      return `<td style="padding:4px 10px;border:1px solid #dde3ec;font-weight:700">${L}</td>
-              <td style="padding:4px 10px;border:1px solid #dde3ec;letter-spacing:4px">${d.split("").join("・")}</td>`;
-    });
-    const half = 5;
-    let body = "";
-    for (let i = 0; i < half; i++) {
-      body += `<tr>${rows[i]}<td style="border:none;width:14px"></td>${rows[i + half]}</tr>`;
-    }
-    return `<div style="margin:18px auto 0;max-width:420px;background:#fbfcfe;border:1px solid #dde3ec;border-radius:10px;padding:12px">
-      <p style="margin:0 0 8px;font-size:14px"><b>完了コード</b></p>
-      <p style="margin:0 0 8px;font-size:12.5px;color:#556">タスクの画面に書かれた<b>ヒントの文字</b>に対応する3つの番号を、順番に選んでください。</p>
-      <table style="margin:0 auto;border-collapse:collapse;font-size:15px">${body}</table>
+    return `<div style="margin:14px auto;max-width:300px">
+      ${SHARED_CODE.split("").map((d, i) =>
+        `<div style="margin:10px 0">
+           <div style="font-size:14px;color:#556">完了コード${i + 1}文字目</div>
+           <div style="font-size:34px;font-weight:800;color:#1E2A5E;background:#f2f5f8;
+             border:1px solid #dde3ec;border-radius:10px;padding:8px 0;margin-top:4px">${d}</div>
+         </div>`).join("")}
     </div>`;
   }
 
