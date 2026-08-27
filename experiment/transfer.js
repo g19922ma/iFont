@@ -143,6 +143,16 @@ function applyPhaseOverrides() {
       Object.assign({}, CFG.visual.families.wipe.direction_assign, ov.wipe_direction_assign);
     done.push("wipe_dir=" + (CFG.visual.families.wipe.direction_assign.mode || "?"));
   }
+  if (Array.isArray(ov.decoy_exclude)) {
+    // 紛れ字の除外一覧を差し替える（2026-08-27 追加）。
+    // ■ なぜ要るか: 「ん」は回答の表にあるのに一度も出題されない唯一の字だった
+    //   （聴覚は「ん」で始まる語が無く刺激を作れないため。視覚はそれに合わせていただけ）。
+    //   視覚では見れば区別できるので、出題しない理由がない。丸山判断で
+    //   **視覚の追いバッチ(calib2)からは「ん」も紛れ字の候補に入れる**。
+    //   1回目との違いは候補が63→64字になることだけで、1人の構成（紛れ12字×3点）は変わらない。
+    CFG.decoys = Object.assign({}, CFG.decoys, { exclude: ov.decoy_exclude.slice() });
+    done.push("decoy_exclude=[" + ov.decoy_exclude.join("") + "]");
+  }
   if (ov.speed_probe === false) {
     // 速さ2水準を止めて、既定の1本(base_anim_ms)にする。
     // ■ なぜ要るか(2026-08-27): 方式を1つに絞ったフェーズでは nf=1 になり、
