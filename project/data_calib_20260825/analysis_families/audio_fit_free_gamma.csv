@@ -1,0 +1,9 @@
+char,gamma_free,lambda,mu,sigma,converged,usable_for_transcription,note
+あ,0.0,0.9645,19.48636,0.39578,True,True,
+か,0.0,1.0,33.91655,18.40926,True,True,
+が,0.0,0.01493,31.74852,0.075,True,False,
+ぱ,0.0,0.42604,15.09199,0.26544,True,False,
+し,0.0597,0.25595,26.35132,0.05,True,False,
+つ,0.0,0.67341,1.04484,19.42994,True,False,
+ま,0.0135,0.90277,45.85909,2.86867,True,True,
+ら,0.0,0.41614,44.95818,6.23277,True,False,

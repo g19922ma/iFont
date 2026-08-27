@@ -1,0 +1,17 @@
+family_1,family_2,spearman_rho,n_chars_common
+fade,fade,1.0,63
+fade,reveal,-0.14,63
+fade,blur,0.079,63
+fade,wipe,0.179,63
+reveal,fade,-0.14,63
+reveal,reveal,1.0,63
+reveal,blur,0.161,63
+reveal,wipe,0.013,63
+blur,fade,0.079,63
+blur,reveal,0.161,63
+blur,blur,1.0,63
+blur,wipe,0.202,63
+wipe,fade,0.179,63
+wipe,reveal,0.013,63
+wipe,blur,0.202,63
+wipe,wipe,1.0,63

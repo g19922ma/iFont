@@ -1,0 +1,5 @@
+family,n_char_converged,sigma_median,sigma_iqr,lambda_min,lambda_median,lambda_max,mu_min,mu_max,mu_seion_median,mu_diacritic_median,mu_diacritic_minus_seion,fit_error_mean,n_success,n_partial,n_fail,n_na,note
+fade,8,0.493,0.225,0.93,0.981,1.0,1.32,2.72,1.43,2.28,0.86,0.0461,1,2,0,5,
+reveal,8,0.732,0.426,0.87,0.967,1.0,0.97,3.44,1.43,3.39,1.96,0.063,2,1,0,5,
+blur,8,10.459,3.897,0.958,1.0,1.0,31.37,68.85,44.98,62.7,17.72,0.0658,3,0,0,5,
+wipe,8,4.184,8.421,0.875,0.943,1.0,3.97,99.45,24.1,77.4,53.3,0.0375,1,2,0,5,実測水準は0.5/1/2/4/8/14/25/100%で、25%と100%の間にテスト水準が無い(実測に支えられない区間)

@@ -1,0 +1,9 @@
+char,diacritic,diacritic_label,centroid_x_frac,right_ink_frac,fine_detail_frac
+あ,seion,清音,0.4963,0.4528,0.1258
+か,seion,清音,0.4793,0.4664,0.1281
+が,dakuon,濁音,0.4913,0.4944,0.1343
+ぱ,handakuon,半濁音,0.53,0.5956,0.1361
+し,seion,清音,0.4531,0.3654,0.1214
+つ,seion,清音,0.5719,0.6455,0.1252
+ま,seion,清音,0.4888,0.5167,0.1312
+ら,seion,清音,0.5124,0.5322,0.134

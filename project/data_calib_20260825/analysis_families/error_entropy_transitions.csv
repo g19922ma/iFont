@@ -1,0 +1,5 @@
+family,transition_s_pct,note
+fade,6.0,進み具合6.0%以降でentropy_norm<0.6が続く
+reveal,4.0,進み具合4.0%以降でentropy_norm<0.6が続く
+blur,64.0,進み具合64.0%以降でentropy_norm<0.6が続く
+wipe,100.0,進み具合100.0%以降でentropy_norm<0.6が続く
