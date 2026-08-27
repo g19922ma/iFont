@@ -299,8 +299,34 @@
                border:1px solid #dde3ec;border-radius:10px;padding:8px 0;margin-top:4px">${d}</div>
            </div>`).join("")}
       </div>
+      ${(opts && opts.hintTable) ? hintTableHTML() : ""}
       ${(opts && opts.hideMeta) ? "" :
         `<p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p>`}</div>`;
+  }
+
+  // チェック設問（ヒント：A〜J）の答えの対応表（2026-08-27・丸山案）。
+  // ■ ねらい: チェック設問には「（ヒント：A）」としか書かず、答えの対応表を
+  //   **実験を終えた人しか見られないこの画面**に置く。これで掲載側の自動採点が
+  //   「実験を最後までやったか」の検査になる（答えは実験の外からは分からない）。
+  // ■ 番号は codeFromWid("hint-" + 文字) で決める。設問データ側
+  //   （project/設問データ_…tsv の生成スクリプト）も同じ式なので、表の二重管理がない。
+  function hintTableHTML() {
+    const letters = "ABCDEFGHIJ".split("");
+    const rows = letters.map((L) => {
+      const d = codeFromWid("hint-" + L);
+      return `<td style="padding:4px 10px;border:1px solid #dde3ec;font-weight:700">${L}</td>
+              <td style="padding:4px 10px;border:1px solid #dde3ec;letter-spacing:4px">${d.split("").join("・")}</td>`;
+    });
+    const half = 5;
+    let body = "";
+    for (let i = 0; i < half; i++) {
+      body += `<tr>${rows[i]}<td style="border:none;width:14px"></td>${rows[i + half]}</tr>`;
+    }
+    return `<div style="margin:18px auto 0;max-width:420px;background:#fbfcfe;border:1px solid #dde3ec;border-radius:10px;padding:12px">
+      <p style="margin:0 0 8px;font-size:14px"><b>チェック設問の答え</b></p>
+      <p style="margin:0 0 8px;font-size:12.5px;color:#556">タスクの中に「（ヒント：A）」のような設問がある場合は、下の表のヒントに対応する3つの番号を選んでください。</p>
+      <table style="margin:0 auto;border-collapse:collapse;font-size:15px">${body}</table>
+    </div>`;
   }
 
   global.PROD = {
