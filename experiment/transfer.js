@@ -984,6 +984,58 @@ function blurBegin(ch) {
   blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
   if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
 }
+// ---- canvas の filter が本当に効くか（2026-08-27 に較正データで発覚）--------
+//
+// **WebKit(iOS の全ブラウザ・Yahooアプリ内WebView・macOS Safari)は canvas の
+//   `ctx.filter` を黙って無視する。** 例外も警告も出ないまま、ぼかしが一切かからず
+//   字が鮮明なまま提示される。
+//
+// 実測での証拠(較正 calib + calib2、視覚325人):
+//   進み具合 3%（ぼかし半径 69.84px ＝ 判読できないはず）で
+//     WebKit 端末   … 正答率 100.0%（31試行）
+//     それ以外      … 正答率   3.3%（273試行、当てずっぽう 1/72 = 1.4%）
+//   うすい(fade)・点が増える(reveal)・端から(wipe)は両者でほぼ同じなので、
+//   参加者の質ではなく**描画の不具合**である。
+//
+// ⚠ **見た目を別の作りで再現しない。** 要素側の CSS filter で代用すると、
+//   ぼかしの広がり方・縁のにじみ・枠線の扱いが canvas 版と変わる。
+//   すでに取った較正データ（非WebKit）と刺激が違うものになり、
+//   曲線を束ねられなくなる。**効かない端末は断る**のが、この実験では正しい。
+//
+// 判定は「実際に小さく描いてみて、隣の画素がにじむか」で行う（UA 文字列で
+// 見分けない。将来 WebKit が対応したら自動的に通るようにするため）。
+let _canvasFilterOK = null;
+function canvasFilterWorks() {
+  if (P.get("nofilter") === "1") return false;      // 研究者の動作確認用
+  if (_canvasFilterOK !== null) return _canvasFilterOK;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 32;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, 32, 32);
+    x.filter = "blur(4px)";
+    x.fillStyle = "#000"; x.fillRect(12, 12, 8, 8);   // 中央に 8×8 の黒い四角
+    x.filter = "none";
+    // ⚠ **四角の中央**を見る。1画素だけ黒を置いて隣のにじみを見る作りにすると、
+    //   ぼかしで墨が薄く広がりすぎて、効いていても真っ白と区別がつかない
+    //   （2026-08-27 に Chrome で実測して分かった。最初の実装はこれで誤判定した）。
+    //   ここは差が大きい: 効いていれば中央は 136 前後まで薄まり、
+    //   効いていなければ 0（真っ黒）のまま。
+    _canvasFilterOK = x.getImageData(16, 16, 1, 1).data[0] > 40;
+  } catch (e) {
+    _canvasFilterOK = false;
+  }
+  return _canvasFilterOK;
+}
+
+// この回の出題に「ぼかし」が混ざるか。組み合わせ(fade+blur など)も数える。
+function usesBlurFamily() {
+  const fams = (GROUP === "aprime" && CFG.assignment.aprime_families)
+    ? CFG.assignment.aprime_families
+    : (CFG.conditions || []).map(c => c && c.family);
+  return fams.some(f => String(f || "").indexOf("blur") >= 0);
+}
+
 // ぼかしのフィルタ適用部分だけを切り出したもの(src を差し替えれば組み合わせ
 // アニメ(fade+blur / reveal+blur)からもそのまま呼べる。挙動は元の blurDraw と同じ)。
 function blurApplyFilter(ctx, src, s) {
@@ -2871,6 +2923,15 @@ function volumeCheck() {
 // 全部表示なら画面が正常なら必ず読めるので、外す＝環境に問題がある、と分かる。
 // 使う字は **本命8字と、その人の decoy 12字を避けて**選ぶ（出題の範囲を先に見せない）。
 function visionCheck() {
+  // ⚠ ぼかしが描けない端末（WebKit）は、ここで丁寧にお断りする。
+  //   このまま進めると「ぼかしたはずの字が鮮明に出る」ので、
+  //   本人は真面目に答えているのに、測っているものが別物になる。
+  //   （設定 visual.require_canvas_filter を false にすると、この関門を外せる。）
+  if (CFG.visual.require_canvas_filter !== false
+      && usesBlurFamily() && !canvasFilterWorks()) {
+    unsupportedDeviceScreen();
+    return;
+  }
   const resuming = !!(resumeState && resumeState.trials);
   const cfg = (CFG.visual && CFG.visual.check) || { rounds: 2, n_choices: 4 };
   const need = Math.max(1, Math.round(Number(cfg.rounds) || 1));
@@ -2999,6 +3060,23 @@ function tidyConsentScreen() {
 // =========================================================================
 // 起動
 // =========================================================================
+// 画面の描画がこの課題に対応していない端末へのお断り（2026-08-27 追加）。
+// **参加者に落ち度はない**ので、そう分かる書き方にする。
+// 報酬の受け取り方（辞退してもらう）まで書かないと、参加者が困る。
+function unsupportedDeviceScreen() {
+  screenEl.innerHTML = `
+    <p>ご参加いただきありがとうございます。</p>
+    <p>申し訳ございません。<b>お使いの端末では、この課題の画面を正しく表示できないことが分かりました。</b>
+    ご利用の環境に問題があるわけではなく、こちらの課題の作りによるものです。</p>
+    <p>お手数ですが、<b>この作業は辞退して</b>ページを閉じてください。
+    別の端末（パソコン、または Android のスマートフォン）をお持ちでしたら、
+    そちらから改めてお試しいただけます。</p>
+    <p class="muted" style="font-size:13px">ご迷惑をおかけして申し訳ありません。</p>
+    ${(window.PROD && PROD.enabled) ? "" :
+      `<p class="muted" style="font-size:12px;text-align:right">研究者向け: canvas の filter が効かない端末
+       （ぼかしが描けない）。v${VERSION}</p>`}`;
+}
+
 // すでに前のフェーズに参加した人へのお断り。報酬の説明を丁寧に添える。
 function blockedScreen(reason, info) {
   // 「もう参加済み」で断る理由は4通りある(較正・群C・その他・GAS 版の古い呼び名)。

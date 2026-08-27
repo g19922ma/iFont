@@ -579,17 +579,27 @@ window.TRANSFER_CONFIG = {
   // (transfer.js / transfer_comfort.js の blockedScreen が見ている)。
   phase_blocks: {
     calib: [],
+    // ⚠ 2026-08-27: **calib2 と followup を足した。**
+    //   calib2 は同日に新設して 162人が実施した視覚較正の追いバッチで、
+    //   課題の形は群A′と同じ（アニメを止めて同じ8字を当てる）。
+    //   ここに載せ忘れると、**calib2 の162人がそのまま群B・群Cにも応募できてしまい**、
+    //   4集団の独立が崩れる（同じ字を何度も見た人が検証に混ざる）。
+    //   followup はまだ走っていないが、走ったときに足し忘れないよう先に入れておく。
     test: [
       { phase: "calib", reason: "already_in_calib" },
       { phase: "comfort", reason: "already_in_comfort" },
       { phase: "wipedir", reason: "already_in_other_phase" },
       { phase: "blurthin", reason: "already_in_other_phase" },
+      { phase: "followup", reason: "already_in_other_phase" },
+      { phase: "calib2", reason: "already_in_calib" },
     ],
     comfort: [
       { phase: "calib", reason: "already_in_other_phase" },
       { phase: "test", reason: "already_in_other_phase" },
       { phase: "wipedir", reason: "already_in_other_phase" },
       { phase: "blurthin", reason: "already_in_other_phase" },
+      { phase: "followup", reason: "already_in_other_phase" },
+      { phase: "calib2", reason: "already_in_other_phase" },
     ],
     // 向きの実験は較正と同じ「アニメを止めて字を当てる」課題なので、
     // 較正に出た人は**必ず断る**（同じ字を何度も見ていると読みやすくなるため）。
@@ -1491,6 +1501,25 @@ window.TRANSFER_CONFIG = {
     },
 
     // 4方式の描画パラメータ。方式の実装は transfer.js の Renderers。
+    // ⚠ ぼかしが描けない端末を断るか（2026-08-27 追加。既定 true）。
+    //
+    // WebKit（iOS の全ブラウザ・Yahooアプリ内WebView・macOS Safari）は
+    // canvas の `ctx.filter` を黙って無視する。ぼかしが一切かからず、
+    // **字が鮮明なまま出る**。較正の実測で判明した:
+    //   進み具合 3%（ぼかし半径 69.84px ＝ 判読できないはず）で
+    //     WebKit 端末 … 正答率 100.0%（31試行）
+    //     それ以外    … 正答率   3.3%（273試行）
+    // うすい・点が増える・端から の3方式は両者でほぼ同じなので、描画の不具合である。
+    //
+    // 見た目を別の作りで代用すると、すでに取った較正データと刺激が変わって
+    // 曲線を束ねられなくなる。そこで **効かない端末は課題に入る前に断る**。
+    // 判定は UA ではなく「実際に描いてにじむか」で行う（transfer.js の
+    // canvasFilterWorks）。将来 WebKit が対応すれば自動的に通る。
+    //
+    // false にすると関門を外せるが、**ぼかしを使うフェーズでは外さないこと。**
+    // 動作確認は URL に ?nofilter=1 を付ければ、対応端末でも断り画面を出せる。
+    require_canvas_filter: true,
+
     families: {
       // 不透明度 = s^gamma。文字全体が最初からあり、信号の強さが上がる。
       //
@@ -1580,6 +1609,8 @@ window.TRANSFER_CONFIG = {
       //   ⚠ **水準の並びを変えたら、この値も見直すこと**（いちばん薄い水準が変われば
       //     床の条件も変わる）。確かめ方は experiment/tools/level_chooser.html。
       blur: { max_radius_px: 72 },
+
+
       // 見せる領域を単調に広げる。direction: "ltr" | "rtl" | "ttb" | "btt"
       // ここに書いた direction は「向きの割り当て規則を使わない/使えない場面」の既定値
       // (下の direction_assign が mode:"fixed" のときに使う値)。
