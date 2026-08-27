@@ -2588,7 +2588,7 @@ async function showResults() {
 // 研究者モードの完了コードは、送信もされず照合もできない使い捨ての6文字で、
 // 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
 function finishHTML(durS) {
-  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS, { hideMeta: true, hintTable: true, hideCode: true, codeNote: `<p>下の<b>完了コード</b>を、<b>このページを開いたタスクの画面に戻り</b>、「完了コード1文字目〜3文字目」の選択欄で順番に選んで提出してください。</p><p style="font-size:14px;color:#8a4a00;background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:8px 12px;max-width:420px;margin:10px auto"><b>入力画面は2回あります。</b>どちらにも同じ完了コードを選んでください。</p><p class="muted" style="font-size:13px">提出するまで、報酬のお支払い手続きが始まりません。</p>` });
+  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS, { hideMeta: true, hintTable: true, hideCode: true, codeNote: `<p>下の<b>完了コード</b>を、<b>このページを開いたタスクの画面に戻り</b>、<br>選択欄で順番に選んで提出してください。</p><p style="font-size:14px;color:#8a4a00;background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:8px 12px;max-width:360px;margin:10px auto"><b>入力画面は2回あります。</b><br>どちらにも同じ完了コードを選んでください。</p><p class="muted" style="font-size:13px">提出するまで、報酬のお支払い手続きが始まりません。</p>` });
   return `<div style="text-align:center;padding:24px 10px">
     <h1>動作確認が終わりました</h1>
     <p class="muted">研究者向け動作確認モード（URL に <code>?prod=1</code> が無い）です。</p>
@@ -3135,7 +3135,7 @@ async function startSession() {
       }
       if (resumeState && !resumeState.completed && resumeState.session_v !== SESSION_V) resumeState = null;
       if (resumeState && resumeState.completed) {
-        screenEl.innerHTML = PROD.completionHTML(resumeState.duration_s || 0, { hideMeta: true, hintTable: true, hideCode: true, codeNote: `<p>下の<b>完了コード</b>を、<b>このページを開いたタスクの画面に戻り</b>、「完了コード1文字目〜3文字目」の選択欄で順番に選んで提出してください。</p><p style="font-size:14px;color:#8a4a00;background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:8px 12px;max-width:420px;margin:10px auto"><b>入力画面は2回あります。</b>どちらにも同じ完了コードを選んでください。</p><p class="muted" style="font-size:13px">提出するまで、報酬のお支払い手続きが始まりません。</p>` });
+        screenEl.innerHTML = PROD.completionHTML(resumeState.duration_s || 0, { hideMeta: true, hintTable: true, hideCode: true, codeNote: `<p>下の<b>完了コード</b>を、<b>このページを開いたタスクの画面に戻り</b>、<br>選択欄で順番に選んで提出してください。</p><p style="font-size:14px;color:#8a4a00;background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:8px 12px;max-width:360px;margin:10px auto"><b>入力画面は2回あります。</b><br>どちらにも同じ完了コードを選んでください。</p><p class="muted" style="font-size:13px">提出するまで、報酬のお支払い手続きが始まりません。</p>` });
         return;
       }
     }
