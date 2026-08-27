@@ -1214,28 +1214,36 @@ function compositeOffCanvas() {
 //   **本番では必ず表が読めていること**を確かめること。
 function compositeSplit(pairName, ch, s) {
   const p = Math.max(0, Math.min(1, s));
-  // ① 設定の固定指数（2026-08-27 追加）。**較正で組み合わせを測るときはこちら**。
-  //    warp表は較正データから作るものなので、較正の最中には読めない（読まない）。
-  //    字によらない固定の写し方にしておけば、紛れ字でも正しく動く。
+  // ① **warp表の字ごとの写しを最優先で使う**（2026-08-27 に順序を入れ替えた）。
+  //
+  //    ⚠ **以前は②の固定指数を先に返していた。これは誤りだった。**
+  //      固定指数は8字平均の中点に合わせたもので、字ごとのばらつきを吸収しない。
+  //      端から(wipe)の中点は「ま」3.9% 〜 「ぱ」79.9% と20倍以上開くので、
+  //      平均に合わせた1つの指数では両端の字が死ぬ。実際、生成済みの表では
+  //      **「が」のうすい+端からは提示の全時間で進み具合が 85.70→86.02 と
+  //      0.3ポイントしか動かなかった**（8字中2字＝セルの25%が測定不能）。
+  //      字ごとの表があるならそれを使う。無いときだけ②へ落ちる。
+  const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
+  const m = table && table[ch];
+  if (m && Array.isArray(m.a) && Array.isArray(m.b) && m.a.length >= 2) {
+    const n = m.a.length;
+    const x = p * (n - 1);
+    const i = Math.min(n - 1, Math.floor(x));
+    const j = Math.min(n - 1, i + 1);
+    const f = x - i;
+    const pick = (arr) => (arr[i] * (1 - f) + arr[j] * f) / 100;
+    return { sa: Math.max(0, Math.min(1, pick(m.a))),
+             sb: Math.max(0, Math.min(1, pick(m.b))) };
+  }
+  // ② 設定の固定指数。**字ごとの表が無いときの受け皿**である。
+  //    紛れ字には字ごとの曲線が無いので、こちらが使われる。
   //    形: s_x(u) = 100 · u^k（u=0.5 で各方式の中央の中点を通るよう k を決めてある）
   const ax = (CFG.visual.composite_axis || {})[pairName];
   if (ax && ax.uniform_k > 0 && ax.spatial_k > 0) {
     return { sa: Math.pow(p, ax.uniform_k), sb: Math.pow(p, ax.spatial_k) };
   }
-  // ② warp表の字ごとの写し（群Bの転写用）。
-  const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
-  const m = table && table[ch];
-  if (!m || !Array.isArray(m.a) || !Array.isArray(m.b) || m.a.length < 2) {
-    return { sa: p, sb: p };
-  }
-  const n = m.a.length;
-  const x = p * (n - 1);
-  const i = Math.min(n - 1, Math.floor(x));
-  const j = Math.min(n - 1, i + 1);
-  const f = x - i;
-  const pick = (arr) => (arr[i] * (1 - f) + arr[j] * f) / 100;
-  return { sa: Math.max(0, Math.min(1, pick(m.a))),
-           sb: Math.max(0, Math.min(1, pick(m.b))) };
+  // ③ どちらも無ければ恒等（両方を同じだけ進める）。
+  return { sa: p, sb: p };
 }
 
 // begin: 両方の begin を呼ぶ(reveal は点描の並びを、wipe は字の範囲を先に作る必要があるため)。
