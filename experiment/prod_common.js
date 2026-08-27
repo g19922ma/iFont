@@ -59,27 +59,29 @@
   //     130円の課題でそこまでやる人は考えにくいが、**サーバ記録との照合は別途行う**
   //     （承認判定の表。experiment/tools/build_yahoo_task_tsv.py と同じ式で作る）。
   //   IDが無いとき（研究者のローカル確認など）は従来どおりランダム。
+  // ■ 2026-08-27、6文字の英数字から**3つの番号(各0〜9)**へ変えた（丸山判断）。
+  //   掲載側のフォームをセレクトボックス3つに作り替え、チェック設問の自動照合を
+  //   使えるようにするため（自由記述欄はチェック設問の対象にできない）。
+  //   番号はIDから決まる（Python側と同一の式。FNV-1a → 線形合同法 → 各桁 %10）。
+  //   3桁=1000通りなので当てずっぽうは0.1%。IDが鍵なので番号の衝突は問題にならない。
   function codeFromWid(wid) {
-    // FNV-1a 32bit → 線形合同法で6文字。Python側(build_yahoo_task_tsv.py)と同一の式。
     let h = 0x811c9dc5;
     const src = "ifont-cc-2026|" + wid;
     for (let i = 0; i < src.length; i++) {
       h ^= src.charCodeAt(i);
-      // ⚠ 普通の掛け算だと 2^53 を超えて桁落ちする（Python側と食い違った）。
-      //   Math.imul で 32bit に収める。
+      // ⚠ 普通の掛け算だと 2^53 を超えて桁落ちする。Math.imul で 32bit に収める。
       h = Math.imul(h, 0x01000193) >>> 0;
     }
     let out = "";
-    for (let k = 0; k < CODE_LEN; k++) {
+    for (let k = 0; k < 3; k++) {
       h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
-      out += CODE_CHARS[h % CODE_CHARS.length];
+      out += String(h % 10);
     }
     return out;
   }
   let completionCode = workerId
     ? codeFromWid(workerId)
-    : Array.from({ length: CODE_LEN },
-        () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+    : Array.from({ length: 3 }, () => String(Math.floor(Math.random() * 10))).join("");
 
   let sentTrials = 0;
 
@@ -288,10 +290,15 @@
     return `<div style="text-align:center;padding:24px 10px">
       <h1>全ての実験が終了しました</h1>
       <p>ご協力ありがとうございました。</p>
-      ${(opts && opts.codeNote) || `<p><b>完了コード</b>は以下です。参加したサービスの入力欄に貼り付けてください。</p>`}
-      <p style="font-size:30px;font-weight:800;letter-spacing:3px;color:#1E2A5E;
-        background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:14px 8px;margin:14px auto;max-width:360px">${completionCode}</p>
-      <p><button class="primary" onclick="navigator.clipboard.writeText('${completionCode}').then(()=>{this.textContent='コピーしました ✓'},()=>{this.textContent='コピーできませんでした。上のコードを手動で選択してください'})">完了コードをコピー</button></p>
+      ${(opts && opts.codeNote) || `<p><b>完了番号</b>は以下の3つです。参加したサービスの選択欄で順番に選んでください。</p>`}
+      <div style="display:flex;gap:12px;justify-content:center;margin:14px auto">
+        ${completionCode.split("").map((d, i) =>
+          `<div style="text-align:center">
+             <div style="font-size:13px;color:#667">${i + 1}つ目</div>
+             <div style="font-size:34px;font-weight:800;color:#1E2A5E;background:#f2f5f8;
+               border:1px solid #dde3ec;border-radius:10px;padding:10px 22px">${d}</div>
+           </div>`).join("")}
+      </div>
       ${(opts && opts.hideMeta) ? "" :
         `<p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p>`}</div>`;
   }
