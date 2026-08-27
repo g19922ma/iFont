@@ -290,13 +290,13 @@
     return `<div style="text-align:center;padding:24px 10px">
       <h1>全ての実験が終了しました</h1>
       <p>ご協力ありがとうございました。</p>
-      ${(opts && opts.codeNote) || `<p><b>完了番号</b>は以下の3つです。参加したサービスの選択欄で順番に選んでください。</p>`}
-      <div style="display:flex;gap:12px;justify-content:center;margin:14px auto">
+      ${(opts && opts.codeNote) || `<p><b>完了コード</b>は以下です。参加したサービスの選択欄で順番に選んでください。</p>`}
+      <div style="margin:14px auto;max-width:300px">
         ${completionCode.split("").map((d, i) =>
-          `<div style="text-align:center">
-             <div style="font-size:13px;color:#667">${i + 1}つ目</div>
+          `<div style="margin:10px 0">
+             <div style="font-size:14px;color:#556">完了コード${i + 1}文字目</div>
              <div style="font-size:34px;font-weight:800;color:#1E2A5E;background:#f2f5f8;
-               border:1px solid #dde3ec;border-radius:10px;padding:10px 22px">${d}</div>
+               border:1px solid #dde3ec;border-radius:10px;padding:8px 0;margin-top:4px">${d}</div>
            </div>`).join("")}
       </div>
       ${(opts && opts.hideMeta) ? "" :
