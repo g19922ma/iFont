@@ -68,6 +68,7 @@ FILES=(
   "transfer_calib_visual.html"   # 較正・視覚（群A′）
   "transfer_test.html"           # 検証（群B）
   "transfer_comfort.html"        # 見え心地（群C）
+  "transfer_calib2.html"         # 較正の追いバッチ（視覚のみ・2026-08-27）
   # 研究者の動作確認用（掲載しない。振り分け版の入口）
   "transfer_calib.html"
   # 見た目
