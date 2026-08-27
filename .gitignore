@@ -76,3 +76,6 @@ project/data_calib2_live/transfer_wellbeing.csv
 project/data_calib2_live/transfer_roster.csv
 project/data_calib2_live/納品データ*.tsv
 project/data_calib2_live/承認判定_calib2.csv
+
+# calib2 の参加者生データ（公開フォークなので丸ごと除外）
+project/data_calib2_live/
