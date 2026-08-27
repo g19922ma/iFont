@@ -11,7 +11,9 @@
   50.0
  ],
  "onset_zero": "acoustic onset を 0ms とする(計画書 4.4-4)。各ファイルは onset の lead_ms 手前から始まるので、刺激の長さ(gate_ms)はファイル全長(dur_ms)から lead_ms を引いた値にあたる",
- "config_version": "prov-2026-08-25b",
+ "config_version": "prov-2026-08-26a",
+  "config_version_restamped_from": "prov-2026-08-25b",
+  "restamp_note": "2026-08-27: 設定の版だけ上げ直した。prov-2026-08-25b から prov-2026-08-26a のあいだに音声(audio)の設定は1行も変わっておらず(git diff で確認)、WAV544本と打ち切り時刻は同一である。索引を作り直していないことを残すためにこの2行を置いてある。",
  "salted": false,
  "count": 544,
  "items": {

@@ -324,7 +324,10 @@
   }
 
   global.PROD = {
-    enabled, workerId, participantId, completionCode,
+    // sharedCode … 全員共通の完了コード(2026-08-27〜)。参加者が実際に目にするのは
+    //   completionCode(個人別・記録用)ではなく**こちら**である。送信に失敗した画面など、
+    //   completionHTML() を通さずにコードを出す場所は必ずこの値を使うこと。
+    enabled, workerId, participantId, completionCode, sharedCode: SHARED_CODE,
     setEnv, saveTrial, saveDone, saveFracTrial, consentScreen, completionHTML,
     loadState, saveState, clearState,
     hasEndpoint: !!SUBMIT_URL,

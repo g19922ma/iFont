@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.12";
+const VERSION = "c1.14";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
@@ -480,15 +480,21 @@ function blurBegin(ch) {
   blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
   if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
 }
-function blurDraw(ctx, ch, s) {
-  if (!blurOff) blurBegin(ch);
+// ⚠ 中身は transfer.js の blurApplyFilter() と**1文字も違えないこと**。
+//   群Bと群Cで違う絵を出すと、両者の比較そのものが成り立たなくなる。
+//   check_comfort_render.js が blurDraw() の中身を transfer.js と突き合わせている。
+function blurApplyFilter(ctx, src, s) {
   const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
   drawBlank(ctx);
   ctx.save();
   ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
-  ctx.drawImage(blurOff, 0, 0, SIZE, SIZE);
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
   ctx.restore();
   ctx.filter = "none";
+}
+function blurDraw(ctx, ch, s) {
+  if (!blurOff) blurBegin(ch);
+  blurApplyFilter(ctx, blurOff, s);
 }
 
 // ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられる。
@@ -533,11 +539,13 @@ function wipeBBoxPrepare(ch) {
   return bbox;
 }
 function wipeBegin(ch) { wipeBBoxPrepare(ch); }
-function wipeDraw(ctx, ch, s) {
+// ⚠ 中身は transfer.js の wipeClipRect()／wipeApplyClip() と**1文字も違えないこと**。
+//   check_comfort_render.js が wipeDraw() の中身を transfer.js と突き合わせている。
+//   dirArg は群Bの向き反転実験（wipedir）で使う引数。群Cは渡さないので、
+//   設定の direction（既定 ltr）に落ちる＝従来と同じ絵になる。
+function wipeClipRect(ch, s, dirArg) {
   const p = Math.max(0, Math.min(1, s));
-  drawBlank(ctx);
-  if (!imgs[ch]) return;
-  const dir = CFG.visual.families.wipe.direction || "ltr";
+  const dir = dirArg || CFG.visual.families.wipe.direction || "ltr";
   const b = wipeBBoxPrepare(ch);
   let rx = 0, ry = 0, rw = 0, rh = SIZE;
   // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
@@ -558,13 +566,22 @@ function wipeDraw(ctx, ch, s) {
     rx = 0;
     ry = (dir === "ttb") ? 0 : SIZE - h;
   }
+  return { rx, ry, rw, rh };
+}
+function wipeApplyClip(ctx, src, ch, s, dirArg) {
+  drawBlank(ctx);
+  if (!src) return;
+  const { rx, ry, rw, rh } = wipeClipRect(ch, s, dirArg);
   if (rw <= 0 || rh <= 0) return;
   ctx.save();
   ctx.beginPath();
   ctx.rect(rx, ry, rw, rh);
   ctx.clip();
-  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
   ctx.restore();
+}
+function wipeDraw(ctx, ch, s, dirArg) {
+  wipeApplyClip(ctx, imgs[ch], ch, s, dirArg);
 }
 
 // フェード(fade): 不透明度 = s^gamma。
@@ -1197,10 +1214,10 @@ function showSendFailure(rec, durS, tries) {
     ${giveUp ? `
     <div style="margin-top:18px;background:#fff7ed;border:1px solid #f0c98a;border-radius:8px;padding:14px 14px">
       <p style="margin-top:0">何度試しても送れないため、<b>完了コード</b>をここに出します。
-      <b>このコードと、いまの日付・時刻をお手元に控えて</b>、募集の回答欄に貼って提出してください。</p>
+      <b>このコードと、いまの日付・時刻をお手元に控えて</b>、募集の回答欄で選んで提出してください。</p>
       <p style="font-size:26px;font-weight:800;letter-spacing:3px;color:#1E2A5E;text-align:center;
                 background:#f2f5f8;border:1px solid #dde3ec;border-radius:10px;padding:12px 8px;margin:12px auto;max-width:340px">
-        ${(window.PROD && PROD.completionCode) || ""}</p>
+        ${(window.PROD && PROD.sharedCode) || ""}</p>
       <p style="margin-bottom:0">記録側にこのコードが残っていない可能性があります。
       承認されない場合は、<b>控えたコードと日時</b>を添えて
       ${mailLink(c.email)}${viaCs}までご連絡ください。
@@ -1222,7 +1239,12 @@ function showSendFailure(rec, durS, tries) {
 // 研究者モードの完了コードは、送信もされず照合もできない使い捨ての6文字で、
 // 動作確認のつもりで控えると「記録に無いコード」として非承認の元になる。
 function finishHTML(durS) {
-  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS, { hideMeta: true, codeNote: `<p>下の<b>完了コード</b>をコピーして、<b>このページを開いたタスクの画面に戻り</b>、「完了コードを入力してください」の欄に貼り付けてください。</p><p class="muted" style="font-size:13px">貼り付けて提出するまで、報酬のお支払い手続きが始まりません。</p>` });
+  // ■ 2026-08-27: 完了コードを**全員共通の3桁(949)**にそろえた（transfer.js と同じ）。
+  //   募集サイトの設問がセレクトボックス3つ（自由記述はチェック設問の自動照合に
+  //   使えないため）に変わったので、案内の文言も「コピーして貼り付け」から
+  //   「順番に選ぶ」に直してある。個人別コード codeFromWid() は記録に残すだけで
+  //   **参加者には見せない**（hideCode: true）。
+  if (window.PROD && PROD.enabled) return PROD.completionHTML(durS, { hideMeta: true, hintTable: true, hideCode: true, codeNote: `<p>下の<b>完了コード</b>を、<b>このページを開いたタスクの画面に戻り</b>、<br>選択欄で順番に選んで提出してください。</p><p style="font-size:14px;color:#8a4a00;background:#fff7ec;border:1px solid #f0dcc0;border-radius:8px;padding:8px 12px;max-width:360px;margin:10px auto"><b>入力画面は2回あります。</b><br>どちらにも同じ完了コードを選んでください。</p><p class="muted" style="font-size:13px">提出するまで、報酬のお支払い手続きが始まりません。</p>` });
   return `<div style="text-align:center;padding:24px 10px">
     <h1>動作確認が終わりました</h1>
     <p class="muted">研究者向け動作確認モード（URL に <code>?prod=1</code> が無い）です。</p>
@@ -1233,8 +1255,67 @@ function finishHTML(durS) {
     送信できなかった記録 ${sendFailures} 件・作り直して送れた記録 ${sendRetries} 件</p></div>`;
 }
 
+// ---- canvas の filter が本当に効くか（2026-08-27。transfer.js と同じ関門）----
+//
+// **WebKit(iOS の全ブラウザ・Yahooアプリ内WebView・macOS Safari)は canvas の
+//   `ctx.filter` を黙って無視する。** ぼかしが一切かからず字が鮮明なまま出る。
+// 較正の実測（視覚325人）で判明した経緯と証拠は transfer.js の同名の関数、
+// および transfer_config.js の visual.require_canvas_filter を見ること。
+//
+// ⚠ **群Cでも同じ関門が要る。** 群Cは5つの見せ方のうち「ぼやけ→はっきり」を
+//   3本出して見え心地を7段階で聞く。ぼかしが効かない端末では、その3本が
+//   「最初から鮮明な字」になり、**見やすさの評価が別物になる**（しかも本人は
+//   異常に気づかない）。識別の正誤が無い群Cでは、あとからデータで検出もできない。
+// ⚠ 見た目を別の作り（CSS filter など）で代用しないこと。群Bと違う絵になり、
+//   両群を並べて論じられなくなる（transfer.js の同じ注意書きと同じ理由）。
+let _canvasFilterOK = null;
+function canvasFilterWorks() {
+  if (P.get("nofilter") === "1") return false;      // 研究者の動作確認用
+  if (_canvasFilterOK !== null) return _canvasFilterOK;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 32;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, 32, 32);
+    x.filter = "blur(4px)";
+    x.fillStyle = "#000"; x.fillRect(12, 12, 8, 8);   // 中央に 8×8 の黒い四角
+    x.filter = "none";
+    // ⚠ **四角の中央**を見る（1画素だと、効いていても真っ白と区別が付かない）。
+    _canvasFilterOK = x.getImageData(16, 16, 1, 1).data[0] > 40;
+  } catch (e) {
+    _canvasFilterOK = false;
+  }
+  return _canvasFilterOK;
+}
+
+// この回の見せ方に「ぼやけ」が混ざるか。組み合わせ(fade+blur など)も数える。
+function usesBlurFamily() {
+  return (C.families || []).some(f => String(f || "").indexOf("blur") >= 0);
+}
+
+function unsupportedDeviceScreen() {
+  screenEl.innerHTML = `
+    <p>ご参加いただきありがとうございます。</p>
+    <p>申し訳ございません。<b>お使いの端末では、この課題の画面を正しく表示できないことが分かりました。</b>
+    ご利用の環境に問題があるわけではなく、こちらの課題の作りによるものです。</p>
+    <p>お手数ですが、<b>この作業は辞退して</b>ページを閉じてください。
+    別の端末（パソコン、または Android のスマートフォン）をお持ちでしたら、
+    そちらから改めてお試しいただけます。</p>
+    <p class="muted" style="font-size:13px">ご迷惑をおかけして申し訳ありません。</p>
+    ${(window.PROD && PROD.enabled) ? "" :
+      `<p class="muted" style="font-size:12px;text-align:right">研究者向け: canvas の filter が効かない端末
+       （ぼかしが描けない）。v${VERSION}</p>`}`;
+}
+
 // ---- 見え方の確認 ---------------------------------------------------------
 function visionCheck() {
+  // ⚠ ぼかしが描けない端末（WebKit）は、ここで丁寧にお断りする。
+  //   （設定 visual.require_canvas_filter を false にすると、この関門を外せる。）
+  if (CFG.visual.require_canvas_filter !== false
+      && usesBlurFamily() && !canvasFilterWorks()) {
+    unsupportedDeviceScreen();
+    return;
+  }
   const resuming = !!(answers && answers.clips.length);
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">見え方の確認</h2>
     <p>本番と<b>同じ大きさ・同じ並び</b>で見本を表示しています。
@@ -1295,8 +1376,12 @@ function tidyConsentScreen() {
   const ul = screenEl.querySelector("ul");
   if (ul) ul.remove();
   // リード文（「本実験は、〜を調べる研究です。」）の直後に、残す1行だけを足す。
+  //
   // ⚠ **問い合わせ先は 2026-08-25 に外した**（丸山判断。「募集サイトに書いてあれば十分」）。
-  //   transfer.js の同じ場所と扱いをそろえてある。
+  //   募集サイトのタスク説明文に、研究責任者・宛先・取り消しの案内を書いてある。
+  //   ⚠ 外部サイトに移ったあとで困った人（音が出ない・送信が失敗した等）は、
+  //     募集サイトの画面に戻らないと宛先が分からない。承知のうえでの判断である。
+  //     戻せるように mailLink() と CFG.contact はそのまま残してある。
   const add = document.createElement("p");
   add.innerHTML = "募集ページに記載した内容にご同意のうえ、開始してください。";
   const lead = screenEl.querySelector("p");

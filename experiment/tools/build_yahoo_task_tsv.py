@@ -71,6 +71,19 @@ def main() -> int:
     ap.add_argument("--encoding", default="cp932", choices=["cp932", "utf-8"],
                     help="書き出す文字コード。既定はテンプレートに合わせて Shift_JIS")
     ap.add_argument("--out", default=None, help="出力先。省略時は project/設問_<phase>.tsv")
+    # ---- 2026-08-27 追加: セレクト式テンプレート(16列)への対応 ----------------
+    # 募集サイトのテンプレートが「テキストエリア1つ」から
+    # 「ラベル＋セレクトボックス3つ(完了コードを1文字ずつ選ばせる)」に変わった。
+    # 自由記述欄はチェック設問の自動照合に使えないので、セレクト式でないと
+    # 「完了コードが合っているか」をサイト側で判定できない。
+    # calib2(2026-08-27 掲載)はこの形で回した。見本:
+    #   project/設問データ_見え方の課題2_0827.tsv
+    ap.add_argument("--code", default="949",
+                    help="完了コード(全員共通の3桁)。experiment/prod_common.js の "
+                         "SHARED_CODE と必ず一致させること")
+    ap.add_argument("--check-rows", type=int, default=10,
+                    help="末尾に足すチェック設問の数(セレクト式のときだけ)。"
+                         "0 で足さない。設問IDは chk01, chk02, … になる")
     a = ap.parse_args()
 
     path = a.path or {"calib": "/calib", "test": "/read", "comfort": "/survey"}.get(a.phase)
@@ -78,8 +91,9 @@ def main() -> int:
         print(f"エラー: phase '{a.phase}' の入口が分からない。--path で指定すること。",
               file=sys.stderr)
         return 1
-    if not (1 <= a.n <= MAX_ROWS):
-        print(f"エラー: --n は 1〜{MAX_ROWS} にすること(サイトの条件5)。", file=sys.stderr)
+    if not (1 <= a.n + max(0, a.check_rows) <= MAX_ROWS):
+        print(f"エラー: 行数(本命 {a.n} ＋ チェック設問 {a.check_rows})は "
+              f"1〜{MAX_ROWS} にすること(サイトの条件5)。", file=sys.stderr)
         return 1
 
     header, tmpl_enc = read_header(Path(a.template).expanduser())
@@ -125,6 +139,55 @@ def main() -> int:
         return "unknown"
 
     slots = [slot(c) for c in header]
+    field_names = [x.split(":")[1] if x.startswith("field:") else "" for x in slots]
+
+    # ---- セレクト式テンプレート(2026-08-27〜)の見分けと文言の割り当て ----------
+    # 「F0n:ラベル」＋「F0n+1:セレクトボックス」が3組あるのがこの形。
+    # ラベルは**そのすぐ手前の列**が見出しになるので、列の名前を決め打ちせず
+    # 「セレクトの直前のラベル」を桁の見出しにする(列が増減しても付いてくる)。
+    select_fields = [x.split(":")[1] for x in slots
+                     if x.startswith("field:") and "セレクトボックス" in x]
+    label_fields = [x.split(":")[1] for x in slots
+                    if x.startswith("field:") and "ラベル" in x]
+    is_select = bool(select_fields)
+    CHECK_FIELDS: dict[str, str] = {}      # チェック設問の行だけ差し替える文言
+    if is_select:
+        DIGITS = "@".join(str(d) for d in range(10))     # 0@1@…@9
+        if len(select_fields) != len(a.code):
+            print(f"エラー: セレクトボックスが {len(select_fields)} 個なのに "
+                  f"--code は {len(a.code)} 桁。数をそろえること。", file=sys.stderr)
+            return 1
+        caption = {}
+        for k, sf in enumerate(select_fields):
+            idx = field_names.index(sf)
+            prev = next((field_names[j] for j in range(idx - 1, -1, -1)
+                         if "ラベル" in slots[j]), None)
+            if prev is None or prev in caption:
+                print(f"エラー: {sf} の見出しになるラベル列が見つからない。"
+                      "テンプレートが変わった可能性がある。", file=sys.stderr)
+                return 1
+            caption[prev] = f"完了コード{k + 1}文字目"
+        first_sel = field_names.index(select_fields[0])
+        lead = [f for f in label_fields
+                if f not in caption and field_names.index(f) < first_sel]
+        if len(lead) != 3:
+            print(f"エラー: 説明文を入れるラベル列が {len(lead)} 個で、想定の3個と違う"
+                  f"（{lead}）。テンプレートが変わった可能性がある。", file=sys.stderr)
+            return 1
+        # ⚠ 文言は calib2(2026-08-27 掲載)で実際に使ったものをそのまま写す。
+        #   見本: project/設問データ_見え方の課題2_0827.tsv
+        FIELDS = {sf: DIGITS for sf in select_fields}
+        FIELDS.update(caption)
+        FIELDS[lead[0]] = "ページを開き、課題を完了させてください。"
+        FIELDS[lead[1]] = "課題の最後に、完了コードが表示されます。"
+        FIELDS[lead[2]] = "最後に表示された完了コードを選んでください"
+        # チェック設問の行は、課題への案内を出さず、同じコードをもう一度選ばせるだけ。
+        CHECK_FIELDS = dict(FIELDS)
+        CHECK_FIELDS[lead[0]] = ""
+        CHECK_FIELDS[lead[1]] = ""
+        CHECK_FIELDS[lead[2]] = ("こちらのページに新しい課題はございません。"
+                                 "先ほどと全く同じ完了コードを再度お選びください。")
+
     # 見出しに無い欄を FIELDS に書いていたら、その文言は**どこにも出ない**。
     have = {x.split(":")[1] for x in slots if x.startswith("field:")}
     unused = [f for f, v in FIELDS.items() if v and f not in have]
@@ -160,7 +223,7 @@ def main() -> int:
     # ⚠ **空でも入力欄が出るのかは未確認**である。出ないと完了コードを受け取れない。
     #   プレビューで必ず確かめること。出ないようなら FIELDS に文言を足す。
     filled_box = [f for f in box_fields if (FIELDS.get(f) or LEGACY.get(f))]
-    if not filled_box:
+    if not filled_box and not is_select:
         print(f"⚠ 入力欄（{'/'.join(box_fields) or 'なし'}）を空にしてある。"
               "プレビューで入力欄が出ることを必ず確かめること。", file=sys.stderr)
 
@@ -197,6 +260,33 @@ def main() -> int:
     if len(set(wids)) != len(wids):
         print("エラー: URLの作業者IDが重複した。--length を増やすこと。", file=sys.stderr)
         return 1
+
+    # --- チェック設問の行（セレクト式のときだけ）------------------------------
+    # ⚠ **URLの重複検査より「あと」に足す。** チェック設問の行はURLを持たない
+    #   （どれも空文字）ので、先に足すと「作業者IDが重複した」と誤って止まる。
+    # ⚠ 解答は「チェック設問の解答」列に**1桁ずつ**入れる。列の数とコードの桁数は
+    #   上で一致を確かめてある。
+    check_rows = []
+    if is_select and a.check_rows > 0:
+        n_ans = sum(1 for x in slots if x == "check_ans")
+        if n_ans != len(a.code):
+            print(f"エラー: 『チェック設問の解答』列が {n_ans} 個で、"
+                  f"--code の {len(a.code)} 桁と合わない。", file=sys.stderr)
+            return 1
+        for k in range(1, a.check_rows + 1):
+            row, ai = [], 0
+            for x in slots:
+                if x == "qid":            row.append(f"chk{k:02d}")
+                elif x == "check_flag":   row.append("1")
+                elif x == "check_ans":    row.append(a.code[ai]); ai += 1
+                else:                     row.append(CHECK_FIELDS.get(x.split(":")[1], ""))
+            check_rows.append(row)
+        rows.extend(check_rows)
+        ids = [r[0] for r in rows]
+        if len(set(ids)) != len(ids):
+            print("エラー: チェック設問の設問IDが本命とぶつかった。", file=sys.stderr)
+            return 1
+
     for w in ids:
         if len(w) > 20 or not w.isalnum() or not w.isascii():
             print(f"エラー: 設問ID '{w}' が『半角英数字20文字以内』を満たさない。",
@@ -242,11 +332,18 @@ def main() -> int:
     print(f"{a.n} 設問を書き出した(phase={a.phase} path={path} 種={a.seed})")
     print(f"  出力: {out}  {size:,} バイト  文字コード={a.encoding}  改行=CRLF")
     print(f"  テンプレートの文字コード: {tmpl_enc}")
-    print(f"  列: {len(header)}（見出しはテンプレートのまま）")
+    print(f"  列: {len(header)}（見出しはテンプレートのまま）"
+          f"{'／セレクト式' if is_select else '／自由記述式'}")
     print(f"  1設問の文字数: {sum(len(c) for c in rows[0])}（上限 {MAX_CHARS_PER_QUESTION}）")
     print(f"  先頭: 設問ID {rows[0][0]}  {rows[0][link_col]}")
-    print(f"  末尾: 設問ID {rows[-1][0]}  {rows[-1][link_col]}")
-    print(f"  入力欄: {'/'.join(filled_box)}（ここが空だと完了コードを受け取れない）")
+    print(f"  本命の末尾: 設問ID {rows[a.n - 1][0]}  {rows[a.n - 1][link_col]}")
+    if check_rows:
+        print(f"  チェック設問: {len(check_rows)} 行（chk01〜chk{len(check_rows):02d}）"
+              f" 解答={a.code}  ⚠ prod_common.js の SHARED_CODE と一致させること")
+    if is_select:
+        print(f"  完了コードの入力: セレクトボックス {len(select_fields)} 個（0〜9）")
+    else:
+        print(f"  入力欄: {'/'.join(filled_box)}（ここが空だと完了コードを受け取れない）")
     print("  検査: 設問IDの重複なし／URLの作業者IDの重複なし／禁止文字なし／文字数と行数は上限内")
     return 0
 
