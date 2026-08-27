@@ -2033,6 +2033,12 @@ function runAudioTrial(t) {
 // 提示は1回だけ(見直しボタンは出さない)。描画フレームの実時刻から実測を取る。
 function runVisualTrial(t) {
   let tStim = null, picked = null, pickedRt = null, autoTimer = null;
+  // 提示が終わらないまま固まったときの逃げ道（2026-08-27 追加）。
+  // ⚠ **これが無いと参加者は詰む。** 回答ボタンは提示が終わるまで押せない作りなので、
+  //   requestAnimationFrame が止まる（アプリ切り替え・画面ロック・省電力・描画中の例外）と、
+  //   表は見えているのにどのボタンも押せず、エラーも出ず、先へ進む手段もない。
+  //   実際に「本番で文字が出て来ず時間切れ」という申し出があった（原因は特定できていない）。
+  let stuckTimer = null, presentFailed = false;
   let actualMs = null, actualFrames = null, actualS = null, presenting = false;
   // 2026-08-25 追加。「情報がどこまで進んだか」と「最後の絵を余分に見た時間」を分ける。
   //   lastDrawMs … 最後に絵を描いた時刻（提示開始から）
@@ -2069,8 +2075,10 @@ function runVisualTrial(t) {
 
   const finalize = () => {
     if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
+    if (stuckTimer) { clearTimeout(stuckTimer); stuckTimer = null; }
     finalizeCommon(t, makeRecord(t, picked, {
       rt_ms: pickedRt, actual_ms: actualMs, actual_frames: actualFrames,
+      present_failed: presentFailed || "",
       actual_s: actualS === null ? "" : Math.round(actualS * 1000) / 1000,
       last_draw_ms: lastDrawMs, blank_ms: blankMs,
       final_hold_ms: (lastDrawMs === null || blankMs === null) ? "" : (blankMs - lastDrawMs),
@@ -2181,6 +2189,23 @@ function runVisualTrial(t) {
       if (t.practice) setLines("");         // 提示が始まったら案内を消す
       introduced = true;
     };
+    // ---- 固まったときの逃げ道 ----------------------------------------
+    // 提示にかかるはずの時間を大きく超えても finish() に来ないときは、
+    // **回答できる状態にして先へ進めるようにする**。
+    // 記録には present_failed を立て、解析でこの試行を外せるようにする。
+    // ⚠ 提示そのものをやり直さない。もう一度見せると「1問1回」の前提が崩れ、
+    //   その試行だけ条件が変わってしまう。**捨てて先に進む**のが正しい。
+    const expectedMs = (Number(t.base_anim_ms) || CFG.visual.base_anim_ms || 300)
+                     + (Number(CFG.visual.fix_ms) || 0) + (Number(CFG.visual.gap_ms) || 0);
+    stuckTimer = setTimeout(() => {
+      if (!presenting) return;              // もう終わっている
+      presenting = false; presentFailed = true;
+      drawBlank(ctx);
+      if (tStim === null) tStim = performance.now();
+      document.getElementById("grid")
+        ?.querySelectorAll("button.kana").forEach(b => { b.disabled = false; });
+      setLines("うまく表示できませんでした。分からないまま，どれか1つを選んで先へお進みください。");
+    }, Math.max(8000, expectedMs + 8000));
     const finish = (now) => {
       drawBlank(ctx);
       blankMs = Math.round(now - tOn);
@@ -2193,6 +2218,7 @@ function runVisualTrial(t) {
         endpointFrames = holdFrames;
       }
       presenting = false;
+      if (stuckTimer) { clearTimeout(stuckTimer); stuckTimer = null; }
       // **ここが「提示が終わった」合図である。**
       // 薄い水準では画面に何も出ないまま終わるので、表の上の一行を書き換え、
       // 同時にボタンを押せるようにする。字が出た場所（canvas）ではなく
