@@ -51,8 +51,35 @@
   //   回答できない**設定なので、試行は1回きりで、当たる確率は約350万分の1である。
   const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const CODE_LEN = 6;
-  let completionCode = Array.from({ length: CODE_LEN },
-    () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
+  // ■ 2026-08-27、**作業者IDから決まる値に変えた**（丸山判断）。
+  //   それまでは毎回ランダムだったが、それだと掲載側のチェック設問（正解の事前登録）が
+  //   使えない。IDから決めれば、設問データのC列に正解を書いておけて、
+  //   Yahoo!側で完了コードの自動照合ができる。
+  //   ⚠ 計算式はこのファイルに載る＝読める人はコードを算出できる。
+  //     130円の課題でそこまでやる人は考えにくいが、**サーバ記録との照合は別途行う**
+  //     （承認判定の表。experiment/tools/build_yahoo_task_tsv.py と同じ式で作る）。
+  //   IDが無いとき（研究者のローカル確認など）は従来どおりランダム。
+  function codeFromWid(wid) {
+    // FNV-1a 32bit → 線形合同法で6文字。Python側(build_yahoo_task_tsv.py)と同一の式。
+    let h = 0x811c9dc5;
+    const src = "ifont-cc-2026|" + wid;
+    for (let i = 0; i < src.length; i++) {
+      h ^= src.charCodeAt(i);
+      // ⚠ 普通の掛け算だと 2^53 を超えて桁落ちする（Python側と食い違った）。
+      //   Math.imul で 32bit に収める。
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    let out = "";
+    for (let k = 0; k < CODE_LEN; k++) {
+      h = (Math.imul(h, 1664525) + 1013904223) >>> 0;
+      out += CODE_CHARS[h % CODE_CHARS.length];
+    }
+    return out;
+  }
+  let completionCode = workerId
+    ? codeFromWid(workerId)
+    : Array.from({ length: CODE_LEN },
+        () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 
   let sentTrials = 0;
 
