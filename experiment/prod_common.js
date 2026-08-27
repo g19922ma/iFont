@@ -323,8 +323,8 @@
       body += `<tr>${rows[i]}<td style="border:none;width:14px"></td>${rows[i + half]}</tr>`;
     }
     return `<div style="margin:18px auto 0;max-width:420px;background:#fbfcfe;border:1px solid #dde3ec;border-radius:10px;padding:12px">
-      <p style="margin:0 0 8px;font-size:14px"><b>チェック設問の答え</b></p>
-      <p style="margin:0 0 8px;font-size:12.5px;color:#556">タスクの中に「（ヒント：A）」のような設問がある場合は、下の表のヒントに対応する3つの番号を選んでください。</p>
+      <p style="margin:0 0 8px;font-size:14px"><b>完了コード</b></p>
+      <p style="margin:0 0 8px;font-size:12.5px;color:#556">タスクの画面に書かれた<b>ヒントの文字</b>に対応する3つの番号を、順番に選んでください。</p>
       <table style="margin:0 auto;border-collapse:collapse;font-size:15px">${body}</table>
     </div>`;
   }
