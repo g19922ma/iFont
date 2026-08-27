@@ -3,6 +3,45 @@
 > セッションをまたぐ作業状態の記録。プロジェクトの全履歴は `project/project_log_260723.md`、
 > セットアップと全体像は `project/handover_260723.md` を参照。
 
+## 2026-08-27（夜） 較正の全面再解析（WebKit描画不全の除外・2バッチ統合）→ `analyze_families_v2.py`
+
+### 現在の状態
+- **新スクリプト `experiment/tools/analyze_families_v2.py` が動く**。出力は
+  `project/data_calib2_live/analysis_families_v2/`（44本のCSV、.gitignore対象なので非コミット）。
+  再実行: `python3 experiment/tools/analyze_families_v2.py`（ブートストラップ込みで約7分）。
+- **旧 `analyze_families.py` の出力（`project/data_calib_20260825/analysis_families/` 21本と
+  `families_report.html`）は、ぼやけが絡む数値がすべて汚染**。棚卸し表は
+  `analysis_families_v2/contamination_inventory.csv`。
+- 旧レポートは**バッチ1のみ163人・WebKit込み**。v2は**両バッチ325人・WebKit除外**。
+
+### 覆った主要な結論
+1. **「ぼやけは床が高く、まったく分からない状態を作れない」は誤り。**
+   汚染時の床13.2% → WebKit除外で3.0%[1.5,5.9]。fade 3.3% / reveal 2.3% / wipe 5.0% と
+   統計的に区別がつかない（対比較6対すべて Holm後 p=1.00）。
+2. **ぼやけの μ が 47.3 → 54.0[51.7,55.7]、σ が 15.1 → 10.2 に。** k（組み合わせの写し指数）は
+   1.0997 → **0.9006**（−18%）。config の `composite_axis` は旧値のまま（要更新）。
+3. **「方式間のμ順位相関はほぼ0」は低検出力の産物**。旧はまぎれ字1セル n=9 で当てはめていた。
+   両バッチだと n≈46 になり ρ=+0.07〜+0.45。WebKit除外の効果ではない。
+4. **転写成立判定は天井の定義で結論が変わる**（旧λ基準 7成立/5一部 →
+   実測天井基準 11成立/1一部）。λ が自由推定で1.0に張り付くと旧基準は自動的に成立になる。
+
+### 覆らなかったこと
+聴覚側は完全に無傷（μの差 |Δ|≤1.2ms）。使える字は あ・か・ま の3字のみ。
+実質選択肢数「全部聞かせても2.0択」も同じ。2バッチの一致（fade −2.0pt / reveal −1.3pt、
+Holm後 p=1.00）も再現。速さの効果は reveal のみ +7.6pt[+2.2,+12.9]（Holm後 p=0.008）。
+
+### 残る未解決
+- **blur だけバッチ間で −7.2pt[−12.3,−2.0]（Holm後 p=0.02）の差が残る**（WebKit除外後）。
+  バッチ別の当てはめは μ=51.8（calib）/ 58.5（calib2）。文脈効果の可能性。
+- `transfer.js` の `compositeSplit` は config の固定 k を**warp表より先に**見るため、
+  組み合わせだけ字ごとの写しが効かない。が・ぱ では fade+wipe / reveal+wipe の
+  使える幅が進み具合の 0.6〜2.5% しかない（`composite_per_char.csv`）。
+
+### 次にやること
+1. `transfer_config.js` の `composite_axis` の k を再計算値へ（blur 1.0997→0.9006 が主）。
+2. `compositeSplit` を「warp表を先に、固定kはまぎれ字のフォールバック」に変える。
+3. 組み合わせの写しを、べき乗から**字ごとの5〜95%窓の対数線形**へ（使える幅が約2倍）。
+
 ## 2026-08-25 聴覚刺激を「さ」版で作り直し・関門を追加・視覚水準のフレーム量子化問題を発見（未解決）
 
 ### 概要
