@@ -69,3 +69,10 @@ project/data_calib_20260825/納品データ_0826.tsv
 project/data_calib_20260825/承認判定_0826.csv
 # 集計の中間ファイル（生データから再生成できる）
 project/data_calib_20260825/cube/
+
+# calib2 追いバッチ（2026-08-27・163人枠）の生データ。同じ理由で入れない。
+project/data_calib2_live/transfer_trials.csv
+project/data_calib2_live/transfer_wellbeing.csv
+project/data_calib2_live/transfer_roster.csv
+project/data_calib2_live/納品データ*.tsv
+project/data_calib2_live/承認判定_calib2.csv
