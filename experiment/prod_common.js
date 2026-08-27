@@ -290,15 +290,15 @@
     return `<div style="text-align:center;padding:24px 10px">
       <h1>全ての実験が終了しました</h1>
       <p>ご協力ありがとうございました。</p>
-      ${(opts && opts.codeNote) || `<p><b>完了コード</b>は以下です。参加したサービスの選択欄で順番に選んでください。</p>`}
-      <div style="margin:14px auto;max-width:300px">
+      ${(opts && opts.codeNote) || ""}
+      ${(opts && opts.hideCode) ? "" : `<div style="margin:14px auto;max-width:300px">
         ${completionCode.split("").map((d, i) =>
           `<div style="margin:10px 0">
              <div style="font-size:14px;color:#556">完了コード${i + 1}文字目</div>
              <div style="font-size:34px;font-weight:800;color:#1E2A5E;background:#f2f5f8;
                border:1px solid #dde3ec;border-radius:10px;padding:8px 0;margin-top:4px">${d}</div>
            </div>`).join("")}
-      </div>
+      </div>`}
       ${(opts && opts.hintTable) ? hintTableHTML() : ""}
       ${(opts && opts.hideMeta) ? "" :
         `<p class="muted">参加者ID: ${participantId} ／ 所要 ${seconds} 秒</p>`}</div>`;
