@@ -817,24 +817,39 @@ function makePlayer(stage, family, opts) {
   const hold = single ? t.single.hold_ms : t.sequence.hold_ms;
   const gapMs = single ? t.single.gap_ms : t.sequence.gap_ms;
   const cycleMs = chars.length * step + hold + gapMs;
-  const maxCycles = o.maxCycles || t.max_cycles || 0;
+  // ⚠ **`o.maxCycles || …` にしてはいけない**（2026-08-28 修正）。
+  //   0 は「無制限」の意図だが falsy なので t.max_cycles(=40) に落ちていた。
+  //   最後の「5方式を見くらべる」画面は maxCycles:0 を渡しているため、
+  //   約65秒で5つの見本がすべて消え、［見本を最初から流す］も効かなくなっていた。
+  const maxCycles = (o.maxCycles !== undefined && o.maxCycles !== null)
+    ? o.maxCycles : (t.max_cycles || 0);
 
   let raf = null, stopped = false, t0 = null;
   let lastCycle = -1, curIdx = -1, done = [], cycles = 0;
 
   const ctxFor = (i) => (ctxs.length > 1 ? ctxs[i] : ctxs[0]);
+  // その字のアニメが終わった時点の進み具合。転写では 1 まで行かない
+  // （うすいなら 3% 程度で終わる。その水準で読めるので、それが正しい転写である）。
+  const endSAt = chars.map((ch, i) => progs[i].fn(progs[i].dur_ms));
+  const endS = (ch) => { const i = chars.indexOf(ch); return i < 0 ? 1 : endSAt[i]; };
 
   // 取りこぼしの穴埋め。**横並びのときだけ**要る。
   // 画面が重いときや、参加者が別のタブに移っているあいだは、ブラウザが描画のコマを
   // 飛ばす。そのまま進むと「2文字目だけ出ていない」といった抜けが残ってしまう。
-  // そこで次の字に移るときに、まだ描き終わっていない手前の字を、
-  // **完成した姿で描き足して**から進む。
+  // そこで次の字に移るときに、まだ描き終わっていない手前の字を描き足してから進む。
+  //
+  // ⚠ **2026-08-28 に「進み具合1（完成形）」から「その字の終端の進み具合」に変えた。**
+  //   転写では進み具合が1まで行かない。うすい(fade)なら 3% 程度で終わる
+  //   （その水準で正答率85%に達するため、薄いままで読める。それが正しい転写である）。
+  //   1 で描き足すと、**横並びのときだけ次の字が始まった瞬間に真っ黒な完成形へ切り替わり**、
+  //   1字条件と見えるものが違ってしまう。「1字か5字か」を比べる実験なのに
+  //   比べる対象が別物になる（丸山指摘）。**終端の値で描けば1字条件とそろう。**
   function fillSkipped(upTo) {
     if (ctxs.length <= 1) return;
     for (let k = 0; k < upTo && k < chars.length; k++) {
       if (done[k]) continue;
       renderer.begin(chars[k], ctxFor(k));
-      renderer.draw(ctxFor(k), chars[k], 1);
+      renderer.draw(ctxFor(k), chars[k], endS(chars[k]));
       done[k] = true;
     }
   }
@@ -883,7 +898,14 @@ function makePlayer(stage, family, opts) {
   raf = requestAnimationFrame(frame);
   return {
     stop() { stopped = true; if (raf) cancelAnimationFrame(raf); },
-    restart() { t0 = null; lastCycle = -1; curIdx = -1; done = []; ctxs.forEach(drawBlank); },
+    restart() {
+      // ⚠ **stopped を戻し、ループを掛け直す**（2026-08-28 修正）。
+      //   これが無いと、max_cycles に達して止まったあとは
+      //   ［▶ もう一度みる］を押しても白紙のままだった。
+      t0 = null; lastCycle = -1; curIdx = -1; done = []; cycles = 0;
+      ctxs.forEach(drawBlank);
+      if (stopped) { stopped = false; raf = requestAnimationFrame(frame); }
+    },
     cycles: () => cycles,
     info: { step_ms: step, cycle_ms: cycleMs, anim_ms: animMax,
             progress_source: progs[0].source, n_chars: chars.length },
