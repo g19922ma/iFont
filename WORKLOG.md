@@ -3,6 +3,55 @@
 > セッションをまたぐ作業状態の記録。プロジェクトの全履歴は `project/project_log_260723.md`、
 > セットアップと全体像は `project/handover_260723.md` を参照。
 
+## 2026-08-28 情報量を目標にした warp 表（warp_v5_info）と見比べプレビュー
+
+### 現在の状態
+- **`experiment/tools/build_warp_v5_info.py`（新規）が動く。** 出力
+  `project/data_calib2_live/warp_v5_info/`（.gitignore 対象・非コミット）:
+  `transfer_warp_v5_info.json`（情報量を目標）/ `transfer_warp_v5_acc.json`（正答率を目標）/
+  `build_log_v5.csv`（32セル×2目標の可動域・丸め・成立判定）。
+  再実行: `python3 experiment/tools/build_warp_v5_info.py`（数秒）。
+- **`experiment/tools/build_warp_preview_info.py`（新規）が動く。** 出力
+  `experiment/warp_preview_info.html`（190KB・単一ファイル・`noindex,nofollow`・
+  `build_hosting.sh` の掲載一覧には**入れていない**・`warp_preview.html` と同じく非コミット）。
+  再実行: `python3 experiment/tools/build_warp_preview_info.py` → `open experiment/warp_preview_info.html`。
+- 本番の `experiment/transfer_warp.json` / `transfer_config.js` / `transfer.js` は**触っていない**。
+
+### 技術的な決定とその理由
+1. **情報量の指標は「相互情報量の字ごとの分け前」** `D_c(x)=KL(P(R|c,x)‖P(R|x))`。
+   `analyze_information.py` が①応答分布のエントロピー ②事前分布からの KL ③これ の3つを比べ、
+   ③を選んでいる。理由は「基準がその水準の実測の周辺分布なので事前の偏りが自動的に差し引かれ、
+   何も届いていなければ 0、字ごとに分けられる」。ここでもそれに従った。
+2. **曲線は推定し直さない。** `analysis_information/curves_info.csv`（袋詰め PAVA 済み）を
+   読み直して逆引きするだけにした。並べ替え検定つきの袋詰めは重く、やり直すと乱数でぶれて
+   `information_report.html` と数値が食い違うため。
+   検算として `warp_series.csv` と突き合わせている（最大差 0.005pt）。
+3. **正答率版も同じパイプラインで作り直した**（`transfer_warp_v5_acc.json`）。
+   warp_v4 の別推定と比べると「推定の違い」と「目標の違い」が混ざるため。
+   v5 の2つは**軸に載っている量だけが違う**。
+4. プレビューの描画は `transfer.js` の
+   `const SIZE = CFG.visual.size_px;` 〜 `function loadImage(` を**そのまま切り出して**貼る方式
+   （`build_warp_preview.py` / `check_warp_playback.js` と同じ手口）。目印が消えると止まる。
+
+### 結果（数値は build_log_v5.csv）
+- **転写できないセル（7点のあいだで進み具合が1ptも動かない）: 正答率版 4/32 → 情報量版 0/32。**
+  正答率版の内訳は うすい×が・うすい×し・うすい×つ・点が増える×し。
+- **「が」**（打ち切りなし 66試行・正答2＝3.0%・うち「か」57・答えは4種類、
+  10ms は答えが11種類に散る）。目標の軌跡が 0→3.3% ではなく **0.70→1.71 bit** になる。
+  うすい×が の別々の絵は 2枚 → 4枚、不成立 → 成立。
+- **打ち切り7点で別々の絵になる枚数（中央値）**: うすい 4.5→5.0 / 点が増える 6.0→7.0 /
+  ぼやけ 5.5→6.5 / 端から 6.0→7.0。
+- ⚠ **うすい（fade）はどちらの目標でも絵としては薄い。** この方式は見え方の変化がぜんぶ
+  進み具合 0〜3% に詰まっているため、情報量版の s≒1〜2% でも不透明度は数％。
+  変わったのは「7点のあいだで絵が動く」ことであって「はっきり見える」ことではない。
+  ページの §1 と §3-2 にその旨を明記した。
+
+### 次にやること
+- 丸山さんがプレビューを見て、**情報量を目標にするかどうかを決める**。
+- 採るなら `transfer_warp.json` の差し替えと `config_version` の更新。採らないならこのまま検討材料。
+- ⚠ 聴覚の曲線は最後の打ち切り（字ごとに 60〜125ms）より先へ伸ばさないので、
+  提示 300ms の後半はどちらの版も絵が止まる。これは既存の設計どおり（v4 も同じ）。
+
 ## 2026-08-27（夜） 較正の全面再解析（WebKit描画不全の除外・2バッチ統合）→ `analyze_families_v2.py`
 
 ### 現在の状態
