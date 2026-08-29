@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>実験C 構成案 2026-08-29</title>
+<style>
+:root{
+  --paper:#FBFAF7; --panel:#F4F1E9; --ink:#16181D; --ink2:#4C5058; --ink3:#7B7F88;
+  --rule:#DBD5C8; --rule2:#EAE5DA;
+  --ai:#23456F;      /* 藍 */
+  --matsuba:#3F6B4C; /* 松葉 */
+  --shu:#A93C2C;     /* 朱 */
+  --oudo:#7A5E1F;    /* 黄土 */
+  --c1:var(--ai); --c2:var(--matsuba); --c3:var(--shu); --c4:var(--oudo);
+  --disp:"Hiragino Mincho ProN","Yu Mincho","YuMincho","Hiragino Mincho Pro","MS PMincho",serif;
+  --body:"Hiragino Kaku Gothic ProN","Yu Gothic","YuGothic","Meiryo",system-ui,sans-serif;
+  --mono:ui-monospace,"SFMono-Regular","Menlo","Consolas",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);
+     font-family:var(--body);font-size:15px;line-height:1.85;
+     -webkit-font-smoothing:antialiased;letter-spacing:.01em}
+.wrap{max-width:980px;margin:0 auto;padding:0 28px 96px}
+
+/* ---- 表紙 ---- */
+.masthead{padding:64px 0 30px;border-bottom:2px solid var(--ink)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;
+         color:var(--ink3);text-transform:none;margin:0 0 18px}
+h1{font-family:var(--disp);font-weight:600;font-size:40px;line-height:1.35;
+   margin:0 0 10px;letter-spacing:.02em}
+.sub{font-family:var(--disp);font-size:19px;color:var(--ink2);margin:0 0 26px}
+.meta{display:flex;flex-wrap:wrap;gap:10px 30px;font-family:var(--mono);
+      font-size:11.5px;color:var(--ink3);padding-top:6px}
+
+/* ---- 要点 ---- */
+.tldr{margin:34px 0 8px;padding:24px 26px;background:var(--panel);
+      border-left:3px solid var(--ai)}
+.tldr h2{font-family:var(--disp);font-size:15px;margin:0 0 14px;letter-spacing:.14em;
+         color:var(--ai);font-weight:600}
+.tldr ol{margin:0;padding-left:1.3em}
+.tldr li{margin:0 0 9px}
+.tldr li:last-child{margin-bottom:0}
+
+/* ---- 節 ---- */
+section{margin:56px 0 0;padding-top:6px}
+.sechead{display:flex;align-items:baseline;gap:16px;border-bottom:1px solid var(--rule);
+         padding-bottom:9px;margin-bottom:22px}
+.secno{font-family:var(--disp);font-size:30px;line-height:1;color:var(--rule);
+       font-weight:600;min-width:1.4em}
+h2.sect{font-family:var(--disp);font-size:23px;font-weight:600;margin:0;letter-spacing:.03em}
+h3{font-family:var(--body);font-size:14.5px;font-weight:700;margin:30px 0 10px;
+   letter-spacing:.06em;color:var(--ink)}
+h3::before{content:"▍";color:var(--ai);margin-right:6px}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 16px;padding-left:1.5em}
+li{margin:0 0 6px}
+b,strong{font-weight:700}
+.q{color:var(--ink2);font-size:14px}
+.note{font-size:13px;color:var(--ink2);line-height:1.75}
+
+/* ---- 表 ---- */
+.tw{overflow-x:auto;margin:0 0 18px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.6}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule2);text-align:left;
+      vertical-align:top}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:700;font-size:12.5px;
+         letter-spacing:.05em;white-space:nowrap}
+tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;
+          white-space:nowrap}
+.ch{font-family:var(--disp);font-size:17px;font-weight:600}
+.sepr td{border-top:1.5px solid var(--rule)}
+caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--ink2);
+        padding:0 0 8px;line-height:1.6}
+caption b{color:var(--ink)}
+
+/* 2x2 の設計表 */
+table.grid2{width:auto;min-width:520px;margin-bottom:20px}
+table.grid2 th,table.grid2 td{border:1px solid var(--rule);padding:12px 16px}
+table.grid2 thead th{border-bottom:1px solid var(--rule)}
+table.grid2 td .cn{font-family:var(--disp);font-size:20px;font-weight:600;
+                   margin-right:8px;vertical-align:-1px}
+.c1 .cn,.k1{color:var(--c1)} .c2 .cn,.k2{color:var(--c2)}
+.c3 .cn,.k3{color:var(--c3)} .c4 .cn,.k4{color:var(--c4)}
+
+/* ---- フィルムストリップ ---- */
+figure{margin:26px 0 30px}
+figcaption{font-size:12.5px;color:var(--ink2);line-height:1.7;margin-top:12px;
+           padding-left:12px;border-left:2px solid var(--rule)}
+.strip{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+       padding:2px 0;background:#fff}
+.striprow{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--rule2)}
+.striprow:last-child{border-bottom:0}
+.rowlab{flex:0 0 128px;padding:12px 10px 12px 12px;border-right:1px solid var(--rule2);
+        display:flex;flex-direction:column;justify-content:center;gap:3px}
+.rowlab .fam{font-size:14px;font-weight:700}
+.rowlab .mid{font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+.frames{display:flex;flex:1 1 auto;min-width:0}
+.fr{flex:1 1 0;min-width:0;padding:10px 3px 8px;text-align:center;
+    border-left:1px solid var(--rule2)}
+.fr:first-child{border-left:0}
+.fr.zero{background:#F7F4EC}
+.fr canvas{width:100%;max-width:76px;height:auto;display:block;margin:0 auto;
+           border:1px solid var(--rule2);background:#fff}
+.fr .cap{font-family:var(--mono);font-size:9.5px;color:var(--ink3);
+         margin-top:5px;line-height:1.45}
+.fr .cap b{color:var(--ink2);font-weight:600}
+.fr.blank canvas{border-color:var(--shu);border-style:dashed}
+.fr.blank .cap b{color:var(--shu)}
+.bar{height:4px;background:var(--rule2);margin:4px auto 0;max-width:76px}
+.bar i{display:block;height:100%;background:var(--ai)}
+.fr.zero .bar{background:#E6E0D2}
+.playbar{display:flex;align-items:center;gap:12px;margin:10px 0 0;
+         font-family:var(--mono);font-size:11px;color:var(--ink3)}
+button.play{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
+            background:#fff;border:1px solid var(--ink);color:var(--ink);
+            padding:5px 13px;cursor:pointer;border-radius:0}
+button.play:hover{background:var(--ink);color:#fff}
+button.play:focus-visible{outline:2px solid var(--ai);outline-offset:2px}
+
+/* ---- 注記ボックス ---- */
+.callout{margin:20px 0;padding:16px 20px;border:1px solid var(--rule);
+         background:#fff;font-size:13.5px;line-height:1.8}
+.callout.warn{border-left:3px solid var(--shu);background:#FCF7F5}
+.callout .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+              color:var(--shu);display:block;margin-bottom:7px}
+.callout.plain .lbl{color:var(--ai)}
+.callout p:last-child{margin-bottom:0}
+
+/* ---- 判断リスト ---- */
+.asks{list-style:none;padding:0;margin:0;counter-reset:ask}
+.asks li{counter-increment:ask;border-top:1px solid var(--rule);padding:20px 0 18px;
+         margin:0;display:flex;gap:20px}
+.asks li:last-child{border-bottom:1px solid var(--rule)}
+.asks li::before{content:counter(ask);font-family:var(--disp);font-size:26px;
+                 line-height:1;color:var(--shu);flex:0 0 34px;padding-top:2px}
+.asks .q2{font-weight:700;display:block;margin-bottom:6px}
+.asks .body{flex:1 1 auto}
+
+.src{font-family:var(--mono);font-size:11px;color:var(--ink3);margin:6px 0 22px;
+     line-height:1.7}
+.src::before{content:"出典 ";letter-spacing:.12em}
+hr.end{border:0;border-top:1px solid var(--rule);margin:64px 0 20px}
+
+@media (max-width:760px){
+  .wrap{padding:0 16px 60px} h1{font-size:29px}
+  .rowlab{flex:0 0 92px} .asks li{gap:12px}
+}
+@media print{
+  @page{margin:16mm 14mm}
+  body{background:#fff;font-size:10.5pt;line-height:1.7}
+  .wrap{max-width:none;padding:0}
+  .masthead{padding-top:0}
+  section{margin-top:26px;page-break-inside:auto}
+  .sechead,h3{page-break-after:avoid}
+  figure,table,.callout,.tldr,.strip{page-break-inside:avoid}
+  .playbar{display:none}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){button.play{display:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">実験C ／ 見え心地の評価 ／ 構成案</p>
+  <h1>音の「分かっていく過程」を<br>文字の動きに写す — その写し方を選ぶ</h1>
+  <p class="sub">4通りの合わせ方を比べる実験の組み立て、必要人数、ご判断いただきたい3点</p>
+  <div class="meta">
+    <span>2026年8月29日</span><span>丸山</span>
+    <span>栗原先生へ</span><span>A4で6ページ程度</span>
+  </div>
+</header>
+
+<div class="tldr">
+  <h2>先にお伝えしたいこと</h2>
+  <ol>
+    <li>実験Cは<b>正解のない実験</b>です。文字の動きを見て「続けて見ていられるか」「変化が自然か」「わずらわしくないか」を7段階で答えてもらいます。正しく読めるかどうかは較正（415人）ですでに測り終えています。</li>
+    <li>較正で得たデータは<b>2通りに読めます</b>（正答率／絞れ具合）。そこから動きを作る合わせ方も<b>2通りあります</b>（曲線の形まで合わせる／半分まで来た時刻だけ合わせる）。2×2で4条件になり、これを比べます。</li>
+    <li>方式は<b>ぼやけ・端から</b>の2つに絞ります。1人が見るのは10本・約7分。<b>18種類</b>を人ごとに分けて配り、人数で本数を補います。</li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">一</span>
+    <h2 class="sect">この実験で何を知りたいか</h2></div>
+
+  <p>音声を途中で切って聞かせると、人は少しずつ答えを絞り込んでいきます。その「分かっていく過程」を、文字がだんだん現れるアニメーションで<b>見た目に写す</b>手法を作っています。</p>
+
+  <p>写し方には何通りかあります。どれも較正データと矛盾しませんが、<b>見え方はまったく違います</b>。実験Cは、そのどれが見ていて自然かを人に聞く実験です。</p>
+
+  <div class="callout plain">
+    <span class="lbl">測るもの</span>
+    <p>1本ごとに7段階で3項目 ——「この表示は継続して見やすい」「変化が自然に感じる」「目障り・わずらわしい」（3つ目だけ向きが逆）。最後に、4条件を並べて「字幕として普段使うならどれか」を選んでもらいます。</p>
+    <p style="margin-top:8px"><b>正誤はありません。</b>正しく読めるかどうかは較正で測り終えています。</p>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">二</span>
+    <h2 class="sect">較正データは2通りに読める</h2></div>
+
+  <p>較正では、音声を7つの長さで切って「何と聞こえたか」を68択で答えてもらいました。この結果は2通りに読めます。</p>
+
+  <ul>
+    <li><b>正答率</b> …… どこまで正しく答えられるか。合っているか外れているかだけを見ます。</li>
+    <li><b>絞れ具合</b> …… 外れた答えの中身まで使い、答えが何択まで絞れているかを見ます。</li>
+  </ul>
+
+  <h3>「が」が決定的な例です</h3>
+
+  <p>音声の「が」は、いちばん長く聞かせた2水準（60ms・85ms）の<b>68回のうち、正しく「が」と答えられたのは1回</b>だけでした。7つの長さ236回すべてを通しても正解は2回（0.8%）です。ところが<b>「か」と答えた人が68回中56回（82%）</b>います。</p>
+
+  <p>いっぽう、ほとんど何も聞こえない10msでは、8字ぶん270回の答えが<b>40種類に散り</b>ます。多い順に「つ」61・「ぷ」25・「か」23・「ち」20・「ん」16で、上位5種類でようやく半分です。</p>
+
+  <div class="callout">
+    <span class="lbl">ここが分かれ目</span>
+    <p>どちらも「ほとんど当たらない」のは同じです。しかし<b>「が」は答えが1つに絞れていて、絞り先が正解でないだけ</b>。10msは答えがまだ散らばったままです。正答率だけを見ると、この2つが同じ「当たらない」に見えてしまいます。</p>
+  </div>
+  <p class="src">project/data_calib2_live/transfer_trials.csv ／ analysis_information/prior_summary.csv, prior_response_distribution.csv</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">三</span>
+    <h2 class="sect">合わせ方も2通りある — 全部で4条件</h2></div>
+
+  <p>読み方が2通りあるのに加えて、その曲線を動きに写すときの<b>合わせ方</b>も2通りあります。</p>
+
+  <ul>
+    <li><b>形まで合わせる</b> …… 音を聞いて分かっていく曲線を、そのままの形で動きに写す。いつどれだけ分かるかを全部そろえます。</li>
+    <li><b>半分まで来た時刻だけ合わせる</b> …… 「半分まで分かった瞬間」だけをそろえ、そこに至る進み方は動き側のままにします。時間軸に沿って前後にずらすだけです。</li>
+  </ul>
+
+  <div class="tw">
+  <table class="grid2">
+    <thead><tr><th></th><th>形まで合わせる</th><th>半分まで来た時刻だけ合わせる</th></tr></thead>
+    <tbody>
+      <tr><th>正答率で読む</th>
+        <td class="c1"><span class="cn">①</span>形まで・正答率</td>
+        <td class="c3"><span class="cn">③</span>半分・正答率</td></tr>
+      <tr><th>絞れ具合で読む</th>
+        <td class="c2"><span class="cn">②</span>形まで・絞れ具合</td>
+        <td class="c4"><span class="cn">④</span>半分・絞れ具合</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="note">③④の正式な呼び方は「到達点の半分で合わせる（正答率）／（絞れ具合）」です。以下では短く「半分・正答率」「半分・絞れ具合」と書きます。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">四</span>
+    <h2 class="sect">「半分」をどう決めるか</h2></div>
+
+  <p>③④は「半分まで来た時刻」をそろえます。この<b>半分の決め方を、今日の議論で変えました</b>。</p>
+
+  <h3>単純に「正答率50%」では決められません</h3>
+
+  <p>音を最後まで聞かせても正答率が50%に届かない字があるからです。</p>
+
+  <div class="tw">
+  <table>
+    <caption><b>表1.</b> 音声を最後まで聞かせたときの正答率（到達点）と、そこから決まる中点。到達点は単調回帰の曲線の終端値。</caption>
+    <thead><tr>
+      <th>字</th><th class="n">到達点</th><th class="n">中点となる正答率</th>
+      <th class="n">中点の時刻</th><th>単純に「50%」を使うと</th></tr></thead>
+    <tbody>
+      <tr><td class="ch">あ</td><td class="n">97.2%</td><td class="n">49.3%</td><td class="n">15.7ms</td><td>15.8msで届く</td></tr>
+      <tr><td class="ch">か</td><td class="n">97.2%</td><td class="n">49.3%</td><td class="n">26.1ms</td><td>28.1msで届く</td></tr>
+      <tr><td class="ch">ま</td><td class="n">97.2%</td><td class="n">49.3%</td><td class="n">44.4ms</td><td>44.5msで届く</td></tr>
+      <tr class="sepr"><td class="ch">つ</td><td class="n">69.1%</td><td class="n">35.3%</td><td class="n">10msより前</td><td>21.9msで届くが、データを200回作り直すと11回は届かない</td></tr>
+      <tr><td class="ch">ぱ</td><td class="n">50.8%</td><td class="n">26.2%</td><td class="n">19.4ms</td><td class="k3">65.1msで届くが、200回のうち<b>91回は届かない</b></td></tr>
+      <tr><td class="ch">ら</td><td class="n">42.0%</td><td class="n">21.8%</td><td class="n">45.5ms</td><td class="k3"><b>届かない</b>（110ms聞かせても42.0%）</td></tr>
+      <tr><td class="ch">し</td><td class="n">28.4%</td><td class="n">14.9%</td><td class="n">24.7ms</td><td class="k3"><b>届かない</b>（60ms聞かせても28.4%）</td></tr>
+      <tr><td class="ch">が</td><td class="n">3.3%</td><td class="n">2.4%</td><td class="n">決められない</td><td class="k3"><b>届かない</b>（85ms聞かせても3.3%）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">project/data_calib2_live/analysis_three_indices/three_indices.csv, absolute50.csv, tables.txt</p>
+
+  <p><b>8字のうち4字（が・し・ら・ぱ）で、共通の50%という基準が使えません。</b>「50%に届く字は50%、届かない字は到達点」という案も考えましたが、最高の成績が49%か51%かで基準の意味が入れ替わってしまうので採りませんでした（外部に相談した2件が、独立に同じ結論でした）。</p>
+
+  <h3>採用した決め方 — 到達点の半分</h3>
+
+  <p><b>当てずっぽうの水準から、その字が到達する上限までの、ちょうど半分</b>に達した時刻を中点とします。当てずっぽうの水準は、音声が68択なので1/68＝1.47%（画面の課題は72択なので1/72＝1.39%）。上限は単調回帰の曲線の終端値です（観測された最大値ではありません。たまたま高く出た1点を拾ってしまうためです）。</p>
+
+  <p class="note">薬の効き方を測るときのEC50（最大の効きの半分が出る濃度）と同じ考え方です。この決め方なら、表1の「中点となる正答率」の列のとおり、8字すべてで基準が決まります。</p>
+
+  <h3>「が」だけは例外です</h3>
+
+  <div class="callout warn">
+    <span class="lbl">が</span>
+    <p><b>正答率では中点が決められません。</b>到達点3.3%の95%信頼区間が0〜9.7%で、当てずっぽうの1.47%を含んでしまいます。到達点そのものが「当てずっぽうと区別がつかない」ので、その途中の点も置きようがありません。</p>
+    <p style="margin-top:8px"><b>絞れ具合で見れば、普通に扱えます。</b>絞れ具合を縦軸にすると「が」の中点は16.2msに決まり、8字すべてで中点が求まります。二節で書いた「答えは絞れているが正解ではない」という状態を、絞れ具合はきちんと拾うためです。</p>
+  </div>
+
+  <p class="note">なお「つ」は、この決め方だと中点が測った範囲（10ms〜）より前に来てしまいます。外挿はしない方針なので、この字の扱いは別に決める必要があります。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">五</span>
+    <h2 class="sect">実際にどう見えるか</h2></div>
+
+  <div class="callout warn">
+    <span class="lbl">数値の但し書き</span>
+    <p>この節の絵と数値は、<b>ひとつ前の決め方（到達点の半分ではなく、上限の半分）</b>で作った表から引いています。新しい決め方での表は現在作り直し中です。</p>
+    <p style="margin-top:8px">6字（あ・か・ま・ぱ・し・ら）では中点が0.1〜1.3msしか動かないので、<b>見え方の話はそのまま通用します</b>。決め方の変更で扱いが変わるのは「が」と「つ」の2字だけです。</p>
+  </div>
+
+  <h3>① 形まで合わせたとき（「ま」1字・4方式）</h3>
+  <div class="strip" id="fig-shape">
+<div class="striprow">
+<div class="rowlab"><span class="fam">うすい</span><span class="mid">途中の絵 4/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00000" data-play="acc_shape|fade|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">10ms<br><b>4%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00200"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">25ms<br><b>4%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00600"></canvas><div class="bar"><i style="width:14%"></i></div><div class="cap">35ms<br><b>14%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.02370"></canvas><div class="bar"><i style="width:73%"></i></div><div class="cap">50ms<br><b>73%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.02900"></canvas><div class="bar"><i style="width:84%"></i></div><div class="cap">65ms<br><b>84%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.03190"></canvas><div class="bar"><i style="width:89%"></i></div><div class="cap">85ms<br><b>89%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.21040"></canvas><div class="bar"><i style="width:96%"></i></div><div class="cap">125ms<br><b>96%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">点が増える</span><span class="mid">途中の絵 3/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00000" data-play="acc_shape|reveal|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00080"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">10ms<br><b>0%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00200"></canvas><div class="bar"><i style="width:3%"></i></div><div class="cap">25ms<br><b>3%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00630"></canvas><div class="bar"><i style="width:10%"></i></div><div class="cap">35ms<br><b>10%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.03960"></canvas><div class="bar"><i style="width:73%"></i></div><div class="cap">50ms<br><b>73%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.05490"></canvas><div class="bar"><i style="width:84%"></i></div><div class="cap">65ms<br><b>84%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.06400"></canvas><div class="bar"><i style="width:89%"></i></div><div class="cap">85ms<br><b>89%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.08040"></canvas><div class="bar"><i style="width:96%"></i></div><div class="cap">125ms<br><b>96%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">ぼやけ</span><span class="mid">途中の絵 3/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.00000" data-play="acc_shape|blur|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:2%"></i></div><div class="cap">10ms<br><b>2%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.05670"></canvas><div class="bar"><i style="width:2%"></i></div><div class="cap">25ms<br><b>2%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.16280"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">35ms<br><b>4%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.60680"></canvas><div class="bar"><i style="width:73%"></i></div><div class="cap">50ms<br><b>73%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.66620"></canvas><div class="bar"><i style="width:84%"></i></div><div class="cap">65ms<br><b>84%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.69500"></canvas><div class="bar"><i style="width:89%"></i></div><div class="cap">85ms<br><b>89%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.77300"></canvas><div class="bar"><i style="width:96%"></i></div><div class="cap">125ms<br><b>96%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">端から</span><span class="mid">途中の絵 4/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00000" data-play="acc_shape|wipe|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00810"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">10ms<br><b>0%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.01680"></canvas><div class="bar"><i style="width:2%"></i></div><div class="cap">25ms<br><b>2%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.02410"></canvas><div class="bar"><i style="width:17%"></i></div><div class="cap">35ms<br><b>17%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.05900"></canvas><div class="bar"><i style="width:73%"></i></div><div class="cap">50ms<br><b>73%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.07580"></canvas><div class="bar"><i style="width:84%"></i></div><div class="cap">65ms<br><b>84%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.11750"></canvas><div class="bar"><i style="width:89%"></i></div><div class="cap">85ms<br><b>89%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.40760"></canvas><div class="bar"><i style="width:96%"></i></div><div class="cap">125ms<br><b>96%</b></div></div>
+</div></div>
+</div>
+<div class="playbar"><button class="play" data-target="fig-shape">▶ 300ms で流す</button><span>画面上でのみ動きます</span></div>
+  <figcaption><b>図の読み方。</b>いちばん左（うすい地）は参加者が見はじめた瞬間の絵で、数字はアニメの進み具合。以降の7枚は、音声の打ち切り7点に対応する絵。青い横棒と数字は<b>その絵を見て正しく読める割合</b>（較正から推定した値）。赤い破線枠は完全な白（何も出ていない絵）。<br>
+  <span class="k3"><b>紙面では見えないもの。</b></span>うすい・点が増えるが実際に使う濃さは0.4〜3.5%というごく狭い幅です。本番の画面（暗い部屋・一辺256ピクセル）では3.3%の濃さでも9割の人が読めますが、この小さい図や印刷では白に見えます。<b>絵が白く見えても、青い横棒が伸びていればその絵は読めています。</b></figcaption>
+
+  <h3>③ 半分まで来た時刻だけ合わせたとき（同じ「ま」・同じ4方式）</h3>
+  <div class="strip" id="fig-mid">
+<div class="striprow">
+<div class="rowlab"><span class="fam">うすい</span><span class="mid">途中の絵 0/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00000" data-play="acc_mid|fade|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">10ms<br><b>4%</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">25ms<br><b>4%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.00330"></canvas><div class="bar"><i style="width:4%"></i></div><div class="cap">35ms<br><b>4%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.03300"></canvas><div class="bar"><i style="width:91%"></i></div><div class="cap">50ms<br><b>91%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.08300"></canvas><div class="bar"><i style="width:95%"></i></div><div class="cap">65ms<br><b>95%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.14960"></canvas><div class="bar"><i style="width:96%"></i></div><div class="cap">85ms<br><b>96%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="fade" data-ch="ま" data-s="0.28300"></canvas><div class="bar"><i style="width:97%"></i></div><div class="cap">125ms<br><b>97%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">点が増える</span><span class="mid">途中の絵 1/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00000" data-play="acc_mid|reveal|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">10ms<br><b>0%</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">25ms<br><b>0%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.00480"></canvas><div class="bar"><i style="width:8%"></i></div><div class="cap">35ms<br><b>8%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.04770"></canvas><div class="bar"><i style="width:79%"></i></div><div class="cap">50ms<br><b>79%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.09770"></canvas><div class="bar"><i style="width:100%"></i></div><div class="cap">65ms<br><b>100%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.16430"></canvas><div class="bar"><i style="width:100%"></i></div><div class="cap">85ms<br><b>100%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="reveal" data-ch="ま" data-s="0.29770"></canvas><div class="bar"><i style="width:100%"></i></div><div class="cap">125ms<br><b>100%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">ぼやけ</span><span class="mid">途中の絵 6/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.38046" data-play="acc_mid|blur|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>38.0%進</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.41380"></canvas><div class="bar"><i style="width:20%"></i></div><div class="cap">10ms<br><b>20%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.46380"></canvas><div class="bar"><i style="width:26%"></i></div><div class="cap">25ms<br><b>26%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.49710"></canvas><div class="bar"><i style="width:36%"></i></div><div class="cap">35ms<br><b>36%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.54710"></canvas><div class="bar"><i style="width:59%"></i></div><div class="cap">50ms<br><b>59%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.59710"></canvas><div class="bar"><i style="width:71%"></i></div><div class="cap">65ms<br><b>71%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.66380"></canvas><div class="bar"><i style="width:83%"></i></div><div class="cap">85ms<br><b>83%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="blur" data-ch="ま" data-s="0.79710"></canvas><div class="bar"><i style="width:98%"></i></div><div class="cap">125ms<br><b>98%</b></div></div>
+</div></div>
+<div class="striprow">
+<div class="rowlab"><span class="fam">端から</span><span class="mid">途中の絵 2/7</span></div>
+<div class="frames">
+<div class="fr zero"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00000" data-play="acc_mid|wipe|ま"></canvas><div class="bar"></div><div class="cap">見はじめ<br><b>0.0%進</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00000"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">10ms<br><b>0%</b></div></div>
+<div class="fr blank"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00060"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">25ms<br><b>0%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.00670"></canvas><div class="bar"><i style="width:0%"></i></div><div class="cap">35ms<br><b>0%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.05670"></canvas><div class="bar"><i style="width:71%"></i></div><div class="cap">50ms<br><b>71%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.10670"></canvas><div class="bar"><i style="width:88%"></i></div><div class="cap">65ms<br><b>88%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.17340"></canvas><div class="bar"><i style="width:92%"></i></div><div class="cap">85ms<br><b>92%</b></div></div>
+<div class="fr"><canvas width="256" height="256" data-fam="wipe" data-ch="ま" data-s="0.30670"></canvas><div class="bar"><i style="width:93%"></i></div><div class="cap">125ms<br><b>93%</b></div></div>
+</div></div>
+</div>
+<div class="playbar"><button class="play" data-target="fig-mid">▶ 300ms で流す</button><span>画面上でのみ動きます</span></div>
+  <figcaption>同じ字・同じ方式でも、合わせ方を変えるとこれだけ違って見えます。<b>うすい・点が増えるでは、青い横棒がほぼゼロのまま3枚続き、4枚目でいきなり8〜9割まで跳ね上がります</b>（真っ白が3枚続いて、いきなり読める絵が4枚出る）。ぼやけは見はじめから絵が出ていて、7枚が20 → 26 → 36 → 59 → 71 → 83 → 98% と少しずつ変わります。<br>
+  この「ま」は端からにとっても難しい字で、③で真っ白が出るのは8字のうちこの字だけです（56枚中2枚がここに集まっています）。</figcaption>
+
+  <h3>読み取れること</h3>
+
+  <ul>
+    <li><b>③④のうすい・点が増えるは、途中の絵がほとんど出ません。</b>③のうすい「ま」では、7枚のうち最初の3枚は読み取れる度合いが3.6%（うち2枚は完全な白、1枚は255段階の1）。4枚目でいきなり90.6%になり、そのあとは94.6 → 95.6 → 97.1%です。<b>真っ白が3枚続いて、いきなり読める絵が4枚出る</b>という見え方になります。</li>
+    <li><b>ぼやけと端からは、③④でも途中の絵が出ます。</b>③のぼやけ「ま」は 20.4 → 26.2 → 36.1 → 58.6 → 71.1 → 83.2 → 97.7% と、7枚すべてが違う段階です。8字ぶんの平均で見ると、7枚のうち途中の絵はぼやけ5.5枚・端から5.1枚。真っ白はぼやけが56枚中0枚、端からが2枚（2枚とも「ま」）で、うすい・点が増えるの11枚とは大きく違います。</li>
+    <li><b>③④のぼやけは、始まった時点ですでに平均44%進んだ状態から見えます。</b>中点だけを合わせるやり方は、進み方の形を変えずに全体を時間軸に沿ってずらします。ぼやけは進むのが早いため、そろえると「始まる前」の部分が切り落とされ、参加者が見はじめた時点ではもう絵が進んでいます。</li>
+  </ul>
+
+  <div class="tw">
+  <table>
+    <caption><b>表2.</b> 4条件×4方式の要約（本命8字ぶん）。<b>途中の絵</b>＝真っ白でも完成形でもない絵の枚数（7枚中の平均）。<b>真っ白</b>＝8字×7枚＝56枚のうち何も出ていない枚数。<b>見はじめの進み具合</b>＝参加者が見はじめた瞬間にアニメがどこまで進んでいるか（0%＝何も出ていない、100%＝完全に出た）。</caption>
+    <thead><tr><th>条件</th><th>方式</th><th class="n">途中の絵<br>（7枚中）</th><th class="n">真っ白<br>（56枚中）</th><th class="n">見はじめの<br>進み具合</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="4" class="k1"><b>① 形まで・正答率</b></td><td>うすい</td><td class="n">4.25</td><td class="n">4</td><td class="n">0.3%</td></tr>
+      <tr><td>点が増える</td><td class="n">4.38</td><td class="n">3</td><td class="n">0.2%</td></tr>
+      <tr><td>ぼやけ</td><td class="n">4.25</td><td class="n">2</td><td class="n">11.6%</td></tr>
+      <tr><td>端から</td><td class="n">4.38</td><td class="n">2</td><td class="n">3.1%</td></tr>
+      <tr class="sepr"><td rowspan="4" class="k2"><b>② 形まで・絞れ具合</b></td><td>うすい</td><td class="n">6.25</td><td class="n">0</td><td class="n">0.6%</td></tr>
+      <tr><td>点が増える</td><td class="n">5.25</td><td class="n">0</td><td class="n">0.3%</td></tr>
+      <tr><td>ぼやけ</td><td class="n">4.75</td><td class="n">0</td><td class="n">18.5%</td></tr>
+      <tr><td>端から</td><td class="n">3.25</td><td class="n">0</td><td class="n">1.1%</td></tr>
+      <tr class="sepr"><td rowspan="4" class="k3"><b>③ 半分・正答率</b></td><td>うすい</td><td class="n">1.50</td><td class="n">11</td><td class="n">0.0%</td></tr>
+      <tr><td>点が増える</td><td class="n">2.50</td><td class="n">11</td><td class="n">0.0%</td></tr>
+      <tr><td>ぼやけ</td><td class="n">5.50</td><td class="n">0</td><td class="n">44.1%</td></tr>
+      <tr><td>端から</td><td class="n">5.12</td><td class="n">2</td><td class="n">23.8%</td></tr>
+      <tr class="sepr"><td rowspan="4" class="k4"><b>④ 半分・絞れ具合</b></td><td>うすい</td><td class="n">1.88</td><td class="n">4</td><td class="n">0.0%</td></tr>
+      <tr><td>点が増える</td><td class="n">2.62</td><td class="n">0</td><td class="n">0.0%</td></tr>
+      <tr><td>ぼやけ</td><td class="n">5.75</td><td class="n">0</td><td class="n">44.2%</td></tr>
+      <tr><td>端から</td><td class="n">3.88</td><td class="n">0</td><td class="n">9.8%</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">project/data_calib2_live/warp_mid/gate_metrics_4cond.csv（ひとつ前の決め方で作った表）</p>
+
+  <div class="callout plain">
+    <span class="lbl">外さずに残す理由</span>
+    <p>「真っ白が続いて、いきなり出る」という見え方も、<b>見え心地の実験では立派な評価対象です</b>。既存の13本には比較対象として「しばらく何も出ず、一気に出る」という見本がすでに入っており、③のうすい・点が増えるは見え方としてそれに近づきます。<b>参考として1本ずつ残し</b>、実際に人がどう感じるかを聞きます。</p>
+  </div>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">六</span>
+    <h2 class="sect">提案する構成</h2></div>
+
+  <p>本数が増えるので、<b>1人あたりは10本・約7分に収め、種類は人ごとに分けて配ります</b>。人数を増やすことで1種類あたりの評定数を確保します。</p>
+
+  <h3>何を全員に見せ、何を分けるか</h3>
+
+  <p>いちばん知りたいのは<b>合わせ方4条件の違い</b>なので、そこは<b>同じ人の中に残します</b>（同じ人が4条件すべてを見る）。人ごとに分けるのは方式です。</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>軸</th><th>通り</th><th>割り振り</th><th>ねらい</th></tr></thead>
+    <tbody>
+      <tr><td><b>合わせ方</b></td><td>①②③④の4通り</td><td class="k1"><b>全員が4つとも見る</b></td><td>いちばん知りたい比較。同じ人の中で比べれば、人ごとの評定の甘辛が消える</td></tr>
+      <tr><td><b>出し方</b></td><td>1字だけ／5字を並べる の2通り</td><td class="k1"><b>全員が両方見る</b></td><td>5字並べたときの見え方を知りたい。これも同じ人の中で比べる</td></tr>
+      <tr><td><b>方式</b></td><td>ぼやけ／端から の2通り</td><td><b>人ごとに割り当てる</b></td><td>本数を10本に収めるため。方式どうしの比較は既存13本で聞き済み</td></tr>
+      <tr><td><b>参考</b></td><td>うすい×③／点が増える×③（1字）</td><td class="k1"><b>全員が見る</b></td><td>「真っ白が続いて、いきなり出る」表示への反応を取る</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="tw">
+  <table>
+    <caption><b>表3.</b> 種類の一覧。全部で18種類、1人が見るのは10本。</caption>
+    <thead><tr><th>内訳</th><th class="n">種類</th><th class="n">1人が見る本数</th></tr></thead>
+    <tbody>
+      <tr><td>ぼやけ × 4条件 × 2通りの出し方</td><td class="n">8</td><td class="n">8（割り当てられた人のみ）</td></tr>
+      <tr><td>端から × 4条件 × 2通りの出し方</td><td class="n">8</td><td class="n">8（割り当てられた人のみ）</td></tr>
+      <tr><td>うすい × ③（1字）</td><td class="n">1</td><td class="n">1</td></tr>
+      <tr><td>点が増える × ③（1字）</td><td class="n">1</td><td class="n">1</td></tr>
+      <tr><td><b>合計</b></td><td class="n"><b>18</b></td><td class="n"><b>10</b></td></tr>
+      <tr class="sepr"><td>＋ 4条件を並べて選ばせる強制選択（1字版・5字版）</td><td class="n">—</td><td class="n">2問</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>10本の並び順は人ごとに入れ替えます（前に見たものに引きずられるのを防ぐため）。強制選択の2問は、その人に割り当てられた方式で出します。</p>
+
+  <h3>1人あたりの時間</h3>
+
+  <ul>
+    <li>1字の見本は<b>1周1.8秒</b>（アニメ300ms＋完成形のまま1200ms＋間300ms）。</li>
+    <li>5字の見本は<b>1周5.0秒</b>（5字×〈300ms＋字間300ms〉＋完成形のまま1500ms＋間500ms）。</li>
+    <li>既存の13本の設計が約7〜8分。1本あたり33〜37秒の見当です。</li>
+    <li>これを当てはめると、<b>10本＋2問で約6〜7分</b>。5字の見本が5本入るぶん長くなるので、実際に測って7分に収まることを確かめます。</li>
+  </ul>
+  <p class="src">experiment/transfer_comfort_config.js の timing（1周の長さは計算値。1人あたりの所要は既存設計からの見積もり）</p>
+
+  <h3>5字に何を使うか</h3>
+
+  <p>いまの5字は<b>「あ・か・し・ま・ら」</b>です。この資料ではこのままとしますが、選択肢が2つあります。ひとつは<b>濁点のある字を入れる</b>こと（「が」のように答えが1つに絞れる字が入ると、合わせ方の違いが見えやすくなります）。もうひとつは<b>紛れ字から選ぶ</b>ことで、較正では音声59字・画面64字の紛れ字も測ってあります（1字あたり音声43〜93回、画面97〜287回）。ただし進み方の表は本命8字ぶんしかないため、紛れ字を使う場合は簡易な写し方になります。実験Cは写しの精度が要らないので、それでも成立します。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">七</span>
+    <h2 class="sect">必要人数の見積もり</h2></div>
+
+  <div class="callout plain">
+    <span class="lbl">仮定 — 実測ではなく計算です</span>
+    <p>① 4条件は同じ人が全部見るので「対応のある比較」になる。② 4条件の総当たり6組を比べ、Holm法で調整する（いちばん厳しい組で両側 α = 0.05 ÷ 6 = 0.0083）。③ 検出力0.80。④ 正規近似で n =（z<sub>1−α/2</sub> + z<sub>0.8</sub>）² ÷ d²。⑤ d は「同じ人の2条件の差」をその差のばらつきで割った値。⑥ <b>方式は人ごとに割り当てるので、方式ごとに見るときの人数は全体の半分</b>。</p>
+  </div>
+
+  <div class="tw">
+  <table>
+    <caption><b>表4.</b> 見たい差の大きさごとの必要人数。</caption>
+    <thead><tr><th class="n">見たい差 d</th><th></th><th class="n">1方式あたり</th><th class="n">全体（2方式）</th></tr></thead>
+    <tbody>
+      <tr><td class="n">0.20</td><td class="q">小さめ</td><td class="n">303人</td><td class="n"><b>606人</b></td></tr>
+      <tr><td class="n">0.25</td><td class="q"></td><td class="n">194人</td><td class="n"><b>388人</b></td></tr>
+      <tr><td class="n">0.30</td><td class="q">中くらいの手前</td><td class="n">135人</td><td class="n"><b>270人</b></td></tr>
+      <tr><td class="n">0.35</td><td class="q"></td><td class="n">99人</td><td class="n"><b>198人</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><b>逆から見ると</b> —— 全体400人なら1方式200人で、d = 0.25 弱まで見えます。全体600人なら1方式300人で d = 0.20。<br>
+  なお、方式をまたいで束ね「合わせ方の違いだけ」を見るなら、必要人数は上の表の<b>「1方式あたり」の列そのまま</b>（d = 0.25 で194人）です。</p>
+
+  <h3>1種類あたりの評定数</h3>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>種類</th><th class="n">全体400人のとき</th><th class="n">全体600人のとき</th></tr></thead>
+    <tbody>
+      <tr><td>ぼやけ・端からの16種類</td><td class="n">各200評定</td><td class="n">各300評定</td></tr>
+      <tr><td>うすい③・点が増える③（2種類）</td><td class="n">各400評定</td><td class="n">各600評定</td></tr>
+      <tr><td>強制選択2問</td><td class="n">各400回答</td><td class="n">各600回答</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p class="note">既存の13本の設計は414人が13本すべてを見る想定で、1種類あたり414評定でした。新構成で主要16種類を同じ414評定にするには全体約830人が要ります。ただし<b>合わせ方の比較は同じ人の中で取る</b>ので、1種類あたりの評定数をそこまで揃える必要はありません。判断は表4の人数で足ります。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">八</span>
+    <h2 class="sect">既存の13本との関係</h2></div>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th></th><th>既存の設計</th><th>新しい構成</th></tr></thead>
+    <tbody>
+      <tr><th>知りたいこと</th><td><b>方式どうしの比較</b><br>どの現れ方がよいか</td><td><b>合わせ方の比較</b><br>同じ現れ方をどう作るのがよいか</td></tr>
+      <tr><th>本数</th><td>13本（5方式×3通りの出し方、うち「一気に出す」は1字のみ）</td><td>18種類のうち1人10本＋強制選択2問</td></tr>
+      <tr><th>方式</th><td>うすい・点が増える・ぼやけ・端から・一気に出す</td><td>ぼやけ・端から（＋参考でうすい・点が増える）</td></tr>
+      <tr><th>所要</th><td>約7〜8分</td><td>約6〜7分</td></tr>
+      <tr><th>状態</th><td>設問データ414人分を用意済み</td><td>本資料で提案中</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>この2つは<b>別のことを聞いています</b>。新しい構成は既存の13本の置き換えにも、追加にもなり得ます。掲載は別に立てるのが自然です（同じ人が両方に答えると、後半の評定が疲労で歪みます）。<b>どちらを回すか、両方かは先生のご判断を仰ぎたい</b>点です。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">九</span>
+    <h2 class="sect">今日直した不具合（3件）</h2></div>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>症状</th><th>原因</th></tr></thead>
+    <tbody>
+      <tr><td>5字を並べる条件で、<b>前の字が完成形に化けていた</b>。1字だけの条件と見えるものが違っていた</td><td>前の字を描き直すときに進み具合が引き継がれず、完成形で描かれていた</td></tr>
+      <tr><td>見比べる画面が<b>40周（約65秒）で止まっていた</b>。5つの見本がすべて消えた</td><td>「回数無制限」を0で指定していたが、0が「指定なし」と解釈され、初期値の40周が使われていた</td></tr>
+      <tr><td>止まったあと<b>「もう一度みる」を押しても動かなかった</b></td><td>上と同じ原因。止まった状態から再開する道がなかった</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">experiment/transfer_comfort.js（コミット 24497e57、8月28日）。いずれも修正済みです。</p>
+</section>
+
+<!-- ================================================================ -->
+<section>
+  <div class="sechead"><span class="secno">十</span>
+    <h2 class="sect">決めていただきたいこと</h2></div>
+
+  <ol class="asks">
+    <li><div class="body">
+      <span class="q2">既存の13本と新しい構成の、どちらを回すか。両方か。</span>
+      既存は方式どうしの比較、新しい構成は合わせ方の比較で、聞いていることが違います。両方回す場合は掲載を分け、別々の人に答えてもらう形になります。
+    </div></li>
+    <li><div class="body">
+      <span class="q2">人数をどこに置くか。</span>
+      表4のとおりです。全体400人なら小さめの差（d = 0.25 弱）まで、600人なら d = 0.20 まで見えます。人を増やすことは可能と伺っています。
+    </div></li>
+    <li><div class="body">
+      <span class="q2">較正に参加した人（415人）を、実験Cから除外するか。</span>
+      見え心地の評価は識別の課題とは別物なので、<b>除外すべき研究上の理由は文書にありません</b>。論点は次の2つです。<br>
+      ・報酬を二重に受け取ることになる<br>
+      ・掲載文に「この研究の前の回に参加した方は…」と書くかどうかの整合<br>
+      除外すると、募集できる人数がそのぶん減ります。
+    </div></li>
+  </ol>
+</section>
+
+<hr class="end">
+<p class="src">この資料の図は experiment/transfer.js の描画コードをそのまま切り出して描いています（参加者が見る絵と同じものです）。本番ファイル（transfer.js / transfer_config.js / transfer_warp.json）は読むだけで、書き換えていません。</p>
+
+</div>
+
+<script>
+const DATA = {"cfg": {"config_version": "prov-2026-08-27a", "pre_launch": false, "phase_group_weights": {"calib": {"acal": 80, "aprime": 150}}, "distributed_wids": {"calib": ["znxa8x", "6xt88w", "jav5yw", "5mk55k", "dp8m84", "jv7cuy", "f93un7", "wmqha6", "byaecm", "wx6xru", "4wacpa", "8tczuu", "uyzjrv", "ewumqe", "pnqzzt", "xmy87q", "6x4tck", "s7zuf5", "wuk8ch", "75a86d", "yjzfjn", "pc7z98", "j9978y", "89ke9n", "xy6r3n", "3f2h8t", "8f3ez4", "w9h9rb", "wu85fb", "rhamzs", "8ed82z", "c8b6m7", "v89wqq", "r8vtwa", "d3njj2", "x4se3h", "y4mru5", "gc93re", "bkwdqn", "zdqjkk", "rmw3du", "2vrc3s", "w9nt9r", "ds9kv4", "p2mgd9", "qk8f4m", "qsc3hu", "yjj2th", "8b32hh", "bn7cuk", "u8gh9x", "48nspu", "zhdnmg", "3j6g3v", "5rue3f", "knrp78", "r7zmkx", "rhvfqu", "8rvfmc", "qd5ryd", "xyddwr", "x9q6n8", "u7wxm2", "prjd7d", "hq3ejg", "6xdvt6", "g4sjcn", "qtpk66", "as95xe", "sqmhr5", "tapugz", "xsv5b9", "u3nzyb", "hkvvyw", "jmekpv", "9zsycx", "5cbe5h", "e6qnad", "xy3ft6", "hbbxeq", "vfrz3y", "stpnn6", "stsvsb", "4sevzn", "4r2xz4", "f7w3mj", "hjkrzz", "us7gp5", "n93sbh", "q4bd7u", "xxpgbq", "4cbcbt", "f35era", "79tbh8", "pzuk5w", "7z5aej", "xf5bm3", "95bmgh", "52caav", "62hmq8", "4jtpbj", "x6veqf", "ekmjen", "rmdh8u", "e3kzzw", "rh7qmb", "ux3hkt", "nmkmeb", "zpdbua", "2x7avj", "knxs5x", "nzhjha", "5eqper", "jbwvsd", "9ztyjc", "eb86cp", "84n9ua", "2zgfq6", "8smmyb", "p6jw45", "wtg78p", "6avefq", "t4njfp", "u7bqp9", "6qrr66", "c93a3f", "chvqd3", "3d5qw7", "jpr258", "vbpzrr", "qqjdev", "xwpvu7", "56rctp", "uaxyfq", "au53mq", "qduaw3", "c9hg3s", "s2gceg", "vmqrps", "fwdmdk", "qmnmvu", "t26s69", "ddw23c", "jpfj42", "kknqsj", "7r46cp", "2svajw", "k2nsvt", "7fkd3f", "engs37", "nvauv9", "8yeta4", "hk7uhn", "hd3vd2", "jg5nrv", "y8pp85", "xd8tnb", "ckzpvv", "849zh8", "53kee2", "kyxtgp", "b83gas", "f92ss3", "znzsar", "uuc8qp", "fhp9ka", "6uzyh7", "hm7acs", "9f23es", "34pk2a", "fcyebr", "kafz4v", "3r75am", "s79ufd", "b97rk4", "d6mkwc", "d6a5m2", "53bs9x", "3vxx5c", "qd5kya", "22zvh6", "4qvmg6", "8yf73q", "62wurq", "weq9mp", "q4qegr", "g6m26m", "nymbz3", "nrtm2p", "38a9qz", "z2atcw", "yfa8ss", "97judq", "rfut85", "gu66cu", "qnza2n", "c2sgzy", "mfyd2r", "p32zj8", "4g5j75", "ssjpd2", "e693f2", "hajetz", "a5qcj2", "nzy2gx", "wzhchf", "9jqmjp", "5wq2ku", "4e28p4", "4b3ute", "y322v9", "aetzbt", "xjvrwa", "wnudsp", "a6qs9c", "759u5k", "wvfpha", "ca2uap", "zj39dp", "746gmf", "9sz9ff", "jp3rmj", "qy555z", "zt5jxc", "padjyj", "a9d6cq", "5gccuk", "2yhsey", "mg3gwq", "k2ttdg", "tcqe4q", "w26tp5", "vfr63t", "fnwvgc", "9cd7fm", "mktztw", "9k6dqu", "cd42kj", "z84tfr", "ymqsup", "tepma2", "g43u6b", "mh4c5m", "k9xc6y", "wrtbj8", "apvegd", "drfmr9", "zn5fsy", "7yk3p4", "bycpjd", "7smzpz", "b5f668", "sdafbg"], "wipedir": ["d4nh6e", "kzuxem", "dygjts", "s8u6np", "fy63wg", "h34uj4", "w65em9", "928sjg", "gvw8m3", "stc2e7", "a2j4yk", "sts6fd", "ynsp5k", "c9chg2", "4xw9uc", "8f45c9", "pz4kz8", "kczf89", "39wbhb", "3jdram", "wbsp6t", "t8tbeb", "jqa3ps", "wk74kc", "hahwys", "8wdxky", "452aen", "pswhyr", "4exq5g", "7ddtjn", "4rmmd6", "y8hvtc", "cdh638", "s2vbnb", "f5xfkm", "sdr57j", "u8nybb", "86gmap", "x5rjak", "cpk43v", "xvy95b", "hw5xyq", "ngqwnv", "9gprfu", "58qvhz", "f3nfjm", "ef28xn", "7xnd49", "4ghfea", "jjkb3k", "cb9a89", "fpd9y8", "53zyw8", "xzq3qy", "4tr2d5", "zxrcf2", "ha8263", "q3t3z9", "5akxbg", "dybywk", "mqc3cf", "br8d6v", "dmtqh5", "vqgab9", "zt8s5z", "d8p7rn", "369nzy", "3m6ak4", "pur6kv", "74hrta", "7ty4ew", "m6fvz6", "a3kckg", "xu42np", "thcmap", "k7yv3j", "8n37gv", "zp5r9g", "84t5hg", "bh8k3g", "ha49e4", "gvvhnt", "dfgab5", "sgh55v", "r7ja7z", "wnfxe4", "d7q6kk", "hq3cvx", "9sxfpw", "6vhecx", "brvadu", "22s87x", "y8vxwp", "s2885p", "chmbcb", "x2qvqp", "2gbghf", "jpemrs", "aaxf99", "jxeqfv", "4tczpq", "y2qkr6", "9gb954", "bxmkcu", "v3mbtc", "vxk6mk", "sde8cs", "yjrdt7", "3ns5jr", "hafza4", "fybzey", "bm72k5", "abrxds", "3mbmmk", "afqb4q", "9ue5rz", "yj5je4", "gc66un", "c7bpsj", "2xw6zr", "ym894d", "kfedxg", "5dcmk7", "n956x9", "p6mnca", "85xcq4", "kpb7en", "8yfjk4", "vzvfuf", "xtwz8c", "xbcmve", "u7sh28"], "test": ["8kt6qv", "g8g6f4", "28zqfg", "csqxvm", "jywzvv", "qhw6yg", "avpvcy", "gs5nhd", "ebgx8j", "kfh8ac", "zryq6k", "vkwghm", "9gqpcs", "vt2fxb", "ajw6h7", "7mq7jm", "k5e3bu", "vy429x", "4pqdrg", "jnqdm4", "gu5waw", "xd9453", "b229yp", "d4uqhd", "e2t6h8", "qh7jn3", "db3mw8", "n7n3jk", "b86pks", "dfx86p", "hyc3hj", "5jc2rw", "sfp7nc", "4hb7pd", "eyh9fg", "u7jhjp", "ypm7d7", "7rzz4a", "drshdd", "xjfbpa", "u3aexf", "6zsnyf", "rgkjve", "xf27nm", "brcpkn", "rdz7mp", "zuxjet", "qudcmj", "4vxm44", "54f364", "h2qpm6", "z6359v", "ptx3jq", "m5sxce", "xwncbc", "eb466s", "pubbw4", "g79uaj", "qmrybf", "zhj4k9", "b7amqn", "fup44z", "g7uz69", "gg3vsd", "hbux32", "8wwfzs", "5hh5bh", "ay3vrr", "uad53x", "zqpfdt", "je9e87", "ragrww", "atkmb3", "mmy4ep", "q2zns3", "gjyhye", "vs7tb6", "2asm2t", "zmbrv9", "3yfzez", "m3pr96", "9batpf", "d9be9z", "27h3fx", "tuy4pt", "sumpr8", "52bu65", "4ufz5m", "kz5wy8", "4k386m", "5d3udv", "k8ng58", "67kye5", "vaqqh7", "snmyf7", "9gpuax", "85z5mx", "7wd63d", "dmmzb4", "tuheks", "w56xm9", "u7c6hg", "tabrru", "dhwuah", "yztarn", "h42ufj", "v9g5ju", "x5r8jv", "mcee7f", "dkfrrc", "wgd7ex", "9jcjnm", "cquvbq", "nk8hbd", "9vhkhh", "u5ts4c", "47x87x", "yw4hax", "b5dg5y", "9x3ptz", "bh2pz5", "acmss5", "b2juhx", "mta4rt", "nygyrj", "xqgpd4", "2bka3h", "qc53x2", "hhkarf", "fcpmyn", "krpde6", "qpx9sv", "4ak25t", "pz5trt", "w3ch5a", "5r76sm", "n59dxj", "5utj2p", "jm6amm", "72wwg8", "v94825", "7rfmez", "39k6bf", "kfr75t", "ptz67c", "ukushb", "9vekqs", "nrgxsw", "znjq3u", "8u2nxn", "ybfued", "e546u6", "axmwkp", "s6rebr", "8hhqg8", "cfp3wz", "xp7ar4", "d42qwb", "gj49sn", "cdycmy", "rs4kam", "2gk86d", "dk6ppt", "wewqmx", "gvkhy7", "bu2nyb", "kzw9p6", "snwktg", "8zpeuy", "dw5fp2", "e989fr", "4adcpg", "79fhhm", "7mqunc", "3xjhdp", "bbnc46", "qsbzce", "sg6hd8", "9zh4cy", "kznkgg", "khhaaa", "yz8xfp", "2vdrdn", "a9qm9u", "gwwdsp", "jgmxck", "j2g94h", "dx3de3", "22wq3n", "hpha8x", "43t3eb", "rk3a4c", "22gmzy", "36rz4a", "q84st7", "epu4uy", "2ramg4", "4quxnz", "63tk94", "26mmmv", "fqvx67", "whedfx", "cpgwdc", "pvmzvg", "kcb9ke", "gafmpe", "begsmr", "vjxdrw", "zdjvwr", "uvbhwk", "9w2n7f", "x69rtr", "vzqw98", "v2p9e4", "fd9dd9", "2drqv6", "4pdntk", "4za4pn", "xyagsz", "z6skrk", "xjsxv5", "25wce9", "m4cqup", "gwquef", "dmkjjc", "bce23q", "yuwwtn", "wsxfwn", "36kpjb", "rctmej", "cf597a", "s2fnye", "kbuquh", "96kt4n", "gjt9h2", "72dqb2", "5uqj9w", "vyvs5h", "tgfjmt", "6fpkqy", "ks4vv4", "7ts5ud", "3jvsx8", "4mbcrk", "eg3v8w", "x6r4as", "y8rj47", "kk2467", "3xeu8x", "7sbrm3", "tj8yvq", "5x2ypx", "3sc4x6", "3jzbvr", "rq2y4e", "svv59m", "u98qk7", "qy7t2a", "d9g4r8", "awbes9", "2xufpk", "qyjjav", "rtjm8g", "hr47sq", "z2x3yh", "7fqbd7", "xby9g8", "xqufzx", "wj2sd8", "dd84k4", "9vgzjh", "fseqaz", "4gynk7", "9b5n9p", "jzmx7c", "87d53b", "wxt58n", "m6skfg", "yneqqs", "rbx3tr", "zwduv2", "xr5tzp", "dzsbd8", "92p7xq", "jtxmnv", "cq4nbc", "3mmq9s", "b3x7cw", "bmwgkz", "2qc3jd", "4ptpcg", "zkft7s", "rzqrj4", "mp92mg", "yzc36p", "2zhfsc", "g26j2y", "h3wfac", "uj5hmj", "fhdrnt", "xg5qct", "zwt3xr", "xfdyxx", "nxw9tw", "mmv4r6", "m4kuqt", "hkeyzp", "3x9hpq", "muun8x", "8kfp84", "xa6zs9", "dz8n3t", "qbsmkg", "2ser9j", "gz6286", "5sqru2", "n6us9c", "4ggmfv", "hyh8v6", "yjjg86", "q3kpzn", "999h33", "sgf2hs", "2km892", "r7h76x", "tf4hkc", "6afq2q", "8pyjbw", "mnkcvv", "723f4e", "hdwsya", "veeyux", "95x8z9", "gq6n5z", "baffrb", "ahb93u", "vv3gur", "cq3azg", "rzrpzu", "uyswpr", "7ce4d3", "2b6gwy", "tsjbbc", "v9bu27", "r92pus", "quxuaj", "bwuz8g", "c7x99c", "7t32vu", "hjynww", "hkafaw", "637spw", "jamz7s", "wnf695", "nkpkw6", "ezbn2h", "rf3kug", "zxjjjq", "bsr6cu", "z3gqmt", "gukg3q", "87xyff", "gztvws", "v5g66q", "6ygq7x", "us2hrb", "agh87d", "q5rder", "u36tsb", "vfq8c2", "zymxh5", "z8ency", "9brbw6", "c7y6pv", "zthd9y", "mz2n5k", "t6ma5p", "rfquzb", "ebvcdt", "3ywwdm", "agkvhp", "sptyw6", "y775mh", "xee25z", "yc6zzx", "qsru8x", "dhn8fw", "qkn2j5", "ja2nnh", "5mc6t8", "c32bq2", "xc46b2", "jsun4k", "6c5u4y", "rxfkka", "82uwb3", "vrsvb9", "b8udck", "p9k4kg", "v7vedq", "7xdrh2", "pje3qq", "7xqc5w", "2n963h", "j2yp7x", "s3w3t6", "axg5qr", "qzfyau", "ama6m2", "wngdd2", "r7yghz", "g4y4vj", "mnpb3k", "ptcrpj", "ad8dnu", "ymfxr3", "784nty", "qhx6c5", "bxu2vu", "bvb85s", "d2y88h", "z4jp67", "vr3k6e", "gefnxz", "z9nk2u", "cbw5yz", "4bcaz5", "3h3ndf", "48fp4t", "ewdcer", "etm5v2", "32742z", "t8t859", "jvu2tv", "se8htw", "vdr65x", "xxj94e", "9w7n4r", "ug8pcx", "4vuq64", "tc6dcg", "catxwd", "p8zrrf", "8ba6ze", "7wqbgd", "f7chv5", "vs62d4", "2ra7zx", "7new5n", "vftfvw", "mxpwj9", "agjfrs", "u6mudq", "s9pbnj", "z6uaky", "ydarvh", "2fpqsp", "kx26cc", "rtv5q3", "yuqx52", "bnddft", "bb3svr"], "comfort": ["d6evm8", "hnvgfs", "enpdkm", "khyajh", "jvmdvv", "6jv2re", "txmxwc", "ew3cq5", "9n4zt9", "hhpuns", "md46xh", "stk6um", "3g9wdb", "8rpmxx", "9t3hfx", "dcq47m", "vjkgbz", "v6n32k", "3m2syy", "xbutfh", "6tyhce", "6v5duh", "bqdqmc", "b38c9z", "evrq8x", "354pmq", "ptm4ng", "kyqwzx", "5kxa46", "fntwk7", "mms7f6", "meck84", "9bdmuk", "wg5gqv", "d3pa6x", "v2xj83", "5vm3wk", "u34xfb", "68jg2p", "mb375c", "znpxes", "5zuq2d", "k5nh37", "ykw7k8", "2bm47b", "utpebc", "kqmr57", "cs4aqc", "kczq9a", "hvbf2b", "ujtpwy", "shw8k5", "kbkfut", "jfp8cp", "hufbuy", "xrd2v5", "356avd", "6ddsd7", "4vu9fy", "tzk4ke", "hs4kar", "4hv8gq", "n4gcc6", "h4xfan", "jn7auf", "8hz5cx", "cczcpa", "acnwsa", "ze8mgr", "42cvan", "u549jb", "2hbxkk", "ddvnys", "64gcnu", "wb7v34", "p3jepk", "spxfda", "b3gg7g", "yu2eq2", "45vjat", "fyhd35", "s52wpw", "5d7p9c", "ukxfmx", "qfymug", "ze6pxn", "2398vk", "9vucnz", "kmfc2r", "yq522g", "xharjz", "u92gnv", "h4rgrv", "v34hts", "4pzsd9", "cupdu8", "jrysqj", "end6s4", "z3pa9r", "pbdjr7", "73dver", "cw97br", "7s6m94", "zrvzk4", "2wypgy", "pghbrk", "cc9yyg", "byuvv4", "wgbzrz", "rff86x", "4ftb4b", "aqy9xh", "sqsc8e", "vwh7nv", "z6bvvb", "exdcbf", "a48t78", "c9ahph", "cc9cyd", "dx3jwd", "gggheb", "un4wmj", "s2xx2m", "az3wym", "ua49v8", "6dfv9w", "esmjhw", "ch5hw3", "zvhusx", "t5w26a", "aqwurq", "gak7n3"], "blurthin": ["9ar2gb", "p97h3y", "j89fay", "6wsp5k", "yj5aum", "daj97j", "gjn3bh", "g6my7x", "stpttq", "x4mpgx", "u3da9t", "k9fsbe", "4ns9ar", "c698k4", "h2p325", "92pfqj", "2q9v4v", "s2h9u5", "zh4cqj", "x4cpxd", "45mf4m", "w8zfgu", "dthb7t", "8um752", "4muf9b", "uwvuk7", "zu54vr", "m3pr38", "7kvd38", "6u664t", "ht48kq", "b6jukn", "7nn4ar", "wa5etu", "3q2w4b", "nfeakm", "8ad7bv", "zhvsbj", "zdvejb", "9dha9f", "h58339", "q8gbqr", "ab9cry", "enh23m", "n8x4uf", "qamfrx", "6e5ttx", "3pduhz", "q3v8yg", "quqw9g", "cuzncb", "nbz26z", "4zh6tj", "d395k7", "fg2m5t", "f3znr7", "wgruph", "ye73ut", "t7xwvx", "b7vvjt", "yzm9zs", "yugc9x", "mw4uy5", "wkmwwe", "2ajpjr", "8yxy5q", "yxddg5", "msutzb", "jz5h8w", "73dsec", "q2wdtv", "4jnrgs", "2kqnhg", "9cdpss", "ek3n8m", "abdds2", "dtk7yv", "7astat", "vfz6sx", "6mt7vn", "fyn5tm", "yqrysk", "wgy7rf", "xxaja5", "5qmxkd", "qt5csm", "jefkzb", "r9s6zh"], "followup": ["8tdgpn", "6gy92h", "td94vu", "2hez4c", "cc7unz", "jch3qf", "pyjf75", "25tvh5", "c2r6hg", "a8hhb8", "4p7g5q", "vpmxzd", "9qs6ux", "7tz5y4", "r7fkcx", "6hn4wb", "tg3vq4", "dspa3a", "rypp4h", "zwpya4", "ph9p97", "6qvhm8", "dmebm8", "a63c8u", "r742tx", "jdx5gz", "faehnm", "7h3bqv", "rjba33", "7vxwz8", "ufxkv3", "7v4zty", "qp4n2r", "fm7fap", "3e4chb", "7r3v3z", "uvspez", "j6rxac", "5ae22r", "js669z", "23p6bz", "4ym4wg", "wgnpwq", "xjqbqx", "atjc86", "drdcyk", "3ewscx", "hefwtm", "m34kqe", "yb86kw", "yrgee9", "pe4qgx", "y46y3z", "59tfcm", "yrt3md", "wkwwzw", "dmjuxz", "g6yhkp", "3gjfjs", "5hq9dy", "k3cyb6", "z28rwy", "m953tq", "bxcg8a", "w54cgh", "wedtdg", "shd2qs", "jrb58a", "79bep8", "sgbpgy", "kcg3a9", "t49r3s", "enh3qb", "m2ntc4", "dr9cyz", "eeu256", "xt82ka", "npcqvm", "xpbp8k", "g72k7e", "v5cyy5", "nbakey", "y7mvur", "y57w26", "txtmyu", "xmrz72", "q3g3fh", "v5qxge", "bt9a35", "jypyvk", "rjrkxy", "qusme5", "5xhrcw", "8wqs2m", "fwxhtu", "bkwxsj", "3fdru7", "xubn46", "dwsdvw", "fzfa6y", "x2sudy", "5upt3x", "4xg2zz", "7xpmhg", "6zb7d2", "9fgxuh", "9gsmmv", "buz8mr", "ve7awj", "4q9agd", "fej44x", "wpgcnf", "73tjz3", "vjg2zz", "kh5wh6", "x8v8ey", "9f2nw8", "c8jykd", "5khzez", "r7v8dv", "et2nks", "asyfqv", "pqpwdr", "xa3a6t", "kj4nxx", "gee6hb", "dckbdz", "45jxms", "yxygqn", "st6x2d", "mu86v2", "87hath", "2s83hf", "xj5uqp", "maznc7", "vqjrbc", "2beyz6", "5cy5j6", "jfdra4", "qz42jr", "xab6nd", "ykybh3", "hujcbs", "94rr8g", "5dvcvq", "82cv3x", "qwq59k", "bwtef2", "s4e9bv", "xbr2ta", "yrs45q", "e5s3gw", "z3qh3r", "42p85p", "t3mt8b", "st4ccn", "gt7d5k", "u8fsy6", "ahjekm", "26mntv", "cf3uxz", "qzsrz6", "ep4sr7", "tgzgbc", "xjt75q", "r4v9nn", "zrtbfn", "ejmach", "rxsrf8", "kz795g", "32ajf6", "c8mhat", "36dngz", "qrcth9", "w87afc", "cntrzg", "4sppab", "zmc62w", "r3aa4v", "a3djn8", "k4w5ub", "xkfcst", "shtebh", "cbx4rr", "8ngjfx", "g7auyu", "2a5gxa", "z2vmwb", "u56sdf", "exb3yz", "kqmmu2", "2y8nc5", "z23fn9", "havyas", "4wb4h2", "4nt67c", "bag74e", "m35dfw", "zawt5a", "zcdy6w", "b34cau", "ug6djn", "3p7may", "c4m8fk", "tn4fwx", "cpbhhv", "rkf4mg", "atb5vd", "jzv39h", "55cagf", "5wqf59", "dp9nhk", "4msvu2", "hzyh9s", "dd9zek", "aa2jwc", "4pwwvx", "wsy9rm", "vx3mpp", "8ju7ej", "ewekf5", "mx6vvs", "trxe3r", "fj5kef", "6hrazn", "fren3c", "wuvhac", "d43jaf", "a5qhg3", "7bfp8n", "f4h6ht", "jeascp", "8fhdty", "uazran", "r8thab", "rrq8q9", "xp8f4g", "78a2aw", "8akjhv", "rndqzm", "k92kkj", "hcy2r8"], "calib2": ["y2hw2y", "9yfkkt", "rkts8x", "t9njtq", "z7g96d", "57g9uy", "x9wkwy", "cjfpsb", "k8w97t", "qens6g", "fyc3mq", "6uytqp", "uud9ca", "s5739w", "nv2zb7", "vtssme", "zetdwd", "rvbvwq", "8u6z9g", "qehqyb", "nr4j76", "cawtt5", "hdp7bb", "zcmfhk", "jpbdsq", "9r4rh7", "nfwfvt", "tux72c", "tnzfhv", "5h8wrj", "kdktuf", "6vxbqn", "u5ccq3", "zrh2fq", "hzh2hv", "hjuyhj", "df5d39", "tjdrsh", "mzmggc", "y9pqy2", "wympgv", "jdr4vb", "ymh2hn", "rcuvgk", "4jen78", "nchz9g", "xvd4j4", "8ev7e5", "naq3a2", "vtwvz8", "8c3c5s", "yuuq6c", "hj36ax", "eckj7j", "r773nv", "ta7a6e", "ge88ap", "7tbdp5", "dshep8", "8hf6r4", "d7ssvg", "28x9br", "8mm3eu", "zt3eyh", "nv5q4h", "3f9p8c", "sy2shr", "yd8aw3", "u6dv8g", "u9neqn", "s6qnmu", "57tgtz", "f6qamc", "r7j2cs", "6p9x67", "3way2y", "26susb", "tvkb3h", "29bzf3", "q3sbz4", "rc9hrq", "46k3gu", "9yubxh", "trnpx6", "6mhuyd", "8gu3n4", "dpkujy", "g6mnpu", "ccfrdc", "zsa84j", "q9bunv", "qypmnc", "zp75dr", "b2ahj9", "h8nduz", "gddhpr", "f57tqv", "p7egn6", "u9vqc7", "rss78j", "prfekq", "ntqa62", "4m9xgv", "dntvbs", "xf8js4", "6daqqp", "s3pe22", "b3ff36", "ej7sft", "f3y693", "v3m3j7", "2ubw4m", "q7bj3g", "q4s75d", "xvhazy", "djfusz", "sb9nq2", "4wbap9", "paddd8", "muvmnh", "865s4b", "abfdgx", "mrjqwe", "fnvptb", "vsgm9m", "z4jjzg", "th8xe4", "vyeqpq", "p3e6kz", "2f6yuy", "9zgxvg", "fr5sw6", "3vt64e", "fmfk9e", "hgjs25", "rf7xq7", "9tckae", "p3phtz", "u9g7wb", "mdscva", "6kxhpw", "baepx5", "fzd8nf", "pvch7x", "bsa66f", "gwnewr", "rq7wp9", "9qxh6d", "cbf3ht", "95pr9c", "9rynpc", "hztsts", "4rbwqt", "g47d9z", "bg23xp", "uyj29y", "x3vygm", "ku4qfg", "kcbbj9", "s29bx3", "hmbr3h", "5742ux", "ek29k4", "997dwq", "p88ugb", "2fyb79", "ta2sr8", "nujaeu", "qearee", "2qk7tp", "a5fpjm", "6rggh9", "jha28w", "duyrf9", "p6mnfq", "nzcqbt", "mumhry", "kcxny8", "y6avps", "s78bxv", "3vbjuc", "f7hs53", "zj4vdv", "93x2pr", "frw6kk", "bprbcx", "na85rd", "bj76fr", "mwsv8e", "xfjry5", "yuf46x", "cz4hmr", "4m9f9v", "n25gyy", "nxcbwt", "tc4g22", "4978uz", "vt7bkf", "97ny35", "8qdev9", "gh5eyh", "2h8jdf", "cjv5uy", "gdmf8m", "t44zas", "ghnz4u", "mepxaa", "mkqqdy", "as8y8f", "vxtpe5", "59h9rc", "pptbh6", "5hs3r8", "3seysr", "88v9tt", "m8hecw", "67gb5v", "gbhnqt", "esruxu", "j7evb7", "zghrg3", "5q2x64", "kukvq3", "6xa6qd", "43yyyc", "hphmms", "5ffau2", "wwvcu2", "hssbdk", "vjqyex", "ewf4cy", "snkfad", "wby7pz", "ekbnds", "n558ca", "u7qwvv", "s72t3q", "cqjj4f", "rr49yf", "kpnqd7", "gqzreb", "n9vxyw", "4xqzft", "muzg7k", "nqudap", "evxqqv", "2jkaqg", "kqxp6k", "atfsar", "4pt8uw", "jsvmjz", "e98zhm", "wxex3z"]}, "open_phases": [], "phase_overrides": {"test": {"targets": ["あ", "か", "が", "ぱ", "し", "つ", "ま", "ら"]}, "calib2": {"decoy_exclude": [], "progress_pct_levels_by_family": {"blur": [3, 7, 12, 17, 22, 26, 48, 100], "wipe": [2, 8, 20, 35, 50, 65, 80, 100]}}, "followup": {"targets": ["か", "し", "た", "は", "が", "じ", "だ", "ば"], "speed_probe": false, "wipe_direction_assign": {"mode": "alternate", "directions": ["ltr", "rtl"]}, "progress_pct_levels_by_family": {"blur": [3, 7, 12, 17, 22, 26, 48, 100], "wipe": [2, 8, 20, 35, 50, 65, 80, 100]}}, "blurthin": {"aprime_families": ["blur"], "progress_pct_levels_by_family": {"blur": [3, 7, 12, 17, 22, 26, 48, 100]}}, "wipedir": {"speed_probe": false, "targets": ["か", "し", "た", "は", "が", "じ", "だ", "ば"], "aprime_families": ["wipe"], "wipe_direction_assign": {"mode": "alternate", "directions": ["ltr", "rtl"]}, "progress_pct_levels_by_family": {"wipe": [2, 8, 20, 35, 50, 65, 80, 100]}}}, "phases": {"calib": ["acal", "aprime"], "test": ["b"], "comfort": ["c"], "wipedir": ["aprime"], "calib2": ["aprime"], "followup": ["aprime"], "blurthin": ["aprime"]}, "phase_blocks": {"calib": [], "test": [{"phase": "calib", "reason": "already_in_calib"}, {"phase": "comfort", "reason": "already_in_comfort"}, {"phase": "wipedir", "reason": "already_in_other_phase"}, {"phase": "blurthin", "reason": "already_in_other_phase"}, {"phase": "followup", "reason": "already_in_other_phase"}, {"phase": "calib2", "reason": "already_in_calib"}], "comfort": [{"phase": "calib", "reason": "already_in_other_phase"}, {"phase": "test", "reason": "already_in_other_phase"}, {"phase": "wipedir", "reason": "already_in_other_phase"}, {"phase": "blurthin", "reason": "already_in_other_phase"}, {"phase": "followup", "reason": "already_in_other_phase"}, {"phase": "calib2", "reason": "already_in_other_phase"}], "wipedir": [{"phase": "calib", "reason": "already_in_calib"}, {"phase": "test", "reason": "already_in_other_phase"}, {"phase": "comfort", "reason": "already_in_other_phase"}, {"phase": "blurthin", "reason": "already_in_other_phase"}], "blurthin": [{"phase": "calib", "reason": "already_in_calib"}, {"phase": "test", "reason": "already_in_other_phase"}, {"phase": "comfort", "reason": "already_in_other_phase"}, {"phase": "wipedir", "reason": "already_in_other_phase"}], "followup": [{"phase": "calib", "reason": "already_in_calib"}, {"phase": "test", "reason": "already_in_other_phase"}, {"phase": "comfort", "reason": "already_in_other_phase"}, {"phase": "wipedir", "reason": "already_in_other_phase"}, {"phase": "blurthin", "reason": "already_in_other_phase"}], "calib2": [{"phase": "calib", "reason": "already_in_calib"}, {"phase": "test", "reason": "already_in_other_phase"}, {"phase": "comfort", "reason": "already_in_other_phase"}, {"phase": "wipedir", "reason": "already_in_other_phase"}, {"phase": "blurthin", "reason": "already_in_other_phase"}, {"phase": "followup", "reason": "already_in_other_phase"}]}, "backend": {"roster": "firestore", "logging": "firestore", "fallback": true, "dual_write_logging": false}, "firestore": {"enabled": true, "project_id": "ifont-transfer", "api_key": "AIzaSyB87BFzuwRHtCRJVhjilYjjJwM0KfYRgio", "timeout_ms": 10000}, "roster": {"status_url": "https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec", "timeout_ms": 15000, "retry": {"attempts": 3, "delays_ms": [800, 2000, 4000], "jitter_ms": 400}, "require_server": true}, "targets": ["あ", "か", "が", "ぱ", "し", "つ", "ま", "ら"], "decoys": {"per_participant": 12, "reps": 3, "exclude": ["ん"], "pool": [], "seed_prefix": "decoy-pool:"}, "answer_grid": [["あ", "い", "う", "え", "お"], ["か", "き", "く", "け", "こ"], ["さ", "し", "す", "せ", "そ"], ["た", "ち", "つ", "て", "と"], ["な", "に", "ぬ", "ね", "の"], ["は", "ひ", "ふ", "へ", "ほ"], ["ま", "み", "む", "め", "も"], ["や", "", "ゆ", "", "よ"], ["ら", "り", "る", "れ", "ろ"], ["わ", "", "", "", "ん"], ["が", "ぎ", "ぐ", "げ", "ご"], ["ざ", "じ", "ず", "ぜ", "ぞ"], ["だ", "", "", "で", "ど"], ["ば", "び", "ぶ", "べ", "ぼ"], ["ぱ", "ぴ", "ぷ", "ぺ", "ぽ"]], "answer_grid_split_at": 10, "homophone_label": {"お": "お／を", "じ": "じ／ぢ", "ず": "ず／づ"}, "answer_grid_visual": [["あ", "い", "う", "え", "お"], ["か", "き", "く", "け", "こ"], ["さ", "し", "す", "せ", "そ"], ["た", "ち", "つ", "て", "と"], ["な", "に", "ぬ", "ね", "の"], ["は", "ひ", "ふ", "へ", "ほ"], ["ま", "み", "む", "め", "も"], ["や", "", "ゆ", "", "よ"], ["ら", "り", "る", "れ", "ろ"], ["わ", "", "", "", "を"], ["ん", "", "", "", ""], ["ゔ", "", "", "", ""], ["が", "ぎ", "ぐ", "げ", "ご"], ["ざ", "じ", "ず", "ぜ", "ぞ"], ["だ", "ぢ", "づ", "で", "ど"], ["ば", "び", "ぶ", "べ", "ぼ"], ["ぱ", "ぴ", "ぷ", "ぺ", "ぽ"]], "answer_grid_visual_split_at": 11, "audio": {"credit": "COEIROINK:あみたろ", "gates_ms": {"_default": [20, 40, 60, 80, 110, 150, 220], "あ": [10, 20, 30, 35, 50, 65, 90], "い": [10, 15, 20, 25, 35, 45, 60], "う": [10, 15, 20, 25, 35, 45, 60], "え": [10, 20, 25, 35, 45, 60, 85], "お": [10, 15, 20, 25, 35, 45, 60], "か": [10, 20, 25, 35, 45, 60, 85], "き": [10, 15, 25, 30, 40, 50, 70], "く": [10, 15, 20, 25, 35, 45, 60], "け": [10, 20, 25, 35, 45, 55, 80], "こ": [10, 20, 25, 35, 45, 60, 85], "さ": [10, 40, 60, 75, 95, 120, 150], "し": [10, 20, 30, 35, 40, 50, 60], "す": [10, 30, 40, 50, 60, 75, 90], "せ": [10, 40, 55, 70, 85, 110, 135], "そ": [10, 40, 60, 75, 95, 120, 150], "た": [10, 20, 30, 40, 50, 65, 95], "て": [10, 20, 25, 35, 45, 60, 80], "と": [10, 20, 25, 35, 45, 60, 80], "ち": [10, 25, 35, 45, 55, 75, 100], "つ": [10, 20, 30, 35, 50, 65, 85], "な": [10, 25, 35, 50, 70, 90, 125], "に": [10, 25, 35, 50, 70, 90, 125], "ぬ": [10, 20, 35, 45, 60, 80, 115], "ね": [10, 25, 35, 50, 70, 90, 130], "の": [10, 20, 35, 45, 65, 80, 115], "は": [10, 30, 40, 50, 60, 75, 95], "ひ": [10, 25, 40, 50, 60, 70, 90], "ふ": [10, 25, 35, 45, 50, 65, 80], "へ": [10, 30, 40, 50, 60, 75, 90], "ほ": [10, 30, 40, 50, 60, 75, 90], "ま": [10, 25, 35, 50, 65, 85, 125], "み": [10, 20, 35, 45, 60, 80, 115], "む": [10, 20, 35, 45, 60, 80, 115], "め": [10, 20, 35, 45, 65, 85, 120], "も": [10, 25, 35, 50, 65, 85, 125], "や": [10, 30, 40, 55, 75, 100, 130], "ゆ": [10, 25, 30, 40, 55, 70, 90], "よ": [10, 30, 40, 55, 70, 95, 125], "わ": [10, 25, 40, 50, 65, 90, 115], "ら": [10, 25, 35, 50, 65, 85, 110], "り": [10, 20, 30, 35, 45, 60, 80], "る": [10, 25, 35, 45, 60, 85, 110], "れ": [10, 25, 30, 40, 55, 70, 95], "ろ": [10, 20, 30, 35, 50, 65, 80], "ん": [10, 15, 25, 30, 45, 55, 75], "が": [10, 20, 25, 35, 45, 60, 85], "ぎ": [10, 20, 25, 35, 45, 60, 80], "ぐ": [10, 20, 25, 35, 50, 60, 85], "げ": [10, 20, 25, 35, 50, 60, 85], "ご": [10, 20, 30, 35, 50, 65, 90], "ざ": [10, 25, 35, 45, 60, 80, 105], "じ": [10, 25, 30, 40, 50, 70, 90], "ず": [10, 25, 35, 45, 55, 75, 100], "ぜ": [10, 25, 30, 40, 55, 70, 90], "ぞ": [10, 25, 35, 45, 60, 80, 100], "だ": [10, 20, 30, 40, 50, 65, 95], "で": [10, 20, 25, 35, 45, 60, 80], "ど": [10, 15, 25, 30, 45, 55, 75], "ば": [10, 15, 25, 30, 45, 55, 75], "び": [10, 20, 25, 35, 50, 60, 85], "ぶ": [10, 15, 20, 25, 35, 45, 60], "べ": [10, 15, 25, 30, 45, 55, 75], "ぼ": [10, 20, 25, 35, 45, 55, 80], "ぱ": [10, 15, 25, 30, 40, 50, 70], "ぴ": [10, 15, 25, 30, 40, 50, 70], "ぷ": [10, 15, 25, 30, 40, 50, 65], "ぺ": [10, 15, 25, 30, 45, 55, 75], "ぽ": [10, 20, 30, 35, 50, 65, 90]}, "include_full_gate": true, "pilot_extra_gates": {"enabled": false, "gate_ms": [10]}, "manifest_url": "transfer_audio_manifest_amitaro.json", "stimuli_dir": "transfer_stimuli_amitaro", "fallback": {"enabled": false, "dir": "audio_base", "ext": ".mp3", "onsets_url": "audio1char_onsets.json", "default_onset_ms": 50}, "fade_out_ms": 5, "beep_hz": 880, "beep_ms": 80, "beep_lead_ms": 600, "end_gap_ms": 500, "end_beep_gap_ms": 140, "check": {"dir": "audio_check", "digits": {"1": "いち", "2": "に", "3": "さん", "4": "よん"}, "rounds": 2}}, "visual": {"size_px": 256, "base_dir": "base", "fix_ms": 1000, "practice_fix_ms": 1400, "cue_delay_ms": 350, "check": {"rounds": 2, "n_choices": 4}, "fix_jitter_ms": 0, "fix_gap_ms": 500, "base_anim_ms": 300, "progress_pct_levels": [2, 4, 7, 11, 16, 25, 40, 100], "endpoint_hold_ms": 34, "progress_pct_levels_by_family": {"fade": [0.4, 0.8, 1.4, 2.2, 3.5, 6, 12, 100], "blur": [26, 38, 48, 56, 64, 72, 84, 100], "reveal": [0.1, 0.25, 0.5, 1, 2, 4, 9, 100], "wipe": [0.5, 1, 2, 4, 8, 14, 25, 100], "fade+blur": [2, 6, 12, 20, 32, 48, 70, 100], "fade+wipe": [2, 6, 12, 20, 32, 48, 70, 100], "reveal+blur": [2, 6, 12, 20, 32, 48, 70, 100], "reveal+wipe": [2, 6, 12, 20, 32, 48, 70, 100]}, "progress_pct_shift": {"enabled": false, "apply_to_lowest": 3, "step_pct": 0.75, "count": 3}, "calib_speed_probe": {"enabled": true, "families": ["fade", "reveal", "blur", "wipe"], "base_anim_ms_levels": [300, 500], "generation_level_ms": 300}, "gates_ms": {"_default": [20, 40, 60, 80, 110, 150, 220], "あ": [10, 20, 30, 35, 50, 65, 90], "か": [10, 20, 25, 35, 45, 60, 85], "が": [10, 20, 25, 35, 45, 60, 85], "ぱ": [10, 15, 25, 30, 40, 50, 70], "し": [10, 20, 30, 35, 40, 50, 60], "つ": [10, 20, 30, 35, 50, 65, 85], "ま": [10, 25, 35, 50, 65, 85, 125], "ら": [10, 25, 35, 50, 65, 85, 110]}, "require_canvas_filter": true, "families": {"fade": {"gamma": 1}, "reveal": {"seed_prefix": "stroke-mask:", "ink_threshold": 128}, "blur": {"max_radius_px": 72}, "wipe": {"direction": "ltr", "soft_edge_px": 0, "direction_assign": {"mode": "fixed", "directions": ["ltr", "rtl"]}}}, "composite_axis": {"fade+blur": {"uniform_k": 5.9302, "spatial_k": 1.0997}, "fade+wipe": {"uniform_k": 5.9302, "spatial_k": 1.5576}, "reveal+blur": {"uniform_k": 5.6221, "spatial_k": 1.0997}, "reveal+wipe": {"uniform_k": 5.6221, "spatial_k": 1.5576}}, "warp": {"tables_url": "transfer_warp.json", "frozen_commit": "4ea9b5178", "fallback_affine": {"a": 0.0044, "b": -0.05}, "fallback_step_mid_ms": 60}}, "conditions": [{"family": "fade", "condition": "baseline1", "tier": 1}, {"family": "fade", "condition": "baseline2", "tier": 1}, {"family": "fade", "condition": "proposed", "tier": 1}, {"family": "reveal", "condition": "baseline1", "tier": 1}, {"family": "reveal", "condition": "baseline2", "tier": 1}, {"family": "reveal", "condition": "proposed", "tier": 1}, {"family": "blur", "condition": "proposed", "tier": 2}, {"family": "wipe", "condition": "proposed", "tier": 2}, {"family": "fade+blur", "condition": "proposed", "tier": 2}, {"family": "fade+wipe", "condition": "proposed", "tier": 2}, {"family": "reveal+blur", "condition": "proposed", "tier": 2}, {"family": "reveal+wipe", "condition": "proposed", "tier": 2}], "design": {"reps": 1, "target_points_per_char": 3, "min_same_char_gap": 4, "max_target_trials": 0, "practice_min": 1, "check_full_rate": 0.1, "check_floor_rate": 0.06, "ask_awareness": false, "post_survey": {"enabled": true, "questions": [{"id": "age_band", "label": "年齢層", "options": ["10代", "20代", "30代", "40代", "50代", "60代", "70代", "80代", "90代以上"]}, {"id": "read_difficulty", "label": "日常的に、ひらがなを読むのに支障はありますか？", "options": ["支障なし", "多少ある（時々読み間違える等）", "ある（読み取りに困難を感じる）"]}, {"id": "hear_difficulty", "label": "日常的に、会話などの聞き取りに支障はありますか？", "options": ["支障なし", "多少ある（聞き返すことがある等）", "ある（聞き取りに困難を感じる）"]}]}, "short_run_trials": 4, "auto_start_ms": 700, "full_hold_ms": 350}, "assignment": {"mode": "rotation", "aprime_families": ["fade", "reveal", "blur", "wipe"], "b_step": 5, "pnum_param": "pnum", "point_subsets": {"5": [0, 1, 3], "7": [0, 2, 4], "8": [0, 3, 5]}}, "wellbeing": {"in_group_b": false, "chars": ["あ", "ぱ"], "families": ["fade", "reveal", "blur", "wipe"], "condition": "proposed", "items": [{"key": "readable", "text": "この表示は継続して見やすい"}, {"key": "natural", "text": "変化が自然に感じる"}, {"key": "annoying", "text": "目障り・わずらわしい"}], "scale_min_label": "まったくそう思わない", "scale_max_label": "とてもそう思う", "choice_text": "字幕として普段使うなら、どの表示がよいですか。", "choice_labels": {"fade": "だんだん濃くなる", "reveal": "点が増えていく", "blur": "ぼやけ→はっきり", "wipe": "端から現れる"}, "allow_replay": true}, "contact": {"pi": "栗原一貴", "email": "kurihara@tsuda.ac.jp", "institution": "", "contact_name": "栗原一貴", "retention": "収集したデータは本プロジェクトの運営中は保管し、研究終了時に完全に削除します。データはGoogle Cloud Firestore（東京リージョン）に暗号化して保存し、研究責任者と共同研究者のみがアクセスします。", "via_crowdsourcing": true, "provisional": []}, "logging": {"retry": {"attempts": 3, "delays_ms": [800, 2500, 6000], "jitter_ms": 400}, "submit_url": "https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec", "modality_audio": "transfer_audio", "modality_visual": "transfer_visual"}}, "imgs": {"ま": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII="}, "series": {"acc_shape|fade|ま": [0.0, 0.0, 0.00400851, 0.02365071, 0.02959478, 0.03166145, 0.03400615, 0.14458209, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813, 0.27626813], "acc_shape|reveal|ま": [0.0, 0.0013884, 0.00262082, 0.03963034, 0.05661447, 0.06320843, 0.07102564, 0.07859959, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614, 0.08224614], "acc_shape|blur|ま": [0.0, 0.0, 0.11346844, 0.6068483, 0.67284584, 0.69284477, 0.71465879, 0.76005398, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675, 0.78593675], "acc_shape|wipe|ま": [0.0, 0.01342195, 0.02019104, 0.05897652, 0.07768692, 0.10740112, 0.20829531, 0.39079854, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953, 0.42440953], "info_shape|fade|ま": [0.008062, 0.00977565, 0.01193186, 0.02264979, 0.02645065, 0.02841027, 0.03179041, 0.03557947, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796, 0.04204796], "info_shape|reveal|ま": [0.00474533, 0.01647529, 0.02510905, 0.04710083, 0.07616299, 0.09867543, 0.17770659, 0.3008634, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391, 0.38081391], "info_shape|blur|ま": [0.32123925, 0.47707416, 0.55752614, 0.62888414, 0.68003227, 0.73915539, 0.8071601, 0.85724363, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074, 0.87318074], "info_shape|wipe|ま": [0.02161451, 0.04143049, 0.05561964, 0.27004573, 0.31715514, 0.34154286, 0.40782405, 0.48494784, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272, 0.55768272], "acc_mid|fade|ま": [0.0, 0.0, 0.0, 0.03296043, 0.08851598, 0.14407154, 0.19962709, 0.25518265, 0.31073821, 0.36629376, 0.42184932, 0.47740487, 0.53296043, 0.58851598, 0.64407154, 0.69962709, 0.75518265, 0.81073821, 0.86629376], "acc_mid|reveal|ま": [0.0, 0.0, 0.0, 0.04765173, 0.10320729, 0.15876284, 0.2143184, 0.26987395, 0.32542951, 0.38098506, 0.43654062, 0.49209618, 0.54765173, 0.60320729, 0.65876284, 0.7143184, 0.76987395, 0.82542951, 0.88098506], "acc_mid|blur|ま": [0.38045713, 0.43601268, 0.49156824, 0.54712379, 0.60267935, 0.6582349, 0.71379046, 0.76934601, 0.82490157, 0.88045713, 0.93601268, 0.99156824, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "acc_mid|wipe|ま": [0.0, 0.0, 0.00114889, 0.05670445, 0.11226001, 0.16781556, 0.22337112, 0.27892667, 0.33448223, 0.39003778, 0.44559334, 0.50114889, 0.55670445, 0.61226001, 0.66781556, 0.72337112, 0.77892667, 0.83448223, 0.89003778], "info_mid|fade|ま": [0.0, 0.0, 0.04789296, 0.10344851, 0.15900407, 0.21455962, 0.27011518, 0.32567073, 0.38122629, 0.43678185, 0.4923374, 0.54789296, 0.60344851, 0.65900407, 0.71455962, 0.77011518, 0.82567073, 0.88122629, 0.93678185], "info_mid|reveal|ま": [0.0, 0.00430577, 0.05986132, 0.11541688, 0.17097244, 0.22652799, 0.28208355, 0.3376391, 0.39319466, 0.44875021, 0.50430577, 0.55986132, 0.61541688, 0.67097244, 0.72652799, 0.78208355, 0.8376391, 0.89319466, 0.94875021], "info_mid|blur|ま": [0.48080691, 0.53636247, 0.59191802, 0.64747358, 0.70302913, 0.75858469, 0.81414025, 0.8696958, 0.92525136, 0.98080691, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], "info_mid|wipe|ま": [0.0, 0.03422851, 0.08978407, 0.14533962, 0.20089518, 0.25645073, 0.31200629, 0.36756184, 0.4231174, 0.47867295, 0.53422851, 0.58978407, 0.64533962, 0.70089518, 0.75645073, 0.81200629, 0.86756184, 0.9231174, 0.97867295]}, "meta": {"acc_shape": {"frame_ms": 16.666667, "duration_ms": 300.0}, "info_shape": {"frame_ms": 16.666667, "duration_ms": 300.0}, "acc_mid": {"frame_ms": 16.666667, "duration_ms": 300.0}, "info_mid": {"frame_ms": 16.666667, "duration_ms": 300.0}}, "lab": {"fade": "うすい", "reveal": "点が増える", "blur": "ぼやけ", "wipe": "端から"}};
+const CFG = DATA.cfg;
+const SIZE = CFG.visual.size_px;
+const imgs = {};           // かな → Image (base/<かな>.png)
+
+function newCanvas() {
+  const c = document.createElement("canvas");
+  c.id = "stim"; c.width = SIZE; c.height = SIZE;
+  c.style.background = "#fff"; c.style.border = "1px solid #ddd";
+  c.style.display = "block"; c.style.margin = "0 auto";
+  return c;
+}
+function drawBlank(ctx) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, SIZE, SIZE); }
+// 注視点。strong = true のときは**練習用に大きく濃く**描く。
+// ⚠ 本番（strong なし）の見え方は変えないこと。注視点が目立ちすぎると
+//   そのあとに出る薄い字が相対的に見えにくくなり、測る値が動く。
+function drawFix(ctx, strong) {
+  drawBlank(ctx);
+  ctx.fillStyle = strong ? "#1E2A5E" : "#333";
+  ctx.font = (strong ? 72 : 40) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 練習の注視点。大きさをゆっくり上下させて目を引く。**練習でしか呼ばない。**
+// 周期 900ms。行き過ぎないよう 0.85〜1.15 倍の範囲に収める。
+function drawFixPulse(ctx, elapsedMs) {
+  const k = 1 + 0.15 * Math.sin((elapsedMs / 900) * 2 * Math.PI);
+  drawBlank(ctx);
+  ctx.fillStyle = "#1E2A5E";
+  ctx.font = Math.round(72 * k) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 部分表示(reveal)用: 字ごとに固定した乱数順のストローク画素の並び。
+// 既存資産(generate.py / README.md「マスキング手法」)と同じ考え方だが、
+// 101段階の画像には依存せず、その場で並びを作って任意の s を描けるようにした。
+// 乱数の並びは Python の random.Random とは別物になるが、**字ごとに固定**であれば
+// 実験の要件(同じ字はいつも同じ順で現れる)は満たす。
+function hashSeed(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const revealOrder = {};    // かな → Uint32Array (画素の並び。値は画素の通し番号)
+function revealPrepare(ch) {
+  if (revealOrder[ch]) return revealOrder[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = CFG.visual.families.reveal.ink_threshold;
+  const idx = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    // 輝度 ≤ しきい値 の画素を「ストローク画素」とみなす(既存資産と同じ判定)。
+    const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+    if (lum <= th) idx.push(i);
+  }
+  const rnd = mulberry32(hashSeed(CFG.visual.families.reveal.seed_prefix + ch));
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1)); const t = idx[i]; idx[i] = idx[j]; idx[j] = t;
+  }
+  revealOrder[ch] = Uint32Array.from(idx);
+  return revealOrder[ch];
+}
+
+// 描画のたびに全画素を書き直すと重いので、1試行のあいだは同じ ImageData を使い、
+// 増えたぶんの画素だけ黒く塗る(s は試行内で単調に増えるため)。
+const revealState = { ch: null, shown: 0, img: null };
+function revealBegin(ch, ctx) {
+  revealPrepare(ch);
+  revealState.ch = ch; revealState.shown = 0;
+  revealState.img = ctx.createImageData(SIZE, SIZE);
+  revealState.img.data.fill(255);
+}
+function revealDraw(ctx, ch, s) {
+  if (revealState.ch !== ch || revealState.img === null) revealBegin(ch, ctx);
+  const order = revealOrder[ch];
+  const want = Math.round(order.length * Math.max(0, Math.min(1, s)));
+  const d = revealState.img.data;
+  if (want < revealState.shown) {           // 戻る場合(練習の再生など)は塗り直す
+    d.fill(255); revealState.shown = 0;
+  }
+  for (let i = revealState.shown; i < want; i++) {
+    const p = order[i] * 4;
+    d[p] = 0; d[p + 1] = 0; d[p + 2] = 0; d[p + 3] = 255;
+  }
+  revealState.shown = want;
+  ctx.putImageData(revealState.img, 0, 0);
+}
+
+// ぼかし解除(blur): ガウスぼかしの半径を単調に減らす。s=0 で最大、s=1 で鮮明。
+let blurOff = null, blurOffCtx = null;
+function blurBegin(ch) {
+  if (!blurOff) {
+    blurOff = document.createElement("canvas"); blurOff.width = SIZE; blurOff.height = SIZE;
+    blurOffCtx = blurOff.getContext("2d");
+  }
+  blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+}
+// ---- canvas の filter が本当に効くか（2026-08-27 に較正データで発覚）--------
+//
+// **WebKit(iOS の全ブラウザ・Yahooアプリ内WebView・macOS Safari)は canvas の
+//   `ctx.filter` を黙って無視する。** 例外も警告も出ないまま、ぼかしが一切かからず
+//   字が鮮明なまま提示される。
+//
+// 実測での証拠(較正 calib + calib2、視覚325人):
+//   進み具合 3%（ぼかし半径 69.84px ＝ 判読できないはず）で
+//     WebKit 端末   … 正答率 100.0%（31試行）
+//     それ以外      … 正答率   3.3%（273試行、当てずっぽう 1/72 = 1.4%）
+//   うすい(fade)・点が増える(reveal)・端から(wipe)は両者でほぼ同じなので、
+//   参加者の質ではなく**描画の不具合**である。
+//
+// ⚠ **見た目を別の作りで再現しない。** 要素側の CSS filter で代用すると、
+//   ぼかしの広がり方・縁のにじみ・枠線の扱いが canvas 版と変わる。
+//   すでに取った較正データ（非WebKit）と刺激が違うものになり、
+//   曲線を束ねられなくなる。**効かない端末は断る**のが、この実験では正しい。
+//
+// 判定は「実際に小さく描いてみて、隣の画素がにじむか」で行う（UA 文字列で
+// 見分けない。将来 WebKit が対応したら自動的に通るようにするため）。
+let _canvasFilterOK = null;
+function canvasFilterWorks() {
+  if (P.get("nofilter") === "1") return false;      // 研究者の動作確認用
+  if (_canvasFilterOK !== null) return _canvasFilterOK;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 32;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, 32, 32);
+    x.filter = "blur(4px)";
+    x.fillStyle = "#000"; x.fillRect(12, 12, 8, 8);   // 中央に 8×8 の黒い四角
+    x.filter = "none";
+    // ⚠ **四角の中央**を見る。1画素だけ黒を置いて隣のにじみを見る作りにすると、
+    //   ぼかしで墨が薄く広がりすぎて、効いていても真っ白と区別がつかない
+    //   （2026-08-27 に Chrome で実測して分かった。最初の実装はこれで誤判定した）。
+    //   ここは差が大きい: 効いていれば中央は 136 前後まで薄まり、
+    //   効いていなければ 0（真っ黒）のまま。
+    _canvasFilterOK = x.getImageData(16, 16, 1, 1).data[0] > 40;
+  } catch (e) {
+    _canvasFilterOK = false;
+  }
+  return _canvasFilterOK;
+}
+
+// この回の出題に「ぼかし」が混ざるか。組み合わせ(fade+blur など)も数える。
+function usesBlurFamily() {
+  const fams = (GROUP === "aprime" && CFG.assignment.aprime_families)
+    ? CFG.assignment.aprime_families
+    : (CFG.conditions || []).map(c => c && c.family);
+  return fams.some(f => String(f || "").indexOf("blur") >= 0);
+}
+
+// ぼかしのフィルタ適用部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+blur / reveal+blur)からもそのまま呼べる。挙動は元の blurDraw と同じ)。
+function blurApplyFilter(ctx, src, s) {
+  const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
+  drawBlank(ctx);
+  ctx.save();
+  ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
+  ctx.restore();
+  ctx.filter = "none";
+}
+function blurDraw(ctx, ch, s) {
+  if (!blurOff) blurBegin(ch);
+  blurApplyFilter(ctx, blurOff, s);
+}
+
+// ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられ、
+// (2026-08-26〜)試行ごとにも変えられる(下の wipeDirFor と t.wipe_dir を見ること)。
+//
+// 進み具合 s は「画面の端(0)から端(SIZE)まで」ではなく、**字のインクが実際にある
+// 範囲(bbox)の中だけ**で動かす。そのままだと、字によっては書き出しの位置が
+// 画像の端から離れている(左右・上下に余白がある)ため、s の前半ぶんが余白を
+// なぞるだけの「何も起きない区間」になってしまう(丸山・2026-08-22の下見で発覚)。
+// bbox の外側は s によらずつねに欠けたまま/つねに映ったままなので、
+// s=0 でちょうど「インクが何も見えない」、s=1 でちょうど「インクが全部見える」に
+// そろう。字ごとに余白の量が違う(字形しだい)ので、そろえないと同じ s でも
+// 字によって実質の情報量が変わってしまう(較正データの字間比較を歪める)。
+const wipeBBox = {};   // かな → {xMin, xMax, yMin, yMax}(xMax/yMaxは「最後のインク列/行+1」)
+function wipeInkThreshold() {
+  const w = CFG.visual.families.wipe;
+  return (w && typeof w.ink_threshold === "number") ? w.ink_threshold
+    : CFG.visual.families.reveal.ink_threshold;
+}
+function wipeBBoxPrepare(ch) {
+  if (wipeBBox[ch]) return wipeBBox[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = wipeInkThreshold();
+  let xMin = SIZE, xMax = 0, yMin = SIZE, yMax = 0, found = false;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const i = y * SIZE + x;
+      const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+      if (lum <= th) {
+        found = true;
+        if (x < xMin) xMin = x; if (x + 1 > xMax) xMax = x + 1;
+        if (y < yMin) yMin = y; if (y + 1 > yMax) yMax = y + 1;
+      }
+    }
+  }
+  // インク画素が1つも無い(白紙の画像など)ときは、bboxを使わず元の挙動(0..SIZE)に落とす。
+  const bbox = found ? { xMin, xMax, yMin, yMax } : { xMin: 0, xMax: SIZE, yMin: 0, yMax: SIZE };
+  wipeBBox[ch] = bbox;
+  return bbox;
+}
+function wipeBegin(ch) { wipeBBoxPrepare(ch); }
+// dirArg: この試行の向き(t.wipe_dir)。呼び出し元が渡さない(undefined/空文字)ときは
+// 従来どおり設定の既定(CFG.visual.families.wipe.direction || "ltr")を使う。
+// **bbox(wipeBBoxPrepare)は向きによらず共通**なので、ここでは向きの選び方だけが変わる。
+// クリップ矩形の計算だけを切り出したもの(向きの選び方は元の wipeDraw と同じ)。
+function wipeClipRect(ch, s, dirArg) {
+  const p = Math.max(0, Math.min(1, s));
+  const dir = dirArg || CFG.visual.families.wipe.direction || "ltr";
+  const b = wipeBBoxPrepare(ch);
+  let rx = 0, ry = 0, rw = 0, rh = SIZE;
+  // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
+  // ltr/ttb は0側(左/上)を固定してインク側の遠い端へ伸ばす → w/hはxMin→xMaxで増える。
+  // rtl/btt はSIZE側(右/下)を固定してインク側の遠い端へ伸ばす → w/hは(SIZE-xMax)→(SIZE-xMin)で増える。
+  if (dir === "ltr" || dir === "rtl") {
+    const w = (dir === "ltr")
+      ? b.xMin + (b.xMax - b.xMin) * p        // 0:xMin(何も新しく見えない) → 1:xMax(インク全部)
+      : (SIZE - b.xMax) + (b.xMax - b.xMin) * p;
+    rw = w; rh = SIZE;
+    rx = (dir === "ltr") ? 0 : SIZE - w;
+    ry = 0;
+  } else {
+    const h = (dir === "ttb")
+      ? b.yMin + (b.yMax - b.yMin) * p
+      : (SIZE - b.yMax) + (b.yMax - b.yMin) * p;
+    rw = SIZE; rh = h;
+    rx = 0;
+    ry = (dir === "ttb") ? 0 : SIZE - h;
+  }
+  return { rx, ry, rw, rh };
+}
+// クリップして描く部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+wipe / reveal+wipe)からもそのまま呼べる。挙動は元の wipeDraw と同じ)。
+function wipeApplyClip(ctx, src, ch, s, dirArg) {
+  drawBlank(ctx);
+  if (!src) return;
+  const { rx, ry, rw, rh } = wipeClipRect(ch, s, dirArg);
+  if (rw <= 0 || rh <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rx, ry, rw, rh);
+  ctx.clip();
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
+  ctx.restore();
+}
+function wipeDraw(ctx, ch, s, dirArg) {
+  wipeApplyClip(ctx, imgs[ch], ch, s, dirArg);
+}
+
+// フェード(fade): 不透明度 = s^gamma。
+// gamma は「進み具合を画面の濃さにどう配るか」のつまみ(transfer_config.js の
+// visual.families.fade.gamma)。**既定の 1.0 では濃さ = s** となり、
+// 既存の1文字課題と同じ挙動になる。1.0 より大きくすると序盤を薄めに通せる。
+function fadeAlpha(s) {
+  const g = (CFG.visual.families.fade && CFG.visual.families.fade.gamma);
+  const t = Math.max(0, Math.min(1, s));
+  // gamma が無い/1.0 のときは、余計な計算を挟まず s をそのまま使う。
+  if (!(typeof g === "number") || g === 1) return t;
+  return Math.pow(t, g);
+}
+function fadeDraw(ctx, ch, s) {
+  drawBlank(ctx);
+  if (!imgs[ch]) return;
+  ctx.globalAlpha = fadeAlpha(s);
+  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.globalAlpha = 1;
+}
+
+const RENDERERS = {
+  fade:   { begin: () => {},                     draw: fadeDraw },
+  reveal: { begin: (ch, ctx) => revealBegin(ch, ctx), draw: revealDraw },
+  blur:   { begin: (ch) => blurBegin(ch),        draw: blurDraw },
+  wipe:   { begin: (ch) => wipeBegin(ch),        draw: wipeDraw },
+};
+
+// =========================================================================
+// 組み合わせアニメ(2026-08-26 追加): 一様(fade/reveal) × 空間(blur/wipe) の
+// 総当たり4通り。較正で「一様2つは進み具合0〜5%に全変化が詰まる」
+// 「ぼやけは床が高く『まだ誰も分からない』状態を作れない」ことが分かったため、
+// 互いの弱点を埋め合う狙いで足す。
+//
+// 描画ロジックは新しく書かない。fadeDraw / revealDraw と、blur/wipe から
+// 切り出した blurApplyFilter / wipeApplyClip を「一様側をオフスクリーンに描き、
+// その結果へ空間側をかけて本番canvasへ転写する」形でそのまま呼ぶだけ。
+let compositeOff = null, compositeOffCtx = null;
+function compositeOffCanvas() {
+  if (!compositeOff) {
+    compositeOff = document.createElement("canvas");
+    compositeOff.width = SIZE; compositeOff.height = SIZE;
+    compositeOffCtx = compositeOff.getContext("2d");
+  }
+  return compositeOffCtx;
+}
+
+// 組み合わせ全体の進み具合 s(0..1)を、各方式が実際に働く区間
+// (transfer_warp.json の composite_ranges[pairName][ch] = {a:[lo,hi]%, b:[lo,hi]%})
+// に写し直す。a は一様側(fade/reveal)、b は空間側(blur/wipe)。
+// 区間が取れないとき(warp表が未読込・その字が無い等)は、
+// 両方に s をそのまま渡す(動作は鈍るが壊れない)。
+// 組み合わせの進み具合 s を、2つの方式それぞれの進み具合へ写す。
+//
+// ⚠ **区間 [lo, hi] へ線形に写す作りは使えない**（2026-08-26 に実装して判明）。
+//   fade の働く区間は「か」で 0〜3.65% しかないので、s=100% でも不透明度が
+//   3.65% にしかならず、**文字が最後まで完成しない**。
+//   確認問題（全部見せて正答率を見る）が成立しなくなる。
+//
+// ■ いまの作り：**表を引く**
+//   transfer_warp.json の composite_map に、u を 0〜1 で 101 点刻みにした
+//   「その方式の進み具合(%)」の列が入っている（生成は build_warp_b.py）。
+//   表は s_x(u) = 100·u^k（k は u=0.5 でその方式の中間点 μ を通るように決めた）
+//   で作ってあるので、
+//     s=0   → 何も見えない
+//     s=0.5 → 両方式が同時に自分の中間点
+//     s=1   → 完全に出る
+//   の3点が自然にそろう。
+//
+//   表が無い（読込前・その字が無い等）ときは両方に s をそのまま渡す。
+//   壊れはしないが、遅い方に飲み込まれて組み合わせの意味が薄れるので、
+//   **本番では必ず表が読めていること**を確かめること。
+function compositeSplit(pairName, ch, s) {
+  const p = Math.max(0, Math.min(1, s));
+  // ① **warp表の字ごとの写しを最優先で使う**（2026-08-27 に順序を入れ替えた）。
+  //
+  //    ⚠ **以前は②の固定指数を先に返していた。これは誤りだった。**
+  //      固定指数は8字平均の中点に合わせたもので、字ごとのばらつきを吸収しない。
+  //      端から(wipe)の中点は「ま」3.9% 〜 「ぱ」79.9% と20倍以上開くので、
+  //      平均に合わせた1つの指数では両端の字が死ぬ。実際、生成済みの表では
+  //      **「が」のうすい+端からは提示の全時間で進み具合が 85.70→86.02 と
+  //      0.3ポイントしか動かなかった**（8字中2字＝セルの25%が測定不能）。
+  //      字ごとの表があるならそれを使う。無いときだけ②へ落ちる。
+  const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
+  const m = table && table[ch];
+  if (m && Array.isArray(m.a) && Array.isArray(m.b) && m.a.length >= 2) {
+    const n = m.a.length;
+    const x = p * (n - 1);
+    const i = Math.min(n - 1, Math.floor(x));
+    const j = Math.min(n - 1, i + 1);
+    const f = x - i;
+    const pick = (arr) => (arr[i] * (1 - f) + arr[j] * f) / 100;
+    return { sa: Math.max(0, Math.min(1, pick(m.a))),
+             sb: Math.max(0, Math.min(1, pick(m.b))) };
+  }
+  // ② 設定の固定指数。**字ごとの表が無いときの受け皿**である。
+  //    紛れ字には字ごとの曲線が無いので、こちらが使われる。
+  //    形: s_x(u) = 100 · u^k（u=0.5 で各方式の中央の中点を通るよう k を決めてある）
+  const ax = (CFG.visual.composite_axis || {})[pairName];
+  if (ax && ax.uniform_k > 0 && ax.spatial_k > 0) {
+    return { sa: Math.pow(p, ax.uniform_k), sb: Math.pow(p, ax.spatial_k) };
+  }
+  // ③ どちらも無ければ恒等（両方を同じだけ進める）。
+  return { sa: p, sb: p };
+}
+
+// begin: 両方の begin を呼ぶ(reveal は点描の並びを、wipe は字の範囲を先に作る必要があるため)。
+function compositeBegin(uniformName, spatialName) {
+  return function (ch, ctx) {
+    RENDERERS[uniformName].begin(ch, ctx);
+    RENDERERS[spatialName].begin(ch, ctx);
+  };
+}
+// draw: 一様側(uniformDraw)をオフスクリーンに描き、その結果(compositeOff)へ
+// 空間側(spatialApply)をかけて本番の ctx へ転写する。
+function compositeDraw(pairName, uniformDraw, spatialApply) {
+  return function (ctx, ch, s, dirArg) {
+    const { sa, sb } = compositeSplit(pairName, ch, s);
+    const off = compositeOffCanvas();
+    uniformDraw(off, ch, sa);
+    spatialApply(ctx, compositeOff, ch, sb, dirArg);
+  };
+}
+
+RENDERERS["fade+blur"] = {
+  begin: compositeBegin("fade", "blur"),
+  draw: compositeDraw("fade+blur", fadeDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["fade+wipe"] = {
+  begin: compositeBegin("fade", "wipe"),
+  draw: compositeDraw("fade+wipe", fadeDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
+};
+RENDERERS["reveal+blur"] = {
+  begin: compositeBegin("reveal", "blur"),
+  draw: compositeDraw("reveal+blur", revealDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["reveal+wipe"] = {
+  begin: compositeBegin("reveal", "wipe"),
+  draw: compositeDraw("reveal+wipe", revealDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
+};
+
+// =========================================================================
+// 視覚: 進み方 s(t)
+//   較正(群A′)は等速。検証(群B)は生成した数値列(60Hz)を線形補間してなぞる。
+// =========================================================================
+let warpTables = null;      // {frame_ms, tables: {family: {char: {condition: [s,...]}}}}
+
+function warpSeries(family, ch, condition) {
+  if (!warpTables || !warpTables.tables) return null;
+  const f = warpTables.tables[family];
+  if (!f || !f[ch]) return null;
+  const s = f[ch][condition];
+  return (Array.isArray(s) && s.length) ? s : null;
+}
+function seriesAt(series, frameMs, tMs) {
+  if (tMs <= 0) return series[0];
+  const x = tMs / frameMs;
+  const i = Math.floor(x);
+  if (i >= series.length - 1) return series[series.length - 1];
+  const f = x - i;
+  return series[i] * (1 - f) + series[i + 1] * f;
+}
+
+// 1試行ぶんの「経過時間ms → 進み具合 s」を作る。
+// 返り値: {fn, source} source は記録用("table" / "linear" / "affine")。
+// その試行の基準アニメの長さ。RQ4 の速さ2水準では試行ごとに違うので、
+// 設定の既定値ではなく試行に書かれた値を使う(書かれていなければ既定値)。
+function baseAnimMs(t) {
+  return (t && typeof t.base_anim_ms === "number") ? t.base_anim_ms : CFG.visual.base_anim_ms;
+}
+
+function progressFn(t) {
+  if (t.play === "calib" || t.condition === "calib") {
+    const base = baseAnimMs(t);
+    return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
+  }
+  const series = warpSeries(t.family, t.char, t.condition);
+  if (series) {
+    const frameMs = (warpTables && warpTables.frame_ms) || (1000 / 60);
+    return { fn: (ms) => Math.max(0, Math.min(1, seriesAt(series, frameMs, ms))), source: "table" };
+  }
+  // 表が無いとき(生成前・研究者の動作確認)。
+  if (t.condition === "baseline2") {
+    const a = CFG.visual.warp.fallback_affine.a, b = CFG.visual.warp.fallback_affine.b;
+    return { fn: (ms) => Math.max(0, Math.min(1, a * ms + b)), source: "affine" };
+  }
+  const base = baseAnimMs(t);
+  return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
+}
+
+// =========================================================================
+// 読み込み
+// =========================================================================
+
+
+// ---- 画像を読み込んでから描く（imgs は切り出した描画コードが参照する） ----
+function boot(){
+  const need = Object.keys(DATA.imgs);
+  let left = need.length;
+  need.forEach(ch => {
+    const im = new Image();
+    im.onload = () => { imgs[ch] = im; if (--left === 0) drawAll(); };
+    im.onerror = () => { if (--left === 0) drawAll(); };
+    im.src = DATA.imgs[ch];
+  });
+}
+
+function seriesAtMs(arr, ms){
+  const f = DATA.meta.acc_mid.frame_ms;
+  const x = Math.max(0, Math.min(arr.length - 1, ms / f));
+  const i = Math.floor(x), j = Math.min(arr.length - 1, i + 1), t = x - i;
+  return Math.max(0, Math.min(1, arr[i] * (1 - t) + arr[j] * t));
+}
+
+function paint(cv, fam, ch, s){
+  const ctx = cv.getContext("2d", {willReadFrequently:true});
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+  const R = RENDERERS[fam] || RENDERERS.fade;
+  R.begin(ch, ctx);
+  R.draw(ctx, ch, Math.max(0, Math.min(1, s)), 1);
+}
+
+function drawAll(){
+  document.querySelectorAll("canvas[data-fam]").forEach(cv => {
+    paint(cv, cv.dataset.fam, cv.dataset.ch, parseFloat(cv.dataset.s));
+  });
+}
+
+// 実時間 300ms で流す（表は19点＝1点16.67ms）
+function playStrip(box){
+  const rows = [...box.querySelectorAll(".striprow")].map(r => {
+    const cv = r.querySelector("canvas[data-play]");
+    return cv ? {cv, key: cv.dataset.play} : null;
+  }).filter(Boolean);
+  if (!rows.length) return;
+  const dur = DATA.meta.acc_mid.duration_ms;
+  const t0 = performance.now();
+  function step(now){
+    const el = now - t0;
+    const ms = Math.min(dur, el);
+    rows.forEach(r => {
+      const arr = DATA.series[r.key];
+      if (arr) paint(r.cv, r.cv.dataset.fam, r.cv.dataset.ch, seriesAtMs(arr, ms));
+    });
+    if (el < dur + 700) requestAnimationFrame(step);
+    else drawAll();
+  }
+  requestAnimationFrame(step);
+}
+
+document.addEventListener("click", e => {
+  const b = e.target.closest("button.play");
+  if (!b) return;
+  playStrip(document.getElementById(b.dataset.target));
+});
+
+boot();
+
+</script>
+</body>
+</html>
