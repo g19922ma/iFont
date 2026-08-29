@@ -97,20 +97,42 @@ ok(`表の中身: ${combos.length} 通り（方式×字×条件）・各 ${wantL
 
 // ---- 2. 実験ページが引く組合せが表にあるか --------------------------------
 // 群Bは「ターゲット8字 × 8条件」を参加者をまたいで全部出す(割付は連番で回る)。
-const missing = [];
-for (const ch of CFG.targets) {
-  for (const c of CFG.conditions) {
-    if (!P.warpSeries(c.family, ch, c.condition)) missing.push(`${c.family}|${ch}|${c.condition}`);
+// どのページが引くかは、表が自分で名乗る集団(meta.for_group)で決める。
+//   既定 … 群B(transfer.html)。8字 × 12条件 = 96通り(組み合わせ方式を含む)
+//   "c"  … 群C(transfer_comfort.html)。transfer_comfort_config.js の
+//          使う字 × 見せる方式 × condition だけを引く。群Cは組み合わせ方式を
+//          出さないので、そこまで要求すると通らない表を不合格にしてしまう。
+//          ステップ表示("step")は表を引かず step_mid_ms を使うので数えない。
+let WANT;                 // [{family, char, condition}, ...]
+let wantWhat;
+if (TBL.meta && TBL.meta.for_group === "c") {
+  require(path.join(EXP, "transfer_comfort_config.js"));
+  const CC = global.window.TRANSFER_COMFORT_CONFIG;
+  const chars = Array.from(new Set([CC.single_char].concat(CC.sequence || [])));
+  const fams = (CC.families || []).filter((f) => f !== "step");
+  WANT = [];
+  for (const ch of chars) for (const f of fams) WANT.push({ family: f, char: ch, condition: CC.condition });
+  wantWhat = `群C(見え心地)のページが引きうる ${WANT.length} 通り`
+    + `（${fams.length}方式 × ${chars.length}字 × ${CC.condition}）`;
+  ok(`この表は群C用と名乗っている（meta.for_group="c"）ので、群Cの設定で見る`);
+} else {
+  WANT = [];
+  for (const ch of CFG.targets) for (const c of CFG.conditions) {
+    WANT.push({ family: c.family, char: ch, condition: c.condition });
   }
+  wantWhat = `実験ページが引きうる ${WANT.length} 通り`;
 }
-const needed = CFG.targets.length * CFG.conditions.length;
+const missing = [];
+for (const w of WANT) {
+  if (!P.warpSeries(w.family, w.char, w.condition)) missing.push(`${w.family}|${w.char}|${w.condition}`);
+}
 if (missing.length) {
-  const msg = `実験ページが引きうる ${needed} 通りのうち ${missing.length} 通りが表に無い`
+  const msg = `${wantWhat} のうち ${missing.length} 通りが表に無い`
     + `（その問題は代用の進み方に落ちる: ${missing.slice(0, 4).join(", ")}${missing.length > 4 ? " …" : ""}）`;
   if (TBL.demo) ok("※ " + msg + " ← 試走用の表なので想定どおり");
   else bad(msg);
 } else {
-  ok(`実験ページが引きうる ${needed} 通りすべてが表にある`);
+  ok(`${wantWhat} すべてが表にある`);
 }
 
 // ---- 3. 再生(progressFn) --------------------------------------------------
