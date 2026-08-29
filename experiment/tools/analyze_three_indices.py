@@ -587,13 +587,19 @@ def main():
             if rb["status"] == "ok":
                 vals.append(rb["value"])
         vals = np.asarray(vals, float)
-        okv = len(vals) >= max(20, int(0.5 * ydr.shape[0]))
-        ab.append(dict(base, x_abs50=r["value"],
+        nb = ydr.shape[0]
+        frac_fail = (nb - len(vals)) / nb
+        # 3 指標と同じ基準: 参加者を取り直して 10% 以上の回で 50% に届かなければ
+        # 「届くとは言えない」＝推定不能とする
+        okv = frac_fail < 0.10 and len(vals) >= 20
+        ab.append(dict(base,
+                       x_abs50=(r["value"] if okv else None),
                        x_abs50_lo=(float(np.percentile(vals, 2.5)) if okv else None),
                        x_abs50_hi=(float(np.percentile(vals, 97.5)) if okv else None),
-                       status=("ok" if r["status"] == "ok" else r["status"]),
-                       note=(f"{ydr.shape[0]}回のうち{ydr.shape[0]-len(vals)}回は 50% に"
-                             "届かなかった" if len(vals) < ydr.shape[0] else "")))
+                       status=("ok" if okv else "推定不能（再抽出で届かない回がある）"),
+                       note=(f"{nb}回のうち{nb-len(vals)}回（{100*frac_fail:.0f}%）は 50% に"
+                             f"届かなかった。点推定は {r['value']:.2f}"
+                             if frac_fail > 0 else "")))
     abd = pd.DataFrame(ab)
     abd.to_csv(os.path.join(a.out, "absolute50.csv"), index=False)
 
@@ -829,6 +835,13 @@ def main():
     P("  文献での名称: stimulus-specific surprise（specific surprise）。")
     P("    Bezzi (2007) BioSystems 89(1-3):4-9 が I₁ として整理し、Σ_s p(s)·I₁(s)=I(S;R) を明記。")
     P("    ⚠ Butts (2003) の stimulus-specific information (SSI) は別の量なので混同しないこと。")
+    P()
+    U_hi_over = int((df[df.target == "info"]["U_hi"] > 3.0).sum())
+    P(f"  ⚠ 到達点 U の点推定は 40 セルすべて 3 bit 以下（最大 "
+      f"{df[df.target == 'info']['U'].max():.2f}）だが、95% 区間の上端は "
+      f"{U_hi_over}/40 セルで 3 bit を超える。")
+    P("    並べ替えでバイアスを引いた推定量は、理論上限のすぐ下ではばらつきが上限をまたぐ。")
+    P("    区間の上端は『3 bit で頭打ち』と読むこと。")
 
     with open(os.path.join(a.out, "tables.txt"), "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
