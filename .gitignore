@@ -79,3 +79,6 @@ project/data_calib2_live/承認判定_calib2.csv
 
 # calib2 の参加者生データ（公開フォークなので丸ごと除外）
 project/data_calib2_live/
+
+# ペア比較(2026-08-30掲載)の生データは公開リポジトリに入れない
+project/data_pair_live/
