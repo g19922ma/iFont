@@ -277,7 +277,7 @@ s_i(t) = V̂_i⁻¹( Â_i(t) )
 [18] Uetsuki, M., Watanabe, J. and Maruya, K.: "Textual Prosody" Can Change Impressions of Reading in People With Normal Hearing and Hearing Loss, Frontiers in Psychology, Vol.11, Article 548619 (2020).
 [19] Wichmann, F. A. and Hill, N. J.: The psychometric function: I. Fitting, sampling, and goodness of fit, Perception & Psychophysics, Vol.63, No.8, pp.1293–1313 (2001).
 [20] Perez-Ortiz, M. and Mantiuk, R. K.: A practical guide and software for analysing pairwise comparison experiments, arXiv:1712.03686 (2017).
-[21] Clark, ?.: 一対比較が直接評定より判断が容易であることを報告した研究 (2018). ※著者フルネーム・表題・掲載誌が未確認．投稿前に原著を確認し，確認できなければこの引用に依存する 1 文ごと削ること
+[21] Clark, A. P., Howard, K. L., Woods, A. T., Penton-Voak, I. S. and Burt, D. M.: Why Rate When You Could Compare? Using the "EloChoice" Package to Assess Pairwise Comparisons of Perceived Physical Strength, PLOS ONE, Vol.13, No.1, e0190393 (2018).
 [22] 松浦裕久, 青木友裕, 園田晋, 寺田努: 頭部装着型ディスプレイのための歩行時着地衝撃を考慮した動的フォント変化手法, インタラクション 2025 論文集, INT25020 (2025). ※著者の並び順は投稿前に論文集で確認すること
 
 ## 執筆メモ（Word には流し込まない）
