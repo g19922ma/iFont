@@ -27,6 +27,7 @@ STATE = HERE / ".watch_transfer_state.json"
 IDS_FILES = [
     Path("project/設問データ_一部だけ見えた文字・聞こえた音を当てる問題_0825_v2.tsv"),
     Path("project/設問データ_見え方の課題2_0827.tsv"),
+    Path("project/設問データ_文字のくらべ_0830.tsv"),      # ペア比較(comfort・112人)
 ]
 
 
@@ -79,25 +80,28 @@ def main() -> int:
     rows = [d.to_dict() or {} for d in
             db.collection("transfer_trials").where("ts", ">", since).stream()]
     counters = {}
-    for cid in ("calib", "calib__test", "calib2", "calib2__test"):
+    # 2026-08-30〜 の掲載はペア比較(comfort)。読むカウンタは必要な2件だけ。
+    for cid in ("comfort", "comfort__test"):
         d = db.collection("transfer_counters").document(cid).get()
         counters[cid] = (d.to_dict() or {}).get("n", 0)
 
     ids = distributed_ids()
     when = datetime.datetime.fromtimestamp(since / 1000).strftime("%m-%d %H:%M")
     print(f"■ {when} 以降の記録：{len(rows)} 行   （配布ID {len(ids)} 件）")
-    print(f"  カウンタ  calib 本番 {counters['calib']} テスト {counters['calib__test']}"
-          f"  ／  calib2 本番 {counters['calib2']} テスト {counters['calib2__test']}")
+    print(f"  カウンタ  comfort 本番 {counters['comfort']} 人 ／ テスト {counters['comfort__test']} 人"
+          f"   （予定112人）")
 
     # 累計（読み取りは増やさない。増分を手元の控えに足していくだけ）。
-    # 1人ぶんの行数の目安: 本命24 + 紛れ36 + 確認問題 ≒ 60行台。
+    # ペア比較の1人ぶん: 見くらべ24行 + 属性1行 + final 1行 + session 1行 = 27行。
+    # 完走の判定は行数でなく record_kind=="final" の有無で行う。
     state = json.loads(STATE.read_text()) if STATE.exists() else {}
-    total = state.get("total", {})   # pid → {"n":…, "ok":…, "is_test":…}
+    total = state.get("total", {})   # pid → {"n":…, "ok":…, "is_test":…, "final":…}
     for r in rows:
         pid = str(r.get("participant_id"))
         t = total.setdefault(pid, {"n": 0, "ok": 0, "is_test": bool(r.get("is_test"))})
         t["n"] += 1
         if str(r.get("correct")).lower() in ("true", "1"): t["ok"] += 1
+        if str(r.get("record_kind")) == "final": t["final"] = True
         t["is_test"] = bool(r.get("is_test"))
         ts = r.get("ts") or 0
         if ts:
@@ -106,9 +110,9 @@ def main() -> int:
     prod = {p: t for p, t in total.items() if not t["is_test"]}
     if prod:
         ns = sorted(t["n"] for t in prod.values())
-        done = sum(1 for n in ns if n >= 60)
-        print(f"  累計（本番のみ）: {len(prod)} 人が回答開始 ／ 完走目安(60行以上) {done} 人"
-              f" ／ 行数の中央値 {ns[len(ns)//2]}")
+        done = sum(1 for t in prod.values() if t.get("final"))
+        print(f"  累計（本番のみ）: {len(prod)} 人が回答開始 ／ 完走(final行あり) {done} 人"
+              f" ／ 行数の中央値 {ns[len(ns)//2]}（1人27行が目安）")
 
     if not rows:
         print("  （新しい記録はありません）")
