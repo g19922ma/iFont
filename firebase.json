@@ -29,7 +29,7 @@
       },
       {
         "source": "/survey",
-        "destination": "/transfer_comfort.html"
+        "destination": "/transfer_pair.html"
       },
       {
         "source": "/check",

@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>ぼかし画像の突き合わせ</title>
+<style>
+  body{font-family:system-ui,-apple-system,"Hiragino Sans",sans-serif;margin:24px;color:#1a1a1a;line-height:1.7}
+  h1{font-size:18px;border-bottom:2px solid #2E7D8F;padding-bottom:6px}
+  table{border-collapse:collapse;margin:12px 0;font-size:13px}
+  th,td{border:1px solid #ddd;padding:4px 10px;text-align:right}
+  th{background:#f4f6f8}
+  td:first-child,th:first-child{text-align:left}
+  .ok{color:#1a6b3c;font-weight:700}
+  .ng{color:#a11;font-weight:700}
+  #verdict{font-size:16px;padding:12px 16px;border:1px solid #ddd;border-radius:6px;margin:16px 0}
+  .samples{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 24px}
+  .samples figure{margin:0;text-align:center;font-size:11px;color:#555}
+  canvas{border:1px solid #ccc;image-rendering:pixelated}
+  code{background:#f4f6f8;padding:1px 5px;border-radius:3px}
+</style>
+</head>
+<body>
+<h1>ぼかし済みPNG と canvas の <code>ctx.filter</code> を突き合わせる</h1>
+<p>本番と同じ手順（白で塗る → <code>ctx.filter=blur(r)</code> → 字を描く）で描いた絵と、
+<code>build_blur_frames.py</code> が作った PNG を、画素ごとに比べます。
+<b>このページは <code>ctx.filter</code> が効くブラウザ（Chrome など）で開いてください。</b>
+効かない端末で開いても比較になりません。</p>
+
+<div id="verdict">実行中…</div>
+<div id="out"></div>
+<h2 style="font-size:15px">目で見る見本（差がいちばん大きかった段）</h2>
+<div class="samples" id="samples"></div>
+
+<script>
+const SIZE = 256;
+const OK_MEAN = 1.5;   // 平均のずれ（0-255）がこれ以下なら一致とみなす
+const OK_MAX  = 24;    // 1画素の最大のずれ
+
+function el(t, html){ const e=document.createElement(t); if(html!=null) e.innerHTML=html; return e; }
+
+function loadImage(src){
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("読めない: " + src));
+    im.src = src;
+  });
+}
+
+// 本番 transfer.js / transfer_comfort.js の blurBegin + blurApplyFilter と同じ手順。
+function drawWithFilter(ctx, srcCanvas, r){
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,SIZE,SIZE);
+  ctx.save();
+  ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
+  ctx.drawImage(srcCanvas, 0, 0, SIZE, SIZE);
+  ctx.restore();
+  ctx.filter = "none";
+}
+
+function diff(a, b){
+  let sum = 0, mx = 0;
+  for (let i = 0; i < a.length; i += 4){
+    for (let k = 0; k < 3; k++){
+      const d = Math.abs(a[i+k] - b[i+k]);
+      sum += d; if (d > mx) mx = d;
+    }
+  }
+  return { mean: sum / (a.length / 4 * 3), max: mx };
+}
+
+// この環境で ctx.filter が本当に効くかを、本番と同じ判定で確かめる。
+function canvasFilterWorks(){
+  const c = document.createElement("canvas"); c.width = c.height = 32;
+  const x = c.getContext("2d");
+  x.fillStyle="#fff"; x.fillRect(0,0,32,32);
+  x.filter = "blur(4px)";
+  x.fillStyle="#000"; x.fillRect(12,12,8,8);
+  x.filter = "none";
+  return x.getImageData(16,16,1,1).data[0] > 40;
+}
+
+(async function(){
+  const verdict = document.getElementById("verdict");
+  if (!canvasFilterWorks()){
+    verdict.innerHTML = '<span class="ng">この端末では ctx.filter が効きません。</span>' +
+      ' 比較にならないので、Chrome など効くブラウザで開いてください。';
+    return;
+  }
+
+  const man = await (await fetch("../blur_frames/manifest.json", {cache:"no-store"})).json();
+  const radii = man.radii;
+
+  const cvA = document.createElement("canvas"); cvA.width=cvA.height=SIZE;
+  const ctxA = cvA.getContext("2d", {willReadFrequently:true});
+  const cvB = document.createElement("canvas"); cvB.width=cvB.height=SIZE;
+  const ctxB = cvB.getContext("2d", {willReadFrequently:true});
+  const off  = document.createElement("canvas"); off.width=off.height=SIZE;
+  const offCtx = off.getContext("2d");
+
+  const rows = [];
+  let worst = null;
+
+  for (const ch of man.chars){
+    const base = await loadImage("../base/" + encodeURIComponent(ch) + ".png");
+    offCtx.fillStyle="#fff"; offCtx.fillRect(0,0,SIZE,SIZE);
+    offCtx.drawImage(base, 0, 0, SIZE, SIZE);
+
+    let mMean = 0, mMax = 0, mIdx = 0;
+    for (let i = 0; i < radii.length; i++){
+      drawWithFilter(ctxA, off, radii[i]);
+      const png = await loadImage("../blur_frames/" + encodeURIComponent(ch) +
+                                  "/" + String(i).padStart(3,"0") + ".png");
+      ctxB.fillStyle="#fff"; ctxB.fillRect(0,0,SIZE,SIZE);
+      ctxB.drawImage(png, 0, 0, SIZE, SIZE);
+
+      const d = diff(ctxA.getImageData(0,0,SIZE,SIZE).data,
+                     ctxB.getImageData(0,0,SIZE,SIZE).data);
+      if (d.mean > mMean){ mMean = d.mean; mIdx = i; }
+      if (d.max  > mMax ){ mMax  = d.max; }
+      if (!worst || d.mean > worst.mean) worst = {ch, i, r: radii[i], mean:d.mean, max:d.max};
+    }
+    rows.push({ch, mMean, mMax, mIdx, r: radii[mIdx]});
+  }
+
+  const t = el("table");
+  t.appendChild(el("tr",
+    "<th>字</th><th>平均のずれ</th><th>最大のずれ</th><th>いちばんずれた半径</th>"));
+  for (const r of rows){
+    const okMean = r.mMean <= OK_MEAN, okMax = r.mMax <= OK_MAX;
+    t.appendChild(el("tr",
+      `<td>${r.ch}</td>` +
+      `<td class="${okMean?'ok':'ng'}">${r.mMean.toFixed(2)}</td>` +
+      `<td class="${okMax?'ok':'ng'}">${r.mMax}</td>` +
+      `<td>${r.r.toFixed(2)} px</td>`));
+  }
+  document.getElementById("out").appendChild(t);
+
+  const allMean = Math.max(...rows.map(r=>r.mMean));
+  const allMax  = Math.max(...rows.map(r=>r.mMax));
+  const pass = allMean <= OK_MEAN && allMax <= OK_MAX;
+  verdict.innerHTML = pass
+    ? `<span class="ok">一致しました。</span> 平均のずれは最大 ${allMean.toFixed(2)}（256階調中）、` +
+      `1画素の最大のずれは ${allMax}。ぼかし済みPNGを ctx.filter の代わりに使えます。`
+    : `<span class="ng">ずれています。</span> 平均のずれ ${allMean.toFixed(2)}（許容 ${OK_MEAN}）、` +
+      `最大のずれ ${allMax}（許容 ${OK_MAX}）。PILの標準偏差の与え方を見直してください。`;
+  console.log("[blur_compare]", JSON.stringify({pass, allMean, allMax, worst}));
+
+  // 目で見る見本
+  if (worst){
+    const base = await loadImage("../base/" + encodeURIComponent(worst.ch) + ".png");
+    offCtx.fillStyle="#fff"; offCtx.fillRect(0,0,SIZE,SIZE);
+    offCtx.drawImage(base, 0, 0, SIZE, SIZE);
+    const host = document.getElementById("samples");
+    const mk = (title, paint) => {
+      const f = el("figure"); const c = el("canvas");
+      c.width=c.height=SIZE; c.style.width=c.style.height="180px";
+      paint(c.getContext("2d"));
+      f.appendChild(c); f.appendChild(el("figcaption", title)); host.appendChild(f);
+    };
+    mk(`ctx.filter（${worst.ch}・blur ${worst.r.toFixed(2)}px）`,
+       c => drawWithFilter(c, off, worst.r));
+    const png = await loadImage("../blur_frames/" + encodeURIComponent(worst.ch) +
+                                "/" + String(worst.i).padStart(3,"0") + ".png");
+    mk("作っておいたPNG", c => { c.fillStyle="#fff"; c.fillRect(0,0,SIZE,SIZE);
+                                  c.drawImage(png,0,0,SIZE,SIZE); });
+    mk("差（10倍に強調）", c => {
+      drawWithFilter(ctxA, off, worst.r);
+      ctxB.fillStyle="#fff"; ctxB.fillRect(0,0,SIZE,SIZE); ctxB.drawImage(png,0,0,SIZE,SIZE);
+      const a = ctxA.getImageData(0,0,SIZE,SIZE), b = ctxB.getImageData(0,0,SIZE,SIZE);
+      const o = c.createImageData(SIZE,SIZE);
+      for (let i=0;i<a.data.length;i+=4){
+        const d = Math.min(255, Math.abs(a.data[i]-b.data[i])*10);
+        o.data[i]=255-d; o.data[i+1]=255-d; o.data[i+2]=255-d; o.data[i+3]=255;
+      }
+      c.putImageData(o,0,0);
+    });
+  }
+})().catch(e => {
+  document.getElementById("verdict").innerHTML =
+    '<span class="ng">エラー: ' + e.message + '</span>';
+  console.error(e);
+});
+</script>
+</body>
+</html>

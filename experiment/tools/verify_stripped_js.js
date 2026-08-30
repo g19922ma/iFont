@@ -90,6 +90,7 @@ console.log("1. 設定ファイル: 読み込んでできる値の突き合わ�
 const CONFIGS = [
   ["transfer_config.js", "TRANSFER_CONFIG"],
   ["transfer_comfort_config.js", "TRANSFER_COMFORT_CONFIG"],
+  ["transfer_pair_config.js", "TRANSFER_PAIR_CONFIG"],
 ];
 let cfgValues = {};
 for (const [file, name] of CONFIGS) {
@@ -176,6 +177,7 @@ for (const [file, s, expect] of MUST_KEEP) {
 console.log("4. 極端に縮んでいないか（本体まで削っていないか）");
 const STRONGLY_CHECKED = new Set([
   "transfer_config.js", "transfer_comfort_config.js",   // 値を突き合わせ済み
+  "transfer_pair_config.js",
   "prod_common.js", "transfer_firestore.js",            // 関数の一覧を突き合わせ済み
 ]);
 const MIN_RATIO_PCT = 25;   // 中身を確かめられないファイル向けの下限

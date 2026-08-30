@@ -80,6 +80,10 @@ FILES=(
   "transfer.js"
   "transfer_comfort_config.js"
   "transfer_comfort.js"
+  # 音声つきペア比較（群C第2版・2026-08-30 設計）。/survey は従来のまま。
+  "transfer_pair.html"
+  "transfer_pair_config.js"
+  "transfer_pair.js"
 )
 
 # 生成できていれば公開するが、無くてもエラーにしないもの。
@@ -88,6 +92,9 @@ FILES=(
 # 提案手法のデータにならない）。見え心地（群C）と較正フェーズは無くても動く。
 OPTIONAL_FILES=(
   "transfer_warp.json"
+  # 群Cの4条件ぶんの進み方の表（experiment/tools/merge_warp_comfort.py が作る）。
+  # **群Cの本番前には必ず要る**（無いと4条件とも等速になり、比べるものが無くなる）。
+  "transfer_warp_comfort.json"
   # 研究者が水準を目で見るためのページ（参加者には配らない。robots.txt で拾われない）。
   # ⚠ **これは静止画で、提示時間が入らない。** 本番は 33ms で消えるので、
   #   ここで読めても本番で読めるとは限らない。刻みの一望にだけ使うこと。
@@ -105,6 +112,10 @@ DIRS=(
   "$STIM_DIR"    # 打ち切り済みの音声（544ファイル・約7MB）
   "$BASE_DIR"    # かなの完成形PNG 84字（約340KB）
   "$CHECK_DIR"   # 聞き取り確認の数字の音（4ファイル・約220KB）
+  "blur_frames"  # ぼかし済みPNG 8字×47段（376ファイル・約3.2MB）
+                 # canvas の ctx.filter が効かない端末（iOSの全ブラウザなど）むけ。
+                 # 参加者が落とすのは自分に割り当てられた1字ぶんだけ（約280〜480KB）。
+                 # 作り直し: python3 experiment/tools/build_blur_frames.py
 )
 
 # --- 3. 作り直し ------------------------------------------------------------
@@ -166,7 +177,8 @@ EOF
 #   --charset=utf8 は、日本語を \uXXXX に潰されないようにするため。
 ESBUILD_VER="0.23.1"
 JS_FILES=(prod_common.js transfer_config.js transfer_firestore.js
-          transfer.js transfer_comfort_config.js transfer_comfort.js)
+          transfer.js transfer_comfort_config.js transfer_comfort.js
+          transfer_pair_config.js transfer_pair.js)
 
 echo
 echo "JavaScript からコメントを落とす（esbuild ${ESBUILD_VER}）…"

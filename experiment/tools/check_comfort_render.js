@@ -85,6 +85,7 @@ const COPIED = [
   "hashSeed", "mulberry32",
   "revealPrepare", "revealBegin", "revealDraw",
   "blurBegin", "blurDraw",
+  "blurFrameIndex", "blurDrawFromFrames", "blurFramesLoad",
   "wipeInkThreshold", "wipeBBoxPrepare", "wipeBegin", "wipeDraw", "fadeAlpha", "fadeDraw",
   "warpSeries", "seriesAt",
   "tidyConsentScreen", "mailLink", "isTestRun",
@@ -138,11 +139,24 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
     }
     if (!(only || []).length) bad(`presentations_by_family["${f}"] が空。1つ以上書くこと`);
   }
-  // 最後の質問1は方式の数だけ選択肢が要る。
-  for (const f of C.families) {
-    if (!C.choice.family.labels[f]) bad(`choice.family.labels に "${f}" の説明が無い`);
+  // ---- 4条件（2026-08-29 から）----------------------------------------------
+  if (!Array.isArray(C.conditions) || C.conditions.length < 2) {
+    bad("conditions が2つ未満。合わせ方を比べられない");
   }
-  const chars = [...new Set([C.single_char].concat(C.sequence))];
+  // 最後の質問は「4条件を並べて選ばせる」。説明の言葉は**出してはいけない**
+  // （現れ方を言葉にすると注意がそこへ向いて答えが偏る。丸山指摘 2026-08-29）。
+  const cch = (C.choice || {}).condition || {};
+  if (!cch.families || !cch.families.length) bad("choice.condition.families が空");
+  for (const f of (cch.families || [])) {
+    if (C.families.indexOf(f) < 0) bad(`choice.condition.families の "${f}" を本編で見せていない`);
+  }
+  if (cch.labels) bad("choice.condition.labels がある。現れ方の説明を画面に出してはいけない");
+  if ((C.choice || {}).family || (C.choice || {}).presentation) {
+    bad("choice に family / presentation が残っている（2026-08-29 に条件版へ差し替え済み）");
+  }
+  // 使う字は「人ごとに配る字の一覧」ぜんぶを見る（1人1字だが、8字とも出番がある）。
+  const chars = [...new Set(
+    (C.char_rotation ? (C.chars_pool || []) : []).concat([C.single_char]).concat(C.sequence))];
   for (const ch of chars) {
     if (CFG.targets.indexOf(ch) < 0) {
       bad(`使う字 "${ch}" が transfer_config.js の targets に入っていない` +
@@ -156,10 +170,112 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
     if (!knownPres[p]) bad(`presentations に知らない提示のしかた "${p}" がある`);
     if (!C.presentation_labels[p]) bad(`presentation_labels に "${p}" の説明が無い`);
   }
-  if (C.sequence.length < 2) bad("sequence が2字未満。5字続ける条件が作れない");
-  for (const k of (C.choice.presentation.sample_options || [])) {
-    if (C.presentations.indexOf(k) < 0) {
-      bad(`最後の質問2の選択肢 "${k}" を、本編で1度も見せていない`);
+  // sequence は字の大きさを決めるためだけに残してある（5字を並べる出し方は 2026-08-29 に廃止）。
+  if (C.sequence.length < 2) bad("sequence が2字未満。字の大きさの計算が変わってしまう");
+  // 進み方の表に、配る字ぜんぶ × 方式ぜんぶ × 条件ぜんぶが入っているか。
+  {
+    const wpath = path.join(EXP, C.warp_tables_url || "");
+    if (!C.warp_tables_url || !fs.existsSync(wpath)) {
+      bad(`4条件の進み方の表 ${C.warp_tables_url} が無い` +
+          `（experiment/tools/merge_warp_comfort.py で作る）`);
+    } else {
+      const W = JSON.parse(fs.readFileSync(wpath, "utf8"));
+      let miss = 0;
+      for (const f of C.families) for (const ch of chars) for (const cd of C.conditions) {
+        const a = ((W.tables || {})[f] || {})[ch];
+        if (!a || !Array.isArray(a[cd.key]) || !a[cd.key].length) {
+          if (miss++ < 5) bad(`進み方の表に ${f} × ${ch} × ${cd.key} が無い`);
+        }
+      }
+      if (!miss) ok(`進み方の表に ${C.families.length}方式 × ${chars.length}字 × ` +
+                    `${C.conditions.length}条件 がそろっている`);
+      // ---- 4条件が同じ絵になる組み合わせを数える --------------------------
+      // ⚠ **これは不合格にしない（2026-08-29 に改めた）。**
+      //   「が」では正答率にもとづく①と③がどちらも等速に退化し、同じ絵になる。
+      //   これを実験の成立条件にすると、うまくいかない入力を落として都合のよい字
+      //   だけを残すことになる。「違う写し方が同じ表示を返すことがある」のは
+      //   **手法の出力そのもの**なので、外さずに記録して、分析で層に分ける
+      //   （transfer_comfort_config.js の chars_pool の注記を見ること）。
+      //   ここでは、どこが同じになるかを掲載前に一望できるようにするだけである。
+      const dup = [];
+      for (const ch of chars) for (const f of C.families) {
+        const a = ((W.tables || {})[f] || {})[ch];
+        if (!a) continue;
+        for (let i = 0; i < C.conditions.length; i++) {
+          for (let j = i + 1; j < C.conditions.length; j++) {
+            const x = a[C.conditions[i].key], y = a[C.conditions[j].key];
+            if (Array.isArray(x) && Array.isArray(y) && JSON.stringify(x) === JSON.stringify(y)) {
+              dup.push(`${ch}×${f}: ${C.conditions[i].no}=${C.conditions[j].no}`);
+            }
+          }
+        }
+      }
+      if (!dup.length) {
+        ok(`配る字すべてで、4条件がどの2つを取っても違う絵になっている`);
+      } else {
+        const byChar = {};
+        dup.forEach(d => { const c = d[0]; (byChar[c] = byChar[c] || []).push(d.split(": ")[1]); });
+        ok(`同じ絵になる組がある（外さずに記録する）: ` +
+           Object.entries(byChar).map(([c, v]) =>
+             `${c} は ${[...new Set(v)].join("・")}（${v.length}方式）`).join(" / ") +
+           ` ← 分析では層に分けて扱うこと`);
+      }
+
+      // ---- 字の割り当て（ラテン方格）の釣り合い ----------------------------
+      // 1人に4字を配り、4方式 × 4条件の16マスへ方格で割り当てる。
+      // ここで見るのは3つ。
+      //   (1) 1人の中で、どの条件も4字を1回ずつ使うか（使わないと、条件の比較に
+      //       字の違いが混ざる）
+      //   (2) どの方式も同じか
+      //   (3) 人数ぶん通したとき、どの字も同じ本数・同じ人数になるか
+      if (C.char_rotation && (C.chars_pool || []).length >= C.families.length) {
+        const pool = C.chars_pool, nf = C.families.length, nc = C.conditions.length;
+        const N = Number(C.planned_n) || (pool.length * nf);
+        const cnt = {}, seen = {}, pick = {};
+        const perCond = {}, perFam = {};
+        let unbalanced = 0;
+        for (let i = 0; i < N; i++) {
+          const start = i % pool.length, shift = Math.floor(i / pool.length) % nf;
+          const set = [];
+          for (let k = 0; k < nf; k++) set.push(pool[(start + k) % pool.length]);
+          set.forEach(ch => { seen[ch] = (seen[ch] || 0) + 1; });
+          pick[set[shift]] = (pick[set[shift]] || 0) + 1;
+          for (let fi = 0; fi < nf; fi++) {
+            const row = [];
+            for (let ci = 0; ci < nc; ci++) {
+              const ch = set[(fi + ci + shift) % nf];
+              row.push(ch);
+              cnt[ch] = (cnt[ch] || 0) + 1;
+              perCond[ci + "|" + ch] = (perCond[ci + "|" + ch] || 0) + 1;
+              perFam[fi + "|" + ch] = (perFam[fi + "|" + ch] || 0) + 1;
+            }
+            if (new Set(row).size !== nf) unbalanced++;    // (2) 方式の行に重複
+          }
+          for (let ci = 0; ci < nc; ci++) {
+            const col = [];
+            for (let fi = 0; fi < nf; fi++) col.push(set[(fi + ci + shift) % nf]);
+            if (new Set(col).size !== nf) unbalanced++;    // (1) 条件の列に重複
+          }
+        }
+        if (unbalanced) {
+          bad(`字の割り当てが方格になっていない（${unbalanced} 箇所で同じ字が重複）。` +
+              `条件の比較に字の違いが混ざる`);
+        } else {
+          const uniq = (o) => [...new Set(Object.values(o))];
+          const evenCnt = uniq(cnt).length === 1, evenSeen = uniq(seen).length === 1;
+          const evenCond = uniq(perCond).length === 1, evenFam = uniq(perFam).length === 1;
+          const evenPick = uniq(pick).length === 1;
+          if (evenCnt && evenSeen && evenCond && evenFam && evenPick) {
+            ok(`字の割り当ては方格で釣り合っている（${N}人。1字あたり ` +
+               `${uniq(seen)[0]}人が見て ${uniq(cnt)[0]}本、条件ごと・方式ごとに ` +
+               `${uniq(perCond)[0]}本ずつ、強制選択は ${uniq(pick)[0]}人ずつ）`);
+          } else {
+            bad(`${N}人では字の出番が均等にならない（本数 ${uniq(cnt).join("/")}、` +
+                `人数 ${uniq(seen).join("/")}、強制選択 ${uniq(pick).join("/")}）。` +
+                `人数を ${pool.length * nf} の倍数にすること`);
+          }
+        }
+      }
     }
   }
 
@@ -193,22 +309,25 @@ if (same === COPIED.length) ok(`描画器と進み方 ${same} 個が transfer.js
                                  : C.presentations;
   };
   const clips = [];
-  for (const f of C.families) for (const p of presFor(f)) clips.push({ family: f, presentation: p });
+  for (const f of C.families) for (const p of presFor(f)) for (const cd of C.conditions) {
+    clips.push({ family: f, presentation: p, condition: cd.key });
+  }
   const n = clips.length;
-  const breakdown = C.families.map(f => `${f}×${presFor(f).length}`).join(" ＋ ");
-  ok(`提示は ${n}本（${breakdown}）` +
-     `（7件法${C.items.length}項目 → ${n * C.items.length}回の回答 ＋ 最後の2問）`);
+  const nq = (cch.families || []).length;
+  ok(`提示は ${n}本（${C.families.length}方式 × ${C.conditions.length}条件` +
+     `${C.presentations.length > 1 ? ` × ${C.presentations.length}通りの出し方` : "・1字だけ"}）` +
+     `（7件法${C.items.length}項目 → ${n * C.items.length}回の回答 ＋ 最後の${nq}問）`);
   const cycSingle = anim + C.timing.single.hold_ms + C.timing.single.gap_ms;
   const cycSeq = C.sequence.length * soa + C.timing.sequence.hold_ms + C.timing.sequence.gap_ms;
-  ok(`1周の長さ: 1字条件 ${(cycSingle / 1000).toFixed(1)}秒 ／ ` +
-     `5字条件 ${(cycSeq / 1000).toFixed(1)}秒`);
+  ok(`1周の長さ: ${(cycSingle / 1000).toFixed(1)}秒` +
+     (C.presentations.indexOf("row5") >= 0 ? ` ／ 5字条件 ${(cycSeq / 1000).toFixed(1)}秒` : ""));
   // 所要 = 前置き100秒 ＋ 1本目の慣れ15秒 ＋ 各本(1周見る時間 ＋ 回答12秒)
   //        ＋ 最後の2問70秒 ＋ 完了画面15秒。
   const nSingle = clips.filter(c => c.presentation === "single").length;
   const nSeq = n - nSingle;
   // 最後の2問: 現れ方の見くらべは選択肢の数に比例して伸びる（1つあたり約14秒）＋
   // 出し方の見くらべ約14秒。以前は4択のときの実測から70秒と置いていた。
-  const lastQ = C.families.length * 14 + 14;
+  const lastQ = (cch.families || []).length * (C.conditions.length * 14);
   const est = 100 + 15 + nSingle * (cycSingle / 1000 + 12) + nSeq * (cycSeq / 1000 + 12) + lastQ + 15;
   ok(`所要のめやす: 約 ${Math.round(est / 60 * 10) / 10} 分（同意から完了コードまで）`);
 }

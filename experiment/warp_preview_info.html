@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>情報量を目標にした転写（研究者用）</title>
+<style>
+:root{
+  --bg:#faf8f4; --fg:#1c1a17; --muted:#6b6560; --accent:#b45309; --line:#ded6c8;
+  --ok:#15803d; --warn:#b45309; --bad:#b91c1c; --card:#ffffff;
+  --acc:#8a3ea8;   /* 正答率を目標 */
+  --info:#0f766e;  /* 情報量を目標 */
+  --canvasbg:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#171512; --fg:#eee8de; --muted:#a89f92; --accent:#e8a14c; --line:#3a352c;
+    --card:#211e19; --ok:#4ade80; --bad:#f87171;
+    --acc:#cf95e6; --info:#5ec8bb;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#171512; --fg:#eee8de; --muted:#a89f92; --accent:#e8a14c; --line:#3a352c;
+  --card:#211e19; --ok:#4ade80; --bad:#f87171;
+  --acc:#cf95e6; --info:#5ec8bb;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);
+  font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  line-height:1.75;max-width:1240px;margin:0 auto;padding:2rem 1.2rem 6rem}
+h1{font-size:1.6rem;border-bottom:2px solid var(--accent);padding-bottom:.5rem;line-height:1.4}
+h2{font-size:1.22rem;margin-top:3rem;color:var(--accent);
+   border-bottom:1px solid var(--line);padding-bottom:.3rem}
+h3{font-size:1rem;margin-top:1.8rem}
+p{margin:.6rem 0}
+.lead{color:var(--muted);font-size:.94rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.9rem 1.2rem;margin:1rem 0}
+.card.note{border-left:5px solid var(--accent)}
+.card.star{border-left:5px solid var(--info)}
+.small{font-size:.83rem;color:var(--muted)}
+code{background:color-mix(in srgb,var(--fg) 7%,transparent);padding:.05rem .3rem;
+  border-radius:4px;font-size:.88em}
+.tbl{border-collapse:collapse;width:100%;font-size:.82rem;margin:.8rem 0}
+.tbl th,.tbl td{border:1px solid var(--line);padding:.28rem .5rem;text-align:left}
+.tbl th{background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.tagacc{color:var(--acc);font-weight:700}
+.taginfo{color:var(--info);font-weight:700}
+
+#bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  padding:.55rem 1.2rem;margin:0 -1.2rem 1.2rem;
+  display:flex;flex-wrap:wrap;gap:.5rem 1.1rem;align-items:center;font-size:.85rem}
+#bar label{display:flex;align-items:center;gap:.32rem;white-space:nowrap}
+#bar select,#bar button{font:inherit;font-size:.85rem;padding:.15rem .4rem;
+  background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px}
+#bar button{cursor:pointer}
+#bar button:hover{border-color:var(--accent)}
+.ttlkey{font-weight:700;color:var(--muted)}
+
+.gridwrap{overflow-x:auto;margin:.8rem 0 1.4rem}
+table.frames{border-collapse:separate;border-spacing:0;font-size:.75rem}
+table.frames th,table.frames td{padding:.18rem .25rem;vertical-align:top}
+table.frames th.chh{text-align:left;font-size:1.6rem;font-weight:700;
+  padding-right:.6rem;white-space:nowrap;vertical-align:middle}
+table.frames th.gh{color:var(--muted);font-weight:600;text-align:center;font-size:.72rem}
+table.frames tr.rowinfo td,table.frames tr.rowinfo th{
+  background:color-mix(in srgb,var(--info) 7%,transparent)}
+table.frames tr.sep td,table.frames tr.sep th{border-bottom:1px solid var(--line)}
+.cell{display:flex;flex-direction:column;align-items:center;gap:.15rem}
+.cell canvas{width:92px;height:92px;background:var(--canvasbg);
+  border:1px solid var(--line);border-radius:4px}
+.cell.dead canvas{border:2px solid var(--bad)}
+.cell .cap{font-size:.67rem;color:var(--muted);text-align:center;line-height:1.35;
+  font-variant-numeric:tabular-nums}
+.cell .cap b{color:var(--fg);font-weight:700}
+.rowlbl{font-size:.7rem;white-space:nowrap;vertical-align:middle}
+.playbtn{font:inherit;font-size:.72rem;padding:.1rem .45rem;cursor:pointer;
+  background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:5px}
+.playbtn:hover{border-color:var(--accent)}
+.deadnote{font-size:.68rem;color:var(--bad);font-weight:700;text-align:center}
+
+figure{margin:1.4rem 0 2rem}
+figcaption{font-size:.85rem;margin-top:.4rem;padding-left:.7rem;
+  border-left:3px solid var(--accent);color:var(--fg)}
+.figwrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:.5rem}
+svg.fig{display:block;max-width:100%;height:auto;margin:0 auto}
+svg text{font-family:"Hiragino Sans","Yu Gothic",sans-serif;fill:var(--fg)}
+svg .lbl{fill:var(--muted);font-size:11px}
+svg .tiny{font-size:9.5px;fill:var(--muted)}
+svg .ttl{fill:var(--fg);font-size:12.5px;font-weight:700}
+svg .ax{stroke:var(--muted);stroke-width:1.1;fill:none}
+svg .grid{stroke:var(--line);stroke-width:1;stroke-dasharray:2 3;fill:none}
+.legend{font-size:.78rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:.2rem 1rem;
+  margin:.3rem 0 .1rem}
+.legend i{display:inline-block;width:16px;height:0;border-top:2.5px solid currentColor;
+  vertical-align:middle;margin-right:.25rem}
+
+/* 成立判定のマトリクス */
+table.mx{border-collapse:collapse;font-size:.78rem;margin:.6rem 0}
+table.mx th,table.mx td{border:1px solid var(--line);padding:.25rem .45rem;text-align:center}
+table.mx th{background:color-mix(in srgb,var(--accent) 10%,var(--card));font-weight:600}
+table.mx td.j0{background:color-mix(in srgb,var(--bad) 42%,transparent);
+  color:var(--fg);font-weight:700}
+table.mx td.j1{background:color-mix(in srgb,var(--warn) 20%,transparent)}
+table.mx td.j2{background:color-mix(in srgb,var(--ok) 20%,transparent)}
+.pill{display:inline-block;border-radius:5px;padding:0 .4rem;font-size:.75rem;font-weight:700}
+.pillbad{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+.pillok{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.bigstat{display:flex;flex-wrap:wrap;gap:1.4rem;margin:.8rem 0}
+.bigstat div{min-width:150px}
+.bigstat b{display:block;font-size:1.7rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.bigstat span{font-size:.78rem;color:var(--muted)}
+details{margin:.6rem 0}
+summary{cursor:pointer;font-size:.88rem;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<h1>情報量を目標にした転写 ― 正答率を目標にした版と見比べる</h1>
+<p class="lead">研究者用。参加者には配らない（<code>build_hosting.sh</code> の公開一覧に入れていない）。
+描画は <code>experiment/transfer.js</code> の本文をそのまま切り出して動かしているので、
+ここに出る絵は<strong>参加者が見るものと同じ</strong>。</p>
+
+<div class="card note">
+<h3 style="margin-top:.2rem">同じデータを2通りに読む</h3>
+<p>転写とは「<strong>音を途中まで聞いたときの手ごたえ</strong>を、文字アニメーションが
+<strong>同じ時刻に同じ手ごたえ</strong>になるように進み具合を決める」やり方である。
+この「手ごたえ」に何を置くかで、2通りのアニメーションができる。</p>
+<p style="text-align:center;font-size:.95rem;margin:.8rem 0">
+<code>時刻 t</code> →〔聴覚の曲線〕→ <code>目標の値</code>
+→〔視覚の較正曲線を逆に引く〕→ <code>進み具合 s</code> →〔描画〕→ <code>絵</code></p>
+<ul style="font-size:.9rem">
+<li><span class="tagacc">正答率を目標</span> … どこまで<strong>正しく答えられる</strong>か。単位は割合。</li>
+<li><span class="taginfo">情報量を目標</span> … どこまで<strong>候補が絞れている</strong>か。単位は bit。</li>
+</ul>
+<p class="small"><strong>手続きは完全に同じ。</strong>軸に載っている量だけが違う。
+だから2つの差は「目標の選び方」だけから来る。曲線はどちらも
+参加者ブートストラップの<strong>袋詰め PAVA（単調回帰）</strong>で推定していて、
+測った範囲の外へは伸ばしていない。</p>
+</div>
+
+<div class="card star">
+<h3 style="margin-top:.2rem">採用した情報量の指標</h3>
+<p><strong>相互情報量の字ごとの分け前</strong>
+<code>D<sub>c</sub>(x) = KL( P(R|c,x) ‖ P(R|x) )</code>（単位 bit）。
+「その回答を見て、<strong>どの字が出たか</strong>がどれだけ分かるか」そのもの。</p>
+<p class="small"><code>analyze_information.py</code> は3つ出して比べている。
+① 応答分布のエントロピー <code>H(R|x)</code>（実質何択か）は直感的だが、
+<strong>何も聞こえなくて「つ」に偏る</strong>のと
+<strong>聞こえていて「か」に偏る</strong>のを区別できない。
+② 事前分布からの情報利得 <code>KL</code> は事前の偏りを差し引けるが、
+刺激と無関係に回答が動いただけでも大きくなる。
+③ は基準がその水準の<strong>実測の周辺分布</strong> <code>P(R|x)</code> なので、
+事前の偏りが自動的に差し引かれ、何も届いていなければ 0 になる。字ごとに分けられるので
+字ごとの転写にそのまま使える。<strong>③を目標に採った。</strong></p>
+<p class="small">⚠ 対象が8字なので上限は <code>H(S)=3 bit</code>。実運用の字数ではもっと大きくなる（縮尺の話）。
+⚠ 素の推定は必ず上に偏るので、<strong>字のラベルを並べ替えた偽の情報量を引いて</strong>いる。</p>
+</div>
+
+<div id="bar">
+  <label><span class="ttlkey">方式</span><select id="selFam"></select></label>
+  <label><span class="ttlkey">条件</span><select id="selCond">
+    <option value="proposed">転写 proposed</option>
+    <option value="baseline1">等速 baseline1</option>
+    <option value="baseline2">一次変換 baseline2</option>
+  </select></label>
+  <label><span class="ttlkey">端からの向き</span><select id="selDir">
+    <option value="ltr">左→右</option><option value="rtl">右→左</option>
+    <option value="ttb">上→下</option><option value="btt">下→上</option>
+  </select></label>
+  <button id="btnPlayAll">見えているぶんを順に再生（300ms）</button>
+  <span class="small" id="loading">画像を読み込み中…</span>
+</div>
+
+<!-- ================= §1 が ================= -->
+<h2>1. まず「が」を見る ― いちばんの見どころ</h2>
+<div class="card">
+<div class="bigstat" id="gastat"></div>
+<p class="small" id="gatext"></p>
+</div>
+<p class="small">横は<strong>聴覚の打ち切り7点</strong>（<code>transfer_config.js</code> の
+<code>audio.gates_ms</code>）。その時刻に画面に出ている絵をそのまま描いている。
+上段が <span class="tagacc">正答率を目標</span>、下段が <span class="taginfo">情報量を目標</span>。
+<span class="pill pillbad">赤枠</span>は7点のあいだで進み具合が 1pt も動かないセル（＝転写できない）。</p>
+<div id="frames_ga"></div>
+<div class="card">
+<p class="small" style="margin:0"><strong>正直に書いておく：</strong>
+うすい（fade）は<strong>どちらの目標でも絵としては薄い</strong>。
+この方式は見え方の変化がぜんぶ進み具合 0〜3% に詰まっているので、
+情報量版の <code>s ≒ 1.0〜2.0%</code> でも不透明度は数％にしかならない。
+情報量を目標にして変わったのは「<strong>7点のあいだで絵が動くようになった</strong>」ことであって
+（うすい×が の別々の絵は 2枚 → 4枚）、「はっきり見えるようになった」ことではない。
+はっきりした違いが出るのは<strong>点が増える・ぼやけ・端から</strong>のほう。
+方式を切り替えて見比べること。</p>
+</div>
+
+<!-- ================= §2 全部 ================= -->
+<h2>2. 8字 × 選んだ方式</h2>
+<p class="small">上の操作バーで方式を切り替える。「が」は §1 と同じものを再掲している。</p>
+<div id="frames_all"></div>
+
+<!-- ================= §3 何が違うか ================= -->
+<h2>3. 何が違うか</h2>
+
+<h3>3-1. 転写できないセル（進み具合が動かない）</h3>
+<p class="small">「不成立」＝ 7つの打ち切り点のあいだで進み具合が <strong>1ポイントも動かない</strong>。
+その字・その方式では、参加者に何を見せても同じ絵になり、<strong>測定そのものが成立しない</strong>。</p>
+<div id="deadsum"></div>
+<div style="overflow-x:auto"><div id="mx"></div></div>
+
+<h3>3-2. 打ち切り7点のうち、何点で別の絵になるか</h3>
+<p class="small">進み具合が動いても、<strong>絵が変わらなければ</strong>意味がない。
+そこで7点の進み具合を実際の描画の段階（うすい＝不透明度、点が増える＝画素数、
+ぼやけ＝ぼかし半径、端から＝出ている画素数）に量子化して、<strong>何通りの絵になるか</strong>を数える。
+7 なら7点とも別の絵、1 なら全部同じ絵。</p>
+<div id="fig_distinct"></div>
+<div id="tbl_distinct"></div>
+
+<h3>3-3. 進み具合そのものの違い</h3>
+<p class="small">選んだ方式について、8字ぶんの <code>s(t)</code> を重ねて描く。
+<span class="tagacc">紫＝正答率を目標</span>／<span class="taginfo">緑＝情報量を目標</span>。
+丸は打ち切り7点。縦軸は進み具合（%）。<strong>字ごとに縦軸の上限を変えている</strong>
+（うすいのように 0〜3% にすべてが詰まる方式があるため）。</p>
+<div id="fig_st"></div>
+
+<!-- ================= §4 目標の軌跡 ================= -->
+<h2>4. なぜアニメーションが変わるのか ― 目標の軌跡そのもの</h2>
+<p class="small">アニメーションの違いは、<strong>逆引きする前の「目標の軌跡」</strong>の違いから来る。
+「が」について、正答率の軌跡と情報量の軌跡を並べる。</p>
+<div id="fig_ga"></div>
+
+<h3>4-2. 「が」は何と答えられていたか</h3>
+<p class="small">同じ「ほとんど正解しない」でも、中身が違う。
+帯は打ち切り点ごとの回答の内訳（多い順に6つ、残りは「その他」）。
+出どころ <code id="srcTrials"></code>。</p>
+<div id="fig_resp"></div>
+
+<h3>4-3. 8字ぜんぶの軌跡</h3>
+<div id="fig_all_traj"></div>
+
+<hr style="border:none;border-top:1px solid var(--line);margin:3rem 0 1rem">
+<p class="small" id="prov"></p>
+
+<script>
+const CFG = window.TRANSFER_CONFIG = {"config_version":"prov-2026-08-27a","pre_launch":false,"phase_group_weights":{"calib":{"acal":80,"aprime":150}},"distributed_wids":{"calib":["znxa8x","6xt88w","jav5yw","5mk55k","dp8m84","jv7cuy","f93un7","wmqha6","byaecm","wx6xru","4wacpa","8tczuu","uyzjrv","ewumqe","pnqzzt","xmy87q","6x4tck","s7zuf5","wuk8ch","75a86d","yjzfjn","pc7z98","j9978y","89ke9n","xy6r3n","3f2h8t","8f3ez4","w9h9rb","wu85fb","rhamzs","8ed82z","c8b6m7","v89wqq","r8vtwa","d3njj2","x4se3h","y4mru5","gc93re","bkwdqn","zdqjkk","rmw3du","2vrc3s","w9nt9r","ds9kv4","p2mgd9","qk8f4m","qsc3hu","yjj2th","8b32hh","bn7cuk","u8gh9x","48nspu","zhdnmg","3j6g3v","5rue3f","knrp78","r7zmkx","rhvfqu","8rvfmc","qd5ryd","xyddwr","x9q6n8","u7wxm2","prjd7d","hq3ejg","6xdvt6","g4sjcn","qtpk66","as95xe","sqmhr5","tapugz","xsv5b9","u3nzyb","hkvvyw","jmekpv","9zsycx","5cbe5h","e6qnad","xy3ft6","hbbxeq","vfrz3y","stpnn6","stsvsb","4sevzn","4r2xz4","f7w3mj","hjkrzz","us7gp5","n93sbh","q4bd7u","xxpgbq","4cbcbt","f35era","79tbh8","pzuk5w","7z5aej","xf5bm3","95bmgh","52caav","62hmq8","4jtpbj","x6veqf","ekmjen","rmdh8u","e3kzzw","rh7qmb","ux3hkt","nmkmeb","zpdbua","2x7avj","knxs5x","nzhjha","5eqper","jbwvsd","9ztyjc","eb86cp","84n9ua","2zgfq6","8smmyb","p6jw45","wtg78p","6avefq","t4njfp","u7bqp9","6qrr66","c93a3f","chvqd3","3d5qw7","jpr258","vbpzrr","qqjdev","xwpvu7","56rctp","uaxyfq","au53mq","qduaw3","c9hg3s","s2gceg","vmqrps","fwdmdk","qmnmvu","t26s69","ddw23c","jpfj42","kknqsj","7r46cp","2svajw","k2nsvt","7fkd3f","engs37","nvauv9","8yeta4","hk7uhn","hd3vd2","jg5nrv","y8pp85","xd8tnb","ckzpvv","849zh8","53kee2","kyxtgp","b83gas","f92ss3","znzsar","uuc8qp","fhp9ka","6uzyh7","hm7acs","9f23es","34pk2a","fcyebr","kafz4v","3r75am","s79ufd","b97rk4","d6mkwc","d6a5m2","53bs9x","3vxx5c","qd5kya","22zvh6","4qvmg6","8yf73q","62wurq","weq9mp","q4qegr","g6m26m","nymbz3","nrtm2p","38a9qz","z2atcw","yfa8ss","97judq","rfut85","gu66cu","qnza2n","c2sgzy","mfyd2r","p32zj8","4g5j75","ssjpd2","e693f2","hajetz","a5qcj2","nzy2gx","wzhchf","9jqmjp","5wq2ku","4e28p4","4b3ute","y322v9","aetzbt","xjvrwa","wnudsp","a6qs9c","759u5k","wvfpha","ca2uap","zj39dp","746gmf","9sz9ff","jp3rmj","qy555z","zt5jxc","padjyj","a9d6cq","5gccuk","2yhsey","mg3gwq","k2ttdg","tcqe4q","w26tp5","vfr63t","fnwvgc","9cd7fm","mktztw","9k6dqu","cd42kj","z84tfr","ymqsup","tepma2","g43u6b","mh4c5m","k9xc6y","wrtbj8","apvegd","drfmr9","zn5fsy","7yk3p4","bycpjd","7smzpz","b5f668","sdafbg"],"wipedir":["d4nh6e","kzuxem","dygjts","s8u6np","fy63wg","h34uj4","w65em9","928sjg","gvw8m3","stc2e7","a2j4yk","sts6fd","ynsp5k","c9chg2","4xw9uc","8f45c9","pz4kz8","kczf89","39wbhb","3jdram","wbsp6t","t8tbeb","jqa3ps","wk74kc","hahwys","8wdxky","452aen","pswhyr","4exq5g","7ddtjn","4rmmd6","y8hvtc","cdh638","s2vbnb","f5xfkm","sdr57j","u8nybb","86gmap","x5rjak","cpk43v","xvy95b","hw5xyq","ngqwnv","9gprfu","58qvhz","f3nfjm","ef28xn","7xnd49","4ghfea","jjkb3k","cb9a89","fpd9y8","53zyw8","xzq3qy","4tr2d5","zxrcf2","ha8263","q3t3z9","5akxbg","dybywk","mqc3cf","br8d6v","dmtqh5","vqgab9","zt8s5z","d8p7rn","369nzy","3m6ak4","pur6kv","74hrta","7ty4ew","m6fvz6","a3kckg","xu42np","thcmap","k7yv3j","8n37gv","zp5r9g","84t5hg","bh8k3g","ha49e4","gvvhnt","dfgab5","sgh55v","r7ja7z","wnfxe4","d7q6kk","hq3cvx","9sxfpw","6vhecx","brvadu","22s87x","y8vxwp","s2885p","chmbcb","x2qvqp","2gbghf","jpemrs","aaxf99","jxeqfv","4tczpq","y2qkr6","9gb954","bxmkcu","v3mbtc","vxk6mk","sde8cs","yjrdt7","3ns5jr","hafza4","fybzey","bm72k5","abrxds","3mbmmk","afqb4q","9ue5rz","yj5je4","gc66un","c7bpsj","2xw6zr","ym894d","kfedxg","5dcmk7","n956x9","p6mnca","85xcq4","kpb7en","8yfjk4","vzvfuf","xtwz8c","xbcmve","u7sh28"],"test":["8kt6qv","g8g6f4","28zqfg","csqxvm","jywzvv","qhw6yg","avpvcy","gs5nhd","ebgx8j","kfh8ac","zryq6k","vkwghm","9gqpcs","vt2fxb","ajw6h7","7mq7jm","k5e3bu","vy429x","4pqdrg","jnqdm4","gu5waw","xd9453","b229yp","d4uqhd","e2t6h8","qh7jn3","db3mw8","n7n3jk","b86pks","dfx86p","hyc3hj","5jc2rw","sfp7nc","4hb7pd","eyh9fg","u7jhjp","ypm7d7","7rzz4a","drshdd","xjfbpa","u3aexf","6zsnyf","rgkjve","xf27nm","brcpkn","rdz7mp","zuxjet","qudcmj","4vxm44","54f364","h2qpm6","z6359v","ptx3jq","m5sxce","xwncbc","eb466s","pubbw4","g79uaj","qmrybf","zhj4k9","b7amqn","fup44z","g7uz69","gg3vsd","hbux32","8wwfzs","5hh5bh","ay3vrr","uad53x","zqpfdt","je9e87","ragrww","atkmb3","mmy4ep","q2zns3","gjyhye","vs7tb6","2asm2t","zmbrv9","3yfzez","m3pr96","9batpf","d9be9z","27h3fx","tuy4pt","sumpr8","52bu65","4ufz5m","kz5wy8","4k386m","5d3udv","k8ng58","67kye5","vaqqh7","snmyf7","9gpuax","85z5mx","7wd63d","dmmzb4","tuheks","w56xm9","u7c6hg","tabrru","dhwuah","yztarn","h42ufj","v9g5ju","x5r8jv","mcee7f","dkfrrc","wgd7ex","9jcjnm","cquvbq","nk8hbd","9vhkhh","u5ts4c","47x87x","yw4hax","b5dg5y","9x3ptz","bh2pz5","acmss5","b2juhx","mta4rt","nygyrj","xqgpd4","2bka3h","qc53x2","hhkarf","fcpmyn","krpde6","qpx9sv","4ak25t","pz5trt","w3ch5a","5r76sm","n59dxj","5utj2p","jm6amm","72wwg8","v94825","7rfmez","39k6bf","kfr75t","ptz67c","ukushb","9vekqs","nrgxsw","znjq3u","8u2nxn","ybfued","e546u6","axmwkp","s6rebr","8hhqg8","cfp3wz","xp7ar4","d42qwb","gj49sn","cdycmy","rs4kam","2gk86d","dk6ppt","wewqmx","gvkhy7","bu2nyb","kzw9p6","snwktg","8zpeuy","dw5fp2","e989fr","4adcpg","79fhhm","7mqunc","3xjhdp","bbnc46","qsbzce","sg6hd8","9zh4cy","kznkgg","khhaaa","yz8xfp","2vdrdn","a9qm9u","gwwdsp","jgmxck","j2g94h","dx3de3","22wq3n","hpha8x","43t3eb","rk3a4c","22gmzy","36rz4a","q84st7","epu4uy","2ramg4","4quxnz","63tk94","26mmmv","fqvx67","whedfx","cpgwdc","pvmzvg","kcb9ke","gafmpe","begsmr","vjxdrw","zdjvwr","uvbhwk","9w2n7f","x69rtr","vzqw98","v2p9e4","fd9dd9","2drqv6","4pdntk","4za4pn","xyagsz","z6skrk","xjsxv5","25wce9","m4cqup","gwquef","dmkjjc","bce23q","yuwwtn","wsxfwn","36kpjb","rctmej","cf597a","s2fnye","kbuquh","96kt4n","gjt9h2","72dqb2","5uqj9w","vyvs5h","tgfjmt","6fpkqy","ks4vv4","7ts5ud","3jvsx8","4mbcrk","eg3v8w","x6r4as","y8rj47","kk2467","3xeu8x","7sbrm3","tj8yvq","5x2ypx","3sc4x6","3jzbvr","rq2y4e","svv59m","u98qk7","qy7t2a","d9g4r8","awbes9","2xufpk","qyjjav","rtjm8g","hr47sq","z2x3yh","7fqbd7","xby9g8","xqufzx","wj2sd8","dd84k4","9vgzjh","fseqaz","4gynk7","9b5n9p","jzmx7c","87d53b","wxt58n","m6skfg","yneqqs","rbx3tr","zwduv2","xr5tzp","dzsbd8","92p7xq","jtxmnv","cq4nbc","3mmq9s","b3x7cw","bmwgkz","2qc3jd","4ptpcg","zkft7s","rzqrj4","mp92mg","yzc36p","2zhfsc","g26j2y","h3wfac","uj5hmj","fhdrnt","xg5qct","zwt3xr","xfdyxx","nxw9tw","mmv4r6","m4kuqt","hkeyzp","3x9hpq","muun8x","8kfp84","xa6zs9","dz8n3t","qbsmkg","2ser9j","gz6286","5sqru2","n6us9c","4ggmfv","hyh8v6","yjjg86","q3kpzn","999h33","sgf2hs","2km892","r7h76x","tf4hkc","6afq2q","8pyjbw","mnkcvv","723f4e","hdwsya","veeyux","95x8z9","gq6n5z","baffrb","ahb93u","vv3gur","cq3azg","rzrpzu","uyswpr","7ce4d3","2b6gwy","tsjbbc","v9bu27","r92pus","quxuaj","bwuz8g","c7x99c","7t32vu","hjynww","hkafaw","637spw","jamz7s","wnf695","nkpkw6","ezbn2h","rf3kug","zxjjjq","bsr6cu","z3gqmt","gukg3q","87xyff","gztvws","v5g66q","6ygq7x","us2hrb","agh87d","q5rder","u36tsb","vfq8c2","zymxh5","z8ency","9brbw6","c7y6pv","zthd9y","mz2n5k","t6ma5p","rfquzb","ebvcdt","3ywwdm","agkvhp","sptyw6","y775mh","xee25z","yc6zzx","qsru8x","dhn8fw","qkn2j5","ja2nnh","5mc6t8","c32bq2","xc46b2","jsun4k","6c5u4y","rxfkka","82uwb3","vrsvb9","b8udck","p9k4kg","v7vedq","7xdrh2","pje3qq","7xqc5w","2n963h","j2yp7x","s3w3t6","axg5qr","qzfyau","ama6m2","wngdd2","r7yghz","g4y4vj","mnpb3k","ptcrpj","ad8dnu","ymfxr3","784nty","qhx6c5","bxu2vu","bvb85s","d2y88h","z4jp67","vr3k6e","gefnxz","z9nk2u","cbw5yz","4bcaz5","3h3ndf","48fp4t","ewdcer","etm5v2","32742z","t8t859","jvu2tv","se8htw","vdr65x","xxj94e","9w7n4r","ug8pcx","4vuq64","tc6dcg","catxwd","p8zrrf","8ba6ze","7wqbgd","f7chv5","vs62d4","2ra7zx","7new5n","vftfvw","mxpwj9","agjfrs","u6mudq","s9pbnj","z6uaky","ydarvh","2fpqsp","kx26cc","rtv5q3","yuqx52","bnddft","bb3svr"],"comfort":["d6evm8","hnvgfs","enpdkm","khyajh","jvmdvv","6jv2re","txmxwc","ew3cq5","9n4zt9","hhpuns","md46xh","stk6um","3g9wdb","8rpmxx","9t3hfx","dcq47m","vjkgbz","v6n32k","3m2syy","xbutfh","6tyhce","6v5duh","bqdqmc","b38c9z","evrq8x","354pmq","ptm4ng","kyqwzx","5kxa46","fntwk7","mms7f6","meck84","9bdmuk","wg5gqv","d3pa6x","v2xj83","5vm3wk","u34xfb","68jg2p","mb375c","znpxes","5zuq2d","k5nh37","ykw7k8","2bm47b","utpebc","kqmr57","cs4aqc","kczq9a","hvbf2b","ujtpwy","shw8k5","kbkfut","jfp8cp","hufbuy","xrd2v5","356avd","6ddsd7","4vu9fy","tzk4ke","hs4kar","4hv8gq","n4gcc6","h4xfan","jn7auf","8hz5cx","cczcpa","acnwsa","ze8mgr","42cvan","u549jb","2hbxkk","ddvnys","64gcnu","wb7v34","p3jepk","spxfda","b3gg7g","yu2eq2","45vjat","fyhd35","s52wpw","5d7p9c","ukxfmx","qfymug","ze6pxn","2398vk","9vucnz","kmfc2r","yq522g","xharjz","u92gnv","h4rgrv","v34hts","4pzsd9","cupdu8","jrysqj","end6s4","z3pa9r","pbdjr7","73dver","cw97br","7s6m94","zrvzk4","2wypgy","pghbrk","cc9yyg","byuvv4","wgbzrz","rff86x","4ftb4b","aqy9xh","sqsc8e","vwh7nv","z6bvvb","exdcbf","a48t78","c9ahph","cc9cyd","dx3jwd","gggheb","un4wmj","s2xx2m","az3wym","ua49v8","6dfv9w","esmjhw","ch5hw3","zvhusx","t5w26a","aqwurq","gak7n3"],"blurthin":["9ar2gb","p97h3y","j89fay","6wsp5k","yj5aum","daj97j","gjn3bh","g6my7x","stpttq","x4mpgx","u3da9t","k9fsbe","4ns9ar","c698k4","h2p325","92pfqj","2q9v4v","s2h9u5","zh4cqj","x4cpxd","45mf4m","w8zfgu","dthb7t","8um752","4muf9b","uwvuk7","zu54vr","m3pr38","7kvd38","6u664t","ht48kq","b6jukn","7nn4ar","wa5etu","3q2w4b","nfeakm","8ad7bv","zhvsbj","zdvejb","9dha9f","h58339","q8gbqr","ab9cry","enh23m","n8x4uf","qamfrx","6e5ttx","3pduhz","q3v8yg","quqw9g","cuzncb","nbz26z","4zh6tj","d395k7","fg2m5t","f3znr7","wgruph","ye73ut","t7xwvx","b7vvjt","yzm9zs","yugc9x","mw4uy5","wkmwwe","2ajpjr","8yxy5q","yxddg5","msutzb","jz5h8w","73dsec","q2wdtv","4jnrgs","2kqnhg","9cdpss","ek3n8m","abdds2","dtk7yv","7astat","vfz6sx","6mt7vn","fyn5tm","yqrysk","wgy7rf","xxaja5","5qmxkd","qt5csm","jefkzb","r9s6zh"],"followup":["8tdgpn","6gy92h","td94vu","2hez4c","cc7unz","jch3qf","pyjf75","25tvh5","c2r6hg","a8hhb8","4p7g5q","vpmxzd","9qs6ux","7tz5y4","r7fkcx","6hn4wb","tg3vq4","dspa3a","rypp4h","zwpya4","ph9p97","6qvhm8","dmebm8","a63c8u","r742tx","jdx5gz","faehnm","7h3bqv","rjba33","7vxwz8","ufxkv3","7v4zty","qp4n2r","fm7fap","3e4chb","7r3v3z","uvspez","j6rxac","5ae22r","js669z","23p6bz","4ym4wg","wgnpwq","xjqbqx","atjc86","drdcyk","3ewscx","hefwtm","m34kqe","yb86kw","yrgee9","pe4qgx","y46y3z","59tfcm","yrt3md","wkwwzw","dmjuxz","g6yhkp","3gjfjs","5hq9dy","k3cyb6","z28rwy","m953tq","bxcg8a","w54cgh","wedtdg","shd2qs","jrb58a","79bep8","sgbpgy","kcg3a9","t49r3s","enh3qb","m2ntc4","dr9cyz","eeu256","xt82ka","npcqvm","xpbp8k","g72k7e","v5cyy5","nbakey","y7mvur","y57w26","txtmyu","xmrz72","q3g3fh","v5qxge","bt9a35","jypyvk","rjrkxy","qusme5","5xhrcw","8wqs2m","fwxhtu","bkwxsj","3fdru7","xubn46","dwsdvw","fzfa6y","x2sudy","5upt3x","4xg2zz","7xpmhg","6zb7d2","9fgxuh","9gsmmv","buz8mr","ve7awj","4q9agd","fej44x","wpgcnf","73tjz3","vjg2zz","kh5wh6","x8v8ey","9f2nw8","c8jykd","5khzez","r7v8dv","et2nks","asyfqv","pqpwdr","xa3a6t","kj4nxx","gee6hb","dckbdz","45jxms","yxygqn","st6x2d","mu86v2","87hath","2s83hf","xj5uqp","maznc7","vqjrbc","2beyz6","5cy5j6","jfdra4","qz42jr","xab6nd","ykybh3","hujcbs","94rr8g","5dvcvq","82cv3x","qwq59k","bwtef2","s4e9bv","xbr2ta","yrs45q","e5s3gw","z3qh3r","42p85p","t3mt8b","st4ccn","gt7d5k","u8fsy6","ahjekm","26mntv","cf3uxz","qzsrz6","ep4sr7","tgzgbc","xjt75q","r4v9nn","zrtbfn","ejmach","rxsrf8","kz795g","32ajf6","c8mhat","36dngz","qrcth9","w87afc","cntrzg","4sppab","zmc62w","r3aa4v","a3djn8","k4w5ub","xkfcst","shtebh","cbx4rr","8ngjfx","g7auyu","2a5gxa","z2vmwb","u56sdf","exb3yz","kqmmu2","2y8nc5","z23fn9","havyas","4wb4h2","4nt67c","bag74e","m35dfw","zawt5a","zcdy6w","b34cau","ug6djn","3p7may","c4m8fk","tn4fwx","cpbhhv","rkf4mg","atb5vd","jzv39h","55cagf","5wqf59","dp9nhk","4msvu2","hzyh9s","dd9zek","aa2jwc","4pwwvx","wsy9rm","vx3mpp","8ju7ej","ewekf5","mx6vvs","trxe3r","fj5kef","6hrazn","fren3c","wuvhac","d43jaf","a5qhg3","7bfp8n","f4h6ht","jeascp","8fhdty","uazran","r8thab","rrq8q9","xp8f4g","78a2aw","8akjhv","rndqzm","k92kkj","hcy2r8"],"calib2":["y2hw2y","9yfkkt","rkts8x","t9njtq","z7g96d","57g9uy","x9wkwy","cjfpsb","k8w97t","qens6g","fyc3mq","6uytqp","uud9ca","s5739w","nv2zb7","vtssme","zetdwd","rvbvwq","8u6z9g","qehqyb","nr4j76","cawtt5","hdp7bb","zcmfhk","jpbdsq","9r4rh7","nfwfvt","tux72c","tnzfhv","5h8wrj","kdktuf","6vxbqn","u5ccq3","zrh2fq","hzh2hv","hjuyhj","df5d39","tjdrsh","mzmggc","y9pqy2","wympgv","jdr4vb","ymh2hn","rcuvgk","4jen78","nchz9g","xvd4j4","8ev7e5","naq3a2","vtwvz8","8c3c5s","yuuq6c","hj36ax","eckj7j","r773nv","ta7a6e","ge88ap","7tbdp5","dshep8","8hf6r4","d7ssvg","28x9br","8mm3eu","zt3eyh","nv5q4h","3f9p8c","sy2shr","yd8aw3","u6dv8g","u9neqn","s6qnmu","57tgtz","f6qamc","r7j2cs","6p9x67","3way2y","26susb","tvkb3h","29bzf3","q3sbz4","rc9hrq","46k3gu","9yubxh","trnpx6","6mhuyd","8gu3n4","dpkujy","g6mnpu","ccfrdc","zsa84j","q9bunv","qypmnc","zp75dr","b2ahj9","h8nduz","gddhpr","f57tqv","p7egn6","u9vqc7","rss78j","prfekq","ntqa62","4m9xgv","dntvbs","xf8js4","6daqqp","s3pe22","b3ff36","ej7sft","f3y693","v3m3j7","2ubw4m","q7bj3g","q4s75d","xvhazy","djfusz","sb9nq2","4wbap9","paddd8","muvmnh","865s4b","abfdgx","mrjqwe","fnvptb","vsgm9m","z4jjzg","th8xe4","vyeqpq","p3e6kz","2f6yuy","9zgxvg","fr5sw6","3vt64e","fmfk9e","hgjs25","rf7xq7","9tckae","p3phtz","u9g7wb","mdscva","6kxhpw","baepx5","fzd8nf","pvch7x","bsa66f","gwnewr","rq7wp9","9qxh6d","cbf3ht","95pr9c","9rynpc","hztsts","4rbwqt","g47d9z","bg23xp","uyj29y","x3vygm","ku4qfg","kcbbj9","s29bx3","hmbr3h","5742ux","ek29k4","997dwq","p88ugb","2fyb79","ta2sr8","nujaeu","qearee","2qk7tp","a5fpjm","6rggh9","jha28w","duyrf9","p6mnfq","nzcqbt","mumhry","kcxny8","y6avps","s78bxv","3vbjuc","f7hs53","zj4vdv","93x2pr","frw6kk","bprbcx","na85rd","bj76fr","mwsv8e","xfjry5","yuf46x","cz4hmr","4m9f9v","n25gyy","nxcbwt","tc4g22","4978uz","vt7bkf","97ny35","8qdev9","gh5eyh","2h8jdf","cjv5uy","gdmf8m","t44zas","ghnz4u","mepxaa","mkqqdy","as8y8f","vxtpe5","59h9rc","pptbh6","5hs3r8","3seysr","88v9tt","m8hecw","67gb5v","gbhnqt","esruxu","j7evb7","zghrg3","5q2x64","kukvq3","6xa6qd","43yyyc","hphmms","5ffau2","wwvcu2","hssbdk","vjqyex","ewf4cy","snkfad","wby7pz","ekbnds","n558ca","u7qwvv","s72t3q","cqjj4f","rr49yf","kpnqd7","gqzreb","n9vxyw","4xqzft","muzg7k","nqudap","evxqqv","2jkaqg","kqxp6k","atfsar","4pt8uw","jsvmjz","e98zhm","wxex3z"]},"open_phases":[],"phase_overrides":{"test":{"targets":["あ","か","が","ぱ","し","つ","ま","ら"]},"calib2":{"decoy_exclude":[],"progress_pct_levels_by_family":{"blur":[3,7,12,17,22,26,48,100],"wipe":[2,8,20,35,50,65,80,100]}},"followup":{"targets":["か","し","た","は","が","じ","だ","ば"],"speed_probe":false,"wipe_direction_assign":{"mode":"alternate","directions":["ltr","rtl"]},"progress_pct_levels_by_family":{"blur":[3,7,12,17,22,26,48,100],"wipe":[2,8,20,35,50,65,80,100]}},"blurthin":{"aprime_families":["blur"],"progress_pct_levels_by_family":{"blur":[3,7,12,17,22,26,48,100]}},"wipedir":{"speed_probe":false,"targets":["か","し","た","は","が","じ","だ","ば"],"aprime_families":["wipe"],"wipe_direction_assign":{"mode":"alternate","directions":["ltr","rtl"]},"progress_pct_levels_by_family":{"wipe":[2,8,20,35,50,65,80,100]}}},"phases":{"calib":["acal","aprime"],"test":["b"],"comfort":["c"],"wipedir":["aprime"],"calib2":["aprime"],"followup":["aprime"],"blurthin":["aprime"]},"phase_blocks":{"calib":[],"test":[{"phase":"calib","reason":"already_in_calib"},{"phase":"comfort","reason":"already_in_comfort"},{"phase":"wipedir","reason":"already_in_other_phase"},{"phase":"blurthin","reason":"already_in_other_phase"},{"phase":"followup","reason":"already_in_other_phase"},{"phase":"calib2","reason":"already_in_calib"}],"comfort":[{"phase":"calib","reason":"already_in_other_phase"},{"phase":"test","reason":"already_in_other_phase"},{"phase":"wipedir","reason":"already_in_other_phase"},{"phase":"blurthin","reason":"already_in_other_phase"},{"phase":"followup","reason":"already_in_other_phase"},{"phase":"calib2","reason":"already_in_other_phase"}],"wipedir":[{"phase":"calib","reason":"already_in_calib"},{"phase":"test","reason":"already_in_other_phase"},{"phase":"comfort","reason":"already_in_other_phase"},{"phase":"blurthin","reason":"already_in_other_phase"}],"blurthin":[{"phase":"calib","reason":"already_in_calib"},{"phase":"test","reason":"already_in_other_phase"},{"phase":"comfort","reason":"already_in_other_phase"},{"phase":"wipedir","reason":"already_in_other_phase"}],"followup":[{"phase":"calib","reason":"already_in_calib"},{"phase":"test","reason":"already_in_other_phase"},{"phase":"comfort","reason":"already_in_other_phase"},{"phase":"wipedir","reason":"already_in_other_phase"},{"phase":"blurthin","reason":"already_in_other_phase"}],"calib2":[{"phase":"calib","reason":"already_in_calib"},{"phase":"test","reason":"already_in_other_phase"},{"phase":"comfort","reason":"already_in_other_phase"},{"phase":"wipedir","reason":"already_in_other_phase"},{"phase":"blurthin","reason":"already_in_other_phase"},{"phase":"followup","reason":"already_in_other_phase"}]},"backend":{"roster":"firestore","logging":"firestore","fallback":true,"dual_write_logging":false},"firestore":{"enabled":true,"project_id":"ifont-transfer","api_key":"AIzaSyB87BFzuwRHtCRJVhjilYjjJwM0KfYRgio","timeout_ms":10000},"roster":{"status_url":"https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec","timeout_ms":15000,"retry":{"attempts":3,"delays_ms":[800,2000,4000],"jitter_ms":400},"require_server":true},"targets":["あ","か","が","ぱ","し","つ","ま","ら"],"decoys":{"per_participant":12,"reps":3,"exclude":["ん"],"pool":[],"seed_prefix":"decoy-pool:"},"answer_grid":[["あ","い","う","え","お"],["か","き","く","け","こ"],["さ","し","す","せ","そ"],["た","ち","つ","て","と"],["な","に","ぬ","ね","の"],["は","ひ","ふ","へ","ほ"],["ま","み","む","め","も"],["や","","ゆ","","よ"],["ら","り","る","れ","ろ"],["わ","","","","ん"],["が","ぎ","ぐ","げ","ご"],["ざ","じ","ず","ぜ","ぞ"],["だ","","","で","ど"],["ば","び","ぶ","べ","ぼ"],["ぱ","ぴ","ぷ","ぺ","ぽ"]],"answer_grid_split_at":10,"homophone_label":{"お":"お／を","じ":"じ／ぢ","ず":"ず／づ"},"answer_grid_visual":[["あ","い","う","え","お"],["か","き","く","け","こ"],["さ","し","す","せ","そ"],["た","ち","つ","て","と"],["な","に","ぬ","ね","の"],["は","ひ","ふ","へ","ほ"],["ま","み","む","め","も"],["や","","ゆ","","よ"],["ら","り","る","れ","ろ"],["わ","","","","を"],["ん","","","",""],["ゔ","","","",""],["が","ぎ","ぐ","げ","ご"],["ざ","じ","ず","ぜ","ぞ"],["だ","ぢ","づ","で","ど"],["ば","び","ぶ","べ","ぼ"],["ぱ","ぴ","ぷ","ぺ","ぽ"]],"answer_grid_visual_split_at":11,"audio":{"credit":"COEIROINK:あみたろ","gates_ms":{"_default":[20,40,60,80,110,150,220],"あ":[10,20,30,35,50,65,90],"い":[10,15,20,25,35,45,60],"う":[10,15,20,25,35,45,60],"え":[10,20,25,35,45,60,85],"お":[10,15,20,25,35,45,60],"か":[10,20,25,35,45,60,85],"き":[10,15,25,30,40,50,70],"く":[10,15,20,25,35,45,60],"け":[10,20,25,35,45,55,80],"こ":[10,20,25,35,45,60,85],"さ":[10,40,60,75,95,120,150],"し":[10,20,30,35,40,50,60],"す":[10,30,40,50,60,75,90],"せ":[10,40,55,70,85,110,135],"そ":[10,40,60,75,95,120,150],"た":[10,20,30,40,50,65,95],"て":[10,20,25,35,45,60,80],"と":[10,20,25,35,45,60,80],"ち":[10,25,35,45,55,75,100],"つ":[10,20,30,35,50,65,85],"な":[10,25,35,50,70,90,125],"に":[10,25,35,50,70,90,125],"ぬ":[10,20,35,45,60,80,115],"ね":[10,25,35,50,70,90,130],"の":[10,20,35,45,65,80,115],"は":[10,30,40,50,60,75,95],"ひ":[10,25,40,50,60,70,90],"ふ":[10,25,35,45,50,65,80],"へ":[10,30,40,50,60,75,90],"ほ":[10,30,40,50,60,75,90],"ま":[10,25,35,50,65,85,125],"み":[10,20,35,45,60,80,115],"む":[10,20,35,45,60,80,115],"め":[10,20,35,45,65,85,120],"も":[10,25,35,50,65,85,125],"や":[10,30,40,55,75,100,130],"ゆ":[10,25,30,40,55,70,90],"よ":[10,30,40,55,70,95,125],"わ":[10,25,40,50,65,90,115],"ら":[10,25,35,50,65,85,110],"り":[10,20,30,35,45,60,80],"る":[10,25,35,45,60,85,110],"れ":[10,25,30,40,55,70,95],"ろ":[10,20,30,35,50,65,80],"ん":[10,15,25,30,45,55,75],"が":[10,20,25,35,45,60,85],"ぎ":[10,20,25,35,45,60,80],"ぐ":[10,20,25,35,50,60,85],"げ":[10,20,25,35,50,60,85],"ご":[10,20,30,35,50,65,90],"ざ":[10,25,35,45,60,80,105],"じ":[10,25,30,40,50,70,90],"ず":[10,25,35,45,55,75,100],"ぜ":[10,25,30,40,55,70,90],"ぞ":[10,25,35,45,60,80,100],"だ":[10,20,30,40,50,65,95],"で":[10,20,25,35,45,60,80],"ど":[10,15,25,30,45,55,75],"ば":[10,15,25,30,45,55,75],"び":[10,20,25,35,50,60,85],"ぶ":[10,15,20,25,35,45,60],"べ":[10,15,25,30,45,55,75],"ぼ":[10,20,25,35,45,55,80],"ぱ":[10,15,25,30,40,50,70],"ぴ":[10,15,25,30,40,50,70],"ぷ":[10,15,25,30,40,50,65],"ぺ":[10,15,25,30,45,55,75],"ぽ":[10,20,30,35,50,65,90]},"include_full_gate":true,"pilot_extra_gates":{"enabled":false,"gate_ms":[10]},"manifest_url":"transfer_audio_manifest_amitaro.json","stimuli_dir":"transfer_stimuli_amitaro","fallback":{"enabled":false,"dir":"audio_base","ext":".mp3","onsets_url":"audio1char_onsets.json","default_onset_ms":50},"fade_out_ms":5,"beep_hz":880,"beep_ms":80,"beep_lead_ms":600,"end_gap_ms":500,"end_beep_gap_ms":140,"check":{"dir":"audio_check","digits":{"1":"いち","2":"に","3":"さん","4":"よん"},"rounds":2}},"visual":{"size_px":256,"base_dir":"base","fix_ms":1000,"practice_fix_ms":1400,"cue_delay_ms":350,"check":{"rounds":2,"n_choices":4},"fix_jitter_ms":0,"fix_gap_ms":500,"base_anim_ms":300,"progress_pct_levels":[2,4,7,11,16,25,40,100],"endpoint_hold_ms":34,"progress_pct_levels_by_family":{"fade":[0.4,0.8,1.4,2.2,3.5,6,12,100],"blur":[26,38,48,56,64,72,84,100],"reveal":[0.1,0.25,0.5,1,2,4,9,100],"wipe":[0.5,1,2,4,8,14,25,100],"fade+blur":[2,6,12,20,32,48,70,100],"fade+wipe":[2,6,12,20,32,48,70,100],"reveal+blur":[2,6,12,20,32,48,70,100],"reveal+wipe":[2,6,12,20,32,48,70,100]},"progress_pct_shift":{"enabled":false,"apply_to_lowest":3,"step_pct":0.75,"count":3},"calib_speed_probe":{"enabled":true,"families":["fade","reveal","blur","wipe"],"base_anim_ms_levels":[300,500],"generation_level_ms":300},"gates_ms":{"_default":[20,40,60,80,110,150,220],"あ":[10,20,30,35,50,65,90],"か":[10,20,25,35,45,60,85],"が":[10,20,25,35,45,60,85],"ぱ":[10,15,25,30,40,50,70],"し":[10,20,30,35,40,50,60],"つ":[10,20,30,35,50,65,85],"ま":[10,25,35,50,65,85,125],"ら":[10,25,35,50,65,85,110]},"require_canvas_filter":true,"families":{"fade":{"gamma":1},"reveal":{"seed_prefix":"stroke-mask:","ink_threshold":128},"blur":{"max_radius_px":72},"wipe":{"direction":"ltr","soft_edge_px":0,"direction_assign":{"mode":"fixed","directions":["ltr","rtl"]}}},"composite_axis":{"fade+blur":{"uniform_k":5.9302,"spatial_k":1.0997},"fade+wipe":{"uniform_k":5.9302,"spatial_k":1.5576},"reveal+blur":{"uniform_k":5.6221,"spatial_k":1.0997},"reveal+wipe":{"uniform_k":5.6221,"spatial_k":1.5576}},"warp":{"tables_url":"transfer_warp.json","frozen_commit":"4ea9b5178","fallback_affine":{"a":0.0044,"b":-0.05},"fallback_step_mid_ms":60}},"conditions":[{"family":"fade","condition":"baseline1","tier":1},{"family":"fade","condition":"baseline2","tier":1},{"family":"fade","condition":"proposed","tier":1},{"family":"reveal","condition":"baseline1","tier":1},{"family":"reveal","condition":"baseline2","tier":1},{"family":"reveal","condition":"proposed","tier":1},{"family":"blur","condition":"proposed","tier":2},{"family":"wipe","condition":"proposed","tier":2},{"family":"fade+blur","condition":"proposed","tier":2},{"family":"fade+wipe","condition":"proposed","tier":2},{"family":"reveal+blur","condition":"proposed","tier":2},{"family":"reveal+wipe","condition":"proposed","tier":2}],"design":{"reps":1,"target_points_per_char":3,"min_same_char_gap":4,"max_target_trials":0,"practice_min":1,"check_full_rate":0.1,"check_floor_rate":0.06,"ask_awareness":false,"post_survey":{"enabled":true,"questions":[{"id":"age_band","label":"年齢層","options":["10代","20代","30代","40代","50代","60代","70代","80代","90代以上"]},{"id":"read_difficulty","label":"日常的に、ひらがなを読むのに支障はありますか？","options":["支障なし","多少ある（時々読み間違える等）","ある（読み取りに困難を感じる）"]},{"id":"hear_difficulty","label":"日常的に、会話などの聞き取りに支障はありますか？","options":["支障なし","多少ある（聞き返すことがある等）","ある（聞き取りに困難を感じる）"]}]},"short_run_trials":4,"auto_start_ms":700,"full_hold_ms":350},"assignment":{"mode":"rotation","aprime_families":["fade","reveal","blur","wipe"],"b_step":5,"pnum_param":"pnum","point_subsets":{"5":[0,1,3],"7":[0,2,4],"8":[0,3,5]}},"wellbeing":{"in_group_b":false,"chars":["あ","ぱ"],"families":["fade","reveal","blur","wipe"],"condition":"proposed","items":[{"key":"readable","text":"この表示は継続して見やすい"},{"key":"natural","text":"変化が自然に感じる"},{"key":"annoying","text":"目障り・わずらわしい"}],"scale_min_label":"まったくそう思わない","scale_max_label":"とてもそう思う","choice_text":"字幕として普段使うなら、どの表示がよいですか。","choice_labels":{"fade":"だんだん濃くなる","reveal":"点が増えていく","blur":"ぼやけ→はっきり","wipe":"端から現れる"},"allow_replay":true},"contact":{"pi":"栗原一貴","email":"kurihara@tsuda.ac.jp","institution":"","contact_name":"栗原一貴","retention":"収集したデータは本プロジェクトの運営中は保管し、研究終了時に完全に削除します。データはGoogle Cloud Firestore（東京リージョン）に暗号化して保存し、研究責任者と共同研究者のみがアクセスします。","via_crowdsourcing":true,"provisional":[]},"logging":{"retry":{"attempts":3,"delays_ms":[800,2500,6000],"jitter_ms":400},"submit_url":"https://script.google.com/macros/s/AKfycbw1bnn7H3HCYuD3fDUIi1djGcnea0cVqnA15XiN5ipgwlrsCNkQx4q16-bdN0wbGQRP/exec","modality_audio":"transfer_audio","modality_visual":"transfer_visual"}};
+const P = { get: function(){ return null; } };   // transfer.js の切り出しが読むクエリ引数（ここでは無し）
+const GROUP = "b";
+/* ======================================================================
+ * ここから experiment/transfer.js の本文をそのまま貼っている。
+ *   'const SIZE = CFG.visual.size_px;' 〜 'function loadImage(' の直前まで。
+ * 一行も書き換えていない。書き換えたら、参加者が見るものと違うものが出る。
+ * ====================================================================== */
+const SIZE = CFG.visual.size_px;
+const imgs = {};           // かな → Image (base/<かな>.png)
+
+function newCanvas() {
+  const c = document.createElement("canvas");
+  c.id = "stim"; c.width = SIZE; c.height = SIZE;
+  c.style.background = "#fff"; c.style.border = "1px solid #ddd";
+  c.style.display = "block"; c.style.margin = "0 auto";
+  return c;
+}
+function drawBlank(ctx) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, SIZE, SIZE); }
+// 注視点。strong = true のときは**練習用に大きく濃く**描く。
+// ⚠ 本番（strong なし）の見え方は変えないこと。注視点が目立ちすぎると
+//   そのあとに出る薄い字が相対的に見えにくくなり、測る値が動く。
+function drawFix(ctx, strong) {
+  drawBlank(ctx);
+  ctx.fillStyle = strong ? "#1E2A5E" : "#333";
+  ctx.font = (strong ? 72 : 40) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 練習の注視点。大きさをゆっくり上下させて目を引く。**練習でしか呼ばない。**
+// 周期 900ms。行き過ぎないよう 0.85〜1.15 倍の範囲に収める。
+function drawFixPulse(ctx, elapsedMs) {
+  const k = 1 + 0.15 * Math.sin((elapsedMs / 900) * 2 * Math.PI);
+  drawBlank(ctx);
+  ctx.fillStyle = "#1E2A5E";
+  ctx.font = Math.round(72 * k) + "px system-ui";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("+", SIZE / 2, SIZE / 2);
+}
+
+// 部分表示(reveal)用: 字ごとに固定した乱数順のストローク画素の並び。
+// 既存資産(generate.py / README.md「マスキング手法」)と同じ考え方だが、
+// 101段階の画像には依存せず、その場で並びを作って任意の s を描けるようにした。
+// 乱数の並びは Python の random.Random とは別物になるが、**字ごとに固定**であれば
+// 実験の要件(同じ字はいつも同じ順で現れる)は満たす。
+function hashSeed(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const revealOrder = {};    // かな → Uint32Array (画素の並び。値は画素の通し番号)
+function revealPrepare(ch) {
+  if (revealOrder[ch]) return revealOrder[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = CFG.visual.families.reveal.ink_threshold;
+  const idx = [];
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    // 輝度 ≤ しきい値 の画素を「ストローク画素」とみなす(既存資産と同じ判定)。
+    const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+    if (lum <= th) idx.push(i);
+  }
+  const rnd = mulberry32(hashSeed(CFG.visual.families.reveal.seed_prefix + ch));
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1)); const t = idx[i]; idx[i] = idx[j]; idx[j] = t;
+  }
+  revealOrder[ch] = Uint32Array.from(idx);
+  return revealOrder[ch];
+}
+
+// 描画のたびに全画素を書き直すと重いので、1試行のあいだは同じ ImageData を使い、
+// 増えたぶんの画素だけ黒く塗る(s は試行内で単調に増えるため)。
+const revealState = { ch: null, shown: 0, img: null };
+function revealBegin(ch, ctx) {
+  revealPrepare(ch);
+  revealState.ch = ch; revealState.shown = 0;
+  revealState.img = ctx.createImageData(SIZE, SIZE);
+  revealState.img.data.fill(255);
+}
+function revealDraw(ctx, ch, s) {
+  if (revealState.ch !== ch || revealState.img === null) revealBegin(ch, ctx);
+  const order = revealOrder[ch];
+  const want = Math.round(order.length * Math.max(0, Math.min(1, s)));
+  const d = revealState.img.data;
+  if (want < revealState.shown) {           // 戻る場合(練習の再生など)は塗り直す
+    d.fill(255); revealState.shown = 0;
+  }
+  for (let i = revealState.shown; i < want; i++) {
+    const p = order[i] * 4;
+    d[p] = 0; d[p + 1] = 0; d[p + 2] = 0; d[p + 3] = 255;
+  }
+  revealState.shown = want;
+  ctx.putImageData(revealState.img, 0, 0);
+}
+
+// ぼかし解除(blur): ガウスぼかしの半径を単調に減らす。s=0 で最大、s=1 で鮮明。
+let blurOff = null, blurOffCtx = null;
+function blurBegin(ch) {
+  if (!blurOff) {
+    blurOff = document.createElement("canvas"); blurOff.width = SIZE; blurOff.height = SIZE;
+    blurOffCtx = blurOff.getContext("2d");
+  }
+  blurOffCtx.fillStyle = "#fff"; blurOffCtx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) blurOffCtx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+}
+// ---- canvas の filter が本当に効くか（2026-08-27 に較正データで発覚）--------
+//
+// **WebKit(iOS の全ブラウザ・Yahooアプリ内WebView・macOS Safari)は canvas の
+//   `ctx.filter` を黙って無視する。** 例外も警告も出ないまま、ぼかしが一切かからず
+//   字が鮮明なまま提示される。
+//
+// 実測での証拠(較正 calib + calib2、視覚325人):
+//   進み具合 3%（ぼかし半径 69.84px ＝ 判読できないはず）で
+//     WebKit 端末   … 正答率 100.0%（31試行）
+//     それ以外      … 正答率   3.3%（273試行、当てずっぽう 1/72 = 1.4%）
+//   うすい(fade)・点が増える(reveal)・端から(wipe)は両者でほぼ同じなので、
+//   参加者の質ではなく**描画の不具合**である。
+//
+// ⚠ **見た目を別の作りで再現しない。** 要素側の CSS filter で代用すると、
+//   ぼかしの広がり方・縁のにじみ・枠線の扱いが canvas 版と変わる。
+//   すでに取った較正データ（非WebKit）と刺激が違うものになり、
+//   曲線を束ねられなくなる。**効かない端末は断る**のが、この実験では正しい。
+//
+// 判定は「実際に小さく描いてみて、隣の画素がにじむか」で行う（UA 文字列で
+// 見分けない。将来 WebKit が対応したら自動的に通るようにするため）。
+let _canvasFilterOK = null;
+function canvasFilterWorks() {
+  if (P.get("nofilter") === "1") return false;      // 研究者の動作確認用
+  if (_canvasFilterOK !== null) return _canvasFilterOK;
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 32;
+    const x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, 32, 32);
+    x.filter = "blur(4px)";
+    x.fillStyle = "#000"; x.fillRect(12, 12, 8, 8);   // 中央に 8×8 の黒い四角
+    x.filter = "none";
+    // ⚠ **四角の中央**を見る。1画素だけ黒を置いて隣のにじみを見る作りにすると、
+    //   ぼかしで墨が薄く広がりすぎて、効いていても真っ白と区別がつかない
+    //   （2026-08-27 に Chrome で実測して分かった。最初の実装はこれで誤判定した）。
+    //   ここは差が大きい: 効いていれば中央は 136 前後まで薄まり、
+    //   効いていなければ 0（真っ黒）のまま。
+    _canvasFilterOK = x.getImageData(16, 16, 1, 1).data[0] > 40;
+  } catch (e) {
+    _canvasFilterOK = false;
+  }
+  return _canvasFilterOK;
+}
+
+// この回の出題に「ぼかし」が混ざるか。組み合わせ(fade+blur など)も数える。
+function usesBlurFamily() {
+  const fams = (GROUP === "aprime" && CFG.assignment.aprime_families)
+    ? CFG.assignment.aprime_families
+    : (CFG.conditions || []).map(c => c && c.family);
+  return fams.some(f => String(f || "").indexOf("blur") >= 0);
+}
+
+// ぼかしのフィルタ適用部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+blur / reveal+blur)からもそのまま呼べる。挙動は元の blurDraw と同じ)。
+function blurApplyFilter(ctx, src, s) {
+  const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
+  drawBlank(ctx);
+  ctx.save();
+  ctx.filter = r > 0.01 ? `blur(${r.toFixed(2)}px)` : "none";
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
+  ctx.restore();
+  ctx.filter = "none";
+}
+function blurDraw(ctx, ch, s) {
+  if (!blurOff) blurBegin(ch);
+  blurApplyFilter(ctx, blurOff, s);
+}
+
+// ワイプ(wipe): 見せる領域を端から単調に広げる。向きは設定で変えられ、
+// (2026-08-26〜)試行ごとにも変えられる(下の wipeDirFor と t.wipe_dir を見ること)。
+//
+// 進み具合 s は「画面の端(0)から端(SIZE)まで」ではなく、**字のインクが実際にある
+// 範囲(bbox)の中だけ**で動かす。そのままだと、字によっては書き出しの位置が
+// 画像の端から離れている(左右・上下に余白がある)ため、s の前半ぶんが余白を
+// なぞるだけの「何も起きない区間」になってしまう(丸山・2026-08-22の下見で発覚)。
+// bbox の外側は s によらずつねに欠けたまま/つねに映ったままなので、
+// s=0 でちょうど「インクが何も見えない」、s=1 でちょうど「インクが全部見える」に
+// そろう。字ごとに余白の量が違う(字形しだい)ので、そろえないと同じ s でも
+// 字によって実質の情報量が変わってしまう(較正データの字間比較を歪める)。
+const wipeBBox = {};   // かな → {xMin, xMax, yMin, yMax}(xMax/yMaxは「最後のインク列/行+1」)
+function wipeInkThreshold() {
+  const w = CFG.visual.families.wipe;
+  return (w && typeof w.ink_threshold === "number") ? w.ink_threshold
+    : CFG.visual.families.reveal.ink_threshold;
+}
+function wipeBBoxPrepare(ch) {
+  if (wipeBBox[ch]) return wipeBBox[ch];
+  const off = document.createElement("canvas"); off.width = SIZE; off.height = SIZE;
+  const octx = off.getContext("2d", { willReadFrequently: true });
+  octx.fillStyle = "#fff"; octx.fillRect(0, 0, SIZE, SIZE);
+  if (imgs[ch]) octx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  const px = octx.getImageData(0, 0, SIZE, SIZE).data;
+  const th = wipeInkThreshold();
+  let xMin = SIZE, xMax = 0, yMin = SIZE, yMax = 0, found = false;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const i = y * SIZE + x;
+      const lum = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+      if (lum <= th) {
+        found = true;
+        if (x < xMin) xMin = x; if (x + 1 > xMax) xMax = x + 1;
+        if (y < yMin) yMin = y; if (y + 1 > yMax) yMax = y + 1;
+      }
+    }
+  }
+  // インク画素が1つも無い(白紙の画像など)ときは、bboxを使わず元の挙動(0..SIZE)に落とす。
+  const bbox = found ? { xMin, xMax, yMin, yMax } : { xMin: 0, xMax: SIZE, yMin: 0, yMax: SIZE };
+  wipeBBox[ch] = bbox;
+  return bbox;
+}
+function wipeBegin(ch) { wipeBBoxPrepare(ch); }
+// dirArg: この試行の向き(t.wipe_dir)。呼び出し元が渡さない(undefined/空文字)ときは
+// 従来どおり設定の既定(CFG.visual.families.wipe.direction || "ltr")を使う。
+// **bbox(wipeBBoxPrepare)は向きによらず共通**なので、ここでは向きの選び方だけが変わる。
+// クリップ矩形の計算だけを切り出したもの(向きの選び方は元の wipeDraw と同じ)。
+function wipeClipRect(ch, s, dirArg) {
+  const p = Math.max(0, Math.min(1, s));
+  const dir = dirArg || CFG.visual.families.wipe.direction || "ltr";
+  const b = wipeBBoxPrepare(ch);
+  let rx = 0, ry = 0, rw = 0, rh = SIZE;
+  // 端から広げる向きによって、bboxのどちら側から growing edge が伸びるかが逆になる。
+  // ltr/ttb は0側(左/上)を固定してインク側の遠い端へ伸ばす → w/hはxMin→xMaxで増える。
+  // rtl/btt はSIZE側(右/下)を固定してインク側の遠い端へ伸ばす → w/hは(SIZE-xMax)→(SIZE-xMin)で増える。
+  if (dir === "ltr" || dir === "rtl") {
+    const w = (dir === "ltr")
+      ? b.xMin + (b.xMax - b.xMin) * p        // 0:xMin(何も新しく見えない) → 1:xMax(インク全部)
+      : (SIZE - b.xMax) + (b.xMax - b.xMin) * p;
+    rw = w; rh = SIZE;
+    rx = (dir === "ltr") ? 0 : SIZE - w;
+    ry = 0;
+  } else {
+    const h = (dir === "ttb")
+      ? b.yMin + (b.yMax - b.yMin) * p
+      : (SIZE - b.yMax) + (b.yMax - b.yMin) * p;
+    rw = SIZE; rh = h;
+    rx = 0;
+    ry = (dir === "ttb") ? 0 : SIZE - h;
+  }
+  return { rx, ry, rw, rh };
+}
+// クリップして描く部分だけを切り出したもの(src を差し替えれば組み合わせ
+// アニメ(fade+wipe / reveal+wipe)からもそのまま呼べる。挙動は元の wipeDraw と同じ)。
+function wipeApplyClip(ctx, src, ch, s, dirArg) {
+  drawBlank(ctx);
+  if (!src) return;
+  const { rx, ry, rw, rh } = wipeClipRect(ch, s, dirArg);
+  if (rw <= 0 || rh <= 0) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rx, ry, rw, rh);
+  ctx.clip();
+  ctx.drawImage(src, 0, 0, SIZE, SIZE);
+  ctx.restore();
+}
+function wipeDraw(ctx, ch, s, dirArg) {
+  wipeApplyClip(ctx, imgs[ch], ch, s, dirArg);
+}
+
+// フェード(fade): 不透明度 = s^gamma。
+// gamma は「進み具合を画面の濃さにどう配るか」のつまみ(transfer_config.js の
+// visual.families.fade.gamma)。**既定の 1.0 では濃さ = s** となり、
+// 既存の1文字課題と同じ挙動になる。1.0 より大きくすると序盤を薄めに通せる。
+function fadeAlpha(s) {
+  const g = (CFG.visual.families.fade && CFG.visual.families.fade.gamma);
+  const t = Math.max(0, Math.min(1, s));
+  // gamma が無い/1.0 のときは、余計な計算を挟まず s をそのまま使う。
+  if (!(typeof g === "number") || g === 1) return t;
+  return Math.pow(t, g);
+}
+function fadeDraw(ctx, ch, s) {
+  drawBlank(ctx);
+  if (!imgs[ch]) return;
+  ctx.globalAlpha = fadeAlpha(s);
+  ctx.drawImage(imgs[ch], 0, 0, SIZE, SIZE);
+  ctx.globalAlpha = 1;
+}
+
+const RENDERERS = {
+  fade:   { begin: () => {},                     draw: fadeDraw },
+  reveal: { begin: (ch, ctx) => revealBegin(ch, ctx), draw: revealDraw },
+  blur:   { begin: (ch) => blurBegin(ch),        draw: blurDraw },
+  wipe:   { begin: (ch) => wipeBegin(ch),        draw: wipeDraw },
+};
+
+// =========================================================================
+// 組み合わせアニメ(2026-08-26 追加): 一様(fade/reveal) × 空間(blur/wipe) の
+// 総当たり4通り。較正で「一様2つは進み具合0〜5%に全変化が詰まる」
+// 「ぼやけは床が高く『まだ誰も分からない』状態を作れない」ことが分かったため、
+// 互いの弱点を埋め合う狙いで足す。
+//
+// 描画ロジックは新しく書かない。fadeDraw / revealDraw と、blur/wipe から
+// 切り出した blurApplyFilter / wipeApplyClip を「一様側をオフスクリーンに描き、
+// その結果へ空間側をかけて本番canvasへ転写する」形でそのまま呼ぶだけ。
+let compositeOff = null, compositeOffCtx = null;
+function compositeOffCanvas() {
+  if (!compositeOff) {
+    compositeOff = document.createElement("canvas");
+    compositeOff.width = SIZE; compositeOff.height = SIZE;
+    compositeOffCtx = compositeOff.getContext("2d");
+  }
+  return compositeOffCtx;
+}
+
+// 組み合わせ全体の進み具合 s(0..1)を、各方式が実際に働く区間
+// (transfer_warp.json の composite_ranges[pairName][ch] = {a:[lo,hi]%, b:[lo,hi]%})
+// に写し直す。a は一様側(fade/reveal)、b は空間側(blur/wipe)。
+// 区間が取れないとき(warp表が未読込・その字が無い等)は、
+// 両方に s をそのまま渡す(動作は鈍るが壊れない)。
+// 組み合わせの進み具合 s を、2つの方式それぞれの進み具合へ写す。
+//
+// ⚠ **区間 [lo, hi] へ線形に写す作りは使えない**（2026-08-26 に実装して判明）。
+//   fade の働く区間は「か」で 0〜3.65% しかないので、s=100% でも不透明度が
+//   3.65% にしかならず、**文字が最後まで完成しない**。
+//   確認問題（全部見せて正答率を見る）が成立しなくなる。
+//
+// ■ いまの作り：**表を引く**
+//   transfer_warp.json の composite_map に、u を 0〜1 で 101 点刻みにした
+//   「その方式の進み具合(%)」の列が入っている（生成は build_warp_b.py）。
+//   表は s_x(u) = 100·u^k（k は u=0.5 でその方式の中間点 μ を通るように決めた）
+//   で作ってあるので、
+//     s=0   → 何も見えない
+//     s=0.5 → 両方式が同時に自分の中間点
+//     s=1   → 完全に出る
+//   の3点が自然にそろう。
+//
+//   表が無い（読込前・その字が無い等）ときは両方に s をそのまま渡す。
+//   壊れはしないが、遅い方に飲み込まれて組み合わせの意味が薄れるので、
+//   **本番では必ず表が読めていること**を確かめること。
+function compositeSplit(pairName, ch, s) {
+  const p = Math.max(0, Math.min(1, s));
+  // ① **warp表の字ごとの写しを最優先で使う**（2026-08-27 に順序を入れ替えた）。
+  //
+  //    ⚠ **以前は②の固定指数を先に返していた。これは誤りだった。**
+  //      固定指数は8字平均の中点に合わせたもので、字ごとのばらつきを吸収しない。
+  //      端から(wipe)の中点は「ま」3.9% 〜 「ぱ」79.9% と20倍以上開くので、
+  //      平均に合わせた1つの指数では両端の字が死ぬ。実際、生成済みの表では
+  //      **「が」のうすい+端からは提示の全時間で進み具合が 85.70→86.02 と
+  //      0.3ポイントしか動かなかった**（8字中2字＝セルの25%が測定不能）。
+  //      字ごとの表があるならそれを使う。無いときだけ②へ落ちる。
+  const table = warpTables && warpTables.composite_map && warpTables.composite_map[pairName];
+  const m = table && table[ch];
+  if (m && Array.isArray(m.a) && Array.isArray(m.b) && m.a.length >= 2) {
+    const n = m.a.length;
+    const x = p * (n - 1);
+    const i = Math.min(n - 1, Math.floor(x));
+    const j = Math.min(n - 1, i + 1);
+    const f = x - i;
+    const pick = (arr) => (arr[i] * (1 - f) + arr[j] * f) / 100;
+    return { sa: Math.max(0, Math.min(1, pick(m.a))),
+             sb: Math.max(0, Math.min(1, pick(m.b))) };
+  }
+  // ② 設定の固定指数。**字ごとの表が無いときの受け皿**である。
+  //    紛れ字には字ごとの曲線が無いので、こちらが使われる。
+  //    形: s_x(u) = 100 · u^k（u=0.5 で各方式の中央の中点を通るよう k を決めてある）
+  const ax = (CFG.visual.composite_axis || {})[pairName];
+  if (ax && ax.uniform_k > 0 && ax.spatial_k > 0) {
+    return { sa: Math.pow(p, ax.uniform_k), sb: Math.pow(p, ax.spatial_k) };
+  }
+  // ③ どちらも無ければ恒等（両方を同じだけ進める）。
+  return { sa: p, sb: p };
+}
+
+// begin: 両方の begin を呼ぶ(reveal は点描の並びを、wipe は字の範囲を先に作る必要があるため)。
+function compositeBegin(uniformName, spatialName) {
+  return function (ch, ctx) {
+    RENDERERS[uniformName].begin(ch, ctx);
+    RENDERERS[spatialName].begin(ch, ctx);
+  };
+}
+// draw: 一様側(uniformDraw)をオフスクリーンに描き、その結果(compositeOff)へ
+// 空間側(spatialApply)をかけて本番の ctx へ転写する。
+function compositeDraw(pairName, uniformDraw, spatialApply) {
+  return function (ctx, ch, s, dirArg) {
+    const { sa, sb } = compositeSplit(pairName, ch, s);
+    const off = compositeOffCanvas();
+    uniformDraw(off, ch, sa);
+    spatialApply(ctx, compositeOff, ch, sb, dirArg);
+  };
+}
+
+RENDERERS["fade+blur"] = {
+  begin: compositeBegin("fade", "blur"),
+  draw: compositeDraw("fade+blur", fadeDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["fade+wipe"] = {
+  begin: compositeBegin("fade", "wipe"),
+  draw: compositeDraw("fade+wipe", fadeDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
+};
+RENDERERS["reveal+blur"] = {
+  begin: compositeBegin("reveal", "blur"),
+  draw: compositeDraw("reveal+blur", revealDraw, (ctx, src, ch, s) => blurApplyFilter(ctx, src, s)),
+};
+RENDERERS["reveal+wipe"] = {
+  begin: compositeBegin("reveal", "wipe"),
+  draw: compositeDraw("reveal+wipe", revealDraw, (ctx, src, ch, s, dirArg) => wipeApplyClip(ctx, src, ch, s, dirArg)),
+};
+
+// =========================================================================
+// 視覚: 進み方 s(t)
+//   較正(群A′)は等速。検証(群B)は生成した数値列(60Hz)を線形補間してなぞる。
+// =========================================================================
+let warpTables = null;      // {frame_ms, tables: {family: {char: {condition: [s,...]}}}}
+
+function warpSeries(family, ch, condition) {
+  if (!warpTables || !warpTables.tables) return null;
+  const f = warpTables.tables[family];
+  if (!f || !f[ch]) return null;
+  const s = f[ch][condition];
+  return (Array.isArray(s) && s.length) ? s : null;
+}
+function seriesAt(series, frameMs, tMs) {
+  if (tMs <= 0) return series[0];
+  const x = tMs / frameMs;
+  const i = Math.floor(x);
+  if (i >= series.length - 1) return series[series.length - 1];
+  const f = x - i;
+  return series[i] * (1 - f) + series[i + 1] * f;
+}
+
+// 1試行ぶんの「経過時間ms → 進み具合 s」を作る。
+// 返り値: {fn, source} source は記録用("table" / "linear" / "affine")。
+// その試行の基準アニメの長さ。RQ4 の速さ2水準では試行ごとに違うので、
+// 設定の既定値ではなく試行に書かれた値を使う(書かれていなければ既定値)。
+function baseAnimMs(t) {
+  return (t && typeof t.base_anim_ms === "number") ? t.base_anim_ms : CFG.visual.base_anim_ms;
+}
+
+function progressFn(t) {
+  if (t.play === "calib" || t.condition === "calib") {
+    const base = baseAnimMs(t);
+    return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
+  }
+  const series = warpSeries(t.family, t.char, t.condition);
+  if (series) {
+    const frameMs = (warpTables && warpTables.frame_ms) || (1000 / 60);
+    return { fn: (ms) => Math.max(0, Math.min(1, seriesAt(series, frameMs, ms))), source: "table" };
+  }
+  // 表が無いとき(生成前・研究者の動作確認)。
+  if (t.condition === "baseline2") {
+    const a = CFG.visual.warp.fallback_affine.a, b = CFG.visual.warp.fallback_affine.b;
+    return { fn: (ms) => Math.max(0, Math.min(1, a * ms + b)), source: "affine" };
+  }
+  const base = baseAnimMs(t);
+  return { fn: (ms) => Math.max(0, Math.min(1, ms / base)), source: "linear" };
+}
+
+// =========================================================================
+// 読み込み
+// =========================================================================
+
+/* ======================== 貼りつけここまで ======================== */
+</script>
+
+<script>
+const DATA = {"chars":["あ","か","が","ぱ","し","つ","ま","ら"],"fams":["fade","reveal","blur","wipe"],"lab":{"fade":"うすい","reveal":"点が増える","blur":"ぼやけ","wipe":"端から"},"gates":{"あ":[10,20,30,35,50,65,90],"か":[10,20,25,35,45,60,85],"が":[10,20,25,35,45,60,85],"ぱ":[10,15,25,30,40,50,70],"し":[10,20,30,35,40,50,60],"つ":[10,20,30,35,50,65,85],"ま":[10,25,35,50,65,85,125],"ら":[10,25,35,50,65,85,110]},"images":{"あ":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD/0lEQVR42u3d2a4aMRBFUY7V///LJ09RpIibAF2T8ebtDgJqudpj2y0/zn6tBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfO3rKvwsPR6PcbclyqXx/375yAwYmQxUggAA0PQyGXAYgLgEAAAAAADGjQbIAADO7gaQAQAAAMDR3QAyAAAAzu4HfbowMi4ecwkAAAAAAAAAAAAAAAAAAADMu01OQyfEyAAAADh7QowMAAAAAB4HLwySAQAAAAAAZ/eEyQAAAAAAgJOHAmQA5wfM+Bp96wbXnKif/sVfCaB3/9WbL41pcNsxpA54TdGbZoAm9yH2yYCkPEjPAA3vSiYDaHxvOhVAGwwo8gC0x5gqC0C7DCvXztOgmpoBCilJlSRBAoDiMlj5AuEACrx6K3IgGiCyzFRRFcZWgtLswXU2gHIDsxM+du3T9vlHAo0AiE7/52/3nEADABRcSemnt3lKoHaAn76B7fBub6jASo3/8+j1bsOnzhkh5c9b+K+fFNWjWTPjV9mMyKqtru/WgP/6jZoAVDB765d+pxYAhRd/7IAqG0AZA7RP30/1AIov/tfjd38GqPf+DwekwBo3Uala0RWcALXxB6TAmh5/dkuwZsV/+y1VB5ASv8qr1DVqoUb1n7nivmtG/E43XLvH7ymXQMbF6rl3imZMAGujW2WnVgAfOK65DYBLPnoNaa3VNahaI2+WHl4HqGIE4JP2CzTG/wlAeAJ0xh+RAVvH/41bZpQMoK9KgP4MaI7/fQAlrwFUbytcZ5f/fQDfCro//pIM8Nzyfx9A8/PflRngra//3kpwRvxtu8Y0ZVv96qkCAuNX5yXg3cu/qQ4YFH8LgDhAIbD8707PrBHh+fAzRHz4ISrurE9Wf8m5VXPtnf/a/xLw4QcpuXtFcfVuknV7j+o6Of27j9cfsaJw9fX9PWJIsb4qfg+sA/SYXP5vZ4Df/RbhGwqjK9Vry+IP3KmzMhOxNv5x/QAV31Nds3PUr5aF9oj/fgbIFZvp82YUr4STiNSxpcBlp8j8pwOq2i1lt9/5Kpzn9rRTKj5rBj/+rJHx1w2HM7u+rh0MuSF+KW1W0RUtkTPrGI+fEcqd92o5TE1j1j26zhNURfgq2arjmU1/2Ska8rjyUemkspyVodnNiwecKxw66lHPmsJ1r31T03rHqKO1Vb7U71n3CFUvcHnHp8+HpcDhD1jwpg9ZmTDo2T0DvPVjdiYdTblfBiSX0KwMaHjm2DCAPwI+62bpvo7VtAx48MBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIOr1C2RC8uTGLtsBAAAAAElFTkSuQmCC","か":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAADtElEQVR42u2dSbKdMBAEKQX3v3J54Y0XDvsjJNFDcoD3RFLVE4Pkq/cxLgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICix73353Vdbg3gN4MrMIb70P+ExXA2BqgbAF0XWeDPw6RBAAAAAI0ACAWETwJYAAAAAEDrJHBUAcYCALjaToTCThnvdKefxwJaHgOl9RRG68ufCoC0hcTId/prCdx9xb9bAdpZB6qZBUwluE0CSQB4G4EsCnB6CzioCUaWzGWC4B7EeQC4vQK8RQIj8/VTYADKAjH3THABZjlAU+bpBbhGO6zpc5HrzAP0AwhW8RggHU+Fd/Gxf8YsoKMSGOEHoC3vDeqcBEb+CkclK0GdKohHgSpXNXsBnZHAqNDpqGg3qBMSuHd0bU/uii3J+S96Inn/pfPya72wLb6jjPtU6CmxqXOx3yhDFYKg2z8n6OuDEfmIdF7+4HHjEWpU6/MS4FnhK+kNwFUSGMGDu/IpQLkkQAwodC4KCcDBf3lEu2FrLHB2Qk4QzNzirZDA6PiyZGELqBkAh1OAMrwtW8kC78MgabDaCelTAOdDgFFAdwBvwyAKqFcFqJkCTBAMAyBKHaxmCjAWCAJAKUuB0ezDUVhgHwDlLIdHcwdggRHdAd7sgdHcAVhgRHOADucBFNA8BKwCoLSjQSzQ3AGLACjveHw0F0DhGOCD7wwtdMCiwaq/VYA/vuL22bfGlHlKfDe1/lYAH+UAa+af70IOMGnwEwBLP28lCqHT4QQLhHIAvUA+ANkFEO1rcljguJxGcwcQBEdzAcRSgLIBEHXAXgeYIBgbwOoQKNJgLgCiDtgcsxwbwHIBKLsC3MsCNSLASgU452hlNBfAOgW4FwBRCG1Pgo4MQGUcEEYBSgXghABMNxgXwAYBfJdV7mrb5hxQwFMB/GDTmA+zyii3b852C0xdrX874cuyYgTYPkmpFKBXuwW6gAVWJwV921reewWg63/7CiqXAnSk8nemZihtGzgFQPX22hjNBfAMQEEBvFWAW7XDFQXwBIAmFmsX+ri6pxb7EIEjW2D2HT5HjikPd5vT5GoVNqY+3m5Ps8tVzJwysd+gZperiDl1asNFTa9X4UqKuR0n9WbBClVRzW65qYXPBH5aTip/McutMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/O34BXTOrCU+S+frAAAAAElFTkSuQmCC","が":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAEQ0lEQVR42u2dyXLkMAxDBZb//5eR29Rk0pmyZMnc0NckHfsJBCVqA0fvjw0BEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEAABEIAUH6A1AGCMeQIoslDyz5vPvs9V6u17esD3yEc/AHwkBzvZMnAhEMkD8PwBx2FfP5gFsLGdzv0rS2HVP2JrH9wrwQtPf+2MrM3LrB+mPOzKBFeT/k6FfgAmfA8VAfBIkqlaD4A7ACSRgGVKAjOBjn4hwAYecEACVqiV2S8L/NcH4QoAIasfjgqgw39ByRDYLQGrle3mJWCdS+JJAeyVgL3TLgwrAWvT5y08M/QoBmw0l4CNyhIgnQCc9sB730d2qQd8kgDJyiHAHY0/xiiyQOKfqSB2MEGGzgJwGQs3S4Pc1B9uv1DyalwRT64ALuQ8JwUw8pdboorwh1cnO3sAX11Thszl8sAKgDeFK8hojvt/NUcITEUDDoTNFWlUT4cmsCxbXv76GQoPhnBkT0CmfsDHOECr4TDGq45sGaY72awgcoMAaleE8GIQWMP50AQAXpTA9j1D9yvCmGpyHBLFaQBcbEiOlwh4h8BvU3gYSecFsMJgzQdRxwQXK3solAXo1h+0RPn7SBBYkIo420+O3mneExLQKTJhLIA+LmAZJ8UaL5dn5dEg7zQuUy2XZzcTRJB0qTTYa88QwgJgNwUgowSsRem3+p6hIKfJIaMFFNkzBPUDmgHYKAFrbgFl9gxBHtAMwDYJWHMLqLJnaF0C8oA6EYD0CoDH2FEhkHVGZJcNWuNqWPoQ2CIBSxsBoRXAPMdK2Wi+cdCaR8AZBTCRDaojVCwC0EwBDOkB9Pwah2t24DmcpUaD8QAwlQ1a9hwQ7wwR5sqE1vkMoS0AMGSC0WpBeBMAsu+1sIa7ZY8CYLYRkRWwQKor7AYAQecDkFABcIoBhUDUCOBLejKdKVrPAke/U2UftITVuCyGy8cRXNUigEVCgG/92VVJAGxsgsTbd47uHQfCrStgDddFaSywA8BhC2QzBSCdAqDhcA0LXAWAOruILVf5IgiAOg6wSwHsBWC3AFyHVdZcACsAKjmAxgILALafdelbWZEC4glAHhAawIQAkCKpmvcoH7kUMOcAQOe5QYw7N2PBu1tpx1NAcBmY7wVS7gKYC4Hlx/0tEtBofQDunhsbGMBjvX6HgBAj6+vtPisqmeD+5mJgAKhZNrHmArgPAEVPVbWepdB5AGh+rC6mH3f+7iBGVgAXHpeljtbm8RuknHBNrC7D2uMi+Mk7XOvccG+fyC9aJtcXYvGBETajYu1VuHMU5GqW8ytMsf7IiHjeAsfb13QiVG8SNTq0mhoTAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAEQAAH48PkCvXfmE86bl7oAAAAASUVORK5CYII=","ぱ":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD5UlEQVR42u3d23bbIBCFYTaL93/l3Zu0q2ljWRIIz8DvmyS2W1ufBhgOEnLZ+1ELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALDyoy1yHPr6eXnNl7zOwZc7CPkB9MNz3gdAL573HgA6eM0btAK6/eIaAOp6OT+Aut+QG0BD3pIXQIPetEom+FXp63Ij15YIAP/1i8p2nSH79V96LgImpFCvk3wdZTzWjN6gfn8Jhyj8LwXenac26DT5UzXAjx98IQbqzFZpzvlnROi7i+YAOFwStEcEuPuE1GRlvmw1KmyGxQHIAmAiAAAAQo0L6WEALdM81rJoCJzVWrQOmN0ddrDOnnZqBXT8lNcE8JGAdlshogMPr1oEvh+Y9P9vJyuntshogLbLAzzoTbUsLOBZEeCYAl49D/CI01LLqgLeIQ9w/zK5mjzrtTtrpbbALFjXUtm2xkSgbrdIbY1E0AyKfhLAjAoDAEDhmqEZzYXGV0sMi1MHAAAAALuuECMCxgCYCAAAAAAAoDf4RAOh5xscigAAAAAAAAAAbDscQATUzYcDiAAAAAAAAAAAAAAAAMqmt5AgAgAAAAAAAAAAAAAAAAAAAAAo200NEgEAAAAAAAAAAAAAAAAAQFnponAiAICS4UZK+vzK0xb0ruBeGuDsVoFeE0Al0uhby9+QZQLQ5s2glsgDbtdM0t6JkPbOBAedfmUFUDDI2QCKF0tTARSyOM3LA3Rho4A7WypEB9CV/WLP9xWcvDfod69pDkH7TAD44u2Sn9v6uUUe8/AbghFB0HJfBdFPUKcHgGM1sTX9VTCdWUFd4CogBQZQ+J5WnXuMDgddF7kM7nYQ1FwlwMM/K9vUmD04CGq6EjA4CBJOjh4FwSazwyOLQc7p8YFBUJOe+mECNeuSmNdBcK0Y1BX3mtMmS2SGCNSZrbmm1YWL7DHSsbP66Yog+yqx7iCoU0upHij0nQI18KCHOuskBSwCmtkahNx2V0+81Q677a7vH9alAfVMO07qkcLiuyZ1framRyoLJ1otfiJJuTGj+E9F4CgAvkOg7o8Kv/P0EYE6ZtRLvNlh6/VZ9uBM4c9nnae4tchA1+DP9mk04Owq597jGhxvntsKaMJ0gK9khY7WDHrq/+CAecDcC6EcMBGyowLWDPOCXuJ6AccsQG1m0VTA+qMGmdL7WP3ZZs9lKFjzcW+9rbq+piK1nu0DlZvPGTj8hZPu+6cKkTnJ0fpBk7+Qkm8UxR0kAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIDDxy+fFcMtoFeBawAAAABJRU5ErkJggg==","し":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAACnElEQVR42u3dwXbjIAwF0Igz///L6r5dzEyDCLKud934hMsDA1GdyNfsa70AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHjk9WfLXeLb3ykBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF5Xv1LzY1e8/frO/gmI8UMgYvwc8A7Bekb8Y/xT4NcheM5jMAYCxIYQPGohFFaCswB+dHhKAIBJAFtGgAQAGD4CJADA8BEgAWvmSeADE5AmwVEA4Smw69fN1vAAmAPWMwKQEjAbIGcBhATMBtg5BUpAQ4C9ASgCCAnoEoB2AHFnAj75S9OzyuTCHNAEII7dNicloKD9hsAaHoBdAHlgEggrwYr1xxq8BKgFiAP3y4sAsmf/Vw6BKL9ZzpkE69q/DyALIxBNF0JRep8csw4obf9GgCyKQHTeC0TZLfJCgKwQqG5/+RwQJf8LlncOgdwtEAeWneveTUxEuwOR3NmQOLPvWCf257G1+7Ph+wPiPz91nNt3Rp4a8bln1ti97448OOfl+3Nmtn6Fxl9feBHnz122J+BfZrxfrxkLzp0iG1VHZI/NUNXxYGaX3WC26f6qpXD2aX/RXiB7xL9wM7T5A2fDE6Hs0P01j8HNz8PseyaYt/d+dQLeD8GB8ru4+FvNI9WHkbd+s3+o+DLyyuKGc6WnkddVeJytu428qszlfNFx5FPq3ToBvBRKAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQfX0BCd9b+XsloSIAAAAASUVORK5CYII=","つ":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAADCElEQVR42u3dOXLDMBBEUTQL979yO3RkV0nEMstn5ESy5qlBEigRI4/exzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAqx4z0YfT757HnOeUgFf99uByAvnmR8wPo9Ts4J4BWvpkzAWjP2zo+gDZnymEBNA4djgZwrPLlBG8Bzle+mOB7gIulryT4BiBA6esEPgOIU/oygg8A4lW/QiD9dFg1psP+vrqX17FPXq5b6dXGUXABwMuj7hwA3jfcHRvA+894PnMfoPsLGFr9rzYBnF9lcJDL4P4FJuvegojulv7/x/A9AMe4/fONyZAD3QAfBnC8KYAPnQRD7EK67FQoF5oGutV02GtuVfl9wKgUgWYJ8IoxwBAYzSNAAkatCLRPgJoBmAQA8HIMZAcwCQCgOYBfngRIAAAAAABA51uhggkQQwAAAAAAAAAAAAAAAAAAAAAAAKoDiASMN0tEDAEAAOj95CgJaH4RIAFP81MACXiqBcAkAIBGACIBr38t8DQPQLUEuBWAmp8ExVVgxQ+mnuYByAuw6vn5p/f3X+sc4EYA67bQeHoPgKQACzeRSQmg5tPhpfsoJQRYW3+sDhM3NrN6Gg//hABa/9TIrPD1u0cCttSfJwHa9NTU07z+JAnQvg0EZvJrn0d5gM0bmc7UNz4etQF0YD+5mfiu16MugI5tbTqzzng8igLo8Na2M+Vk1wVbburSzsYz3zKHSzVd1e19rWeu1S1XaLurUN0bZp4VTWdtvKzQvTtmjiVs92i9faOhwexdfngAp26+rvDVR07AqdYfW3uMKHr1IRNwuOvL7Fz8/jY7it++aHb95sMA3G70tLnTlKK37LqTgEjtvWbbyg81W1PQugt0mxs8LwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/B4/U7WGApjo3OMAAAAASUVORK5CYII=","ま":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAC8ElEQVR42u3d207kMAwA0Dqa//9l7zsSlCU3pz19Q2iG5tS5NHFC5PXuq10AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPvT57/3x8+TlFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIBJV+SIFa0aV4oAAAAAAAAAAAAAAAAAAJj6NihRUhUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFwvWhmKByQJ9kRAqAIAAAAAAAAAAAAAAACQJyhPUBUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC43v6/xuLavvq1BSDuf5NPBYjrpFzTz57CP7MKxKsbwXh3gkRsT3vfChAlMv+3AUSd3Q9bAKLWDpDVAFFvE8xSgKi5EWjZy9Dsvi+idgTEH55gFIuCHoDoue0oYtABEP03HPsJxm+czDmNSB7yOpzzJlayFkAsb7DmEHxO6rVnELRxAZALDMcPDFqx55+rCdqoABgWnIsJWsH6v5Sg5sLIQoJWdLXjnuDxS2N3BIOCoBU+CGQJQSs9BLoleP7q8A1BfxC0UvsmNxCckB9wR/CCBImfCbqC4JQMkRuCQwFiWE/z9yBo55wHNicIjkqS+pHgj0HQNq6Ox2iCV6TJjQ6CNuYuYt262uAgaAeeiTg0CNq2FKGYOFkwHyC7y9M3q/g9QW6rArF2YT0HvZi3PYv5sWDSbC5AdhUrhkyq5IgvaUND8HdBMGxKNwvOCf6icDGuMF+rQdZPkIjRDzM6v2RWisz/9pRDbiPLJUmtqc3R8yWtxGx4jvh0bmgEs0Zr3jMkaGclt/9wH3lusnSevW8wawxpNw6E+kqQT9g52kGQjzlUNQ5tQweeKhtHdiFDj9WNA3vQ4ecKx1Hjh0kHK8chhZ98snQUL3qJo7UvJ0gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADMuv4B0bSezstBapYAAAAASUVORK5CYII=","ら":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAAAAAB5Gfe6AAAD10lEQVR42u3d23LbMAxFUYGD///l04de06nT2CZAQNh+zMQec+nwIomQTdfs17oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAu748+PPtujQa4LtBYQVTfON/vTQzAR85NCoB9uDvGpqAilEITYD97x80NQGFJsnIBNhX/1FjE1BgSAhMgD37Bo1NwMkRIS4B9uL7NGEhVMjAlHMyVNbAlDbO1zQw5c525QxM+VN+KQPTmXVPGQPTsbVfDQLT0QXweQPT8bOAswSmCmdCBwlMRc4GT0WgxMmQXj9zuEcCvpYD3f10+EwOrNx1+uR50Iu1Pz0H5QCyDYreHpeyVoJ+FX1lxaDyBok/Y6CZO0SkedNg9m0Tr/89FToYbEuAld4HkjoLWCuFVey+EPsEuwJY3V1AJAAAAPIBNA3ASAAAAADQcQzcBGAkAAAAAGg5Bu4BMBIAAAAAANDzxsAaPgnQBQAAAIDRkwAJWMNnQRIAwMVzhCpMAnZsPvHKVQKWwOD1K2ViN135oVnQriLPFvAGZZOhBt6k9T/fq+YA9v4HqDiAohfNmwm8z8GPIchaCZoV3YjrzY7+9hCshLaZFTZdzcK/XcCrhF9Pv3FPrYcfb74++7OFC/hV+oGKn1cP7hB4+zPsYZNs23UDC7wC7WcO/3Nf/HHd2PsZ8APNf+FLPyR4W8DT2//iN46qHnxX8J+1QkF9NuTC4Up9CIQCTjStZuFkyIgd0Q1W1sp3TyG4tkfAcw6/Zt8Z2vgYgO0RWN2egqB2CVD851nh02ENvzus8p/pow//+wmwE4+A0c5BYI0+/JEAGl49ri5jy00qR42qMQom2Ct8BOAfg11G+yvdHv+boNfx39IFPhBo5FbZ3wSaulf4B4EGb5aWWrZ/5+lwx+azXR4AAFp+ayMBAAAAwJ41CAkYPgmQAABu0QNEAiYBGGPAzisRa3gAGAPWDQKgSQDGLLD5YuwaHoBmANajXqDR8e8FYBG3Y3z04e+UgKhChDW8/U26QFwZUgsAm/azu9E1mK0ALHpDgvcNv+7eBSxlQ4p3Hfh050HQEjckecs5TzedBu3AfjTvt9bRrRZCdno7ojdb3DZ8oKLVLsboc0EkaDNuo+rxmFI8n3z09z2SLXoU0OTrAcH78H1065O6wMt9YMTT5U8XoPjkxqd1gWf6gNr/wkSzqiuf2/TMLlD4EWM+6WgfTMDFNjkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg/fUN/jvOG5lbKOEAAAAASUVORK5CYII="},"tables":{"info":{"label":"情報量を目標","covers_ms":300.0,"path":"project/data_calib2_live/warp_v5_info/transfer_warp_v5_info.json","doc":{"generated_by":"experiment/tools/build_warp_v5_info.py","estimator":"isotonic_bagged","target":"info","frame_ms":16.666667,"duration_ms":300.0,"base_anim_ms":300.0,"meta":{"space":"rawp","made":"2026-08-28","chars":["あ","か","が","ぱ","し","つ","ま","ら"],"families":["fade","reveal","blur","wipe"],"curve_source":"project/data_calib2_live/analysis_information/curves_info.csv","visual_source":"calib+calib2 両バッチ / 速さ: fade=2水準, reveal=300ms, blur=2水準, wipe=2水準","webkit_excluded_families":["blur"],"audio_source":"実験1(phase=calib)・速さの区別なし","note":"目標＝相互情報量の字ごとの分け前 D_c = KL(P(R|c,x)‖P(R|x))。並べ替え検定でバイアスを引き、参加者ブートストラップの袋詰め PAVA で単調化。","warning":"研究者用の検討材料。本番には置いていない。"},"composite_map":{},"composite_map_n":0,"tables":{"fade":{"あ":{"proposed":[0.00467279,0.01395527,0.02823629,0.03025693,0.03504923,0.05282359,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714,0.06067714],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.015,0.025,0.035,0.045,0.055,0.065,0.075,0.085,0.095,0.105,0.115,0.125,0.135,0.145,0.155,0.165,0.175,0.185]},"か":{"proposed":[0.0,0.00900278,0.01441302,0.0172241,0.0190892,0.02074973,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039,0.0209039],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01111111,0.01222222,0.01333333,0.01444444,0.01555556,0.01666667,0.01777778,0.01888889,0.02,0.02111111,0.02222222,0.02333333,0.02444444,0.02555556,0.02666667,0.02777778,0.02888889,0.03]},"が":{"proposed":[0.00914568,0.01107628,0.01906555,0.020083,0.02008994,0.02010463,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593,0.02010593],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01111111,0.01222222,0.01333333,0.01444444,0.01555556,0.01666667,0.01777778,0.01888889,0.02,0.02111111,0.02222222,0.02333333,0.02444444,0.02555556,0.02666667,0.02777778,0.02888889,0.03]},"ぱ":{"proposed":[0.00508012,0.01182157,0.02702343,0.02871842,0.03107986,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992,0.0314992],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.01166667,0.01833333,0.025,0.03166667,0.03833333,0.045,0.05166667,0.05833333,0.065,0.07166667,0.07833333,0.085,0.09166667,0.09833333,0.105,0.11166667,0.11833333,0.125]},"し":{"proposed":[0.00808123,0.00974146,0.01816713,0.02422913,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707,0.02790707],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01222222,0.01444444,0.01666667,0.01888889,0.02111111,0.02333333,0.02555556,0.02777778,0.03,0.03222222,0.03444444,0.03666667,0.03888889,0.04111111,0.04333333,0.04555556,0.04777778,0.05]},"つ":{"proposed":[0.00643458,0.01432052,0.01824227,0.0204292,0.02716828,0.03173268,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303,0.03217303],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01333333,0.01666667,0.02,0.02333333,0.02666667,0.03,0.03333333,0.03666667,0.04,0.04333333,0.04666667,0.05,0.05333333,0.05666667,0.06,0.06333333,0.06666667,0.07]},"ま":{"proposed":[0.008062,0.00977565,0.01193186,0.02264979,0.02645065,0.02841027,0.03179041,0.03557947,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796,0.04204796],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.00944444,0.01388889,0.01833333,0.02277778,0.02722222,0.03166667,0.03611111,0.04055556,0.045,0.04944444,0.05388889,0.05833333,0.06277778,0.06722222,0.07166667,0.07611111,0.08055556,0.085]},"ら":{"proposed":[0.00402536,0.01074565,0.01464783,0.02037538,0.02378635,0.02519742,0.02565192,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464,0.02584464],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01222222,0.01444444,0.01666667,0.01888889,0.02111111,0.02333333,0.02555556,0.02777778,0.03,0.03222222,0.03444444,0.03666667,0.03888889,0.04111111,0.04333333,0.04555556,0.04777778,0.05]}},"reveal":{"あ":{"proposed":[0.0,0.01794771,0.04575978,0.081988,0.36873468,0.47308507,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438,0.5155438],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.01777778,0.06555556,0.11333333,0.16111111,0.20888889,0.25666667,0.30444444,0.35222222,0.4,0.44777778,0.49555556,0.54333333,0.59111111,0.63888889,0.68666667,0.73444444,0.78222222,0.83]},"か":{"proposed":[0.0016165,0.00633954,0.02133261,0.0274211,0.03169596,0.03564919,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298,0.03602298],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.015,0.01722222,0.01944444,0.02166667,0.02388889,0.02611111,0.02833333,0.03055556,0.03277778,0.035,0.03722222,0.03944444,0.04166667,0.04388889,0.04611111,0.04833333,0.05055556,0.05277778,0.055]},"が":{"proposed":[0.00992943,0.02080413,0.03795883,0.0417418,0.04178798,0.04188594,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465,0.04189465],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.025,0.02722222,0.02944444,0.03166667,0.03388889,0.03611111,0.03833333,0.04055556,0.04277778,0.045,0.04722222,0.04944444,0.05166667,0.05388889,0.05611111,0.05833333,0.06055556,0.06277778,0.065]},"ぱ":{"proposed":[0.0,0.02087861,0.03933989,0.05661439,0.10910295,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283,0.12265283],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.01888889,0.03777778,0.05666667,0.07555556,0.09444444,0.11333333,0.13222222,0.15111111,0.17,0.18888889,0.20777778,0.22666667,0.24555556,0.26444444,0.28333333,0.30222222,0.32111111,0.34]},"し":{"proposed":[0.00551053,0.00824131,0.02763942,0.03500044,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023,0.03798023],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.015,0.025,0.035,0.045,0.055,0.065,0.075,0.085,0.095,0.105,0.115,0.125,0.135,0.145,0.155,0.165,0.175,0.185]},"つ":{"proposed":[0.00358353,0.01085152,0.02239102,0.03405926,0.07186974,0.10642062,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511,0.11363511],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.00944444,0.02388889,0.03833333,0.05277778,0.06722222,0.08166667,0.09611111,0.11055556,0.125,0.13944444,0.15388889,0.16833333,0.18277778,0.19722222,0.21166667,0.22611111,0.24055556,0.255]},"ま":{"proposed":[0.00474533,0.01647529,0.02510905,0.04710083,0.07616299,0.09867543,0.17770659,0.3008634,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391,0.38081391],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.00722222,0.02944444,0.05166667,0.07388889,0.09611111,0.11833333,0.14055556,0.16277778,0.185,0.20722222,0.22944444,0.25166667,0.27388889,0.29611111,0.31833333,0.34055556,0.36277778,0.385]},"ら":{"proposed":[0.0,0.00706523,0.01756884,0.03393197,0.0480658,0.06456388,0.07075274,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694,0.07351694],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12,0.13,0.14,0.15,0.16,0.17,0.18]}},"blur":{"あ":{"proposed":[0.0,0.53237097,0.69705813,0.72045792,0.8434536,0.86189521,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487,0.8683487],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.43888889,0.67777778,0.91666667,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"か":{"proposed":[0.13869549,0.33243212,0.5404005,0.5771151,0.59999656,0.61922499,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088,0.62096088],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.23666667,0.27333333,0.31,0.34666667,0.38333333,0.42,0.45666667,0.49333333,0.53,0.56666667,0.60333333,0.64,0.67666667,0.71333333,0.75,0.78666667,0.82333333,0.86]},"が":{"proposed":[0.41776182,0.49294193,0.64672467,0.65974639,0.65983371,0.66001869,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351,0.6600351],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.23333333,0.26666667,0.3,0.33333333,0.36666667,0.4,0.43333333,0.46666667,0.5,0.53333333,0.56666667,0.6,0.63333333,0.66666667,0.7,0.73333333,0.76666667,0.8]},"ぱ":{"proposed":[0.03073915,0.48760578,0.70234652,0.71759244,0.78006151,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122,0.79220122],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.43111111,0.66222222,0.89333333,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"し":{"proposed":[0.23210405,0.26126991,0.43007228,0.62688733,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999,0.67704999],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.27,0.34,0.41,0.48,0.55,0.62,0.69,0.76,0.83,0.9,0.97,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"つ":{"proposed":[0.28620201,0.37713273,0.56288442,0.60215914,0.67559029,0.73199695,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479,0.74170479],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.33111111,0.46222222,0.59333333,0.72444444,0.85555556,0.98666667,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"ま":{"proposed":[0.32123925,0.47707416,0.55752614,0.62888414,0.68003227,0.73915539,0.8071601,0.85724363,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074,0.87318074],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.34222222,0.48444444,0.62666667,0.76888889,0.91111111,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"ら":{"proposed":[0.05344635,0.43355833,0.56412805,0.64116529,0.71086248,0.72730602,0.73356738,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487,0.73620487],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.34555556,0.49111111,0.63666667,0.78222222,0.92777778,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]}},"wipe":{"あ":{"proposed":[0.0,0.05590926,0.33113167,0.38082299,0.54277886,0.63773789,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007,0.66897007],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.05777778,0.18555556,0.31333333,0.44111111,0.56888889,0.69666667,0.82444444,0.95222222,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"か":{"proposed":[0.0,0.00662203,0.16465359,0.33000314,0.42328493,0.54202246,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527,0.57186527],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.04,0.08,0.12,0.16,0.2,0.24,0.28,0.32,0.36,0.4,0.44,0.48,0.52,0.56,0.6,0.64,0.68,0.72]},"が":{"proposed":[0.00933789,0.05989097,0.45241406,0.48833743,0.48858521,0.4891104,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704,0.48915704],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.22777778,0.25555556,0.28333333,0.31111111,0.33888889,0.36666667,0.39444444,0.42222222,0.45,0.47777778,0.50555556,0.53333333,0.56111111,0.58888889,0.61666667,0.64444444,0.67222222,0.7]},"ぱ":{"proposed":[0.01920712,0.19285837,0.33549917,0.35631648,0.41598327,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085,0.42705085],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.18,0.21666667,0.25333333,0.29,0.32666667,0.36333333,0.4,0.43666667,0.47333333,0.51,0.54666667,0.58333333,0.62,0.65666667,0.69333333,0.73,0.76666667,0.80333333,0.84]},"し":{"proposed":[0.04070163,0.05493786,0.20908965,0.28879826,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733,0.31712733],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.14,0.16,0.18,0.2,0.22,0.24,0.26,0.28,0.3,0.32,0.34,0.36,0.38,0.4,0.42,0.44,0.46,0.48,0.5]},"つ":{"proposed":[0.0,0.07375361,0.17809709,0.27029968,0.34123274,0.42037449,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037,0.43055037],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.04,0.10222222,0.16444444,0.22666667,0.28888889,0.35111111,0.41333333,0.47555556,0.53777778,0.6,0.66222222,0.72444444,0.78666667,0.84888889,0.91111111,0.97333333,1.0,1.0,1.0]},"ま":{"proposed":[0.02161451,0.04143049,0.05561964,0.27004573,0.31715514,0.34154286,0.40782405,0.48494784,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272,0.55768272],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.04277778,0.10055556,0.15833333,0.21611111,0.27388889,0.33166667,0.38944444,0.44722222,0.505,0.56277778,0.62055556,0.67833333,0.73611111,0.79388889,0.85166667,0.90944444,0.96722222,1.0]},"ら":{"proposed":[0.0,0.0484713,0.15813685,0.26412395,0.33260077,0.34789504,0.35595943,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214,0.3604214],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.05611111,0.14722222,0.23833333,0.32944444,0.42055556,0.51166667,0.60277778,0.69388889,0.785,0.87611111,0.96722222,1.0,1.0,1.0,1.0,1.0,1.0,1.0]}}}}},"acc":{"label":"正答率を目標","covers_ms":300.0,"path":"project/data_calib2_live/warp_v5_info/transfer_warp_v5_acc.json","doc":{"generated_by":"experiment/tools/build_warp_v5_info.py","estimator":"isotonic_bagged","target":"acc","frame_ms":16.666667,"duration_ms":300.0,"base_anim_ms":300.0,"meta":{"space":"rawp","made":"2026-08-28","chars":["あ","か","が","ぱ","し","つ","ま","ら"],"families":["fade","reveal","blur","wipe"],"curve_source":"project/data_calib2_live/analysis_information/curves_info.csv","visual_source":"calib+calib2 両バッチ / 速さ: fade=2水準, reveal=300ms, blur=2水準, wipe=2水準","webkit_excluded_families":["blur"],"audio_source":"実験1(phase=calib)・速さの区別なし","note":"目標＝正答率。曲線は同じ袋詰め PAVA（単調回帰）。情報量版との違いは『軸に載っている量』だけ。","warning":"研究者用の検討材料。本番には置いていない。"},"composite_map":{},"composite_map_n":0,"tables":{"fade":{"あ":{"proposed":[0.0,0.01202814,0.10018307,0.11683024,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897,0.22949897],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.01222222,0.04444444,0.07666667,0.10888889,0.14111111,0.17333333,0.20555556,0.23777778,0.27,0.30222222,0.33444444,0.36666667,0.39888889,0.43111111,0.46333333,0.49555556,0.52777778,0.56]},"か":{"proposed":[0.0058709,0.00953225,0.013506,0.01804846,0.02788114,0.09147038,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096,0.09873096],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.00777778,0.01555556,0.02333333,0.03111111,0.03888889,0.04666667,0.05444444,0.06222222,0.07,0.07777778,0.08555556,0.09333333,0.10111111,0.10888889,0.11666667,0.12444444,0.13222222,0.14]},"が":{"proposed":[0.0,0.0,0.00811966,0.00814013,0.00826082,0.00852238,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599,0.00854599],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]},"ぱ":{"proposed":[0.0,0.01156437,0.01880154,0.02237364,0.02372691,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441,0.02396441],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.01111111,0.01222222,0.01333333,0.01444444,0.01555556,0.01666667,0.01777778,0.01888889,0.02,0.02111111,0.02222222,0.02333333,0.02444444,0.02555556,0.02666667,0.02777778,0.02888889,0.03]},"し":{"proposed":[0.00418178,0.00446365,0.00810821,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832,0.00890832],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.0,0.0,0.0,0.00055556,0.00166667,0.00277778,0.00388889,0.005,0.00611111,0.00722222,0.00833333,0.00944444,0.01055556,0.01166667,0.01277778,0.01388889,0.015]},"つ":{"proposed":[0.01156923,0.01420374,0.01687219,0.01895521,0.02020088,0.02128441,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333,0.02138333],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.015,0.01611111,0.01722222,0.01833333,0.01944444,0.02055556,0.02166667,0.02277778,0.02388889,0.025,0.02611111,0.02722222,0.02833333,0.02944444,0.03055556,0.03166667,0.03277778,0.03388889,0.035]},"ま":{"proposed":[0.0,0.0,0.00400851,0.02365071,0.02959478,0.03166145,0.03400615,0.14458209,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813,0.27626813],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.00222222,0.02333333,0.04444444,0.06555556,0.08666667,0.10777778,0.12888889,0.15,0.17111111,0.19222222,0.21333333,0.23444444,0.25555556,0.27666667,0.29777778,0.31888889,0.34]},"ら":{"proposed":[0.0,0.0,0.008131,0.01102302,0.0132957,0.01337949,0.01345496,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501,0.01349501],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.00611111,0.00722222,0.00833333,0.00944444,0.01055556,0.01166667,0.01277778,0.01388889,0.015,0.01611111,0.01722222,0.01833333,0.01944444,0.02055556,0.02166667,0.02277778,0.02388889,0.025]}},"reveal":{"あ":{"proposed":[0.0,0.01315053,0.05864925,0.05962764,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326,0.06776326],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.01333333,0.04666667,0.08,0.11333333,0.14666667,0.18,0.21333333,0.24666667,0.28,0.31333333,0.34666667,0.38,0.41333333,0.44666667,0.48,0.51333333,0.54666667,0.58]},"か":{"proposed":[0.00617503,0.00840418,0.01447505,0.02269389,0.03310123,0.06367789,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826,0.07018826],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.00777778,0.01555556,0.02333333,0.03111111,0.03888889,0.04666667,0.05444444,0.06222222,0.07,0.07777778,0.08555556,0.09333333,0.10111111,0.10888889,0.11666667,0.12444444,0.13222222,0.14]},"が":{"proposed":[0.0,0.0,0.01052977,0.01062236,0.0111801,0.01245994,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037,0.01258037],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.0,0.0,0.0,0.00055556,0.00166667,0.00277778,0.00388889,0.005,0.00611111,0.00722222,0.00833333,0.00944444,0.01055556,0.01166667,0.01277778,0.01388889,0.015]},"ぱ":{"proposed":[0.0,0.02036205,0.03251364,0.03802868,0.04167651,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546,0.04237546],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.02,0.02222222,0.02444444,0.02666667,0.02888889,0.03111111,0.03333333,0.03555556,0.03777778,0.04,0.04222222,0.04444444,0.04666667,0.04888889,0.05111111,0.05333333,0.05555556,0.05777778,0.06]},"し":{"proposed":[0.00155367,0.00183166,0.00584161,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024,0.00655024],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.0,0.0,0.0,0.00055556,0.00166667,0.00277778,0.00388889,0.005,0.00611111,0.00722222,0.00833333,0.00944444,0.01055556,0.01166667,0.01277778,0.01388889,0.015]},"つ":{"proposed":[0.01154506,0.01321383,0.01609063,0.01838302,0.01977162,0.02370243,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488,0.0241488],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.015,0.01611111,0.01722222,0.01833333,0.01944444,0.02055556,0.02166667,0.02277778,0.02388889,0.025,0.02611111,0.02722222,0.02833333,0.02944444,0.03055556,0.03166667,0.03277778,0.03388889,0.035]},"ま":{"proposed":[0.0,0.0013884,0.00262082,0.03963034,0.05661447,0.06320843,0.07102564,0.07859959,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614,0.08224614],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.00388889,0.03833333,0.07277778,0.10722222,0.14166667,0.17611111,0.21055556,0.245,0.27944444,0.31388889,0.34833333,0.38277778,0.41722222,0.45166667,0.48611111,0.52055556,0.555]},"ら":{"proposed":[0.0,0.0,0.0,0.00653202,0.01095484,0.01122412,0.01147082,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334,0.01160334],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.00111111,0.00222222,0.00333333,0.00444444,0.00555556,0.00666667,0.00777778,0.00888889,0.01,0.01111111,0.01222222,0.01333333,0.01444444,0.01555556,0.01666667,0.01777778,0.01888889,0.02]}},"blur":{"あ":{"proposed":[0.0,0.58544504,0.87650631,0.88098122,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555,0.9163555],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.03,0.58555556,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"か":{"proposed":[0.39860227,0.49455925,0.56862439,0.59473991,0.6229523,0.67977561,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046,0.69086046],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.33444444,0.46888889,0.60333333,0.73777778,0.87222222,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"が":{"proposed":[0.0,0.0,0.38972109,0.39139425,0.40131919,0.42317809,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453,0.42517453],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.21444444,0.22888889,0.24333333,0.25777778,0.27222222,0.28666667,0.30111111,0.31555556,0.33,0.34444444,0.35888889,0.37333333,0.38777778,0.40222222,0.41666667,0.43111111,0.44555556,0.46]},"ぱ":{"proposed":[0.0,0.5635195,0.72068206,0.74381335,0.75696696,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074,0.75922074],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.23888889,0.27777778,0.31666667,0.35555556,0.39444444,0.43333333,0.47222222,0.51111111,0.55,0.58888889,0.62777778,0.66666667,0.70555556,0.74444444,0.78333333,0.82222222,0.86111111,0.9]},"し":{"proposed":[0.16025099,0.26012581,0.28501634,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718,0.2941718],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.20666667,0.21333333,0.22,0.22666667,0.23333333,0.24,0.24666667,0.25333333,0.26,0.26666667,0.27333333,0.28,0.28666667,0.29333333,0.3,0.30666667,0.31333333,0.32]},"つ":{"proposed":[0.36601205,0.39315577,0.42759162,0.45257011,0.4668385,0.47888716,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131,0.47997131],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.24222222,0.28444444,0.32666667,0.36888889,0.41111111,0.45333333,0.49555556,0.53777778,0.58,0.62222222,0.66444444,0.70666667,0.74888889,0.79111111,0.83333333,0.87555556,0.91777778,0.96]},"ま":{"proposed":[0.0,0.0,0.11346844,0.6068483,0.67284584,0.69284477,0.71465879,0.76005398,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675,0.78593675],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.07555556,0.32111111,0.56666667,0.81222222,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"ら":{"proposed":[0.0,0.22506593,0.23976526,0.51809014,0.56615164,0.56675331,0.56729251,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776,0.5675776],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.22222222,0.24444444,0.26666667,0.28888889,0.31111111,0.33333333,0.35555556,0.37777778,0.4,0.42222222,0.44444444,0.46666667,0.48888889,0.51111111,0.53333333,0.55555556,0.57777778,0.6]}},"wipe":{"あ":{"proposed":[0.0,0.25532346,0.46437772,0.46570561,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002,0.4761002],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.01,0.24111111,0.47222222,0.70333333,0.93444444,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"か":{"proposed":[0.09228845,0.26616486,0.30963802,0.34490701,0.57294689,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.08,0.19888889,0.31777778,0.43666667,0.55555556,0.67444444,0.79333333,0.91222222,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]},"が":{"proposed":[0.0,0.0,0.37955324,0.38480732,0.41700733,0.49437823,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643,0.65005643],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.22444444,0.24888889,0.27333333,0.29777778,0.32222222,0.34666667,0.37111111,0.39555556,0.42,0.44444444,0.46888889,0.49333333,0.51777778,0.54222222,0.56666667,0.59111111,0.61555556,0.64]},"ぱ":{"proposed":[0.0,0.68842483,0.73075846,0.7455056,0.75381634,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499,0.75523499],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.24222222,0.28444444,0.32666667,0.36888889,0.41111111,0.45333333,0.49555556,0.53777778,0.58,0.62222222,0.66444444,0.70666667,0.74888889,0.79111111,0.83333333,0.87555556,0.91777778,0.96]},"し":{"proposed":[0.0,0.00514857,0.05013821,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588,0.08890588],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.005,0.01166667,0.01833333,0.025,0.03166667,0.03833333,0.045,0.05166667,0.05833333,0.065,0.07166667,0.07833333,0.085,0.09166667,0.09833333,0.105,0.11166667,0.11833333,0.125]},"つ":{"proposed":[0.15808532,0.17870275,0.26404389,0.29183734,0.30825121,0.32241322,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102,0.32370102],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.31,0.32,0.33,0.34,0.35,0.36,0.37,0.38]},"ま":{"proposed":[0.0,0.01342195,0.02019104,0.05897652,0.07768692,0.10740112,0.20829531,0.39079854,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953,0.42440953],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.0,0.0,0.01666667,0.06,0.10333333,0.14666667,0.19,0.23333333,0.27666667,0.32,0.36333333,0.40666667,0.45,0.49333333,0.53666667,0.58,0.62333333,0.66666667,0.71]},"ら":{"proposed":[0.0,0.0148791,0.15045611,0.22032985,0.23557921,0.23610818,0.23658278,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339,0.2368339],"baseline1":[0.0,0.05555556,0.11111111,0.16666667,0.22222222,0.27777778,0.33333333,0.38888889,0.44444444,0.5,0.55555556,0.61111111,0.66666667,0.72222222,0.77777778,0.83333333,0.88888889,0.94444444,1.0],"baseline2":[0.2,0.20333333,0.20666667,0.21,0.21333333,0.21666667,0.22,0.22333333,0.22666667,0.23,0.23333333,0.23666667,0.24,0.24333333,0.24666667,0.25,0.25333333,0.25666667,0.26]}}}}}},"cells":[{"target":"info","family":"fade","char":"あ","s_min":0.4673,"s_max":6.0677,"span_pt_gates":5.6004,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.467|2.143|2.730|2.868|3.026|3.491|6.068","target_first_gate":0.38806,"target_last_gate":2.62793,"visual_bottom":0.31443,"visual_top":2.89292},{"target":"info","family":"fade","char":"か","s_min":0.0,"s_max":2.0904,"span_pt_gates":2.0904,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|0.964|1.334|1.460|1.660|1.835|2.090","target_first_gate":0.46883,"target_last_gate":1.75216,"visual_bottom":0.54485,"visual_top":2.9116},{"target":"info","family":"fade","char":"が","s_min":0.9146,"s_max":2.0106,"span_pt_gates":1.096,"n_distinct_at_gates":4,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.915|1.186|1.425|2.003|2.008|2.008|2.011","target_first_gate":0.7013,"target_last_gate":1.70823,"visual_bottom":0.53972,"visual_top":2.84785},{"target":"info","family":"fade","char":"ぱ","s_min":0.508,"s_max":3.1499,"span_pt_gates":2.6419,"n_distinct_at_gates":4,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.508|1.062|2.578|2.630|2.831|2.872|3.150","target_first_gate":0.48463,"target_last_gate":2.4478,"visual_bottom":0.40916,"visual_top":2.90386},{"target":"info","family":"fade","char":"し","s_min":0.8081,"s_max":2.7907,"span_pt_gates":1.9826,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.808|1.041|1.807|1.821|1.943|2.423|2.791","target_first_gate":0.61019,"target_last_gate":2.23984,"visual_bottom":0.39408,"visual_top":2.86601},{"target":"info","family":"fade","char":"つ","s_min":0.6435,"s_max":3.2173,"span_pt_gates":2.5738,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.643|1.514|1.781|1.845|2.043|2.669|3.217","target_first_gate":0.76555,"target_last_gate":2.43481,"visual_bottom":0.44537,"visual_top":2.92169},{"target":"info","family":"fade","char":"ま","s_min":0.8062,"s_max":4.2048,"span_pt_gates":3.3986,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.806|1.139|1.203|2.265|2.624|2.859|4.205","target_first_gate":0.73329,"target_last_gate":2.58953,"visual_bottom":0.4243,"visual_top":2.87934},{"target":"info","family":"fade","char":"ら","s_min":0.4025,"s_max":2.5845,"span_pt_gates":2.1819,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.403|1.458|1.466|2.038|2.363|2.533|2.584","target_first_gate":0.3382,"target_last_gate":2.36978,"visual_bottom":0.33672,"visual_top":2.89944},{"target":"info","family":"reveal","char":"あ","s_min":0.0,"s_max":51.5544,"span_pt_gates":51.5544,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|2.633|3.883|5.220|8.199|35.846|51.554","target_first_gate":0.38806,"target_last_gate":2.62793,"visual_bottom":0.4288,"visual_top":2.72313},{"target":"info","family":"reveal","char":"か","s_min":0.1617,"s_max":3.6023,"span_pt_gates":3.4406,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.162|0.872|1.871|2.172|2.604|2.998|3.602","target_first_gate":0.46883,"target_last_gate":1.75216,"visual_bottom":0.41958,"visual_top":2.68286},{"target":"info","family":"reveal","char":"が","s_min":0.9929,"s_max":4.1895,"span_pt_gates":3.1965,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.993|2.195|2.560|4.139|4.174|4.174|4.189","target_first_gate":0.7013,"target_last_gate":1.70823,"visual_bottom":0.34059,"visual_top":2.54692},{"target":"info","family":"reveal","char":"ぱ","s_min":0.0,"s_max":12.2653,"span_pt_gates":12.2653,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.484|3.768|3.838|5.044|5.661|12.265","target_first_gate":0.48463,"target_last_gate":2.4478,"visual_bottom":0.495,"visual_top":2.74858},{"target":"info","family":"reveal","char":"し","s_min":0.5511,"s_max":3.798,"span_pt_gates":3.247,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.551|0.951|2.750|2.770|2.944|3.500|3.798","target_first_gate":0.61019,"target_last_gate":2.23984,"visual_bottom":0.09129,"visual_top":2.67223},{"target":"info","family":"reveal","char":"つ","s_min":0.3584,"s_max":11.3635,"span_pt_gates":11.0052,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.358|1.274|2.047|2.334|3.406|6.954|11.364","target_first_gate":0.76555,"target_last_gate":2.43481,"visual_bottom":0.6451,"visual_top":2.76338},{"target":"info","family":"reveal","char":"ま","s_min":0.4745,"s_max":38.0814,"span_pt_gates":37.6069,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.475|2.363|2.537|4.710|7.427|10.201|38.081","target_first_gate":0.73329,"target_last_gate":2.58953,"visual_bottom":0.62347,"visual_top":2.75653},{"target":"info","family":"reveal","char":"ら","s_min":0.0,"s_max":7.3517,"span_pt_gates":7.3517,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.725|1.762|3.393|4.648|6.628|7.352","target_first_gate":0.3382,"target_last_gate":2.36978,"visual_bottom":0.64497,"visual_top":2.75239},{"target":"info","family":"blur","char":"あ","s_min":0.0,"s_max":86.8349,"span_pt_gates":86.8349,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|61.433|68.605|70.222|72.046|84.139|86.835","target_first_gate":0.38806,"target_last_gate":2.62793,"visual_bottom":0.43477,"visual_top":2.86163},{"target":"info","family":"blur","char":"か","s_min":13.8695,"s_max":62.0961,"span_pt_gates":48.2265,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"13.870|39.654|52.573|54.293|56.917|59.113|62.096","target_first_gate":0.46883,"target_last_gate":1.75216,"visual_bottom":0.35146,"visual_top":2.72111},{"target":"info","family":"blur","char":"が","s_min":41.7762,"s_max":66.0035,"span_pt_gates":24.2273,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"41.776|50.036|52.235|65.908|65.975|65.975|66.004","target_first_gate":0.7013,"target_last_gate":1.70823,"visual_bottom":0.36463,"visual_top":2.74032},{"target":"info","family":"blur","char":"ぱ","s_min":3.0739,"s_max":79.2201,"span_pt_gates":76.1462,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"3.074|43.896|69.078|69.570|71.400|71.759|79.220","target_first_gate":0.48463,"target_last_gate":2.4478,"visual_bottom":0.48161,"visual_top":3.00153},{"target":"info","family":"blur","char":"し","s_min":23.2104,"s_max":67.705,"span_pt_gates":44.4946,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"23.210|27.535|42.826|43.092|45.320|62.689|67.705","target_first_gate":0.61019,"target_last_gate":2.23984,"visual_bottom":0.24652,"visual_top":2.72651},{"target":"info","family":"blur","char":"つ","s_min":28.6202,"s_max":74.1705,"span_pt_gates":45.5503,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"28.620|40.512|52.883|56.666|60.216|67.012|74.170","target_first_gate":0.76555,"target_last_gate":2.43481,"visual_bottom":0.47073,"visual_top":2.74993},{"target":"info","family":"blur","char":"ま","s_min":32.1239,"s_max":87.3181,"span_pt_gates":55.1941,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"32.124|53.812|56.036|62.888|67.178|74.284|87.318","target_first_gate":0.73329,"target_last_gate":2.58953,"visual_bottom":0.4614,"visual_top":2.88963},{"target":"info","family":"blur","char":"ら","s_min":5.3446,"s_max":73.6205,"span_pt_gates":68.2759,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"5.345|56.305|56.431|64.117|70.924|72.909|73.620","target_first_gate":0.3382,"target_last_gate":2.36978,"visual_bottom":0.24131,"visual_top":2.77598},{"target":"info","family":"wipe","char":"あ","s_min":0.0,"s_max":66.897,"span_pt_gates":66.897,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|9.127|30.956|34.163|38.082|53.294|66.897","target_first_gate":0.38806,"target_last_gate":2.62793,"visual_bottom":0.68901,"visual_top":2.86038},{"target":"info","family":"wipe","char":"か","s_min":0.0,"s_max":57.1865,"span_pt_gates":57.1865,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|2.025|7.307|17.306|29.679|38.655|57.187","target_first_gate":0.46883,"target_last_gate":1.75216,"visual_bottom":0.64813,"visual_top":2.70541},{"target":"info","family":"wipe","char":"が","s_min":0.9338,"s_max":48.9157,"span_pt_gates":47.9819,"n_distinct_at_gates":4,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.934|8.685|17.937|48.644|48.834|48.834|48.916","target_first_gate":0.7013,"target_last_gate":1.70823,"visual_bottom":0.59945,"visual_top":2.75533},{"target":"info","family":"wipe","char":"ぱ","s_min":1.9207,"s_max":42.7051,"span_pt_gates":40.7844,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"1.921|7.961|32.283|32.818|34.855|35.632|42.705","target_first_gate":0.48463,"target_last_gate":2.4478,"visual_bottom":0.41432,"visual_top":2.89922},{"target":"info","family":"wipe","char":"し","s_min":4.0702,"s_max":31.7127,"span_pt_gates":27.6426,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"4.070|6.115|20.736|20.989|23.170|28.880|31.713","target_first_gate":0.61019,"target_last_gate":2.23984,"visual_bottom":0.44491,"visual_top":2.80887},{"target":"info","family":"wipe","char":"つ","s_min":0.0,"s_max":43.055,"span_pt_gates":43.055,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|10.094|16.981|18.207|27.030|33.818|43.055","target_first_gate":0.76555,"target_last_gate":2.43481,"visual_bottom":0.81088,"visual_top":2.70416},{"target":"info","family":"wipe","char":"ま","s_min":2.1615,"s_max":55.7683,"span_pt_gates":53.6068,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"2.161|5.194|5.627|27.005|31.450|34.380|55.768","target_first_gate":0.73329,"target_last_gate":2.58953,"visual_bottom":0.39608,"visual_top":2.8187},{"target":"info","family":"wipe","char":"ら","s_min":0.0,"s_max":36.0421,"span_pt_gates":36.0421,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|15.244|15.912|26.412|33.091|34.929|36.042","target_first_gate":0.3382,"target_last_gate":2.36978,"visual_bottom":0.55423,"visual_top":2.68044},{"target":"acc","family":"fade","char":"あ","s_min":0.0,"s_max":22.9499,"span_pt_gates":22.9499,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|2.035|7.188|11.683|11.683|22.950|22.950","target_first_gate":0.0,"target_last_gate":0.97242,"visual_bottom":0.06276,"visual_top":1.0},{"target":"acc","family":"fade","char":"か","s_min":0.5871,"s_max":9.8731,"span_pt_gates":9.286,"n_distinct_at_gates":5,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.587|1.056|1.302|1.359|1.626|2.162|9.873","target_first_gate":0.12083,"target_last_gate":0.969,"visual_bottom":0.03518,"visual_top":1.0},{"target":"acc","family":"fade","char":"が","s_min":0.0,"s_max":0.8546,"span_pt_gates":0.8546,"n_distinct_at_gates":2,"judgement":"不成立（動かない）","clip_low_gates":3,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.000|0.814|0.814|0.814|0.855","target_first_gate":0.0,"target_last_gate":0.03323,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"fade","char":"ぱ","s_min":0.0,"s_max":2.3964,"span_pt_gates":2.3964,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.077|1.569|1.827|1.975|2.237|2.396","target_first_gate":0.0,"target_last_gate":0.51146,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"fade","char":"し","s_min":0.4182,"s_max":0.8908,"span_pt_gates":0.4727,"n_distinct_at_gates":2,"judgement":"不成立（動かない）","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.418|0.457|0.794|0.817|0.848|0.891|0.891","target_first_gate":0.0464,"target_last_gate":0.28327,"visual_bottom":0.03459,"visual_top":0.98177},{"target":"acc","family":"fade","char":"つ","s_min":1.1569,"s_max":2.1383,"span_pt_gates":0.9814,"n_distinct_at_gates":3,"judgement":"不成立（動かない）","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"1.157|1.481|1.687|1.687|1.896|2.008|2.138","target_first_gate":0.39092,"target_last_gate":0.69201,"visual_bottom":0.12334,"visual_top":1.0},{"target":"acc","family":"fade","char":"ま","s_min":0.0,"s_max":27.6268,"span_pt_gates":27.6268,"n_distinct_at_gates":6,"judgement":"一部成立（端で丸め）","clip_low_gates":2,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.405|2.365|2.937|3.185|27.627","target_first_gate":0.0,"target_last_gate":0.97052,"visual_bottom":0.0362,"visual_top":1.0},{"target":"acc","family":"fade","char":"ら","s_min":0.0,"s_max":1.3495,"span_pt_gates":1.3495,"n_distinct_at_gates":4,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|0.435|0.819|1.102|1.329|1.339|1.350","target_first_gate":0.0,"target_last_gate":0.42149,"visual_bottom":0.02439,"visual_top":1.0},{"target":"acc","family":"reveal","char":"あ","s_min":0.0,"s_max":6.7763,"span_pt_gates":6.7763,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.716|5.659|5.963|5.963|6.776|6.776","target_first_gate":0.0,"target_last_gate":0.97242,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"reveal","char":"か","s_min":0.6175,"s_max":7.0188,"span_pt_gates":6.4013,"n_distinct_at_gates":7,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.618|0.938|1.345|1.466|1.994|2.834|7.019","target_first_gate":0.12083,"target_last_gate":0.969,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"reveal","char":"が","s_min":0.0,"s_max":1.258,"span_pt_gates":1.258,"n_distinct_at_gates":3,"judgement":"一部成立（端で丸め）","clip_low_gates":3,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.000|1.062|1.062|1.062|1.258","target_first_gate":0.0,"target_last_gate":0.03323,"visual_bottom":0.0,"visual_top":0.95407},{"target":"acc","family":"reveal","char":"ぱ","s_min":0.0,"s_max":4.2375,"span_pt_gates":4.2375,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.698|2.794|3.175|3.388|3.803|4.238","target_first_gate":0.0,"target_last_gate":0.51146,"visual_bottom":0.0,"visual_top":0.95275},{"target":"acc","family":"reveal","char":"し","s_min":0.1554,"s_max":0.655,"span_pt_gates":0.4997,"n_distinct_at_gates":6,"judgement":"不成立（動かない）","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"0.155|0.194|0.573|0.590|0.616|0.655|0.655","target_first_gate":0.0464,"target_last_gate":0.28327,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"reveal","char":"つ","s_min":1.1545,"s_max":2.4149,"span_pt_gates":1.2604,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"1.155|1.387|1.609|1.609|1.838|1.964|2.415","target_first_gate":0.39092,"target_last_gate":0.69201,"visual_bottom":0.06675,"visual_top":1.0},{"target":"acc","family":"reveal","char":"ま","s_min":0.0,"s_max":8.2246,"span_pt_gates":8.2246,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|0.180|0.279|3.963|5.591|6.383|8.225","target_first_gate":0.0,"target_last_gate":0.97052,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"reveal","char":"ら","s_min":0.0,"s_max":1.1603,"span_pt_gates":1.1603,"n_distinct_at_gates":6,"judgement":"一部成立（端で丸め）","clip_low_gates":2,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.112|0.653|1.092|1.125|1.160","target_first_gate":0.0,"target_last_gate":0.42149,"visual_bottom":0.05722,"visual_top":0.96449},{"target":"acc","family":"blur","char":"あ","s_min":0.0,"s_max":91.6356,"span_pt_gates":91.6356,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|65.458|86.692|88.098|88.098|91.636|91.636","target_first_gate":0.0,"target_last_gate":0.97242,"visual_bottom":0.08269,"visual_top":1.0},{"target":"acc","family":"blur","char":"か","s_min":39.8602,"s_max":69.086,"span_pt_gates":29.2258,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"39.860|51.909|56.484|56.927|58.543|61.120|69.086","target_first_gate":0.12083,"target_last_gate":0.969,"visual_bottom":0.01771,"visual_top":1.0},{"target":"acc","family":"blur","char":"が","s_min":0.0,"s_max":42.5175,"span_pt_gates":42.5175,"n_distinct_at_gates":3,"judgement":"一部成立（端で丸め）","clip_low_gates":3,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.000|39.139|39.139|39.139|42.517","target_first_gate":0.0,"target_last_gate":0.03323,"visual_bottom":0.0,"visual_top":0.97457},{"target":"acc","family":"blur","char":"ぱ","s_min":0.0,"s_max":75.9221,"span_pt_gates":75.9221,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|52.867|67.337|71.374|72.671|74.381|75.922","target_first_gate":0.0,"target_last_gate":0.51146,"visual_bottom":0.0,"visual_top":0.95811},{"target":"acc","family":"blur","char":"し","s_min":16.0251,"s_max":29.4172,"span_pt_gates":13.3921,"n_distinct_at_gates":4,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"16.025|26.103|28.344|28.575|28.929|29.417|29.417","target_first_gate":0.0464,"target_last_gate":0.28327,"visual_bottom":0.0,"visual_top":0.983},{"target":"acc","family":"blur","char":"つ","s_min":36.6012,"s_max":47.9971,"span_pt_gates":11.3959,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"36.601|40.131|42.759|42.759|45.257|46.549|47.997","target_first_gate":0.39092,"target_last_gate":0.69201,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"blur","char":"ま","s_min":0.0,"s_max":78.5937,"span_pt_gates":78.5937,"n_distinct_at_gates":6,"judgement":"一部成立（端で丸め）","clip_low_gates":2,"clip_high_gates":0,"s_at_gates":"0.000|0.000|12.705|60.685|67.061|69.465|78.594","target_first_gate":0.0,"target_last_gate":0.97052,"visual_bottom":0.02463,"visual_top":1.0},{"target":"acc","family":"blur","char":"ら","s_min":0.0,"s_max":56.7578,"span_pt_gates":56.7578,"n_distinct_at_gates":4,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|22.917|24.161|51.809|56.608|56.681|56.758","target_first_gate":0.0,"target_last_gate":0.42149,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"wipe","char":"あ","s_min":0.0,"s_max":47.61,"span_pt_gates":47.61,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|33.049|46.152|46.571|46.571|47.610|47.610","target_first_gate":0.0,"target_last_gate":0.97242,"visual_bottom":0.09627,"visual_top":1.0},{"target":"acc","family":"wipe","char":"か","s_min":9.2288,"s_max":100.0,"span_pt_gates":90.7712,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":0,"clip_high_gates":1,"s_at_gates":"9.229|27.831|30.471|31.048|33.208|53.700|100.000","target_first_gate":0.12083,"target_last_gate":0.969,"visual_bottom":0.0,"visual_top":0.9536},{"target":"acc","family":"wipe","char":"が","s_min":0.0,"s_max":65.0056,"span_pt_gates":65.0056,"n_distinct_at_gates":3,"judgement":"一部成立（端で丸め）","clip_low_gates":3,"clip_high_gates":0,"s_at_gates":"0.000|0.000|0.000|38.481|38.481|38.481|65.006","target_first_gate":0.0,"target_last_gate":0.03323,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"wipe","char":"ぱ","s_min":0.0,"s_max":75.5235,"span_pt_gates":75.5235,"n_distinct_at_gates":7,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|68.124|71.677|72.854|73.462|74.551|75.523","target_first_gate":0.0,"target_last_gate":0.51146,"visual_bottom":0.0,"visual_top":0.96701},{"target":"acc","family":"wipe","char":"し","s_min":0.0,"s_max":8.8906,"span_pt_gates":8.8906,"n_distinct_at_gates":6,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|0.550|4.466|5.290|6.840|8.891|8.891","target_first_gate":0.0464,"target_last_gate":0.28327,"visual_bottom":0.06098,"visual_top":1.0},{"target":"acc","family":"wipe","char":"つ","s_min":15.8085,"s_max":32.3701,"span_pt_gates":16.5616,"n_distinct_at_gates":6,"judgement":"成立","clip_low_gates":0,"clip_high_gates":0,"s_at_gates":"15.809|18.670|26.404|26.405|29.184|30.668|32.370","target_first_gate":0.39092,"target_last_gate":0.69201,"visual_bottom":0.02446,"visual_top":0.98109},{"target":"acc","family":"wipe","char":"ま","s_min":0.0,"s_max":42.441,"span_pt_gates":42.441,"n_distinct_at_gates":6,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|1.695|2.026|5.898|7.696|11.183|42.441","target_first_gate":0.0,"target_last_gate":0.97052,"visual_bottom":0.0,"visual_top":1.0},{"target":"acc","family":"wipe","char":"ら","s_min":0.0,"s_max":23.6834,"span_pt_gates":23.6834,"n_distinct_at_gates":5,"judgement":"一部成立（端で丸め）","clip_low_gates":1,"clip_high_gates":0,"s_at_gates":"0.000|2.045|15.978|22.033|23.552|23.616|23.683","target_first_gate":0.0,"target_last_gate":0.42149,"visual_bottom":0.0,"visual_top":0.95354}],"curves":{"chars":["あ","か","が","ぱ","し","つ","ま","ら"],"fams":["fade","reveal","blur","wipe"],"lab":{"fade":"うすい","reveal":"点が増える","blur":"ぼやけ","wipe":"端から"},"audio_levels":{"あ":[10.0,20.0,30.0,35.0,50.0,65.0,90.0],"か":[10.0,20.0,25.0,35.0,45.0,60.0,85.0],"が":[10.0,20.0,25.0,35.0,45.0,60.0,85.0],"ぱ":[10.0,15.0,25.0,30.0,40.0,50.0,70.0],"し":[10.0,20.0,30.0,35.0,40.0,50.0,60.0],"つ":[10.0,20.0,30.0,35.0,50.0,65.0,85.0],"ま":[10.0,25.0,35.0,50.0,65.0,85.0,125.0],"ら":[10.0,25.0,35.0,50.0,65.0,85.0,110.0]},"visual_levels":{"fade":[0.4,0.8,1.4,2.2,3.5,6.0,12.0,100.0],"reveal":[0.1,0.3,0.5,1.0,2.0,4.0,9.0,100.0],"blur":[3.0,7.0,12.0,17.0,22.0,26.0,38.0,48.0,56.0,64.0,72.0,84.0,100.0],"wipe":[0.5,1.0,2.0,4.0,8.0,14.0,20.0,25.0,35.0,50.0,65.0,80.0,100.0]},"audio_bits":{"あ":[0.3880601289487286,1.8575353815383702,2.205790170688202,2.279962001532815,2.3605042192384524,2.575714148631302,2.627928615753396],"か":[0.46882517240760163,0.7863465631021649,1.1843811857184412,1.29724647066221,1.4602694737130775,1.5871335120885024,1.7521577863073736],"が":[0.7013019676446666,0.9499599666337801,1.1382784512012865,1.7019585713537828,1.706343603308256,1.706343603308256,1.708230251332734],"ぱ":[0.4846338375184839,1.1825307701437504,2.1970150434203743,2.2221742713447727,2.3143000428252973,2.3320774484413556,2.4477977360314056],"し":[0.6101855580419664,0.950504378918195,1.7283885094595033,1.740240440605144,1.8367123776000427,2.110437821216502,2.239835981317026],"つ":[0.7655540590711812,1.269577406111978,1.6567767408174419,1.7413333389814938,1.9847442233483037,2.300562270737638,2.4348059809163396],"ま":[0.7332879189581172,1.3669788238248686,1.4663220882521804,2.150802433318429,2.283888724572838,2.3616661174268385,2.589525187840967],"ら":[0.3382018777443512,1.4010332573442335,1.4130737010234182,2.0936794621716066,2.3044740204730574,2.3550109803836237,2.369780385856329]},"audio_bits_raw":{"あ":[0.06716503012721031,1.738427044634193,2.184521624735715,2.260795277851781,2.2510379240109586,2.6181275877130843,2.52498448573987],"か":[0.1877403508039177,0.6070841194564276,1.1214803765878887,1.1551907485540467,1.3533491616805233,1.4749011273514852,1.7152285803021572],"が":[0.46671542880918737,0.724934774206486,0.9292915742908121,1.7636829439466832,1.852598212084019,1.5473077338494388,1.4350411392476823],"ぱ":[0.2512970679193328,0.8697703953198235,2.2548493632068913,2.037520352597158,2.362338272045151,2.1780559117400773,2.3477980076278064],"し":[0.41297386268766356,0.7284688357928552,1.7665585301403657,1.5348299615823848,1.7096346881899624,2.0511564143442618,2.118076176280294],"つ":[0.5071575993743691,1.0701520603987156,1.5752759474999087,1.6094532303315074,1.883724751817409,2.2812902090052454,2.341543929131408],"ま":[0.44324655687508574,1.2758409001110729,1.2419611302422455,2.082970455479666,2.2753276381348764,2.204784083088777,2.510241104085389],"ら":[-0.018488528319622777,1.4004835832695464,1.149538201530831,1.9763271894187622,2.2796657177031405,2.4409497067190262,2.044272905052333]},"audio_acc":{"あ":[0.0,0.7550068122784919,0.9549090216091242,0.9599944041657855,0.9599944041657855,0.9724177359344622,0.9724177359344622],"か":[0.12082856630665839,0.3602439813307803,0.4881179343727073,0.5146021795728979,0.6095092364892346,0.7555212020929425,0.9689994705440909],"が":[0.0,0.0,0.0,0.008735629196352507,0.008735629196352507,0.008735629196352507,0.03322915193794374],"ぱ":[0.0,0.1767576868883673,0.3417832565085156,0.39464276188044095,0.4216033362366055,0.4693739632707878,0.5114553902187882],"し":[0.04639832046853951,0.0699179971817149,0.2169404257799069,0.23141828086889993,0.2533849424261838,0.28327393545204405,0.28327393545204405],"つ":[0.3909228692608017,0.4823773025931741,0.5566457008149005,0.55666951033871,0.6231563858930961,0.6561268093632922,0.6920090585686646],"ま":[0.0,0.02246177980483037,0.039192716077529416,0.7285799291011231,0.8442343176952443,0.8875730270609212,0.97052024810191],"ら":[0.0,0.02685855935247389,0.0616287166825018,0.2757647461846988,0.4102622943655399,0.41569586351464766,0.4214926706940515]},"visual_bits":{"fade":{"あ":[0.3144298305551668,0.6427215434358184,1.4757825060095835,1.8809064249301324,2.579650585248805,2.6266964838925673,2.7026718160284444,2.8929244233435303],"か":[0.5448473627549484,0.5580842773301925,1.2440348645823898,1.8169398715998832,2.396034181399115,2.604465498937424,2.78156303682298,2.911599515383797],"が":[0.5397238495802167,0.5732436196843661,1.108691997120817,1.8573508873197215,2.40864027447472,2.613698914673425,2.7332590199556903,2.8478455790368766],"ぱ":[0.40915982907560433,0.6279968927626994,1.7225850283906965,1.998411236631911,2.5797454623303078,2.712261769362501,2.7706027148499954,2.903858821764696],"し":[0.3940771927628749,0.5966326918682938,1.347780859276888,2.0220723967395355,2.4472019496570043,2.6693930719744685,2.719329517441317,2.866010895813356],"つ":[0.4453720376644485,0.9122064549674203,1.0829876868807178,2.1615026262057215,2.4953683155832254,2.6169010563284623,2.752804927663392,2.9216948598628334],"ま":[0.42429943288831784,0.7191359731928619,1.744914161263881,2.124449869353553,2.544759738222648,2.676292507573555,2.739560856038159,2.879341012065997],"ら":[0.3367189822579862,0.4990087332101221,1.3177983067372454,2.2522869366711125,2.5909913831632645,2.704888086152418,2.79297191694658,2.8994376271895947]},"reveal":{"あ":[0.42880215264552013,0.5981142453198194,0.6249033231543083,0.7161739222858909,1.6107486468189764,2.232491335189158,2.3771270948848042,2.723127006564423],"か":[0.4195799332936485,0.5322352884112075,0.6405541184332949,0.8224207655307342,1.2228578142577395,1.8463613929947436,2.2193212210010995,2.682862355627374],"が":[0.3405888132464032,0.5567686784308541,0.6615819372538073,0.7017123802900032,0.8363318885378572,1.6842959467154004,2.1036211701972958,2.5469206808563003],"ぱ":[0.49500182216939814,0.6865140452504047,0.7933283059710966,0.9835214144746142,1.3331276713888258,2.278606061066419,2.403425436116835,2.74857549365325],"し":[0.09128781865337933,0.46328261328725445,0.5496122246865066,0.981505265616892,1.2241281463414275,2.3218977729850327,2.402329534074069,2.672232230781554],"つ":[0.6450967676203131,0.6788396514808052,0.9280451351154254,1.0695273606022646,1.641826766865096,2.0882986587242884,2.3995789392976823,2.763379772892005],"ま":[0.6234717114323092,0.6741694404133409,0.740031009672521,0.9649297961417785,1.1338018446355873,2.1030485404625696,2.3400132108191123,2.7565317793457984],"ら":[0.6449653205690131,0.6625021915496366,0.771880058184707,1.0903226507347341,1.4851490150830815,2.283073507316387,2.398603141340792,2.752392337290218]},"blur":{"あ":[0.4347694924344285,0.4908675557329179,0.5039956022469015,0.5530069222187692,0.5588022039371241,0.5760251887730085,0.9333039706925378,1.2676491069104896,1.5703788173500093,1.984485834709922,2.35962354665637,2.5729786253927434,2.8616288156582708],"か":[0.3514604414907962,0.40896852989622784,0.44032653232478586,0.5088851333147081,0.5782412843018296,0.5816832123000407,0.7687587342212068,0.8652001640866771,1.405830981438145,1.8533814453892086,2.213284215027285,2.430168748615631,2.721110791720632],"が":[0.3646325956184445,0.4491996391678452,0.45833394771040636,0.46861654491109656,0.4748310760642833,0.4923194169359492,0.6557678053386679,0.7680421025891842,1.4431179249905604,1.5750736035868382,2.08387959841141,2.531246975741287,2.7403210117446246],"ぱ":[0.4816063840903734,0.5867407600526504,0.5983241727803444,0.6005907021292627,0.6180801831585951,0.6405084866461063,0.8913179519753847,1.362955091844434,1.6454923719680992,1.9262009061393772,2.343955237246807,2.5114562650282632,3.001528331305303],"し":[0.24652011511338048,0.35720125229061056,0.4163179480781527,0.44132915139005546,0.4957634142313161,0.8526833502275103,1.499662493646663,1.94663256687326,1.950089452759419,2.139862881819779,2.349111968866182,2.5129514646601363,2.726514515521262],"つ":[0.4707309648731875,0.5071354732552052,0.559371138254695,0.5674013681730936,0.58142897893795,0.6362786650702416,1.1471976500743792,1.5938430447991556,1.693987392232794,2.2288725073254865,2.412466161223779,2.5284187529418127,2.749926758564799],"ま":[0.46140308362692317,0.5576677071771113,0.5769926233477042,0.5837659237017871,0.5849559070641196,0.5874889565663043,0.8490944135326437,1.0929472416107961,1.4625254384189912,2.254751383923813,2.3255724378763882,2.50380305045189,2.8896299387012645],"ら":[0.241313799510548,0.38346769349314486,0.4924457183497146,0.5197390520537903,0.5720506388563227,0.6639287198359005,0.7461792898415038,1.0731357773728742,1.3718328310809906,2.089875658191751,2.3359153978977782,2.570433558285787,2.7759769485077266]},"wipe":{"あ":[0.689006862519951,0.8247400418789747,0.9663255519960953,1.1290000705880463,1.8369802680505152,1.924246806360814,2.0192979656666172,2.0450202605418473,2.298179763986769,2.5615354807779056,2.619805808225219,2.6784231833459295,2.8603758872240137],"か":[0.6481305133301647,0.7830822648924091,0.7832728591879052,0.9541950756100541,1.2190115503471879,1.2275937637578667,1.344783745787153,1.385116806133812,1.5325001183685145,1.728652802654346,1.7745817193487483,2.1913244365011955,2.7054050752099044],"が":[0.5994451561528044,0.7124689335488285,0.7196262698403184,0.8224320229460137,0.929108632241148,1.0711098606985245,1.167790000203102,1.2065015771184098,1.3309505965897963,1.7329360761460786,1.7766047015217332,2.1944415212720485,2.755329128574741],"ぱ":[0.41432204803620776,0.42622132931876633,0.4882505167047718,0.7023371450230304,1.1859244306615668,1.2029405062522527,1.4132127068015166,1.8058598844563176,2.320647891606741,2.548581719378559,2.588603810520175,2.628290026768137,2.899217658058916],"し":[0.44491134621972195,0.45308715946107614,0.5654841032005747,0.5956463322630295,1.1752442552551075,1.296207151910684,1.6930997009484972,1.9109447016386658,2.376231270569301,2.554824368990783,2.6084128486159988,2.665337068220489,2.80887317306356],"つ":[0.8108836853342484,0.8441072626547953,0.8910762601864097,0.9574504809333392,1.1608557262359493,1.4225374365576275,1.8553019116600973,1.8746947330503294,2.3489937542387636,2.496772924081944,2.556321176874028,2.6071921867424037,2.7041609642528095],"ま":[0.396080744281117,0.4655371540126875,0.6942289721045809,1.0429797314414255,1.902823388735819,1.9251154212457169,2.03367255795925,2.083441819686181,2.377288629483285,2.5648397913768197,2.624171317230909,2.6648419477480267,2.8187001519553014],"ら":[0.5542313046129342,0.5736785675259015,0.6103580835735374,0.784010345544881,1.3134022606810498,1.3771559418650166,1.4771883836736817,2.042285524855974,2.3569188682596542,2.5132498533878067,2.5841893104318587,2.6090851405664637,2.6804392820966685]}},"visual_acc":{"fade":{"あ":[0.06275825673133173,0.2085785749198826,0.6859036145802697,0.769407629674751,0.9232219762866181,0.953024690504945,0.9602731399326025,1.0],"か":[0.035181728843232174,0.18989999965125823,0.532766262467882,0.7644754836161318,0.8734782209634975,0.8898594876512071,1.0,1.0],"が":[0.0,0.0,0.2816698415157734,0.6936975724523997,0.8992458977762271,0.9683496556998062,1.0,1.0],"ぱ":[0.0,0.034667092868141236,0.3021454121411294,0.4590538579826381,0.743572453660259,0.9090515658040976,0.9253592533210555,1.0],"し":[0.034592503619587996,0.21877829135625948,0.5543558490286781,0.8260484869575103,0.885591336531666,0.9755532301002096,0.9755532301002096,0.981767822937795],"つ":[0.12334236075908114,0.27650499905007647,0.4500731814759525,0.7082521639704595,0.8239856405468577,0.9042934792806606,0.9712328255720564,1.0],"ま":[0.036195711169852804,0.2201970002801278,0.5307158929051358,0.6899403763899139,0.9379148202902435,0.9411323442408626,0.9514086170846282,1.0],"ら":[0.02438628681260416,0.044887958720553255,0.4479454225270658,0.71314034235134,0.9833236674218981,0.9833236674218981,1.0,1.0]},"reveal":{"あ":[0.0,0.24623605445422256,0.2644767555033279,0.3518658940367111,0.8695545166546119,0.9211876738963977,1.0,1.0],"か":[0.0,0.0,0.0,0.39679125334616594,0.6103875403725454,0.8988886727624927,1.0,1.0],"が":[0.0,0.0,0.0,0.0,0.10033923938501864,0.5301087705134641,0.8717279407368178,0.9540678945078005],"ぱ":[0.0,0.0,0.0,0.09082322118907739,0.20336992302488457,0.490294624076521,0.7878743304173298,0.9527456117194802],"し":[0.0,0.11569219487770685,0.15015698259356966,0.4918017623231883,0.6608487536028386,0.9506815307810608,1.0,1.0],"つ":[0.06675416047571923,0.1153728088523638,0.25903648355225806,0.31918891754098994,0.6652538363335663,0.7636474424238234,0.900418078075396,1.0],"ま":[0.0,0.0419151851396047,0.08421799149513727,0.11510717883802744,0.2814886282422583,0.7346509480746198,1.0,1.0],"ら":[0.05721526232148934,0.09950561147762552,0.2016868850061615,0.39377601892281383,0.5229442953113603,0.7980413401087689,0.9644857438154704,0.9644857438154704]},"blur":{"あ":[0.08269069299519483,0.09768601821267305,0.16723022794992698,0.16723022794992698,0.17432454182362694,0.19566851547329006,0.2415565996695474,0.30837764053978506,0.4752225272866981,0.719219149652586,0.9063454122586463,0.9449471624982838,1.0],"か":[0.017707211350175472,0.017707211350175472,0.022197897985354317,0.022197897985354317,0.022197897985354317,0.022197897985354317,0.0854480903125164,0.25838616761098426,0.45895182430847453,0.9116224900615384,1.0,1.0,1.0],"が":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.06911332949450288,0.31949087268930026,0.5003625952272379,0.7196759733231304,0.9745658257840444,0.9745658257840444],"ぱ":[0.0,0.0,0.0,0.0,0.0,0.029687484463667157,0.0699834202435222,0.1266710444061774,0.20661594469557978,0.29563159541599154,0.40256635222585063,0.7190314942953273,0.9581146378619155],"し":[0.0,0.02867431558474006,0.02867431558474006,0.050019276553935496,0.05854875937808667,0.06287421500842799,0.7402055798308191,0.8355306951919214,0.9208605183957365,0.9504714565137138,0.9830037417529114,0.9830037417529114,0.9830037417529114],"つ":[0.0,0.0,0.03231730281418606,0.03231730281418606,0.1110947270233033,0.1398035085218163,0.4184600042012695,0.6920831128112432,0.8553523926561174,1.0,1.0,1.0,1.0],"ま":[0.024632959794714502,0.024632959794714502,0.038173218414786894,0.04438830040290544,0.04438830040290544,0.053630761286779835,0.16084244505748002,0.27888287322785105,0.6407553483259392,0.7867186379017749,0.9316852402589171,1.0,1.0],"ら":[0.0,0.0,0.0,0.0,0.0,0.10988068173110038,0.14752511075378377,0.1889140853200404,0.3642285474840181,0.9331042040985742,1.0,1.0,1.0]},"wipe":{"あ":[0.09627196114435964,0.09627196114435964,0.10352184077492126,0.18362633122620486,0.29937669331097555,0.3597429331510375,0.4910338988778954,0.5402034018229842,0.799161542554651,1.0,1.0,1.0,1.0],"か":[0.0,0.0,0.0,0.0,0.11305956540934382,0.14348808449330555,0.19846477025880788,0.20885136939906102,0.6836684758154155,0.6843619829423466,0.9458604489176229,0.9458604489176229,0.9535954828156317],"が":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.03288387109883382,0.03288387109883382,0.8700235899551325,1.0],"ぱ":[0.0,0.0,0.007594611972777455,0.007594611972777455,0.007594611972777455,0.007594611972777455,0.007594611972777455,0.007594611972777455,0.024359639124358807,0.024359639124358807,0.024359639124358807,0.6983848400725879,0.9670107895841071],"し":[0.06097804344615183,0.12615954575758762,0.19519569071347134,0.20753119770901937,0.2667718541417244,0.3542535894880494,0.6541765109383867,0.8147245725006013,1.0,1.0,1.0,1.0,1.0],"つ":[0.024456973819463667,0.024456973819463667,0.024456973819463667,0.024456973819463667,0.21883901905336212,0.3241157621640539,0.5202339492572198,0.5203475856208561,0.7439065560711303,0.9627581107323817,0.9627581107323817,0.9810890672746456,0.9810890672746456],"ま":[0.0,0.0,0.029494082657872903,0.5598553862075237,0.8610724419700311,0.9053412104079367,0.9209859917228539,0.9294175158624782,0.9358452733175604,1.0,1.0,1.0,1.0],"ら":[0.0,0.0,0.026116319800363913,0.04915966844868202,0.05054618953368321,0.05054618953368321,0.08045020289289724,0.5306408323707209,0.9136759216483702,0.952290311476967,0.952290311476967,0.953536265205839,0.953536265205839]}}},"full":{"あ":{"n":64,"acc":0.953125,"bits":2.482817563828852,"top1":["あ",61],"top2":["ち",1]},"か":{"n":61,"acc":0.9672131147540984,"bits":1.7402782961161212,"top1":["か",59],"top2":["あ",1]},"が":{"n":66,"acc":0.0303030303030303,"bits":1.597303751529637,"top1":["か",57],"top2":["た",6]},"ぱ":{"n":56,"acc":0.625,"bits":2.396675589469362,"top1":["ぱ",35],"top2":["た",13]},"し":{"n":61,"acc":0.4262295081967213,"bits":2.572779626795821,"top1":["ち",33],"top2":["し",26]},"つ":{"n":62,"acc":0.8548387096774194,"bits":2.599655331813831,"top1":["つ",53],"top2":["す",4]},"ま":{"n":61,"acc":0.8852459016393442,"bits":2.3692672693833705,"top1":["ま",54],"top2":["ら",1]},"ら":{"n":68,"acc":0.3823529411764705,"bits":2.3470372746173913,"top1":["な",32],"top2":["ら",26]}},"resp":{"あ":{"gates":[{"t_ms":10.0,"n":35,"correct":0,"n_kinds":17,"top":[["ぷ",6],["か",5],["つ",5],["ぱ",3],["た",3],["く",2]]},{"t_ms":20.0,"n":33,"correct":25,"n_kinds":8,"top":[["あ",25],["か",2],["ら",1],["た",1],["ぐ",1],["て",1]]},{"t_ms":30.0,"n":33,"correct":32,"n_kinds":2,"top":[["あ",32],["ち",1]]},{"t_ms":35.0,"n":35,"correct":35,"n_kinds":1,"top":[["あ",35]]},{"t_ms":50.0,"n":33,"correct":30,"n_kinds":4,"top":[["あ",30],["ち",1],["や",1],["お",1]]},{"t_ms":65.0,"n":34,"correct":34,"n_kinds":1,"top":[["あ",34]]},{"t_ms":90.0,"n":34,"correct":32,"n_kinds":2,"top":[["あ",32],["お",2]]}],"full":{"n":64,"correct":61,"n_kinds":4,"top":[["あ",61],["ち",1],["ま",1],["ん",1]]}},"か":{"gates":[{"t_ms":10.0,"n":33,"correct":4,"n_kinds":16,"top":[["く",5],["つ",5],["か",4],["た",3],["ぷ",3],["ち",2]]},{"t_ms":20.0,"n":35,"correct":13,"n_kinds":10,"top":[["か",13],["く",9],["つ",3],["あ",3],["ち",2],["が",1]]},{"t_ms":25.0,"n":33,"correct":17,"n_kinds":8,"top":[["か",17],["く",7],["つ",3],["あ",2],["ぬ",1],["き",1]]},{"t_ms":35.0,"n":33,"correct":16,"n_kinds":10,"top":[["か",16],["く",6],["あ",3],["ぷ",2],["が",1],["ひ",1]]},{"t_ms":45.0,"n":35,"correct":21,"n_kinds":6,"top":[["か",21],["く",9],["が",2],["す",1],["あ",1],["た",1]]},{"t_ms":60.0,"n":33,"correct":25,"n_kinds":7,"top":[["か",25],["く",3],["ち",1],["さ",1],["あ",1],["う",1]]},{"t_ms":85.0,"n":34,"correct":33,"n_kinds":2,"top":[["か",33],["ん",1]]}],"full":{"n":61,"correct":59,"n_kinds":3,"top":[["か",59],["あ",1],["ぞ",1]]}},"が":{"gates":[{"t_ms":10.0,"n":34,"correct":0,"n_kinds":11,"top":[["か",12],["く",6],["つ",4],["た",2],["ぷ",2],["ふ",2]]},{"t_ms":20.0,"n":33,"correct":0,"n_kinds":10,"top":[["か",15],["く",9],["つ",2],["ち",1],["ん",1],["う",1]]},{"t_ms":25.0,"n":35,"correct":0,"n_kinds":8,"top":[["か",22],["た",4],["く",4],["あ",1],["う",1],["つ",1]]},{"t_ms":35.0,"n":33,"correct":1,"n_kinds":5,"top":[["か",28],["と",2],["が",1],["く",1],["お",1]]},{"t_ms":45.0,"n":33,"correct":0,"n_kinds":3,"top":[["か",31],["ぬ",1],["い",1]]},{"t_ms":60.0,"n":35,"correct":0,"n_kinds":3,"top":[["か",28],["た",6],["さ",1]]},{"t_ms":85.0,"n":33,"correct":1,"n_kinds":5,"top":[["か",28],["と",2],["ち",1],["が",1],["た",1]]}],"full":{"n":66,"correct":2,"n_kinds":4,"top":[["か",57],["た",6],["が",2],["と",1]]}},"ぱ":{"gates":[{"t_ms":10.0,"n":34,"correct":0,"n_kinds":13,"top":[["つ",9],["ぷ",8],["と",4],["て",2],["ち",2],["き",2]]},{"t_ms":15.0,"n":34,"correct":6,"n_kinds":18,"top":[["ぱ",6],["ぷ",5],["と",4],["ち",2],["つ",2],["ふ",2]]},{"t_ms":25.0,"n":33,"correct":12,"n_kinds":6,"top":[["ぱ",12],["た",10],["と",6],["ぶ",3],["は",1],["し",1]]},{"t_ms":30.0,"n":35,"correct":14,"n_kinds":7,"top":[["た",15],["ぱ",14],["と",2],["あ",1],["は",1],["ま",1]]},{"t_ms":40.0,"n":33,"correct":13,"n_kinds":7,"top":[["ぱ",13],["た",11],["と",5],["ぷ",1],["あ",1],["ば",1]]},{"t_ms":50.0,"n":33,"correct":16,"n_kinds":5,"top":[["ぱ",16],["た",13],["と",2],["ち",1],["か",1]]},{"t_ms":70.0,"n":35,"correct":17,"n_kinds":5,"top":[["ぱ",17],["た",13],["ば",2],["あ",2],["は",1]]}],"full":{"n":56,"correct":35,"n_kinds":8,"top":[["ぱ",35],["た",13],["ば",2],["あ",2],["ち",1],["ぷ",1]]}},"し":{"gates":[{"t_ms":10.0,"n":33,"correct":2,"n_kinds":9,"top":[["つ",14],["ち",7],["て",3],["ん",3],["し",2],["あ",1]]},{"t_ms":20.0,"n":34,"correct":2,"n_kinds":11,"top":[["ち",15],["つ",7],["し",2],["ん",2],["く",2],["ぴ",1]]},{"t_ms":30.0,"n":34,"correct":9,"n_kinds":7,"top":[["ち",13],["し",9],["つ",6],["す",2],["ひ",2],["に",1]]},{"t_ms":35.0,"n":33,"correct":7,"n_kinds":8,"top":[["ち",14],["し",7],["つ",7],["ん",1],["ば",1],["ふ",1]]},{"t_ms":40.0,"n":35,"correct":9,"n_kinds":6,"top":[["ち",17],["し",9],["つ",6],["く",1],["な",1],["ぬ",1]]},{"t_ms":50.0,"n":33,"correct":14,"n_kinds":5,"top":[["し",14],["ち",13],["つ",3],["す",2],["ず",1]]},{"t_ms":60.0,"n":33,"correct":4,"n_kinds":5,"top":[["ち",23],["し",4],["つ",3],["す",2],["ん",1]]}],"full":{"n":61,"correct":26,"n_kinds":3,"top":[["ち",33],["し",26],["つ",2]]}},"つ":{"gates":[{"t_ms":10.0,"n":35,"correct":14,"n_kinds":15,"top":[["つ",14],["ち",5],["ひ",2],["ぬ",2],["ぷ",2],["き",1]]},{"t_ms":20.0,"n":33,"correct":16,"n_kinds":10,"top":[["つ",16],["ち",7],["す",2],["ぴ",2],["き",1],["し",1]]},{"t_ms":30.0,"n":34,"correct":24,"n_kinds":9,"top":[["つ",24],["ち",3],["び",1],["よ",1],["ん",1],["じ",1]]},{"t_ms":35.0,"n":34,"correct":14,"n_kinds":6,"top":[["つ",14],["ち",8],["し",5],["す",5],["ふ",1],["じ",1]]},{"t_ms":50.0,"n":33,"correct":21,"n_kinds":7,"top":[["つ",21],["ち",4],["す",4],["し",1],["ん",1],["ぷ",1]]},{"t_ms":65.0,"n":35,"correct":23,"n_kinds":5,"top":[["つ",23],["す",9],["ず",1],["ひ",1],["ち",1]]},{"t_ms":85.0,"n":33,"correct":22,"n_kinds":6,"top":[["つ",22],["す",7],["ち",1],["さ",1],["せ",1],["ぞ",1]]}],"full":{"n":62,"correct":53,"n_kinds":6,"top":[["つ",53],["す",4],["ち",2],["ん",1],["さ",1],["せ",1]]}},"ま":{"gates":[{"t_ms":10.0,"n":33,"correct":0,"n_kinds":16,"top":[["ん",8],["つ",5],["う",4],["く",2],["し",2],["て",2]]},{"t_ms":25.0,"n":35,"correct":1,"n_kinds":9,"top":[["ん",20],["う",7],["む",2],["ま",1],["ぷ",1],["あ",1]]},{"t_ms":35.0,"n":33,"correct":1,"n_kinds":8,"top":[["ん",20],["う",7],["あ",1],["す",1],["つ",1],["ま",1]]},{"t_ms":50.0,"n":34,"correct":25,"n_kinds":7,"top":[["ま",25],["む",4],["の",1],["も",1],["な",1],["あ",1]]},{"t_ms":65.0,"n":34,"correct":29,"n_kinds":5,"top":[["ま",29],["あ",2],["の",1],["よ",1],["ろ",1]]},{"t_ms":85.0,"n":33,"correct":29,"n_kinds":5,"top":[["ま",29],["ち",1],["な",1],["ろ",1],["か",1]]},{"t_ms":125.0,"n":35,"correct":34,"n_kinds":2,"top":[["ま",34],["ら",1]]}],"full":{"n":61,"correct":54,"n_kinds":8,"top":[["ま",54],["ら",1],["よ",1],["か",1],["あ",1],["な",1]]}},"ら":{"gates":[{"t_ms":10.0,"n":33,"correct":0,"n_kinds":17,"top":[["つ",5],["ぷ",3],["て",3],["ん",3],["ち",2],["う",2]]},{"t_ms":25.0,"n":33,"correct":1,"n_kinds":11,"top":[["う",13],["ん",6],["ぬ",4],["え",2],["の",2],["ち",1]]},{"t_ms":35.0,"n":35,"correct":2,"n_kinds":11,"top":[["ん",17],["う",5],["あ",2],["え",2],["ら",2],["な",2]]},{"t_ms":50.0,"n":33,"correct":9,"n_kinds":9,"top":[["な",16],["ら",9],["よ",2],["つ",1],["も",1],["こ",1]]},{"t_ms":65.0,"n":34,"correct":17,"n_kinds":6,"top":[["ら",17],["な",13],["が",1],["ま",1],["わ",1],["や",1]]},{"t_ms":85.0,"n":34,"correct":14,"n_kinds":5,"top":[["な",17],["ら",14],["ま",1],["よ",1],["ろ",1]]},{"t_ms":110.0,"n":33,"correct":11,"n_kinds":6,"top":[["な",17],["ら",11],["か",2],["あ",1],["ち",1],["だ",1]]}],"full":{"n":68,"correct":26,"n_kinds":9,"top":[["な",32],["ら",26],["が",3],["ま",2],["や",1],["か",1]]}},"_pooled10":{"n":270,"n_kinds":40,"correct":20,"top":[["つ",61],["ぷ",25],["か",23],["ち",20],["ん",16],["く",15]]}},"src":{"curves":"project/data_calib2_live/analysis_information/curves_info.csv","log":"project/data_calib2_live/warp_v5_info/build_log_v5.csv","trials":"project/data_calib2_live/transfer_trials.csv"}};
+
+const LAB = DATA.lab;
+const TKEYS = ["acc", "info"];
+const TLAB = {acc:"正答率を目標", info:"情報量を目標"};
+const ui = {fam:"fade", cond:"proposed", dir:"ltr"};
+
+function isDark(){
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t) return t === "dark";
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function cssvar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+// 画像は data URI から。ふつうのパス参照だと file:// で canvas が汚染され、
+// 点が増える／端から の getImageData が例外になる。
+let imgsReady = false;
+function loadAll(){
+  return Promise.all(DATA.chars.map(ch => new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => { imgs[ch] = im; res(); };
+    im.onerror = () => rej(new Error(ch));
+    im.src = DATA.images[ch];
+  }))).then(() => { imgsReady = true; });
+}
+
+function cellOf(target, fam, ch){
+  return DATA.cells.find(c => c.target === target && c.family === fam && c.char === ch);
+}
+function isDead(target, fam, ch){
+  const c = cellOf(target, fam, ch);
+  return !!c && c.judgement.indexOf("不成立") === 0;
+}
+
+// ---------------------------------------------------------------------------
+// 絵を描く（transfer.js の progressFn / RENDERERS をそのまま呼ぶ）
+// ---------------------------------------------------------------------------
+function drawCell(cv, target, fam, ch, cond, ms){
+  warpTables = DATA.tables[target].doc;
+  const ctx = cv.getContext("2d", {willReadFrequently:true});
+  const R = RENDERERS[fam] || RENDERERS.fade;
+  const {fn} = progressFn({play:"warp", family:fam, char:ch, condition:cond});
+  R.begin(ch, ctx);
+  R.draw(ctx, ch, fn(ms), ui.dir);
+  return fn(ms);
+}
+
+function buildFrames(host, chars){
+  host.innerHTML = "";
+  const fam = ui.fam;
+  const t = document.createElement("table");
+  t.className = "frames";
+  let head = "<tr><th></th><th></th>";
+  for (let i = 0; i < 7; i++) head += '<th class="gh">打ち切り ' + (i+1) + '</th>';
+  head += '<th class="gh">再生</th></tr>';
+  t.innerHTML = head;
+  chars.forEach(ch => {
+    const g = DATA.gates[ch];
+    TKEYS.forEach((target, ki) => {
+      const tr = document.createElement("tr");
+      if (target === "info") tr.className = "rowinfo sep";
+      if (ki === 0){
+        const th = document.createElement("th");
+        th.className = "chh"; th.rowSpan = 2; th.textContent = ch;
+        tr.appendChild(th);
+      }
+      const lab = document.createElement("td");
+      lab.className = "rowlbl";
+      lab.innerHTML = '<span class="' + (target === "acc" ? "tagacc" : "taginfo") + '">'
+                    + (target === "acc" ? "正答率" : "情報量") + '</span>';
+      tr.appendChild(lab);
+      const dead = isDead(target, fam, ch);
+      g.forEach((ms, gi) => {
+        const td = document.createElement("td");
+        const box = document.createElement("div");
+        box.className = "cell" + (dead ? " dead" : "");
+        const cv = document.createElement("canvas");
+        cv.width = CFG.visual.size_px; cv.height = CFG.visual.size_px;
+        box.appendChild(cv);
+        const cap = document.createElement("div"); cap.className = "cap";
+        box.appendChild(cap);
+        td.appendChild(box); tr.appendChild(td);
+        const s = drawCell(cv, target, fam, ch, ui.cond, ms);
+        cap.innerHTML = "t=" + ms + "ms<br><b>s=" + (s*100).toFixed(2) + "%</b>";
+      });
+      const tdp = document.createElement("td");
+      const b = document.createElement("button");
+      b.className = "playbtn"; b.textContent = "▶";
+      b.onclick = () => playRow(tr, target, fam, ch);
+      tdp.appendChild(b);
+      if (dead){
+        const d = document.createElement("div");
+        d.className = "deadnote"; d.textContent = "動かない";
+        tdp.appendChild(d);
+      }
+      tr.appendChild(tdp);
+      t.appendChild(tr);
+    });
+  });
+  const wrap = document.createElement("div");
+  wrap.className = "gridwrap";
+  wrap.appendChild(t);
+  host.appendChild(wrap);
+}
+
+// 実時間 300ms の再生。行の canvas を全部使って動かし、終わったら元の絵に戻す。
+let playing = false;
+function playRow(tr, target, fam, ch){
+  if (playing) return;
+  const cvs = Array.from(tr.querySelectorAll("canvas"));
+  if (!cvs.length) return;
+  playing = true;
+  warpTables = DATA.tables[target].doc;
+  const R = RENDERERS[fam] || RENDERERS.fade;
+  const {fn} = progressFn({play:"warp", family:fam, char:ch, condition:ui.cond});
+  const ctxs = cvs.map(c => c.getContext("2d", {willReadFrequently:true}));
+  ctxs.forEach(c => R.begin(ch, c));
+  const t0 = performance.now();
+  const dur = CFG.visual.base_anim_ms;
+  // 逃げ道: タブが裏に回ると requestAnimationFrame が来ない。
+  const guard = setTimeout(() => {
+    if (!playing) return;
+    playing = false; redrawRow(tr, target, fam, ch);
+  }, dur + 2000);
+  function step(now){
+    const el = now - t0;
+    const s = fn(Math.min(el, dur));
+    ctxs.forEach(c => { R.begin(ch, c); R.draw(c, ch, s, ui.dir); });
+    if (el < dur) requestAnimationFrame(step);
+    else { playing = false; clearTimeout(guard);
+           setTimeout(() => redrawRow(tr, target, fam, ch), 400); }
+  }
+  requestAnimationFrame(step);
+}
+function redrawRow(tr, target, fam, ch){
+  const cvs = Array.from(tr.querySelectorAll("canvas"));
+  const g = DATA.gates[ch];
+  cvs.forEach((cv, i) => { if (i < g.length) drawCell(cv, target, fam, ch, ui.cond, g[i]); });
+}
+// 上下2段を続けて再生する（同じ字の正答率版→情報量版）
+function playAll(){
+  if (playing) return;
+  const rows = Array.from(document.querySelectorAll("#frames_ga tr, #frames_all tr"))
+                    .filter(r => r.querySelector("canvas"));
+  let i = 0;
+  const next = () => {
+    if (i >= rows.length) return;
+    const b = rows[i++].querySelector(".playbtn");
+    if (b) b.click();
+    setTimeout(next, CFG.visual.base_anim_ms + 300);
+  };
+  next();
+}
+
+// ---------------------------------------------------------------------------
+// SVG のこまごま
+// ---------------------------------------------------------------------------
+function el(name, attrs, text){
+  const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+function svg(w, h){
+  const s = el("svg", {class:"fig", viewBox:"0 0 " + w + " " + h, width:w, height:h});
+  return s;
+}
+function figure(host, s, caption){
+  const f = document.createElement("figure");
+  const wrap = document.createElement("div"); wrap.className = "figwrap";
+  wrap.appendChild(s); f.appendChild(wrap);
+  if (caption){
+    const c = document.createElement("figcaption");
+    c.innerHTML = caption; f.appendChild(c);
+  }
+  host.appendChild(f);
+}
+function niceMax(v){
+  if (v <= 0) return 1;
+  const e = Math.pow(10, Math.floor(Math.log10(v)));
+  const m = v / e;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e;
+}
+function fmtS(v){ return v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : v.toFixed(2); }
+
+// ---------------------------------------------------------------------------
+// §1 の見出し数値
+// ---------------------------------------------------------------------------
+function buildGaStat(){
+  const f = DATA.resp["が"].full;
+  const g0 = DATA.resp["が"].gates[0];
+  const fi = DATA.full["が"];
+  const host = document.getElementById("gastat");
+  const acc = (f.correct / Math.max(f.n,1) * 100);
+  host.innerHTML =
+    '<div><b>' + acc.toFixed(1) + '%</b><span>全部聞かせたときの「が」の正答率<br>'
+      + f.n + '試行中 ' + f.correct + '</span></div>' +
+    '<div><b>' + f.top[0][1] + '</b><span>そのうち「' + f.top[0][0]
+      + '」と答えた数<br>＝実質1択まで絞れている</span></div>' +
+    '<div><b>' + f.n_kinds + '種類</b><span>全部聞かせたときの答えの種類</span></div>' +
+    '<div><b>' + g0.n_kinds + '種類</b><span>10ms（何も聞こえない）の答えの種類<br>'
+      + g0.n + '試行</span></div>' +
+    '<div><b style="color:var(--info)">' + fi.bits.toFixed(2) + ' bit</b>'
+      + '<span>全部聞かせたときの情報量<br>（上限 3 bit）</span></div>';
+  const c_acc = cellOf("acc", "fade", "が"), c_inf = cellOf("info", "fade", "が");
+  document.getElementById("gatext").innerHTML =
+    '正答率で読むと、「が」の目標は最初の打ち切りで <b>0%</b>、最後でも <b>'
+    + (c_acc.target_last_gate*100).toFixed(1) + '%</b> しか上がらない。'
+    + '逆引きすると進み具合はほとんど動かず、<b>うすい</b>では7点のあいだで '
+    + c_acc.span_pt_gates.toFixed(2) + 'pt（＝ほぼ真っ白のまま）。'
+    + '情報量で読むと、同じ「が」の目標は <b>' + c_inf.target_first_gate.toFixed(2)
+    + ' bit → ' + c_inf.target_last_gate.toFixed(2) + ' bit</b> と上がっていく。'
+    + '「候補が絞れていく」ぶんが見えているからである。';
+}
+
+// ---------------------------------------------------------------------------
+// §3-1 成立判定のマトリクス
+// ---------------------------------------------------------------------------
+function jclass(j){ return j.indexOf("不成立") === 0 ? "j0" : (j.indexOf("一部") === 0 ? "j1" : "j2"); }
+function jshort(j){ return j.indexOf("不成立") === 0 ? "×" : (j.indexOf("一部") === 0 ? "△" : "○"); }
+
+function buildMatrix(){
+  let h = '<table class="mx"><tr><th rowspan="2">方式</th><th rowspan="2">目標</th>';
+  DATA.chars.forEach(c => h += '<th>' + c + '</th>');
+  h += '<th rowspan="2">不成立</th></tr><tr></tr>';
+  DATA.fams.forEach(fam => {
+    TKEYS.forEach(target => {
+      h += '<tr>';
+      if (target === "acc") h += '<th rowspan="2">' + LAB[fam] + '</th>';
+      h += '<td class="' + (target==="acc"?"tagacc":"taginfo") + '" style="text-align:left">'
+         + (target === "acc" ? "正答率" : "情報量") + '</td>';
+      let nd = 0;
+      DATA.chars.forEach(ch => {
+        const c = cellOf(target, fam, ch);
+        if (c.judgement.indexOf("不成立") === 0) nd++;
+        h += '<td class="' + jclass(c.judgement) + '" title="'
+           + c.judgement + ' / 可動域 ' + c.span_pt_gates.toFixed(2) + 'pt">'
+           + jshort(c.judgement) + '<br><span style="font-size:.66rem;color:var(--muted)">'
+           + fmtS(c.span_pt_gates) + '</span></td>';
+      });
+      h += '<td><b>' + nd + '</b></td></tr>';
+    });
+  });
+  h += '</table>';
+  h += '<p class="small">○ 成立（7点とも曲線の内側で解けた）／△ 一部成立（端で丸めた点がある）'
+     + '／<span class="pill pillbad">× 不成立</span>（7点のあいだで進み具合が1pt も動かない）。'
+     + '小さい数字は7点のあいだの進み具合の可動域（ポイント）。</p>';
+  document.getElementById("mx").innerHTML = h;
+
+  const dead = {};
+  TKEYS.forEach(t => {
+    dead[t] = DATA.cells.filter(c => c.target === t && c.judgement.indexOf("不成立") === 0);
+  });
+  const s = document.getElementById("deadsum");
+  const li = dead.acc.map(c => LAB[c.family] + "×" + c.char).join("、");
+  s.innerHTML =
+    '<div class="bigstat">'
+    + '<div><b class="tagacc">' + dead.acc.length + ' / 32</b>'
+      + '<span>正答率を目標にしたときの不成立セル<br>' + (li || "なし") + '</span></div>'
+    + '<div><b class="taginfo">' + dead.info.length + ' / 32</b>'
+      + '<span>情報量を目標にしたときの不成立セル<br>'
+      + (dead.info.length ? dead.info.map(c => LAB[c.family]+"×"+c.char).join("、") : "なし")
+      + '</span></div></div>';
+}
+
+// ---------------------------------------------------------------------------
+// §3-2 別々の絵の枚数
+// ---------------------------------------------------------------------------
+function buildDistinct(){
+  const host = document.getElementById("fig_distinct");
+  host.innerHTML = "";
+  const W = 900, rowH = 30, padT = 40, padL = 110, padR = 62, padB = 46;
+  const H = padT + DATA.fams.length * (rowH * 2 + 14) + padB;
+  const s = svg(W, H);
+  const x0 = padL, x1 = W - padR, yAx = H - padB + 6;
+  const sc = v => x0 + (v - 1) / 6 * (x1 - x0);
+  s.appendChild(el("text", {x:0, y:16, class:"ttl"},
+    "打ち切り7点のうち、何点で別の絵になるか（札の中の字がその値になった字・縦棒は中央値）"));
+  for (let v = 1; v <= 7; v++){
+    s.appendChild(el("line", {x1:sc(v), y1:padT-6, x2:sc(v), y2:yAx, class:"grid"}));
+    s.appendChild(el("text", {x:sc(v), y:yAx+14, class:"tiny", "text-anchor":"middle"}, v));
+  }
+  s.appendChild(el("text", {x:(x0+x1)/2, y:yAx+32, class:"lbl", "text-anchor":"middle"},
+    "別々の絵の枚数（7点中）"));
+  let y = padT;
+  DATA.fams.forEach(fam => {
+    s.appendChild(el("text", {x:x0-10, y:y+rowH-2, class:"lbl", "text-anchor":"end"}, LAB[fam]));
+    TKEYS.forEach(target => {
+      const col = target === "acc" ? cssvar("--acc") : cssvar("--info");
+      const vals = DATA.chars.map(ch => cellOf(target, fam, ch).n_distinct_at_gates);
+      const yy = y + (target === "acc" ? 8 : 8 + rowH);
+      s.appendChild(el("text", {x:x0-10, y:yy+4, class:"tiny", "text-anchor":"end",
+                                fill:col}, target === "acc" ? "正答率" : "情報量"));
+      // 中央値の縦棒は札の下に敷く（重なっても読めるように先に描く）
+      const sorted = vals.slice().sort((a,b)=>a-b);
+      const med = (sorted[3] + sorted[4]) / 2;
+      s.appendChild(el("path", {d:"M" + sc(med) + " " + (yy-13) + "v26",
+                                stroke:col, "stroke-width":2.4, "stroke-opacity":.9}));
+      // 同じ値の字はまとめて1つの札にする（点を縦に積むと隣の行にはみ出すため）
+      const bag = {};
+      vals.forEach((v, i) => { (bag[v] = bag[v] || []).push(DATA.chars[i]); });
+      Object.keys(bag).forEach(v => {
+        const chs = bag[v].join("");
+        const w = chs.length * 11 + 8;
+        s.appendChild(el("rect", {x:sc(+v)-w/2, y:yy-9, width:w, height:18, rx:4,
+                                  fill:col, "fill-opacity":.16, stroke:col,
+                                  "stroke-opacity":.55}));
+        s.appendChild(el("text", {x:sc(+v), y:yy+4, "text-anchor":"middle", fill:col,
+                                  style:"font-size:11px;font-weight:700"}, chs));
+      });
+    });
+    y += rowH * 2 + 14;
+  });
+  figure(host, s,
+    "右にあるほどよい（7＝打ち切り7点が全部ちがう絵になる）。"
+    + "縦棒はその方式・その目標の中央値。"
+    + "<b>うすい</b>だけは目標を替えても右へ動きにくい ―― この方式は"
+    + "見え方の変化がぜんぶ進み具合 0〜3% に詰まっていて、"
+    + "そもそも刻める絵の枚数が少ないためである（目標の選び方の問題ではない）。");
+
+  // 表
+  let h = '<table class="tbl"><tr><th>方式</th><th>目標</th>'
+        + '<th class="num">別々の絵の枚数（中央値）</th>'
+        + '<th class="num">最小</th><th class="num">7点とも別の絵になった字の数</th>'
+        + '<th class="num">可動域の中央値 pt</th></tr>';
+  DATA.fams.forEach(fam => {
+    TKEYS.forEach(target => {
+      const vs = DATA.chars.map(ch => cellOf(target, fam, ch));
+      const nd = vs.map(c => c.n_distinct_at_gates).sort((a,b)=>a-b);
+      const sp = vs.map(c => c.span_pt_gates).sort((a,b)=>a-b);
+      h += '<tr><td>' + (target==="acc" ? LAB[fam] : "") + '</td>'
+         + '<td class="' + (target==="acc"?"tagacc":"taginfo") + '">'
+         + (target==="acc"?"正答率":"情報量") + '</td>'
+         + '<td class="num">' + ((nd[3]+nd[4])/2).toFixed(1) + '</td>'
+         + '<td class="num">' + nd[0] + '</td>'
+         + '<td class="num">' + vs.filter(c => c.n_distinct_at_gates >= 7).length + '</td>'
+         + '<td class="num">' + ((sp[3]+sp[4])/2).toFixed(2) + '</td></tr>';
+    });
+  });
+  h += '</table>';
+  document.getElementById("tbl_distinct").innerHTML = h;
+}
+
+// ---------------------------------------------------------------------------
+// §3-3 s(t) の重ね描き
+// ---------------------------------------------------------------------------
+function seriesOf(target, fam, ch, cond){
+  const d = DATA.tables[target].doc;
+  return d.tables[fam][ch][cond || ui.cond];
+}
+function buildST(){
+  const host = document.getElementById("fig_st");
+  host.innerHTML = "";
+  const fam = ui.fam;
+  const cols = 4, cw = 215, ch_ = 155, padL = 44, padB = 30, padT = 26, padR = 12;
+  const rows = Math.ceil(DATA.chars.length / cols);
+  const s = svg(cols * cw, rows * ch_ + 6);
+  DATA.chars.forEach((ch, i) => {
+    const gx = (i % cols) * cw, gy = Math.floor(i / cols) * ch_;
+    const x0 = gx + padL, x1 = gx + cw - padR, y0 = gy + padT, y1 = gy + ch_ - padB;
+    const doc = DATA.tables.acc.doc;
+    const frameMs = doc.frame_ms, dur = doc.duration_ms;
+    let mx = 0;
+    TKEYS.forEach(t => seriesOf(t, fam, ch).forEach(v => { if (v*100 > mx) mx = v*100; }));
+    mx = Math.max(niceMax(mx * 1.12), 0.5);
+    const sx = t => x0 + t / dur * (x1 - x0);
+    const sy = v => y1 - Math.min(v, mx) / mx * (y1 - y0);
+    s.appendChild(el("line", {x1:x0, y1:y1, x2:x1, y2:y1, class:"ax"}));
+    s.appendChild(el("line", {x1:x0, y1:y0, x2:x0, y2:y1, class:"ax"}));
+    s.appendChild(el("text", {x:x0, y:gy+14, class:"ttl"}, ch + "（" + LAB[fam] + "）"));
+    s.appendChild(el("text", {x:x0-6, y:y0+4, class:"tiny", "text-anchor":"end"}, fmtS(mx)+"%"));
+    s.appendChild(el("text", {x:x0-6, y:y1+3, class:"tiny", "text-anchor":"end"}, "0"));
+    s.appendChild(el("text", {x:x1, y:y1+16, class:"tiny", "text-anchor":"end"}, dur+"ms"));
+    TKEYS.forEach(target => {
+      const col = target === "acc" ? cssvar("--acc") : cssvar("--info");
+      const ser = seriesOf(target, fam, ch);
+      let d = "";
+      ser.forEach((v, k) => { d += (k ? "L" : "M") + sx(k*frameMs).toFixed(2) + " "
+                                 + sy(v*100).toFixed(2) + " "; });
+      s.appendChild(el("path", {d:d, fill:"none", stroke:col, "stroke-width":2.1}));
+      DATA.gates[ch].forEach(ms => {
+        const k = Math.min(ser.length-1, ms / frameMs);
+        const i0 = Math.floor(k), f = k - i0;
+        const v = (ser[i0] * (1-f) + ser[Math.min(i0+1, ser.length-1)] * f) * 100;
+        s.appendChild(el("circle", {cx:sx(Math.min(ms,dur)), cy:sy(v), r:2.6,
+                                    fill:col, stroke:"var(--card)", "stroke-width":.8}));
+      });
+    });
+  });
+  figure(host, s,
+    '<span style="color:var(--acc)">紫＝正答率を目標</span>／'
+    + '<span style="color:var(--info)">緑＝情報量を目標</span>。'
+    + '縦軸の上限は字ごとに違う（右上に表示）。丸は打ち切り7点。'
+    + '条件は <b>' + ui.cond + '</b>。');
+}
+
+// ---------------------------------------------------------------------------
+// §4 目標の軌跡
+// ---------------------------------------------------------------------------
+function trajPanel(s, gx, gy, cw, chh, ch, kind){
+  const padL = 52, padB = 34, padT = 30, padR = 16;
+  const x0 = gx + padL, x1 = gx + cw - padR, y0 = gy + padT, y1 = gy + chh - padB;
+  const xs = DATA.curves.audio_levels[ch];
+  const ys = kind === "acc" ? DATA.curves.audio_acc[ch] : DATA.curves.audio_bits[ch];
+  const col = kind === "acc" ? cssvar("--acc") : cssvar("--info");
+  const mx = kind === "acc" ? 1 : 3;
+  const lo = Math.log(Math.max(xs[0], 1e-6)), hi = Math.log(xs[xs.length-1]);
+  const sx = v => x0 + (Math.log(Math.max(v,1e-6)) - lo) / (hi - lo) * (x1 - x0);
+  const sy = v => y1 - Math.min(v, mx) / mx * (y1 - y0);
+  s.appendChild(el("line", {x1:x0, y1:y1, x2:x1, y2:y1, class:"ax"}));
+  s.appendChild(el("line", {x1:x0, y1:y0, x2:x0, y2:y1, class:"ax"}));
+  s.appendChild(el("text", {x:x0, y:gy+16, class:"ttl", fill:col},
+    kind === "acc" ? (ch + "：正答率の軌跡") : (ch + "：情報量の軌跡")));
+  const nt = kind === "acc" ? 5 : 4;
+  for (let i = 0; i <= nt; i++){
+    const v = mx * i / nt;
+    s.appendChild(el("line", {x1:x0, y1:sy(v), x2:x1, y2:sy(v), class:"grid"}));
+    s.appendChild(el("text", {x:x0-6, y:sy(v)+3.5, class:"tiny", "text-anchor":"end"},
+      kind === "acc" ? (v*100).toFixed(0)+"%" : v.toFixed(1)));
+  }
+  s.appendChild(el("text", {x:x0-40, y:y0-10, class:"tiny"},
+    kind === "acc" ? "正答率" : "bit"));
+  let d = "";
+  xs.forEach((x, i) => { d += (i ? "L" : "M") + sx(x).toFixed(2) + " " + sy(ys[i]).toFixed(2) + " "; });
+  s.appendChild(el("path", {d:d, fill:"none", stroke:col, "stroke-width":2.4}));
+  xs.forEach((x, i) => {
+    s.appendChild(el("circle", {cx:sx(x), cy:sy(ys[i]), r:3.4, fill:col}));
+    s.appendChild(el("text", {x:sx(x), y:y1+14, class:"tiny", "text-anchor":"middle"}, x));
+  });
+  s.appendChild(el("text", {x:(x0+x1)/2, y:y1+28, class:"tiny", "text-anchor":"middle"},
+    "打ち切り時刻（ms・対数目盛）"));
+  return {x0:x0, x1:x1, y0:y0, y1:y1, sy:sy, mx:mx};
+}
+
+function buildGaTraj(){
+  const host = document.getElementById("fig_ga");
+  host.innerHTML = "";
+  const cw = 440, chh = 220;
+  const s = svg(cw * 2, chh);
+  const a = trajPanel(s, 0, 0, cw, chh, "が", "acc");
+  trajPanel(s, cw, 0, cw, chh, "が", "info");
+  // 正答率の頭打ちを示す
+  const top = DATA.curves.audio_acc["が"][6];
+  s.appendChild(el("text", {x:a.x0+10, y:a.sy(top)-8, class:"tiny", fill:cssvar("--acc"),
+                            style:"font-weight:700"},
+    "最後まで " + (top*100).toFixed(1) + "% で頭打ち"));
+  figure(host, s,
+    '左：正答率で読んだ「が」。7点とも 0〜' + (top*100).toFixed(1)
+    + '% で、ほとんど動かない。逆引きすると進み具合も動かない。<br>'
+    + '右：情報量で読んだ「が」。'
+    + DATA.curves.audio_bits["が"][0].toFixed(2) + ' bit → '
+    + DATA.curves.audio_bits["が"][6].toFixed(2)
+    + ' bit と上がっていく。「候補が絞れていく」ぶんが見えている。<br>'
+    + '曲線はどちらも袋詰め PAVA（単調回帰）。出どころ <code>'
+    + DATA.src.curves + '</code>。');
+}
+
+// 回答の内訳の帯
+function buildResp(){
+  const host = document.getElementById("fig_resp");
+  host.innerHTML = "";
+  const R = DATA.resp["が"];
+  const rows = [{lab:"参考：10ms・8字ぜんぶ", g: DATA.resp._pooled10, ref:true}]
+    .concat(R.gates.map(g => ({lab: "が " + g.t_ms + "ms", g: g})))
+    .concat([{lab:"が 打ち切りなし", g: R.full}]);
+  const W = 900, rowH = 30, padL = 140, padR = 160, padT = 34;
+  const H = padT + rows.length * rowH + 16;
+  const s = svg(W, H);
+  const x0 = padL, x1 = W - padR;
+  s.appendChild(el("text", {x:0, y:18, class:"ttl"},
+    "「が」を聞いたとき、参加者は何と答えたか（多い順に6つ＋その他）"));
+  const pal = isDark()
+    ? ["#5ec8bb","#e8a14c","#cf95e6","#7fb3e8","#e88a8a","#b9c96a","#6b6560"]
+    : ["#0f766e","#b45309","#8a3ea8","#1d6fa5","#b91c1c","#5d7a1f","#9a948d"];
+  rows.forEach((r, i) => {
+    const y = padT + i * rowH;
+    const n = Math.max(r.g.n, 1);
+    if (r.ref){
+      s.appendChild(el("line", {x1:0, y1:y+rowH-3, x2:W, y2:y+rowH-3, class:"grid"}));
+    }
+    s.appendChild(el("text", {x:x0-8, y:y+16, class:"lbl", "text-anchor":"end",
+                              style: r.ref ? "font-style:italic" : ""}, r.lab));
+    let acc = 0;
+    const top = r.g.top;
+    const other = r.g.n - top.reduce((a,b) => a + b[1], 0);
+    const segs = top.concat(other > 0 ? [["その他", other]] : []);
+    segs.forEach((sg, k) => {
+      const w = sg[1] / n * (x1 - x0);
+      const col = sg[0] === "その他" ? pal[6] : pal[k % 6];
+      s.appendChild(el("rect", {x:x0+acc, y:y+2, width:Math.max(w,0.6), height:rowH-8,
+                                fill:col, "fill-opacity": sg[0]==="が" ? 1 : .72,
+                                stroke: sg[0]==="が" ? cssvar("--fg") : "none",
+                                "stroke-width": sg[0]==="が" ? 1.6 : 0}));
+      if (w > 26){
+        s.appendChild(el("text", {x:x0+acc+w/2, y:y+17, class:"tiny",
+                                  "text-anchor":"middle", fill:"#fff",
+                                  style:"font-size:10.5px;font-weight:700"},
+                         sg[0] + " " + sg[1]));
+      }
+      acc += w;
+    });
+    s.appendChild(el("text", {x:x1+8, y:y+16, class:"tiny"},
+      "n=" + r.g.n + " / 答えの種類 " + r.g.n_kinds + " / 正答 " + r.g.correct));
+  });
+  figure(host, s,
+    "いちばん上は参考：<b>10ms を8字ぶん束ねた</b>もの（何も聞こえないときに人が何と答えるか＝事前の偏り）。"
+    + "「つ」に寄るので<b>一様分布ではない</b>。<br>"
+    + "「が」の10ms では答えが散らばる＝<b>何も届いていない</b>。"
+    + "打ち切りなし（いちばん下・" + R.full.n + "試行）では「"
+    + R.full.top[0][0] + "」に集中する＝<b>届いているが1つ隣にずれている</b>。"
+    + "正答率はこの2つを同じ『ほぼ0%』として扱う。情報量は区別する。"
+    + "「が」（正解）の帯だけ縁取りしてある。<br>"
+    + "「打ち切りなし」は、はしごに埋め込んだぶんと確認問題の両方を数えている"
+    + "（<code>analyze_information.py</code> の参照点と同じ数え方）。");
+}
+
+function buildAllTraj(){
+  const host = document.getElementById("fig_all_traj");
+  host.innerHTML = "";
+  const cols = 4, cw = 240, chh = 190;
+  const rows = Math.ceil(DATA.chars.length / cols);
+  const s = svg(cols * cw, rows * chh);
+  DATA.chars.forEach((ch, i) => {
+    const gx = (i % cols) * cw, gy = Math.floor(i / cols) * chh;
+    const padL = 40, padB = 30, padT = 26, padR = 12;
+    const x0 = gx + padL, x1 = gx + cw - padR, y0 = gy + padT, y1 = gy + chh - padB;
+    const xs = DATA.curves.audio_levels[ch];
+    const lo = Math.log(xs[0]), hi = Math.log(xs[xs.length-1]);
+    const sx = v => x0 + (Math.log(v) - lo) / (hi - lo) * (x1 - x0);
+    s.appendChild(el("line", {x1:x0, y1:y1, x2:x1, y2:y1, class:"ax"}));
+    s.appendChild(el("line", {x1:x0, y1:y0, x2:x0, y2:y1, class:"ax"}));
+    s.appendChild(el("text", {x:x0, y:gy+15, class:"ttl"}, ch));
+    // 正答率（0〜1）と情報量（0〜3）をそれぞれの上限で正規化して重ねる
+    [["acc", DATA.curves.audio_acc[ch], 1], ["info", DATA.curves.audio_bits[ch], 3]]
+      .forEach(([k, ys, mx]) => {
+        const col = k === "acc" ? cssvar("--acc") : cssvar("--info");
+        const sy = v => y1 - Math.min(v, mx) / mx * (y1 - y0);
+        let d = "";
+        xs.forEach((x, j) => { d += (j ? "L" : "M") + sx(x).toFixed(2) + " " + sy(ys[j]).toFixed(2) + " "; });
+        s.appendChild(el("path", {d:d, fill:"none", stroke:col, "stroke-width":2,
+                                  "stroke-dasharray": k === "acc" ? "" : ""}));
+        xs.forEach((x, j) => s.appendChild(el("circle", {cx:sx(x), cy:sy(ys[j]), r:2.4, fill:col})));
+      });
+    s.appendChild(el("text", {x:x0-5, y:y0+4, class:"tiny", "text-anchor":"end"}, "100%"));
+    s.appendChild(el("text", {x:x0-5, y:y1+3, class:"tiny", "text-anchor":"end"}, "0"));
+    s.appendChild(el("text", {x:x1, y:y1+15, class:"tiny", "text-anchor":"end"},
+      xs[0] + "〜" + xs[xs.length-1] + "ms"));
+  });
+  figure(host, s,
+    '<span style="color:var(--acc)">紫＝正答率（縦軸 0〜100%）</span>／'
+    + '<span style="color:var(--info)">緑＝情報量（縦軸 0〜3 bit）</span>。'
+    + '縦軸はそれぞれの上限で正規化して重ねてある（単位が違うので高さそのものは比べない）。'
+    + '「が」だけ紫が床に張りついている。');
+}
+
+// ---------------------------------------------------------------------------
+// 起動
+// ---------------------------------------------------------------------------
+function rebuild(){
+  buildFrames(document.getElementById("frames_ga"), ["が"]);
+  buildFrames(document.getElementById("frames_all"), DATA.chars);
+  buildST();
+}
+function init(){
+  const sf = document.getElementById("selFam");
+  DATA.fams.forEach(f => {
+    const o = document.createElement("option");
+    o.value = f; o.textContent = LAB[f]; sf.appendChild(o);
+  });
+  sf.value = ui.fam;
+  sf.onchange = () => { ui.fam = sf.value; rebuild(); };
+  const sc = document.getElementById("selCond");
+  sc.onchange = () => { ui.cond = sc.value; rebuild(); };
+  const sd = document.getElementById("selDir");
+  sd.onchange = () => { ui.dir = sd.value; rebuild(); };
+  document.getElementById("btnPlayAll").onclick = playAll;
+  document.getElementById("srcTrials").textContent = DATA.src.trials;
+
+  buildGaStat();
+  buildMatrix();
+  buildDistinct();
+  buildGaTraj();
+  buildResp();
+  buildAllTraj();
+
+  document.getElementById("prov").innerHTML =
+    "出どころ：warp 表 <code>" + DATA.tables.acc.path + "</code> / <code>"
+    + DATA.tables.info.path + "</code>（どちらも "
+    + DATA.tables.acc.covers_ms + "ms ぶん）、曲線 <code>" + DATA.src.curves
+    + "</code>、セルごとの数値 <code>" + DATA.src.log + "</code>。"
+    + "描画は <code>experiment/transfer.js</code> の切り出し。"
+    + "本番の <code>experiment/transfer_warp.json</code> は書き換えていない。";
+
+  loadAll().then(() => {
+    document.getElementById("loading").textContent = "";
+    rebuild();
+  }).catch(e => {
+    document.getElementById("loading").textContent = "画像が読めない: " + e.message;
+  });
+}
+init();
+</script>
+</body>
+</html>

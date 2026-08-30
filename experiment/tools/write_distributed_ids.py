@@ -55,14 +55,31 @@ def read_ids(path: Path) -> list:
     if col is None:
         col = 0   # 見出しが分からなければ従来どおり1列目
 
-    ids = []
+    # チェック設問の行を見分ける列（「チェック設問有無(0:無 1:有)」が 1 の行）。
+    chk_col = None
+    for j, h in enumerate(head):
+        if h.startswith("チェック設問有無"):
+            chk_col = j
+            break
+
+    ids, skipped = [], 0
     for line in lines[1:]:
         cells = line.split(sep)
         if col >= len(cells):
             continue
+        # ⚠ **チェック設問の行を入れない**（2026-08-29 修正）。
+        #   チェック行には参加者のURLが無いので、この列からは設問ID（chk01 など）が
+        #   拾われる。それを配布済みIDとして登録すると、
+        #   実際には配っていないIDが本番扱いの一覧に入り、人数も水増しになる。
+        if chk_col is not None and chk_col < len(cells) \
+           and cells[chk_col].strip().strip('"') == "1":
+            skipped += 1
+            continue
         cell = cells[col].strip().strip('"')
         if cell:
             ids.append(cell)
+    if skipped:
+        print(f"  チェック設問 {skipped} 行は登録しない（参加者に配るIDではない）")
 
     # 連番を拾ってしまっていないかの検査。
     if ids and all(x.isdigit() for x in ids[:10]):

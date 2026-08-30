@@ -1047,7 +1047,71 @@ function blurApplyFilter(ctx, src, s) {
   ctx.restore();
   ctx.filter = "none";
 }
+// ---- ぼかし済みの絵（ctx.filter が効かない端末むけ）--------------------------
+// あらかじめ PNG にしておいたぼかし画像から、いちばん近い半径の1枚を選んで描く。
+// experiment/tools/build_blur_frames.py が作り、tools/blur_compare.html で
+// ctx.filter の出す絵と画素ごとに突き合わせてある（2026-08-29・Chrome で実測）:
+//   字が読める側（半径36px以下）… 平均のずれ 1.04 以下 ／ 256階調
+//   真っ白に近い側（半径72px）  … 平均のずれ 3.24（その絵自体の濃淡の幅は31）
+//   段のとなりどうしの違い      … 平均 0.17〜2.14（いちばん近い段を選ぶ誤差はその半分）
+//
+// ⚠ 上の「見た目を別の作りで再現しない」に**反しない**。
+//   CSS の filter で代用するとにじみ方が変わるので不可だが、こちらは
+//   canvas と同じ画素を出すことを実測で確かめたうえで差し替えている。
+//   blur(N px) は**標準偏差 N** のガウスぼかしである（半分ではない。
+//   box-shadow のぼかし幅が 2σ なので混同しやすい）。
+//
+// 使うのは「ctx.filter が効かない」かつ「その回に出す字がすべて索引にある」ときだけ。
+// 1字でも欠けたら使わない（欠けた字だけ鮮明に出る事故を防ぐ）。
+const blurFrames = { ready: false, radii: null, byChar: null };
+
+// 半径 r にいちばん近い段の番号。radii は昇順。
+function blurFrameIndex(r) {
+  const R = blurFrames.radii;
+  let lo = 0, hi = R.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (R[m] < r) lo = m + 1; else hi = m; }
+  if (lo > 0 && Math.abs(R[lo - 1] - r) <= Math.abs(R[lo] - r)) lo--;
+  return lo;
+}
+
+function blurDrawFromFrames(ctx, ch, s) {
+  const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
+  const set = blurFrames.byChar[ch];
+  drawBlank(ctx);
+  if (set) ctx.drawImage(set[blurFrameIndex(r)], 0, 0, SIZE, SIZE);
+}
+
+// 読めたら true。呼ぶのは各ページの preload() から（出す字の一覧を渡す）。
+async function blurFramesLoad(chars) {
+  if (canvasFilterWorks()) return false;              // 効く端末は今までどおり
+  const url = (CFG.visual.families.blur || {}).frames_url;
+  if (!url) return false;
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) return false;
+    const man = await r.json();
+    const need = [...new Set(chars)];
+    if (!need.every(ch => (man.chars || []).indexOf(ch) >= 0)) return false;
+    const dir = url.replace(/[^/]*$/, "");
+    const byChar = {};
+    for (const ch of need) {
+      byChar[ch] = await Promise.all((man.radii || []).map((_, i) => new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = () => rej(new Error("ぼかし画像が読めない: " + ch + " " + i));
+        im.src = dir + encodeURIComponent(ch) + "/" + String(i).padStart(3, "0") + ".png";
+      })));
+    }
+    blurFrames.radii = man.radii; blurFrames.byChar = byChar; blurFrames.ready = true;
+    return true;
+  } catch (e) {
+    console.warn("[blur] ぼかし済みの絵を使えません: " + e.message);
+    return false;
+  }
+}
+
 function blurDraw(ctx, ch, s) {
+  if (blurFrames.ready) { blurDrawFromFrames(ctx, ch, s); return; }
   if (!blurOff) blurBegin(ch);
   blurApplyFilter(ctx, blurOff, s);
 }
@@ -1377,6 +1441,11 @@ async function preload() {
     done++; setBar(done / chars.length);
   }));
   if (!TARGETS.every(ch => imgs[ch])) throw new Error("ターゲット字の画像が読めません");
+
+  // canvas の filter が効かない端末では、ぼかし済みの絵に切り替える。
+  // 刺激として出しうる字が**すべて**索引にある回だけ使える。較正フェーズは
+  // まぎれ字も刺激として出すので索引に無く、自動的に使われない（＝従来どおり断る）。
+  await blurFramesLoad(chars);
   // 生成した進み方の表(あれば)。群Bのみ必要。
   if (G.play === "warp" || (G.wellbeing && CFG.wellbeing.condition === "proposed")) {
     try {
@@ -2962,7 +3031,7 @@ function visionCheck() {
   //   本人は真面目に答えているのに、測っているものが別物になる。
   //   （設定 visual.require_canvas_filter を false にすると、この関門を外せる。）
   if (CFG.visual.require_canvas_filter !== false
-      && usesBlurFamily() && !canvasFilterWorks()) {
+      && usesBlurFamily() && !canvasFilterWorks() && !blurFrames.ready) {
     unsupportedDeviceScreen();
     return;
   }

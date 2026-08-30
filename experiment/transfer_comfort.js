@@ -37,7 +37,7 @@
 // =========================================================================
 "use strict";
 
-const VERSION = "c1.14";
+const VERSION = "c1.23";
 const CFG = window.TRANSFER_CONFIG;            // 共用（描画・保存先）。書き換えない。
 const C = window.TRANSFER_COMFORT_CONFIG;      // 群Cだけの設定
 const P = new URLSearchParams(location.search);
@@ -360,14 +360,14 @@ function sendClipRecord(clip) {
   const rec = {
     kind: "transfer_wellbeing",
     record_kind: "clip",
-    stimulus_id: "comfort|" + GROUP + "|" + clip.family + "|" + clip.presentation,
+    stimulus_id: "comfort|" + GROUP + "|" + clip.family + "|" + clip.condition + "|" + clip.char,
     target_char: "-", response_char: "-",
     modality: (C.logging && C.logging.modality) || "transfer_wellbeing",
     q_set: "transfer", phase: PHASE, group: GROUP,
     assign_index: ASSIGN, assign_source: ASSIGN_SOURCE,
-    n_choices: C.families.length,
+    n_choices: C.families.length * C.conditions.length,
     wellbeing_json: JSON.stringify(clip),
-    choice: clip.family + "|" + clip.presentation,
+    choice: clip.family + "|" + clip.condition,
     version: VERSION, config_version: C.config_version,
   };
   // 待たない。画面を止めてまで確かめる価値は無い（本命は最後の1行）。
@@ -492,7 +492,71 @@ function blurApplyFilter(ctx, src, s) {
   ctx.restore();
   ctx.filter = "none";
 }
+// ---- ぼかし済みの絵（ctx.filter が効かない端末むけ）--------------------------
+// あらかじめ PNG にしておいたぼかし画像から、いちばん近い半径の1枚を選んで描く。
+// experiment/tools/build_blur_frames.py が作り、tools/blur_compare.html で
+// ctx.filter の出す絵と画素ごとに突き合わせてある（2026-08-29・Chrome で実測）:
+//   字が読める側（半径36px以下）… 平均のずれ 1.04 以下 ／ 256階調
+//   真っ白に近い側（半径72px）  … 平均のずれ 3.24（その絵自体の濃淡の幅は31）
+//   段のとなりどうしの違い      … 平均 0.17〜2.14（いちばん近い段を選ぶ誤差はその半分）
+//
+// ⚠ 上の「見た目を別の作りで再現しない」に**反しない**。
+//   CSS の filter で代用するとにじみ方が変わるので不可だが、こちらは
+//   canvas と同じ画素を出すことを実測で確かめたうえで差し替えている。
+//   blur(N px) は**標準偏差 N** のガウスぼかしである（半分ではない。
+//   box-shadow のぼかし幅が 2σ なので混同しやすい）。
+//
+// 使うのは「ctx.filter が効かない」かつ「その回に出す字がすべて索引にある」ときだけ。
+// 1字でも欠けたら使わない（欠けた字だけ鮮明に出る事故を防ぐ）。
+const blurFrames = { ready: false, radii: null, byChar: null };
+
+// 半径 r にいちばん近い段の番号。radii は昇順。
+function blurFrameIndex(r) {
+  const R = blurFrames.radii;
+  let lo = 0, hi = R.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (R[m] < r) lo = m + 1; else hi = m; }
+  if (lo > 0 && Math.abs(R[lo - 1] - r) <= Math.abs(R[lo] - r)) lo--;
+  return lo;
+}
+
+function blurDrawFromFrames(ctx, ch, s) {
+  const r = CFG.visual.families.blur.max_radius_px * (1 - Math.max(0, Math.min(1, s)));
+  const set = blurFrames.byChar[ch];
+  drawBlank(ctx);
+  if (set) ctx.drawImage(set[blurFrameIndex(r)], 0, 0, SIZE, SIZE);
+}
+
+// 読めたら true。呼ぶのは各ページの preload() から（出す字の一覧を渡す）。
+async function blurFramesLoad(chars) {
+  if (canvasFilterWorks()) return false;              // 効く端末は今までどおり
+  const url = (CFG.visual.families.blur || {}).frames_url;
+  if (!url) return false;
+  try {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) return false;
+    const man = await r.json();
+    const need = [...new Set(chars)];
+    if (!need.every(ch => (man.chars || []).indexOf(ch) >= 0)) return false;
+    const dir = url.replace(/[^/]*$/, "");
+    const byChar = {};
+    for (const ch of need) {
+      byChar[ch] = await Promise.all((man.radii || []).map((_, i) => new Promise((res, rej) => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = () => rej(new Error("ぼかし画像が読めない: " + ch + " " + i));
+        im.src = dir + encodeURIComponent(ch) + "/" + String(i).padStart(3, "0") + ".png";
+      })));
+    }
+    blurFrames.radii = man.radii; blurFrames.byChar = byChar; blurFrames.ready = true;
+    return true;
+  } catch (e) {
+    console.warn("[blur] ぼかし済みの絵を使えません: " + e.message);
+    return false;
+  }
+}
+
 function blurDraw(ctx, ch, s) {
+  if (blurFrames.ready) { blurDrawFromFrames(ctx, ch, s); return; }
   if (!blurOff) blurBegin(ch);
   blurApplyFilter(ctx, blurOff, s);
 }
@@ -652,7 +716,7 @@ function stepMidMs(ch) {
 
 // 1本ぶんの「経過時間ms → 進み具合 s」と、その1本の長さ(ms)を作る。
 // 返り値: {fn, dur_ms, source}  source は記録用("table" / "linear" / "step" / "step_fallback")。
-function progressFor(family, ch) {
+function progressFor(family, ch, condition) {
   const base = CFG.visual.base_anim_ms;
   // ステップ表示。中点までは何も出さず、そこで一気に完成形にする。
   // 1本の長さは他の方式とそろえる(同じ間合いで流れないと見え心地を比べられない)。
@@ -664,13 +728,24 @@ function progressFor(family, ch) {
       source: mid.fromTable ? "step" : "step_fallback",
     };
   }
-  if (C.condition !== "linear") {
-    const series = warpSeries(family, ch, C.condition);
+  const cond = C.force_condition || condition;
+  if (cond && cond !== "linear") {
+    const series = warpSeries(family, ch, cond);
     if (series) {
       const frameMs = (warpTables && warpTables.frame_ms) || (1000 / 60);
+      // ---- 終端に達したらアニメを終える（2026-08-29）--------------------------
+      // 音声は60〜125msで終わるので、①②は表の前半で終端値に達し、残りは
+      // 同じ絵が並ぶだけになる。そこで**値が最後に動いたコマまで**をアニメの
+      // 長さとし、以後は再生器の「完成形のまま据え置く時間」（hold_ms）に譲る。
+      // こうすると据え置きの長さが4条件で同じ1200msにそろう
+      // （表のままだと①②だけ枠の余り175〜240msぶん完成形を余分に見る）。
+      // 絵のコマは1枚も変わらない。変わるのは1周の長さだけである。
+      const last = series[series.length - 1];
+      let nEff = series.length;
+      while (nEff > 1 && series[nEff - 2] >= last - 1e-9) nEff--;
       return {
         fn: (ms) => Math.max(0, Math.min(1, seriesAt(series, frameMs, ms))),
-        dur_ms: Math.round((series.length - 1) * frameMs),
+        dur_ms: Math.round((nEff - 1) * frameMs),
         source: "table",
       };
     }
@@ -690,9 +765,61 @@ function loadImage(ch) {
   });
 }
 
-// この実験で画面に出る字（1字条件の字 ＋ 5字続ける条件の並び ＋ 見え方の確認の「あ」）。
+// この人に割り当てる字。16本すべてがこの1字になる。
+// 人ごとに配ることで、400人で8字を50人ずつ覆う（設定 char_rotation）。
+// 1人の中では字が変わらないので、条件どうし・方式どうしの比較は同じ人の中で成立する。
+// ---- 字の割り当て（ラテン方格）---------------------------------------------
+// **なぜ方格にするか。**16本すべてを同じ1字で出すと、「あ」の結果はその字を
+// 割り当てられた人だけから出てくる。その人たちが辛口なら「あ」は辛口に出る。
+// 字の性質なのか人の癖なのか分けられない（栗原先生の指摘・2026-08-29
+// 「人物依存度が低いほうがよい」）。
+//
+// そこで**1人に4字を配り**、4方式 × 4条件の16マスへ方格の形で割り当てる。
+//
+//              ①    ②    ③    ④
+//   ぼやけ      あ    か    し    つ
+//   端から      か    し    つ    あ
+//   うすい      し    つ    あ    か
+//   点が増える   つ    あ    か    し
+//
+// **どの条件も4字を1回ずつ使う**ので、1人の中で条件を比べたときに字の違いが
+// 打ち消える。方式の比較も同じ。そのうえで全員が4字を見るので、字ごとの結果が
+// 特定の人に張り付かない。1人あたりの本数は16本のまま増えない。
+//
+// 7字 × 方格の回し方4通り ＝ 28通りを、割付番号で順に配る。
+// 人数を28の倍数にすると、どの組み合わせも同じ回数ずつ出る（196 = 28 × 7）。
+function charPlanForParticipant() {
+  const pool = (C.char_rotation && Array.isArray(C.chars_pool) && C.chars_pool.length)
+    ? C.chars_pool : [C.single_char];
+  const nf = C.families.length;                       // 方式の数（＝方格の一辺）
+  const i = Number.isFinite(ASSIGN) ? Math.abs(Math.trunc(ASSIGN)) : 0;
+  // 字が足りない／方格を使わない設定のときは、従来どおり全部同じ1字にする。
+  if (pool.length < nf) {
+    const ch = pool[i % pool.length];
+    return { set: [ch], choiceChar: ch, cellChar: () => ch, square: false };
+  }
+  const start = i % pool.length;                      // どの4字を使うか（7通り）
+  const shift = Math.floor(i / pool.length) % nf;     // 方格の回し方（4通り）
+  const set = [];
+  for (let k = 0; k < nf; k++) set.push(pool[(start + k) % pool.length]);
+  return {
+    set,
+    // 最後の強制選択で使う字。4条件を**同じ字**で並べないと、条件を比べているのか
+    // 字を比べているのか分からなくなる。ここだけは1字に固定する。
+    // 位置を shift でずらして、どの字も同じ回数だけ選ばれるようにする。
+    choiceChar: set[shift],
+    // 方式 fi 行・条件 ci 列のマスに入る字。
+    cellChar: (fi, ci) => set[(fi + ci + shift) % nf],
+    square: true,
+  };
+}
+let CHAR = null;        // 強制選択で使う字（＝この人の代表字）
+let CHARPLAN = null;
+
+// この実験で画面に出る字（割り当てられた1字だけ）。
 function neededChars() {
-  return [...new Set([C.single_char].concat(C.sequence).concat(["あ"]))];
+  if (!CHARPLAN) { CHARPLAN = charPlanForParticipant(); CHAR = CHARPLAN.choiceChar; }
+  return CHARPLAN.set.slice();
 }
 
 async function preload() {
@@ -710,13 +837,19 @@ async function preload() {
   }));
   if (!need.every(ch => imgs[ch])) throw new Error("代表字の画像が読めません");
 
-  // 生成した進み方の表。無ければ等速で代用する（研究者の動作確認のとき）。
-  if (C.condition !== "linear") {
+  // canvas の filter が効かない端末では、ぼかし済みの絵に切り替える。
+  // 読めれば断らずに済む（読めなければ従来どおり visionCheck で断る）。
+  await blurFramesLoad(need);
+
+  // 4条件ぶんの進み方の表（群B用の transfer_warp.json とは別ファイル）。
+  // 無ければ等速で代用する（研究者の動作確認のとき）。本番では必ず要る。
+  {
+    const url = C.warp_tables_url || CFG.visual.warp.tables_url;
     try {
-      const r = await fetch(CFG.visual.warp.tables_url, { cache: "no-store" });
+      const r = await fetch(url, { cache: "no-store" });
       if (r.ok) warpTables = await r.json();
     } catch (e) { /* 表が無ければ等速 */ }
-    if (!warpTables) console.warn("[comfort] " + CFG.visual.warp.tables_url + " が無いので等速で動かします");
+    if (!warpTables) console.warn("[comfort] " + url + " が無いので等速で動かします");
   }
   setBar(1);
 }
@@ -738,14 +871,19 @@ function presentationsFor(family) {
 }
 function buildClips() {
   const out = [];
-  C.families.forEach(fam =>
-    presentationsFor(fam).forEach(pres => out.push({ presentation: pres, family: fam })));
+  C.families.forEach((fam, fi) =>
+    presentationsFor(fam).forEach(pres =>
+      C.conditions.forEach((cond, ci) =>
+        out.push({ presentation: pres, family: fam, condition: cond.key,
+                   char: CHARPLAN.cellChar(fi, ci) }))));
   return shuffle(out).map((c, i) => Object.assign(c, { order: i + 1 }));
 }
 
 // その本で出す字の並び。1字条件は1字、5字条件は決められた並び。
-function clipChars(presentation) {
-  return (presentation === "single") ? [C.single_char] : C.sequence.slice();
+function clipChars(presentation, ch) {
+  return (presentation === "single")
+    ? [ch || CHAR || C.single_char]
+    : C.sequence.slice();
 }
 
 // =========================================================================
@@ -782,7 +920,7 @@ function charPx(host) {
 // 描く場所を作る。row5 は5枚、それ以外は1枚。
 // row5 では**最初から5枚ぶんの空き枠を置く**（字が出るたびに位置がずれないように）。
 function buildStage(host, presentation, opts) {
-  const chars = clipChars(presentation);
+  const chars = clipChars(presentation, opts && opts.char);
   const px = (opts && opts.px) || charPx(host);
   const gap = Math.round(px * C.layout.gap_ratio);
   const n = (presentation === "row5") ? chars.length : 1;
@@ -809,7 +947,7 @@ function makePlayer(stage, family, opts) {
   const chars = stage.chars, ctxs = stage.ctxs;
   const single = (stage.presentation === "single");
   const renderer = rendererFor(family);
-  const progs = chars.map(ch => progressFor(family, ch));
+  const progs = chars.map(ch => progressFor(family, ch, o.condition));
   const t = C.timing;
   const animMax = Math.max(...progs.map(p => p.dur_ms));
   // 1字ぶんの持ち時間。5字条件は「現れきる時間 ＋ 空ける時間」。
@@ -916,7 +1054,7 @@ function makePlayer(stage, family, opts) {
 // 画面
 // =========================================================================
 let clips = [], idx = 0;
-let answers = null;   // {clips:[...], choice_family:"", choice_presentation:"", ...順序も入る}
+let answers = null;   // {clips:[...], char:"あ", choice_cond:{方式:条件}, ...順序と時間も入る}
 let elapsedPrior = 0;
 const T0 = Date.now();
 
@@ -935,28 +1073,29 @@ function saveProgress() {
 // ---- 説明 -----------------------------------------------------------------
 function intro() {
   const n = clips.length;
-  screenEl.innerHTML = `<h1>このアンケートの進め方</h1>
-    <p>文字が現れる様子を<b>${n}通り</b>、順にお見せします。
-    それぞれについて、<b>「字幕として続けて見ていられるか」</b>を7段階で答えてください。</p>
+  // ⚠ **長く書かない。**2026-08-29、丸山指示。「みんな読まない」ので要点だけにする。
+  //   前の文には「13通り」「5文字続けて出るもの」など、いまの構成と食い違う記述が
+  //   残っていた（1字だけ・16本になった）。ここは clips.length から自動で出す。
+  screenEl.innerHTML = `<h1>進め方</h1>
+    <p>字が現れる様子を<b>${n}通り</b>、順にお見せします。
+    それぞれについて<b>3つの質問</b>に7段階で答えてください。</p>
     <ul style="font-size:14px;line-height:1.9;color:#333">
-      <li><b>当てる課題ではありません。</b>正解・不正解はありません。感じたとおりに答えてください。</li>
-      <li><b>1文字だけ出るもの</b>と、<b>5文字続けて出るもの</b>があります。
-          5文字のときは、左から並んでいくものと、同じ場所で入れ替わるものがあります。</li>
-      <li>1つの表示は<b>くりかえし流れつづけます</b>。答えているあいだ、何度でも見ていられます。</li>
-      <li>「▶ もう一度みる」を押すと、その場で最初から流し直せます。</li>
-      <li>最後に、好みについて2問うかがいます。</li>
+      <li><b>正解はありません。</b>感じたとおりに答えてください。</li>
+      <li>表示は<b>くりかえし流れます</b>。答えているあいだ、何度でも見ていられます。</li>
+      <li>最後に2問うかがいます。</li>
     </ul>
     <p style="text-align:center;margin-top:18px"><button class="primary" id="go">始める</button></p>
     <p class="muted" style="text-align:right;font-size:12px;margin-top:6px">${(window.PROD && PROD.enabled)
       ? ""
-      : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN}${warpTables ? "" : " ／ <b>進み方の表が無いので等速</b>"}`}</p>`;
+      : `研究者向け動作確認 v${VERSION} ／ ${PHASE}フェーズ 集団 ${GROUP}（割り当て: ${ASSIGN_SOURCE}） ／ 割付番号 ${ASSIGN} ／ 字 ${CHARPLAN.set.join("")}（強制選択は ${CHAR}）${warpTables ? "" : " ／ <b>進み方の表が無いので等速</b>"}`}</p>`;
   document.getElementById("go").onclick = () => { showClip(); };
 }
+
 
 // ---- 1本ぶん: 繰り返し再生 ＋ 7件法3項目 ----------------------------------
 function showClip() {
   stopAnim();
-  if (idx >= clips.length) return showChoiceFamily();
+  if (idx >= clips.length) return showChoiceCondition(0);
   const clip = clips[idx];
   const shownAt = Date.now();
 
@@ -968,8 +1107,8 @@ function showClip() {
     </div>
     <div id="wbForm"></div>`;
 
-  const stage = buildStage(document.getElementById("vbox"), clip.presentation);
-  const player = makePlayer(stage, clip.family);
+  const stage = buildStage(document.getElementById("vbox"), clip.presentation, { char: clip.char });
+  const player = makePlayer(stage, clip.family, { condition: clip.condition });
   stopPlayback = () => player.stop();
 
   // 押して流し直した回数（replays）と、自動で流れた周の数（cycles）を分けて数える。
@@ -1004,7 +1143,9 @@ function showClip() {
     stopAnim();
     const one = {
       order: clip.order, family: clip.family, presentation: clip.presentation,
-      chars: stage.chars.join(""), condition: C.condition,
+      // char … その本で出した字（方格のどのマスか）。chars と同じ値だが、
+      //        分析で char で group by できるよう単独の列として残す。
+      char: clip.char, chars: stage.chars.join(""), condition: clip.condition,
       progress_source: player.info.progress_source,
       anim_ms: player.info.anim_ms, step_ms: player.info.step_ms,
       char_px: stage.px, gap_px: stage.gap,
@@ -1017,46 +1158,76 @@ function showClip() {
   };
 }
 
-// ---- 最後の質問1: どの「現れ方」（方式）がよいか -----------------------------
-// 4方式の見本を1字の提示で並べ、見くらべてから選んでもらう。
-// 方式は4つとも違うので、部分表示・ぼかし解除の作業用キャンバスの取り合いは起きない
-// （同じ方式のアニメを2つ同時に動かすと壊れる。→ 質問2の作り）。
-function showChoiceFamily() {
+// ---- 最後の質問: 4条件を並べて、見やすいものを選んでもらう -------------------
+// 方式ごとに1問（設定 choice.condition.families）。ぼやけ版と端から版の2問。
+//
+// なぜ7件法と別に聞くか: 7件法は「どれくらい悪いか」を測るが、差が出なかったとき
+// 「本当に同じ」なのか「7段階では拾えなかった」のかを分けられない。並べて選ばせれば、
+// **選ばれる割合が4分の1ずつに近いこと**が「見分けられていない」の直接の証拠になる。
+//
+// ⚠ **現れ方を言葉で説明しない。** ラベルを出すと参加者の注意がそこへ向いて
+//   答えが偏る（丸山指摘・2026-08-29）。見本と選ぶボタンだけを出す。
+//
+// ⚠ 4つとも**同じ方式**なので同時に動かすことになる。ぼやけと端からは作業用の
+//   状態を取り合わない（1人が見る字は1字だけなので、ぼやけの元絵は4つとも同じ。
+//   端からは共有の書き換え領域を持たない）。**うすい・点が増えるを足すときは、
+//   同時再生でも絵が壊れないことを確かめ直すこと**（設定側の注記も見ること）。
+function showChoiceCondition(qi) {
   stopAnim();
-  const cfg = C.choice.family;
-  const showSamples = !!cfg.show_samples;
-  // 見本を並べる順も混ぜる（左端が有利にならないように）。記録に残す。
-  const order = (answers.choice_family_order && answers.choice_family_order.length)
-    ? answers.choice_family_order.slice() : shuffle(C.families.slice());
-  answers.choice_family_order = order;
+  const cfg = C.choice.condition;
+  const fams = cfg.families || [];
+  if (qi >= fams.length) return submitAndFinish();
+  const fam = fams[qi];
+  // ---- 並べる順は「混ぜる」のではなく、系統的に回す --------------------------
+  // ⚠ **ランダムに混ぜるだけでは位置が正確には釣り合わない（2026-08-29 に改めた）。**
+  //   「が」では①と③が物理的に同じ絵なので、選ばれる率は**期待値として同じ**に
+  //   なるはずで、これを測定そのものの検算に使いたい。ずれたときに「位置の効果を
+  //   拾っている」と言うには、位置がきっちり釣り合っている必要がある。
+  //
+  //   4条件を巡回でずらし（4通り）、参加者の半分では左右を逆にする（2通り）。
+  //   合わせて8通り。**どの条件も、どの位置に同じ回数だけ出る。**
+  //   224人 ÷ 8 = 28 人ずつ。2問目は1つずらして、同じ並びを繰り返さない。
+  const saved = answers.choice_cond_order[fam];
+  let order;
+  if (saved && saved.length) {
+    order = saved.slice();
+  } else {
+    const keys = C.conditions.map(c => c.key), n = keys.length;
+    const a = Number.isFinite(ASSIGN) ? Math.abs(Math.trunc(ASSIGN)) : 0;
+    const shift = (a + qi) % n;                     // どこから始めるか
+    order = [];
+    for (let k = 0; k < n; k++) order.push(keys[(k + shift) % n]);
+    if (Math.floor((a + qi) / n) % 2 === 1) order.reverse();   // 半分は左右逆
+  }
+  answers.choice_cond_order[fam] = order;
   const shownAt = Date.now();
   const px = charPx();
 
-  const cell = (f) => `
+  const cell = (k) => `
     <label style="flex:0 1 auto;display:block;cursor:pointer;padding:10px 8px;background:#f7f8fb;
                   border:1px solid #e3e6ee;border-radius:10px;text-align:center;max-width:${px + 26}px">
-      ${showSamples ? `<div class="mini" data-fam="${f}" style="margin:0 auto 8px"></div>` : ""}
-      <div style="font-size:13px;line-height:1.35;margin-bottom:8px">${cfg.labels[f] || f}</div>
-      <input type="radio" name="wbc" value="${f}">
+      ${cfg.show_samples ? `<div class="mini" data-cond="${k}" style="margin:0 auto 8px"></div>` : ""}
+      <input type="radio" name="wbc${qi}" value="${k}">
     </label>`;
 
-  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後の質問（1 / 2）</h2>
+  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後の質問（${qi + 1} / ${fams.length}）</h2>
     <p>${cfg.text}</p>
-    ${showSamples ? `<p class="muted">${cfg.note}</p>` : ""}
-    <div id="wbc" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px">
+    ${cfg.show_samples ? `<p class="muted">${cfg.note}</p>` : ""}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px">
       ${order.map(cell).join("")}</div>
-    ${showSamples ? `<p style="text-align:center;margin-top:12px">
+    ${cfg.show_samples ? `<p style="text-align:center;margin-top:12px">
       <button id="againAll" style="font-size:15px;padding:10px 24px;border-radius:999px;border:2px solid #1E2A5E;background:#fff;color:#1E2A5E;cursor:pointer">▶ 見本を最初から流す</button></p>` : ""}
     <p style="text-align:center;margin-top:16px">
       <button class="primary" id="wbNext2" disabled style="opacity:.5;background:#1E2A5E">次へ</button></p>`;
 
   const players = [];
   let replays = 0;
-  if (showSamples) {
-    order.forEach(f => {
-      const holder = screenEl.querySelector(`.mini[data-fam="${f}"]`);
+  if (cfg.show_samples) {
+    order.forEach(k => {
+      const holder = screenEl.querySelector(`.mini[data-cond="${k}"]`);
       holder.style.width = px + "px";
-      players.push(makePlayer(buildStage(holder, "single", { px }), f, { maxCycles: 0 }));
+      players.push(makePlayer(buildStage(holder, "single", { px, char: CHAR }), fam,
+                              { maxCycles: 0, condition: k }));
     });
     const againAll = document.getElementById("againAll");
     if (againAll) againAll.onclick = () => { replays++; players.forEach(p => p.restart()); };
@@ -1064,92 +1235,17 @@ function showChoiceFamily() {
   stopPlayback = () => players.forEach(p => p.stop());
 
   const next = document.getElementById("wbNext2");
-  screenEl.querySelectorAll('input[name="wbc"]').forEach(r => r.addEventListener("change", () => {
+  screenEl.querySelectorAll(`input[name="wbc${qi}"]`).forEach(r => r.addEventListener("change", () => {
     next.disabled = false; next.style.opacity = "1";
   }));
   next.onclick = () => {
-    const sel = screenEl.querySelector('input[name="wbc"]:checked');
+    const sel = screenEl.querySelector(`input[name="wbc${qi}"]:checked`);
     stopAnim();
-    answers.choice_family = sel ? sel.value : "";
-    answers.choice_family_ms = Date.now() - shownAt;
-    answers.choice_family_replays = replays;
+    answers.choice_cond[fam] = sel ? sel.value : "";
+    answers.choice_cond_ms[fam] = Date.now() - shownAt;
+    answers.choice_cond_replays[fam] = replays;
     saveProgress();
-    showChoicePresentation();
-  };
-}
-
-// ---- 最後の質問2: 5文字続けるときの「出し方」がどちらがよいか -----------------
-// 見本は**1問目で選ばれた方式**で出す。自分がよいと思った現れ方で、
-// 横に並べるのと入れ替えるのを見くらべてもらうためである。
-//
-// ⚠ 2つの見本は**同じ方式**なので、同時に動かせない。部分表示(reveal)と
-//   ぼかし解除(blur)は作業用のキャンバス・画素の並びを1つだけ持つ作りで、
-//   同じ方式のアニメを2つ並行して動かすと互いの状態を壊してしまう。
-//   そこで**1周ずつ交互に**流し、いま流しているほうを枠の色で示す。
-function showChoicePresentation() {
-  stopAnim();
-  const cfg = C.choice.presentation;
-  // 2問目の見本は「1問目で選ばれた現れ方」で出す。ただしステップ表示を選んだ人には、
-  // 5字を続けて出す見本をステップ表示で出せない（ステップ表示は本編で1字条件しか
-  // 見せていないので、見たことのない絵を見せることになる）。その場合はフェードに置き換える。
-  const picked = answers.choice_family || C.families[0];
-  const fam = (presentationsFor(picked).length >= C.presentations.length) ? picked : "fade";
-  const showSamples = !!cfg.show_samples;
-  const opts = (answers.choice_pres_order && answers.choice_pres_order.length)
-    ? answers.choice_pres_order.slice()
-    : shuffle(cfg.sample_options.slice());
-  answers.choice_pres_order = opts;
-  // 「どちらでもよい」は見本を持たないので、いつも最後に置く。
-  const allOpts = opts.concat(Object.keys(cfg.labels).filter(k => opts.indexOf(k) < 0));
-  const shownAt = Date.now();
-
-  const row = (k) => `
-    <label data-opt="${k}" style="display:block;cursor:pointer;margin:10px 0;padding:12px 12px;
-           background:#f7f8fb;border:2px solid #e3e6ee;border-radius:10px">
-      <div style="font-size:15px;margin-bottom:${opts.indexOf(k) >= 0 && showSamples ? "10px" : "0"}">
-        <input type="radio" name="wbp" value="${k}" style="vertical-align:middle;margin-right:8px">${cfg.labels[k] || k}</div>
-      ${opts.indexOf(k) >= 0 && showSamples ? `<div class="pres" data-opt="${k}"></div>` : ""}
-    </label>`;
-
-  screenEl.innerHTML = `<h2 style="color:#1E2A5E">最後の質問（2 / 2）</h2>
-    <p>${cfg.text}</p>
-    ${showSamples ? `<p class="muted">${cfg.note}（<b>${C.choice.family.labels[fam] || fam}</b>）
-      2つの見本を<b>かわりばんこに</b>流しています。</p>` : ""}
-    <div id="wbp">${allOpts.map(row).join("")}</div>
-    <p style="text-align:center;margin-top:16px">
-      <button class="primary" id="wbDone" disabled style="opacity:.5;background:#1E2A5E">回答を送って終わる</button></p>`;
-
-  if (showSamples) {
-    // 1周ずつ交互に流す。動かすのは常に1つだけ。
-    const stages = opts.map(k => buildStage(screenEl.querySelector(`.pres[data-opt="${k}"]`), k));
-    let turn = 0, cur = null, stopped = false;
-    const mark = () => opts.forEach((k, i) => {
-      const el = screenEl.querySelector(`label[data-opt="${k}"]`);
-      el.style.borderColor = (i === turn) ? "#2E7D8F" : "#e3e6ee";
-      el.style.background = (i === turn) ? "#f2fafc" : "#f7f8fb";
-    });
-    const nextTurn = () => {
-      if (stopped) return;
-      mark();
-      cur = makePlayer(stages[turn], fam, { maxCycles: 1, onEnd: () => {
-        turn = (turn + 1) % opts.length;
-        nextTurn();
-      } });
-    };
-    nextTurn();
-    stopPlayback = () => { stopped = true; if (cur) cur.stop(); };
-  }
-
-  const done = document.getElementById("wbDone");
-  screenEl.querySelectorAll('input[name="wbp"]').forEach(r => r.addEventListener("change", () => {
-    done.disabled = false; done.style.opacity = "1";
-  }));
-  done.onclick = () => {
-    const sel = screenEl.querySelector('input[name="wbp"]:checked');
-    stopAnim();
-    answers.choice_presentation = sel ? sel.value : "";
-    answers.choice_presentation_ms = Date.now() - shownAt;
-    submitAndFinish();
+    showChoiceCondition(qi + 1);
   };
 }
 
@@ -1178,11 +1274,11 @@ async function submitAndFinish() {
     modality: (C.logging && C.logging.modality) || "transfer_wellbeing",
     q_set: "transfer", phase: PHASE, group: GROUP,
     assign_index: ASSIGN, assign_source: ASSIGN_SOURCE,
-    n_choices: C.families.length,
+    n_choices: C.families.length * C.conditions.length,
     wellbeing_json: JSON.stringify(answers),
     // choice 列は1つしかないので、2問の答えを「方式|出し方」の形で入れる
     // （細かい内訳と所要は wellbeing_json のほうに入っている）。
-    choice: answers.choice_family + "|" + answers.choice_presentation,
+    choice: (C.choice.condition.families || []).map(f => f + ":" + (answers.choice_cond[f] || "-")).join("|"),
     version: VERSION, config_version: C.config_version,
   };
   if (window.PROD) PROD.saveFracTrial(rec);
@@ -1334,21 +1430,21 @@ function visionCheck() {
   // ⚠ ぼかしが描けない端末（WebKit）は、ここで丁寧にお断りする。
   //   （設定 visual.require_canvas_filter を false にすると、この関門を外せる。）
   if (CFG.visual.require_canvas_filter !== false
-      && usesBlurFamily() && !canvasFilterWorks()) {
+      && usesBlurFamily() && !canvasFilterWorks() && !blurFrames.ready) {
     unsupportedDeviceScreen();
     return;
   }
   const resuming = !!(answers && answers.clips.length);
   screenEl.innerHTML = `<h2 style="color:#1E2A5E">見え方の確認</h2>
-    <p>本番と<b>同じ大きさ・同じ並び</b>で見本を表示しています。
-    ふだん画面を見る距離のまま、<b>どの字もはっきり見えること</b>を確認してください。
+    <p>本番と<b>同じ大きさ</b>で見本を表示しています。
+    ふだん画面を見る距離のまま、<b>字がはっきり見えること</b>を確認してください。
     見えにくい場合は画面の明るさを上げてください。</p>
     <div id="vcheck" class="vbox"></div>
     <p class="muted" style="text-align:center">画面が横に狭いと、字は自動で小さくなります。
     スマートフォンの方は<b>横向き</b>にすると大きく表示されます。</p>
     <p style="text-align:center;margin-top:16px"><button class="primary" id="go3">${resuming ? "続きから再開する" : "次へ進む"}</button></p>`;
-  // 本番と同じ土台で、5字を現れきった状態のまま出す（大きさと字間をそのまま見せる）。
-  const stage = buildStage(document.getElementById("vcheck"), "row5");
+  // 本番と同じ土台で、その人の字を現れきった状態のまま出す（大きさをそのまま見せる）。
+  const stage = buildStage(document.getElementById("vcheck"), "single");
   stage.chars.forEach((ch, i) => {
     drawBlank(stage.ctxs[i]);
     if (imgs[ch]) stage.ctxs[i].drawImage(imgs[ch], 0, 0, SIZE, SIZE);
@@ -1474,14 +1570,20 @@ async function startSession() {
   ASSIGN = a.assign_index; ASSIGN_SOURCE = a.source;
   await preload();
   if (!clips.length) clips = buildClips();
-  if (!answers) answers = { clips: [], choice_family: "", choice_presentation: "",
-                            choice_family_order: [], choice_pres_order: [] };
+  if (!answers) answers = { clips: [], char: CHAR, char_set: CHARPLAN.set.slice(),
+                            assign_index: ASSIGN,
+                            choice_cond: {}, choice_cond_order: {},
+                            choice_cond_ms: {}, choice_cond_replays: {} };
   // 第3引数は所要の見込み分（いまの prod_common.js は画面に出さないが、
   // 出すようになったときに嘘にならないよう、実測見込みの7分を渡しておく）。
   PROD.consentScreen(screenEl, "文字の見え心地", 7, visionCheck, false,
     { noEnvNote: true,
       // 文末の形は transfer.js とそろえる（2026-08-25 丸山指示）。
-      desc: "日本語のかな1文字が現れる様子について、続けて見ていられるかを調べることを目的としています" });
+      // ⚠ 2026-08-29、丸山指示で短くした。前の文は「〜様子について、続けて見て
+      //   いられるかを」で、何を見ていられるのかが宙に浮いていた。
+      //   聞いているのは3項目（見やすい／自然／わずらわしい）なので、
+      //   ひとつに絞った言い方にせず「文字の表示の評価」とだけ書く。
+      desc: "文字の表示の評価です" });
   tidyConsentScreen();
   return true;
 }
