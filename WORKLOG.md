@@ -9,9 +9,13 @@
 作って共有」に対応した。**先生は共同研究者なので、生データは加工せずそのまま渡す方針にした。**
 
 ### 現在の状態
-- **`~/Desktop/timeFont_共有_20260911/` が完成**（39MB・266ファイル）。Google Drive などに上げれば渡せる。
-  `paper/`（投稿版 PDF・docx）/ `data/raw/`（生データ3実験）/ `data/analysis/`（集計一式）/
-  `scripts/`（分析コード＋`ifont/`）/ `AI引き継ぎ.md`（306行）。
+- **`~/Desktop/timeFont_共有_20260911/` が完成**（29MB・166ファイル）。
+  **GitHub も先生と共有しているので、リポジトリにあるものはフォルダに入れていない。**
+  入れたのは `paper/`（投稿版 PDF・docx）/ `data/raw/`（生データ3実験）/
+  `data/analysis/calib2/`（丸ごと gitignore なので GitHub にない）/
+  `data/analysis/_再計算で出たもの/` / `AI引き継ぎ.md`（364行）。
+  分析コード・`ifont/`・1回目の較正の集計・一対比較の集計は GitHub にあるので入れていない
+  （引き継ぎ md の0節に、どちらに何があるかとフォルダ→リポジトリの対応表を書いた）。
 - 引き継ぎ md は `docs/引き継ぎ_timeFont_20260911.md` としてリポジトリにもコミット。
 - **一対比較の分析コードを書き直して `experiment/tools/analyze_pair.py` に置いた。**
 
